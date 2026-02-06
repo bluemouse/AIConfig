@@ -1,0 +1,146 @@
+---
+description: "Guidelines for creating high-quality Cursor Rules and AGENTS.md files"
+globs:
+  - "**/.cursor/rules/**/*.md"
+  - "**/.cursor/rules/**/*.mdc"
+  - "**/cursor/rules/**/*.md"
+  - "**/cursor/rules/**/*.mdc"
+  - "**/AGENTS.md"
+  - "**/.cursorrules"
+alwaysApply: false
+---
+## Cursor Rules File Guidelines
+
+Guidelines for creating effective and maintainable Cursor Rules that provide persistent, reusable context for Cursor Agent.
+
+### What rules are (and why they exist)
+
+Large language models do not retain memory between completions. Cursor Rules provide stable, reusable instructions that are injected into the model context when they apply.
+
+Use rules to:
+
+- Encode domain-specific knowledge about your repo
+- Standardize architecture and style decisions that the agent frequently gets wrong
+- Provide templates, checklists, and workflows your team repeats
+
+## Rule Types and When They Apply
+
+Cursor supports multiple ways a rule can be applied:
+
+- **Always Apply**: Included in every chat session.
+- **Apply Intelligently**: Cursor decides relevance using the rule’s description.
+- **Apply to Specific Files**: Applied when the current file matches `globs`.
+- **Apply Manually**: Only applied when explicitly invoked (for example by @-mentioning the rule).
+
+Prefer the narrowest scope that still solves the problem:
+
+- Use **Specific Files** for language/framework conventions.
+- Use **Always Apply** only for high-signal, global conventions (communication style, repo-wide architectural constraints).
+
+## File Locations and Formats
+
+### Project Rules
+
+- Cursor expects project rules under `.cursor/rules/`.
+- If you keep rules in a separate folder for sharing/templates (for example `cursor/rules/` in this repository), copy or sync them into `.cursor/rules/` in the target project.
+- Rules are version-controlled and shared with your team.
+- Cursor supports rule files with `.md` and `.mdc` extensions.
+
+### AGENTS.md
+
+- `AGENTS.md` is a simple markdown alternative to project rules.
+- It supports a file in the repository root and in subdirectories.
+- It does not support metadata (no `globs`, `alwaysApply`, etc.).
+
+### Legacy: .cursorrules
+
+- `.cursorrules` in the repository root is still supported but is considered legacy.
+- Prefer migrating to `.cursor/rules/` (or `AGENTS.md`) for new work.
+
+## Recommended Rule Structure
+
+Keep rules focused and skimmable. A good rule reads like clear internal engineering guidance.
+
+Suggested sections:
+
+- **Purpose**: One paragraph describing intent and when it should be used.
+- **Do / Don’t**: Short bullet lists of concrete instructions.
+- **Examples**: Point to canonical files in the repo (preferred) or include small snippets.
+- **Checklist** (optional): For repeatable workflows.
+
+## Frontmatter for .mdc Rules
+
+Use `.mdc` when you need metadata. Frontmatter controls how and when a rule is applied.
+
+Common fields:
+
+- `description`: Short sentence describing the rule’s intent.
+- `globs`: File patterns for “Apply to Specific Files”.
+- `alwaysApply`: Boolean to force the rule into every session.
+
+Example:
+
+```md
+---
+description: "API standards and validation rules"
+alwaysApply: false
+globs:
+  - "src/api/**/*.ts"
+  - "src/routes/**/*.ts"
+---
+
+- Validate all external inputs at the boundary.
+- Keep handlers thin; move logic into services.
+```
+
+## Scoping and Globs
+
+- Use `globs` to keep rules relevant (and reduce noise in context).
+- Prefer a few targeted patterns over broad `**/*`.
+- If you need both broad and specific guidance, split into multiple rules:
+  - A small repo-wide rule (high-level constraints)
+  - Several scoped rules per language/framework/area
+
+## Writing Style (Rules Content)
+
+- Write in the imperative (“Do X”, “Avoid Y”).
+- Prefer concrete, checkable statements over vague guidance.
+- Reference canonical files instead of copying large blocks of code.
+- Keep the rule’s content up to date; treat it like living documentation.
+
+## Best Practices
+
+- Keep rules under ~500 lines.
+- Split large topics into multiple composable rules.
+- Add rules only when you observe repeated mistakes.
+- Prefer tooling over prose for enforcement:
+  - If this is a formatting/style issue, add a formatter/linter rather than a long rule.
+
+## What to Avoid
+
+- Copying entire external style guides into rules.
+- Duplicating information that already exists in the repo without adding guidance.
+- Documenting every possible command; the agent already knows common tooling.
+- Adding lots of rare edge cases; keep rules focused on frequent patterns.
+
+## Validation and Verification
+
+- Ensure the rule appears in Cursor Settings → Rules.
+- Confirm the rule is applied in chat when expected:
+  - Always-apply rules should show up every session.
+  - Glob-scoped rules should apply when a matching file is in focus.
+  - Manual rules should apply only when invoked.
+- If a rule is not being applied:
+  - Check `globs` patterns
+  - Check that the file is in `.cursor/rules/`
+  - Reduce rule size and remove redundant content to improve relevance
+
+## Maintenance
+
+- Update rules when repo conventions change.
+- Prefer small, frequent edits over letting rules drift.
+- Keep descriptions accurate; they drive “Apply Intelligently” decisions.
+
+## Additional Resources
+
+- Cursor Rules documentation: https://cursor.com/docs/context/rules
