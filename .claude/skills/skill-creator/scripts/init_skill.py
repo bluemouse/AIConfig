@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Skill Initializer - Creates a new skill from template
+Skill Initializer - Creates a new Claude Code skill from template
 
 Usage:
     init_skill.py <skill-name> --path <path>
 
 Examples:
-    init_skill.py my-new-skill --path .github/skills
-    init_skill.py my-api-helper --path ~/.copilot/skills
+    init_skill.py my-new-skill --path .claude/skills
+    init_skill.py my-api-helper --path ~/.claude/skills
 """
 
 import sys
@@ -16,7 +16,7 @@ from pathlib import Path
 
 SKILL_TEMPLATE = """---
 name: {skill_name}
-description: [TODO: Complete and informative explanation of what the skill does and when Copilot should use it. Include WHEN to use this skill - specific scenarios, file types, or tasks that trigger it.]
+description: [TODO: Complete and informative explanation of what the skill does and when Claude should use it. Include WHEN to use this skill - specific scenarios, file types, or tasks that trigger it.]
 ---
 
 # {skill_title}
@@ -70,15 +70,15 @@ Executable code (Python/Bash/etc.) that can be run directly to perform specific 
 
 **Appropriate for:** Python scripts, shell scripts, or any executable code that performs automation, data processing, or specific operations.
 
-**Note:** Scripts may be executed without loading into context, but can still be read by Copilot for patching or environment adjustments.
+**Note:** Scripts may be executed without loading into context, but can still be read by Claude for patching or environment adjustments.
 
 ### references/
 Documentation and reference material intended to be loaded into context when needed.
 
-**Appropriate for:** In-depth documentation, API references, database schemas, comprehensive guides, or any detailed information that Copilot should reference while working.
+**Appropriate for:** In-depth documentation, API references, database schemas, comprehensive guides, or any detailed information that Claude should reference while working.
 
 ### assets/
-Files not intended to be loaded into context, but rather used within the output Copilot produces.
+Files not intended to be loaded into context, but rather used within the output Claude produces.
 
 **Appropriate for:** Templates, boilerplate code, document templates, images, icons, fonts, or any files meant to be copied or used in the final output.
 
@@ -124,7 +124,7 @@ This placeholder represents where asset files would be stored.
 Replace with actual asset files (templates, images, fonts, etc.) or delete if not needed.
 
 Asset files are NOT intended to be loaded into context, but rather used within
-the output Copilot produces.
+the output Claude produces.
 """
 
 
@@ -190,7 +190,7 @@ def init_skill(skill_name, path):
     print("1. Edit SKILL.md to complete the TODO items and update the description")
     print("2. Customize or delete the example files in scripts/, references/, and assets/")
     print("3. Run quick_validate.py when ready to check the skill structure")
-    print("4. Reload VS Code so Copilot discovers the new skill")
+    print("4. Reload Claude Code so the new skill is discovered")
 
     return skill_dir
 
@@ -204,8 +204,8 @@ def main():
         print("  - Max 64 characters")
         print("  - Must match directory name exactly")
         print("\nExamples:")
-        print("  init_skill.py my-new-skill --path .github/skills")
-        print("  init_skill.py my-api-helper --path ~/.copilot/skills")
+        print("  init_skill.py my-new-skill --path .claude/skills")
+        print("  init_skill.py my-api-helper --path ~/.claude/skills")
         sys.exit(1)
 
     skill_name = sys.argv[1]

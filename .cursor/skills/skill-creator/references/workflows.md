@@ -2,7 +2,7 @@
 
 ## Sequential Workflows
 
-For complex tasks, break operations into clear, sequential steps. It is often helpful to give Claude an overview of the process towards the beginning of SKILL.md:
+For complex tasks, break operations into clear, sequential steps. Give the Cursor agent an overview near the top of `SKILL.md`:
 
 ```markdown
 Filling a PDF form involves these steps:
@@ -16,7 +16,7 @@ Filling a PDF form involves these steps:
 
 ## Conditional Workflows
 
-For tasks with branching logic, guide Claude through decision points:
+For tasks with branching logic, guide the agent through decision points:
 
 ```markdown
 1. Determine the modification type:
@@ -25,4 +25,15 @@ For tasks with branching logic, guide Claude through decision points:
 
 2. Creation workflow: [steps]
 3. Editing workflow: [steps]
+```
+
+## Feedback Loop Pattern
+
+For quality-critical tasks, add validation loops:
+
+```markdown
+1. Make your edits
+2. **Validate immediately**: `python scripts/validate.py output/`
+3. If validation fails, fix issues and rerun validation
+4. Proceed only when validation passes
 ```
