@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.
+description: Create portable skills for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create a skill from scratch, scaffold `.shared/skills` with tool wrappers in `.cursor/skills`, `.claude/skills`, or `.github/skills`, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say "portable skill" explicitly.
 ---
 
 # Skill Creator
@@ -10,7 +10,8 @@ A skill for creating new skills and iteratively improving them.
 At a high level, the process of creating a skill goes like this:
 
 - Decide what you want the skill to do and roughly how it should do it
-- Write a draft of the skill
+- **Scaffold** the shared skill in `.shared/skills/<name>/` and generate tool wrappers with `create_skill.py`
+- Write a draft of the shared `SKILL.md` (and tool-specific wrapper notes only when needed)
 - Create a few test prompts and run claude-with-access-to-the-skill on them
 - Help the user evaluate the results both qualitatively and quantitatively
   - While the runs happen in the background, draft some quantitative evals if there aren't any (if there are some, you can either use as is or modify if you feel something needs to change about them). Then explain them to the user (or if they already existed, explain the ones that already exist)
@@ -25,7 +26,7 @@ On the other hand, maybe they already have a draft of the skill. In this case yo
 
 Of course, you should always be flexible and if the user is like "I don't need to run a bunch of evaluations, just vibe with me", you can do that instead.
 
-Then after the skill is done (but again, the order is flexible), you can also run the skill description improver, which we have a whole separate script for, to optimize the triggering of the skill.
+Then after the skill is done (but again, the order is flexible), you can also optimize the skill description for better triggering. In Claude Code or Cowork, use the automated `run_loop.py` script; in Cursor or Claude.ai, use the manual alternative documented in **Description Optimization**.
 
 Cool? Cool.
 
@@ -48,10 +49,13 @@ It's OK to briefly explain terms if you're in doubt, and feel free to clarify te
 
 Start by understanding the user's intent. The current conversation might already contain a workflow the user wants to capture (e.g., they say "turn this into a skill"). If so, extract answers from the conversation history first — the tools used, the sequence of steps, corrections the user made, input/output formats observed. The user may need to fill the gaps, and should confirm before proceeding to the next step.
 
-1. What should this skill enable Claude to do?
+1. What should this skill enable the coding agent to do?
 2. When should this skill trigger? (what user phrases/contexts)
-3. What's the expected output format?
-4. Should we set up test cases to verify the skill works? Skills with objectively verifiable outputs (file transforms, data extraction, code generation, fixed workflow steps) benefit from test cases. Skills with subjective outputs (writing style, art) often don't need them. Suggest the appropriate default based on the skill type, but let the user decide.
+3. Where should files be written? (current repo root, a specific output directory)
+4. Are there tool-specific notes for Claude Code, Cursor, or GitHub Copilot?
+5. Should wrappers reference the shared skill, or does the user need a fully standalone copy in one tool folder?
+6. What's the expected output format?
+7. Should we set up test cases to verify the skill works? Skills with objectively verifiable outputs (file transforms, data extraction, code generation, fixed workflow steps) benefit from test cases. Skills with subjective outputs (writing style, art) often don't need them. Suggest the appropriate default based on the skill type, but let the user decide.
 
 ### Interview and Research
 
@@ -65,39 +69,155 @@ Resolve `<SKILL_CREATOR_ROOT>` as the directory containing **this** skill's `SKI
 
 | Script | Path |
 | --- | --- |
-| Scaffold | `<SKILL_CREATOR_ROOT>/scripts/init_skill.py` |
+| Create portable skill | `<SKILL_CREATOR_ROOT>/scripts/create_skill.py` |
+| Standalone scaffold | `<SKILL_CREATOR_ROOT>/scripts/init_skill.py` |
 | Validate | `<SKILL_CREATOR_ROOT>/scripts/quick_validate.py` |
 | Package | `<SKILL_CREATOR_ROOT>/scripts/package_skill.py` |
+| Aggregate benchmark | `<SKILL_CREATOR_ROOT>/scripts/aggregate_benchmark.py` |
+| Description eval loop | `<SKILL_CREATOR_ROOT>/scripts/run_loop.py` |
+| Eval viewer | `<SKILL_CREATOR_ROOT>/eval-viewer/generate_review.py` |
 
-If this skill lives at `.claude/skills/skill-creator/`, then `<SKILL_CREATOR_ROOT>/scripts/init_skill.py` is `.claude/skills/skill-creator/scripts/init_skill.py`.
+If this skill lives at `skills/skill-creator/`, then `<SKILL_CREATOR_ROOT>/scripts/create_skill.py` is `skills/skill-creator/scripts/create_skill.py`.
 
-### Scaffold a new skill
-
-**Always** scaffold with `init_skill.py`. Do **not** manually create skill directories, `SKILL.md`, or placeholder `scripts/` / `references/` / `assets/` folders.
-
-1. Confirm target from the interview:
-   - **Project**: `.claude/skills/`
-   - **Personal**: `~/.claude/skills/`
-
-2. Run (replace `<skill-name>` and `<install-path>`):
+**Running module scripts:** `run_loop.py` imports sibling modules as `scripts.*` and must be run with `<SKILL_CREATOR_ROOT>` as the working directory:
 
 ```bash
-python <SKILL_CREATOR_ROOT>/scripts/init_skill.py <skill-name> --path <install-path>
+cd <SKILL_CREATOR_ROOT>
+python -m scripts.run_loop ...
+python -m scripts.aggregate_benchmark ...
+```
+
+`aggregate_benchmark.py` can also be invoked directly by path from any directory. Prefer `cd <SKILL_CREATOR_ROOT>` for all `python -m scripts.*` commands so imports resolve consistently.
+
+### Anatomy of a portable skill
+
+```
+repo/
+├── .shared/
+│   └── skills/
+│       └── <skill-name>/
+│           ├── SKILL.md          # Canonical, tool-neutral instructions
+│           ├── scripts/
+│           ├── references/
+│           └── assets/
+├── .claude/
+│   └── skills/
+│       └── <skill-name>/
+│           └── SKILL.md          # Claude Code wrapper
+├── .cursor/
+│   └── skills/
+│       └── <skill-name>/
+│           └── SKILL.md          # Cursor wrapper
+└── .github/
+    └── skills/
+        └── <skill-name>/
+            └── SKILL.md          # GitHub Copilot wrapper
+```
+
+**Progressive disclosure:**
+
+1. **Metadata** — `name` and `description` in each file's frontmatter
+2. **Shared skill** — the full workflow and bundled resources
+3. **Wrappers** — tool-specific integration notes only
+
+Keep common behavior in `.shared/skills/<skill-name>/`. Put tool-specific behavior in the wrapper body, not in the shared skill, unless it applies to all tools. Repo-root `skills/` is for meta/bootstrap packages (like `skill-creator` itself), not user-created portable skills.
+
+### Scaffold a new skill (project, shared-first)
+
+**Always** scaffold with `create_skill.py` for repository projects. Do **not** manually create skill directories, `SKILL.md`, or placeholder `scripts/` / `references/` / `assets/` folders.
+
+1. Confirm the repository root from the interview.
+
+2. Run (replace `<skill-name>` and `<repo_root>`):
+
+```bash
+python <SKILL_CREATOR_ROOT>/scripts/create_skill.py --root <repo_root> --name <skill-name>
 ```
 
 Example for a project skill in this repository:
 
 ```bash
-python .claude/skills/skill-creator/scripts/init_skill.py my-skill --path .claude/skills
+python skills/skill-creator/scripts/create_skill.py --root . --name my-skill
 ```
+
+Use `--claude-note`, `--cursor-note`, and `--github-note` only when the user provides tool-specific instructions or when a tool needs a necessary caveat. Add `--overwrite` only when regenerating existing files and the user has confirmed.
 
 3. **Immediately** validate the scaffold before editing content:
 
 ```bash
-python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py <install-path>/<skill-name>
+python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py .shared/skills/<skill-name>
+python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py .cursor/skills/<skill-name>
+python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py .claude/skills/<skill-name>
+python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py .github/skills/<skill-name>
 ```
 
-4. Edit the generated `SKILL.md`, remove unused placeholder files, then **re-run** `quick_validate.py` after substantive edits and before packaging.
+4. Edit the shared `.shared/skills/<skill-name>/SKILL.md`, sync `description` into wrapper frontmatter when it changes, remove unused placeholder files, then **re-run** `quick_validate.py` after substantive edits and before packaging.
+
+### Scaffold a standalone skill (personal or single-tool)
+
+When the user needs a full copy in one location (personal install or maximum standalone behavior), use `init_skill.py`:
+
+```bash
+python <SKILL_CREATOR_ROOT>/scripts/init_skill.py <skill-name> --path <install-path>
+```
+
+Examples:
+
+```bash
+python <SKILL_CREATOR_ROOT>/scripts/init_skill.py my-skill --path ~/.cursor/skills
+python <SKILL_CREATOR_ROOT>/scripts/init_skill.py my-skill --path .cursor/skills
+```
+
+### Shared skill rules
+
+The shared skill must contain tool-neutral instructions:
+
+```markdown
+---
+name: <skill-name>
+description: <clear trigger description>
+---
+
+Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`.
+
+<tool-neutral skill instructions>
+```
+
+- Bundled resources (`scripts/`, `references/`, `assets/`) live only in `.shared/skills/<skill-name>/`.
+- Use `<SKILL_ROOT>` for script and reference paths inside the shared skill.
+- Avoid tool-specific frontmatter in the shared skill unless it applies to all tools.
+
+### Wrapper rules
+
+Wrappers must:
+
+- Use the tool's expected path and contain only `SKILL.md`.
+- Include `name` and `description` frontmatter (keep `description` aligned with the shared skill).
+- State that `.shared/skills/<skill-name>/SKILL.md` is the canonical source of truth.
+- Instruct the agent to read and apply the shared skill before acting.
+- Tell the agent to resolve `<SKILL_ROOT>` and bundled resource paths from the shared skill directory.
+- Add only tool-specific notes in the wrapper body.
+
+Do not duplicate the full shared instructions into wrappers unless the user asks for copy-based portability instead of reference-based wrappers.
+
+### Output summary
+
+After creating files, summarize:
+
+- The shared skill path (`.shared/skills/<skill-name>/`)
+- The three wrapper paths
+- Any assumptions made about the skill instructions
+- Whether the files were created as reference wrappers or full copies
+
+### Updating an existing skill
+
+When the user asks to update a skill rather than create one:
+
+- **Preserve the original name** unless they explicitly want a rename.
+- **Edit the shared skill first** for behavior that should apply across tools.
+- **Edit wrappers only** for tool-specific integration notes or frontmatter.
+- **Sync `description`** into all wrapper frontmatter when the shared description changes.
+- **Re-run `create_skill.py` with `--overwrite`** only when regenerating from scratch is safer than hand-editing. Confirm before overwriting.
 
 ### Write the SKILL.md
 
@@ -112,8 +232,10 @@ Based on the user interview, fill in these components:
 
 #### Anatomy of a Skill
 
+**Shared skill package** (`.shared/skills/<skill-name>/`):
+
 ```
-skill-name/
+<skill-name>/
 ├── SKILL.md (required)
 │   ├── YAML frontmatter (name, description required)
 │   └── Markdown instructions
@@ -121,6 +243,13 @@ skill-name/
     ├── scripts/    - Executable code for deterministic/repetitive tasks
     ├── references/ - Docs loaded into context as needed
     └── assets/     - Files used in output (templates, icons, fonts)
+```
+
+**Tool wrapper** (`.cursor/skills/<skill-name>/`, etc.):
+
+```
+<skill-name>/
+└── SKILL.md        - Wrapper pointing to the shared skill; tool-specific notes only
 ```
 
 #### Progressive Disclosure
@@ -154,7 +283,7 @@ This goes without saying, but skills must not contain malware, exploit code, or 
 
 #### Writing Patterns
 
-Prefer using the imperative form in instructions.
+Prefer using the imperative form in instructions. For additional templates, see `references/output-patterns.md` (output formats and examples) and `references/workflows.md` (multi-step and conditional workflows).
 
 **Defining output formats** - You can do it like this:
 ```markdown
@@ -182,7 +311,7 @@ Try to explain to the model why things are important in lieu of heavy-handed mus
 
 After writing the skill draft, come up with 2-3 realistic test prompts — the kind of thing a real user would actually say. Share them with the user: [you don't have to use this exact language] "Here are a few test cases I'd like to try. Do these look right, or do you want to add more?" Then run them.
 
-Save test cases to `evals/evals.json`. Don't write assertions yet — just the prompts. You'll draft assertions in the next step while the runs are in progress.
+Save test cases to `.shared/skills/<skill-name>/evals/evals.json`. Don't write assertions yet — just the prompts. You'll draft assertions in the next step while the runs are in progress.
 
 ```json
 {
@@ -204,7 +333,7 @@ See `references/schemas.md` for the full schema (including the `assertions` fiel
 
 This section is one continuous sequence — don't stop partway through. Do NOT use `/skill-test` or any other testing skill.
 
-Put results in `<skill-name>-workspace/` as a sibling to the skill directory. Within the workspace, organize results by iteration (`iteration-1/`, `iteration-2/`, etc.) and within that, each test case gets a directory (`eval-0/`, `eval-1/`, etc.). Don't create all of this upfront — just create directories as you go.
+Put results in `<skill-name>-workspace/` as a sibling to `.shared/skills/`. Within the workspace, organize results by iteration (`iteration-1/`, `iteration-2/`, etc.) and within that, each test case gets a directory (`eval-0/`, `eval-1/`, etc.). Don't create all of this upfront — just create directories as you go.
 
 ### Step 1: Spawn all runs (with-skill AND baseline) in the same turn
 
@@ -214,7 +343,7 @@ For each test case, spawn two subagents in the same turn — one with the skill,
 
 ```
 Execute this task:
-- Skill path: <path-to-skill>
+- Skill path: .shared/skills/<skill-name>/
 - Task: <eval prompt>
 - Input files: <eval files if any, or "none">
 - Save outputs to: <workspace>/iteration-<N>/eval-<ID>/with_skill/outputs/
@@ -223,7 +352,7 @@ Execute this task:
 
 **Baseline run** (same prompt, but the baseline depends on context):
 - **Creating a new skill**: no skill at all. Same prompt, no skill path, save to `without_skill/outputs/`.
-- **Improving an existing skill**: the old version. Before editing, snapshot the skill (`cp -r <skill-path> <workspace>/skill-snapshot/`), then point the baseline subagent at the snapshot. Save to `old_skill/outputs/`.
+- **Improving an existing skill**: the old version. Before editing, snapshot the shared skill (`cp -r .shared/skills/<skill-name> <workspace>/skill-snapshot/`), then point the baseline subagent at the snapshot. Save to `old_skill/outputs/`.
 
 Write an `eval_metadata.json` for each test case (assertions can be empty for now). Give each eval a descriptive name based on what it's testing — not just "eval-0". Use this name for the directory too. If this iteration uses new or modified eval prompts, create these files for each new eval directory — don't assume they carry over from previous iterations.
 
@@ -264,8 +393,9 @@ Once all runs are done:
 
 1. **Grade each run** — spawn a grader subagent (or grade inline) that reads `agents/grader.md` and evaluates each assertion against the outputs. Save results to `grading.json` in each run directory. The grading.json expectations array must use the fields `text`, `passed`, and `evidence` (not `name`/`met`/`details` or other variants) — the viewer depends on these exact field names. For assertions that can be checked programmatically, write and run a script rather than eyeballing it — scripts are faster, more reliable, and can be reused across iterations.
 
-2. **Aggregate into benchmark** — run the aggregation script from the skill-creator directory:
+2. **Aggregate into benchmark** — run from `<SKILL_CREATOR_ROOT>`:
    ```bash
+   cd <SKILL_CREATOR_ROOT>
    python -m scripts.aggregate_benchmark <workspace>/iteration-N --skill-name <name>
    ```
    This produces `benchmark.json` and `benchmark.md` with pass_rate, time, and tokens for each configuration, with mean ± stddev and the delta. If generating benchmark.json manually, see `references/schemas.md` for the exact schema the viewer expects.
@@ -275,7 +405,7 @@ Put each with_skill version before its baseline counterpart.
 
 4. **Launch the viewer** with both qualitative outputs and quantitative data:
    ```bash
-   nohup python <skill-creator-path>/eval-viewer/generate_review.py \
+   nohup python <SKILL_CREATOR_ROOT>/eval-viewer/generate_review.py \
      <workspace>/iteration-N \
      --skill-name "my-skill" \
      --benchmark <workspace>/iteration-N/benchmark.json \
@@ -372,7 +502,11 @@ This is optional, requires subagents, and most users won't need it. The human re
 
 ## Description Optimization
 
-The description field in SKILL.md frontmatter is the primary mechanism that determines whether Claude invokes a skill. After creating or improving a skill, offer to optimize the description for better triggering accuracy.
+The description field in SKILL.md frontmatter is the primary mechanism that determines whether the coding agent invokes a skill. After creating or improving a skill, offer to optimize the description for better triggering accuracy.
+
+**Platform availability:** The automated optimization loop (Step 3) requires the Claude Code CLI (`claude -p`). It runs in Claude Code and Cowork. **Skip Step 3 in Cursor and Claude.ai.**
+
+**Manual alternative (Cursor, Claude.ai, or anytime):** Complete Steps 1–2 (draft trigger eval queries and review them with the user), then revise the description yourself using the writing guide and "How skill triggering works" below. Apply the updated description (Step 4) and ask the user to test with realistic prompts in their environment.
 
 ### Step 1: Generate trigger eval queries
 
@@ -416,18 +550,19 @@ This step matters — bad eval queries lead to bad descriptions.
 
 Tell the user: "This will take some time — I'll run the optimization loop in the background and check on it periodically."
 
-Save the eval set to the workspace, then run in the background:
+Save the eval set to the workspace, then run in the background from `<SKILL_CREATOR_ROOT>` (Claude Code or Cowork only — skip in Cursor):
 
 ```bash
+cd <SKILL_CREATOR_ROOT>
 python -m scripts.run_loop \
   --eval-set <path-to-trigger-eval.json> \
-  --skill-path <path-to-skill> \
+  --skill-path .shared/skills/<skill-name> \
   --model <model-id-powering-this-session> \
   --max-iterations 5 \
   --verbose
 ```
 
-Use the model ID from your system prompt (the one powering the current session) so the triggering test matches what the user actually experiences.
+Use the model ID from your system prompt (the one powering the current session) so the triggering test matches what the user actually experiences. In Cursor, use the manual alternative above instead.
 
 While it runs, periodically tail the output to give the user updates on which iteration it's on and what the scores look like.
 
@@ -441,7 +576,7 @@ This means your eval queries should be substantive enough that Claude would actu
 
 ### Step 4: Apply the result
 
-Take `best_description` from the JSON output and update the skill's SKILL.md frontmatter. Show the user before/after and report the scores.
+Take `best_description` from the JSON output and update the shared skill's `SKILL.md` frontmatter. Sync the same `description` into each tool wrapper's frontmatter. Show the user before/after and report the scores.
 
 ---
 
@@ -450,18 +585,36 @@ Take `best_description` from the JSON output and update the skill's SKILL.md fro
 Check whether you have access to the `present_files` tool. If you don't, skip this step. If you do, validate first, then package:
 
 ```bash
-python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py <path/to/skill-folder>
-python <SKILL_CREATOR_ROOT>/scripts/package_skill.py <path/to/skill-folder>
+python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py .shared/skills/<skill-name>
+python <SKILL_CREATOR_ROOT>/scripts/package_skill.py .shared/skills/<skill-name>
 ```
 
-Or from the skill-creator directory in Claude Code:
+Or from the skill-creator directory:
 
 ```bash
-python scripts/quick_validate.py <path/to/skill-folder>
-python scripts/package_skill.py <path/to/skill-folder>
+python scripts/quick_validate.py .shared/skills/<skill-name>
+python scripts/package_skill.py .shared/skills/<skill-name>
 ```
 
+Package the **shared** skill directory only. Wrappers are project-local install targets and are not included in `.skill` packages.
+
 After packaging, direct the user to the resulting `.skill` file path so they can install it.
+
+---
+
+## Cursor-specific instructions
+
+In Cursor, the core workflow (scaffold → draft → test → review → improve → package) works well. Adapt these parts:
+
+**Running test cases**: Use the Task tool to spawn subagents in parallel (with-skill and baseline runs). The eval loop, grading, and benchmark aggregation all work as documented.
+
+**Reviewing results**: If there is no local browser or display, pass `--static <output_path>` to `generate_review.py` and share the HTML file path with the user.
+
+**Description optimization**: The automated loop (`run_loop.py`) requires `claude -p`, which is not available in Cursor. **Skip Step 3.** Use the manual alternative in the Description Optimization section: draft eval queries, review with the user, revise the description yourself, sync wrapper frontmatter, and validate with realistic prompts.
+
+**Packaging**: `package_skill.py` and `quick_validate.py` work normally. Resolve script paths from `<SKILL_CREATOR_ROOT>` as documented in **Bundled scripts**.
+
+**Updating an existing skill**: Edit the shared skill first at `.shared/skills/<skill-name>/`, then sync wrapper frontmatter. Re-run `quick_validate.py` after substantive edits.
 
 ---
 
@@ -477,16 +630,17 @@ In Claude.ai, the core workflow is the same (draft → test → review → impro
 
 **The iteration loop**: Same as before — improve the skill, rerun the test cases, ask for feedback — just without the browser reviewer in the middle. You can still organize results into iteration directories on the filesystem if you have one.
 
-**Description optimization**: This section requires the `claude` CLI tool (specifically `claude -p`) which is only available in Claude Code. Skip it if you're on Claude.ai.
+**Description optimization**: Requires the `claude` CLI (`claude -p`), available only in Claude Code. Skip the automated loop in Claude.ai; use the manual alternative in **Description Optimization** instead.
 
 **Blind comparison**: Requires subagents. Skip it.
 
 **Packaging**: The `package_skill.py` script works anywhere with Python and a filesystem. On Claude.ai, you can run it and the user can download the resulting `.skill` file.
 
 **Updating an existing skill**: The user might be asking you to update an existing skill, not create a new one. In this case:
-- **Preserve the original name.** Note the skill's directory name and `name` frontmatter field -- use them unchanged. E.g., if the installed skill is `research-helper`, output `research-helper.skill` (not `research-helper-v2`).
-- **Copy to a writeable location before editing.** The installed skill path may be read-only. Copy to `/tmp/skill-name/`, edit there, and package from the copy.
-- **If packaging manually, stage in `/tmp/` first**, then copy to the output directory -- direct writes may fail due to permissions.
+- **Preserve the original name.** Note the skill's directory name and `name` frontmatter field — use them unchanged.
+- **Edit the shared skill first** at `.shared/skills/<skill-name>/` for cross-tool behavior.
+- **Copy to a writeable location before editing** if the installed skill path may be read-only. Copy to `/tmp/skill-name/`, edit there, and package from the copy.
+- **If packaging manually, stage in `/tmp/` first**, then copy to the output directory — direct writes may fail due to permissions.
 
 ---
 
@@ -513,28 +667,36 @@ The agents/ directory contains instructions for specialized subagents. Read them
 - `agents/analyzer.md` — How to analyze why one version beat another
 
 The references/ directory has additional documentation:
-- `references/schemas.md` — JSON structures for evals.json, grading.json, etc.
+
+- `references/portable-skill-layout.md` — Shared-first path conventions, wrapper templates, tool-specific paths, and a worked example. Read when explaining structure, reviewing an existing layout, or manually adapting templates.
+- `references/schemas.md` — JSON structures for evals.json, grading.json, benchmark.json, etc.
+- `references/output-patterns.md` — Templates, examples, and quality-standard patterns for skill outputs.
+- `references/workflows.md` — Multi-step, checklist, conditional, and feedback-loop workflow patterns.
 
 The scripts/ directory contains bundled tooling. Resolve paths from `<SKILL_CREATOR_ROOT>` (see **Bundled scripts** above):
 
-- `scripts/init_skill.py` — Scaffold a new skill directory (**always use this**)
-- `scripts/quick_validate.py` — Validate frontmatter and naming rules (**run after scaffold and before packaging**)
-- `scripts/package_skill.py` — Package a validated skill into `.skill`
+- `scripts/create_skill.py` — Scaffold a portable shared skill plus tool wrappers (**always use this for project skills**)
+- `scripts/init_skill.py` — Scaffold a standalone skill in one install path
+- `scripts/quick_validate.py` — Validate shared or wrapper skill directories (**run after scaffold and before packaging**)
+- `scripts/package_skill.py` — Package a validated shared skill into `.skill`
+- `scripts/aggregate_benchmark.py` — Aggregate eval run results into benchmark.json (**run from `<SKILL_CREATOR_ROOT>`**)
+- `scripts/run_loop.py` — Automated description optimization loop (**Claude Code/Cowork only; run from `<SKILL_CREATOR_ROOT>`**)
+- `eval-viewer/generate_review.py` — Generate the eval review viewer (browser or `--static` HTML)
 
 ---
 
 Repeating one more time the core loop here for emphasis:
 
 - Figure out what the skill is about
-- **Scaffold with `init_skill.py`** (never create folders manually)
-- **Validate with `quick_validate.py`** immediately, then draft or edit the skill
+- **Scaffold with `create_skill.py`** for project skills (never create folders manually)
+- **Validate with `quick_validate.py`** on the shared skill and each wrapper immediately, then draft or edit the shared skill
 - Run claude-with-access-to-the-skill on test prompts
 - With the user, evaluate the outputs:
   - Create benchmark.json and run `eval-viewer/generate_review.py` to help the user review them
   - Run quantitative evals
 - **Re-validate with `quick_validate.py`** after substantive edits
 - Repeat until you and the user are satisfied
-- Package the final skill and return it to the user
+- Package the shared skill with `package_skill.py` and return it to the user
 
 Please add steps to your TodoList, if you have such a thing, to make sure you don't forget. If you're in Cowork, please specifically put "Create evals JSON and run `eval-viewer/generate_review.py` so human can review test cases" in your TodoList to make sure it happens.
 
