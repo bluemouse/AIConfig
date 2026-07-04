@@ -1,124 +1,177 @@
-**AI Configuration for GitHub Copilot and Cursor**
+# AI Configuration for Cursor, GitHub Copilot, and Claude Code
 
-This repository documents a portable layout for AI-assisted development with GitHub
-Copilot and Cursor. It no longer ships bundled prompts, agents, instructions, rules,
-commands, or skills.
+This repository provides a **portable, shared-first layout** for AI-assisted development across Cursor, GitHub Copilot, and Claude Code. Tool-specific install folders hold thin wrappers; canonical skill content lives under `.shared/`.
 
-## What was removed
+## Repository layout
 
-The following top-level folders and their contents were deleted:
+```
+repo/
+├── AGENTS.md                          # LLM coding behavioral guidelines
+├── skills/                            # Bootstrap / meta skill sources (edit here, then install)
+│   └── skill-creator/                 # skill-creator bootstrap package
+├── skills-ref/                        # Reference skill packages (not installed by default)
+├── agents-ref/                        # Reference agent definitions (not installed by default)
+├── .shared/
+│   └── skills/
+│       └── <skill-name>/              # Canonical skill content (scripts, references, SKILL.md)
+├── .cursor/
+│   ├── commands/                      # Slash commands (e.g. /create-skill-creator)
+│   ├── rules/                         # Cursor rules (.mdc)
+│   ├── skills/<skill-name>/           # Cursor wrappers → point to .shared/skills/
+│   └── agents/                        # Cursor custom agents
+├── .claude/
+│   └── skills/<skill-name>/           # Claude Code wrappers
+└── .github/
+    ├── agents/                        # GitHub Copilot custom agents
+    └── skills/<skill-name>/           # Copilot wrappers
+```
 
-| Removed path | Previously contained |
+### What each area is for
+
+| Path | Purpose |
 | --- | --- |
-| `copilot/` | Copilot agents, instructions, and prompts |
-| `cursor/` | Cursor rules and slash commands |
-| `document-cpp-code/` | C++ documentation skill |
-| `tools/` | Conversion scripts (`agents2rules.py`, `instructions2rules.py`, `prompts2commands.py`) |
-| `skills/*` | Bundled skill packages (`doc-coauthoring`, `skill-creator`, etc.) |
+| `skills/` | Bootstrap sources for meta packages like `skill-creator`. Edit here, then install into the portable layout. |
+| `.shared/skills/` | Canonical, tool-neutral skill packages. Bundled resources (`scripts/`, `references/`, `assets/`) live here only. |
+| `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | Tool-specific wrappers (`SKILL.md` only) that instruct the agent to read the shared skill. |
+| `skills-ref/` | Example and reference skills (Android, iOS, shader dev, code review, agent-creator, etc.) for copying or adaptation. |
+| `agents-ref/` | Example agent role definitions for reference. |
+| `AGENTS.md` | Project-wide behavioral guidelines for coding agents (think first, simplicity, surgical changes). |
 
-The `.github/` and `.cursor/` directories remain, but several symlinks under them still
-point at the removed `copilot/` and `cursor/` folders and are currently broken. Recreate
-those source folders or replace the symlinks with real directories before adding new assets.
+## Installed skills
 
-## What remains
+This repo currently ships and installs **skill-creator** — a meta-skill for creating, validating, packaging, and iteratively improving portable skills.
 
-| Path | Status |
+| Location | Role |
 | --- | --- |
-| `README.md` | This documentation |
-| `.github/agents/` | Symlink → `../copilot/agents/` (broken until `copilot/` is restored) |
-| `.github/instructions/` | Symlink → `../copilot/instructions/` (broken) |
-| `.github/prompts/` | Symlink → `../copilot/prompts/` (broken) |
-| `.github/skills/` | Empty install target for project-wide Copilot skills |
-| `.cursor/rules/` | Symlink → `../cursor/rules/` (broken until `cursor/` is restored) |
-| `.cursor/commands/` | Symlink → `../cursor/commands/` (broken) |
-| `.cursor/skills/` | Empty install target for project-wide Cursor skills |
-| `skills/` | Empty placeholder for skill source packages |
-| `tools/` | Empty placeholder (conversion scripts removed) |
+| `skills/skill-creator/` | Bootstrap source (edit scripts and `SKILL.md` here) |
+| `.shared/skills/skill-creator/` | Installed canonical skill |
+| `.cursor/skills/skill-creator/` | Cursor wrapper |
+| `.claude/skills/skill-creator/` | Claude Code wrapper |
+| `.github/skills/skill-creator/` | GitHub Copilot wrapper |
+
+After editing the bootstrap source, re-install to propagate changes to the portable layout (see below).
+
+## Install skill-creator
+
+**Option A — Cursor slash command**
+
+In Cursor chat, run:
+
+```
+/create-skill-creator
+```
+
+**Option B — install script**
+
+From the repository root:
+
+```bash
+python skills/skill-creator/scripts/install_portable_skill.py \
+  --root . \
+  --name skill-creator \
+  --source skills/skill-creator \
+  --overwrite
+```
+
+The script copies the bootstrap package to `.shared/skills/skill-creator/`, generates tool wrappers, validates all four paths, and prints a summary.
+
+Reload each tool after install:
+
+- **Cursor** — reload the window
+- **VS Code + Copilot** — reload the window
+- **Claude Code** — restart or reload the session
+
+## Create a new portable skill
+
+Use the installed **skill-creator** skill (or read `skills/skill-creator/SKILL.md`) and scaffold with:
+
+```bash
+python skills/skill-creator/scripts/create_skill.py --root . --name my-skill
+```
+
+This creates:
+
+- `.shared/skills/my-skill/` — shared skill with placeholder resources
+- `.cursor/skills/my-skill/SKILL.md` — Cursor wrapper
+- `.claude/skills/my-skill/SKILL.md` — Claude Code wrapper
+- `.github/skills/my-skill/SKILL.md` — Copilot wrapper
+
+Validate before and after editing:
+
+```bash
+python skills/skill-creator/scripts/quick_validate.py .shared/skills/my-skill
+python skills/skill-creator/scripts/quick_validate.py .cursor/skills/my-skill
+```
+
+For a standalone skill in one location (personal install or single-tool copy):
+
+```bash
+python skills/skill-creator/scripts/init_skill.py my-skill --path ~/.cursor/skills
+```
+
+See `skills/skill-creator/references/portable-skill-layout.md` for path conventions and wrapper templates.
 
 ## Standard install paths
 
-When you add assets to a project (this repo or another), use these locations:
+When adding assets to this repo or another project, use these locations:
 
-### VS Code + GitHub Copilot
+### Shared (all tools)
 
-- `.github/agents/` — custom agents (`*.agent.md`)
-- `.github/instructions/` — scoped instructions (`*.instructions.md`)
-- `.github/prompts/` — reusable prompt templates (`*.prompt.md`)
-- `.github/skills/<skill-name>/` — skill packages (`SKILL.md` plus optional resources)
-
-After copying or symlinking, reload VS Code so Copilot picks up new files.
-
-How you typically use them:
-
-- **Agents**: select an agent in Copilot Chat (agent picker or @-mention, depending on your UI).
-- **Instructions**: automatically apply when you edit matching files (`applyTo` globs).
-- **Prompts**: run from Copilot Chat prompt UI or by invoking a prompt by name.
-- **Skills**: loaded on demand when Copilot detects relevant triggers in the skill metadata.
+- `.shared/skills/<skill-name>/` — canonical skill package
 
 ### Cursor
 
 - `.cursor/rules/` — persistent rules (`.mdc`)
-- `.cursor/commands/` — slash commands (`.md`)
-- `.cursor/skills/<skill-name>/` — skill packages
+- `.cursor/commands/` — slash commands (plain `.md`, no frontmatter)
+- `.cursor/skills/<skill-name>/` — skill wrapper or full standalone skill
+- `.cursor/agents/` — custom agent definitions
 
-After copying or symlinking, reload Cursor.
+Run commands as `/command-name` (filename without extension). Reload Cursor after adding or changing skills, rules, or commands.
 
-How you typically use them:
+### Claude Code
 
-- **Rules**: applied automatically based on `globs` / `alwaysApply`.
-- **Commands**: run as slash commands in chat (e.g. `/my-command`).
-- **Skills**: loaded when the agent matches the skill `description` in your prompt.
+- `.claude/skills/<skill-name>/` — skill wrapper or full standalone skill
+- `.claude/agents/` — custom agent definitions (if used)
+
+### VS Code + GitHub Copilot
+
+- `.github/skills/<skill-name>/` — skill wrapper or full standalone skill
+- `.github/agents/` — custom agents (`*.agent.md`)
+- `.github/instructions/` — scoped instructions (`*.instructions.md`, `applyTo` globs)
+- `.github/prompts/` — reusable prompt templates (`*.prompt.md`)
+
+Reload VS Code after changes so Copilot picks up new files.
 
 ## Skills
 
-Skills are self-contained packages: a folder with `SKILL.md` plus optional `scripts/`,
-`references/`, and other resources. They are discoverable via the SKILL frontmatter
-(`name` + `description`) and loaded progressively when relevant.
+Skills are folders with a `SKILL.md` (YAML frontmatter: `name`, `description`) plus optional bundled resources. The agent discovers skills from frontmatter and loads the body progressively when relevant.
 
-### Install
+**Portable (recommended):** keep full instructions and resources in `.shared/skills/<name>/`; wrappers in tool folders point back to the shared skill.
 
-- **Project-wide (Copilot)**: copy a skill folder into `.github/skills/<skill-name>/`.
-- **Project-wide (Cursor)**: copy a skill folder into `.cursor/skills/<skill-name>/`.
-- **User-wide**: copy into `~/.github/skills/<skill-name>/` or your Cursor user skills location.
+**Standalone:** copy the full skill folder into one tool path (e.g. `.cursor/skills/<name>/` or `~/.cursor/skills/<name>/`).
 
-### Authoring
+Package a shared skill for distribution:
 
-Each skill needs a `SKILL.md` with YAML frontmatter (`name`, `description`) and a clear
-workflow body. Keep the main file focused; put long references and scripts in sibling
-folders so the agent can load them only when needed.
-
-## Agents (GitHub Copilot)
-
-Custom agent definitions are `*.agent.md` files installed under `.github/agents/`.
-
-In Copilot Chat, pick the agent by name or reference it per your Copilot UI.
-
-## Instructions (GitHub Copilot)
-
-Custom instructions are `*.instructions.md` files scoped via `applyTo` globs under
-`.github/instructions/`.
-
-Open or edit files that match `applyTo` patterns; Copilot applies relevant instruction
-files. Keep instructions short and high-signal; split long guidance into multiple files.
-
-## Prompts (GitHub Copilot)
-
-Reusable prompt templates are `*.prompt.md` files under `.github/prompts/`.
-
-Run the prompt from Copilot Chat’s prompt UI. Many prompts accept `${input:...}`
-variables; Copilot will prompt you for values.
-
-## Rules (Cursor)
-
-Cursor rules are persistent instruction files (usually `.mdc`) with metadata controlling
-when they apply (`globs`) or whether they always apply.
-
-Rules apply automatically based on `alwaysApply` / `globs`. Keep rules composable: small
-global rules plus scoped language or framework rules.
+```bash
+python skills/skill-creator/scripts/package_skill.py .shared/skills/my-skill
+```
 
 ## Commands (Cursor)
 
-Cursor custom commands are markdown files intended as chat slash commands under
-`.cursor/commands/`.
+Commands are plain Markdown files in `.cursor/commands/`. The filename becomes the slash command name (e.g. `create-skill-creator.md` → `/create-skill-creator`). No YAML frontmatter — the entire file is the prompt.
 
-Run in chat as `/command-name` (command name typically matches the filename).
+## Rules (Cursor)
+
+Rules are `.mdc` files in `.cursor/rules/` with frontmatter controlling `globs` and `alwaysApply`. They apply automatically based on scope. Keep rules small and composable.
+
+## Agents
+
+Custom agent definitions can live under each tool's agents folder (see **Standard install paths**). Reference examples are in `agents-ref/`.
+
+## Reference material
+
+- `skills-ref/` — skill packages you can copy, adapt, or install into your own projects
+- `agents-ref/` — agent role templates
+- `skills/skill-creator/references/` — portable layout, JSON schemas, workflow and output patterns
+
+These reference folders are not wired into the portable install layout unless you install them explicitly.
