@@ -8,7 +8,8 @@ This repository provides a **portable, shared-first layout** for AI-assisted dev
 repo/
 ├── AGENTS.md                          # LLM coding behavioral guidelines
 ├── skills/                            # Bootstrap / meta skill sources (edit here, then install)
-│   └── skill-creator/                 # skill-creator bootstrap package
+│   ├── skill-creator/                 # skill-creator bootstrap package
+│   └── agent-creator/                 # agent-creator bootstrap package
 ├── skills-ref/                        # Reference skill packages (not installed by default)
 ├── agents-ref/                        # Reference agent definitions (not installed by default)
 ├── .shared/
@@ -30,7 +31,7 @@ repo/
 
 | Path | Purpose |
 | --- | --- |
-| `skills/` | Bootstrap sources for meta packages like `skill-creator`. Edit here, then install into the portable layout. |
+| `skills/` | Bootstrap sources for meta packages like `skill-creator` and `agent-creator`. Edit here, then install into the portable layout. |
 | `.shared/skills/` | Canonical, tool-neutral skill packages. Bundled resources (`scripts/`, `references/`, `assets/`) live here only. |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | Tool-specific wrappers (`SKILL.md` only) that instruct the agent to read the shared skill. |
 | `skills-ref/` | Example and reference skills (Android, iOS, shader dev, code review, agent-creator, etc.) for copying or adaptation. |
@@ -39,7 +40,11 @@ repo/
 
 ## Installed skills
 
-This repo currently ships and installs **skill-creator** — a meta-skill for creating, validating, packaging, and iteratively improving portable skills.
+This repo ships and installs two meta-skills:
+
+### skill-creator
+
+Creates, validates, packages, and iteratively improves portable **skills**.
 
 | Location | Role |
 | --- | --- |
@@ -49,7 +54,19 @@ This repo currently ships and installs **skill-creator** — a meta-skill for cr
 | `.claude/skills/skill-creator/` | Claude Code wrapper |
 | `.github/skills/skill-creator/` | GitHub Copilot wrapper |
 
-After editing the bootstrap source, re-install to propagate changes to the portable layout (see below).
+### agent-creator
+
+Creates, validates, and iteratively improves portable custom **agents** (`.shared/agents/` + tool wrappers).
+
+| Location | Role |
+| --- | --- |
+| `skills/agent-creator/` | Bootstrap source (edit scripts and `SKILL.md` here) |
+| `.shared/skills/agent-creator/` | Installed canonical skill |
+| `.cursor/skills/agent-creator/` | Cursor wrapper |
+| `.claude/skills/agent-creator/` | Claude Code wrapper |
+| `.github/skills/agent-creator/` | GitHub Copilot wrapper |
+
+After editing a bootstrap source, re-install to propagate changes to the portable layout (see below).
 
 ## Install skill-creator
 
@@ -81,6 +98,34 @@ Reload each tool after install:
 - **VS Code + Copilot** — reload the window
 - **Claude Code** — restart or reload the session
 
+## Install agent-creator
+
+Requires **skill-creator** (or at least its `install_portable_skill.py`) to install into the portable layout.
+
+**Option A — Cursor slash command**
+
+In Cursor chat, run:
+
+```
+/create-agent-creator
+```
+
+**Option B — install script**
+
+From the repository root:
+
+```bash
+python skills/skill-creator/scripts/install_portable_skill.py \
+  --root . \
+  --name agent-creator \
+  --source skills/agent-creator \
+  --overwrite
+```
+
+The script copies the bootstrap package to `.shared/skills/agent-creator/`, generates tool wrappers, validates all four paths, and prints a summary.
+
+Reload each tool after install (same as skill-creator above).
+
 ## Create a new portable skill
 
 Use the installed **skill-creator** skill (or read `skills/skill-creator/SKILL.md`) and scaffold with:
@@ -110,6 +155,34 @@ python skills/skill-creator/scripts/init_skill.py my-skill --path ~/.cursor/skil
 ```
 
 See `skills/skill-creator/references/portable-skill-layout.md` for path conventions and wrapper templates.
+
+## Create a new portable agent
+
+Use the installed **agent-creator** skill (or read `skills/agent-creator/SKILL.md`). Draft tool-neutral instructions, then scaffold:
+
+```bash
+python skills/agent-creator/scripts/create_agent.py \
+  --root . \
+  --name my-agent \
+  --description "What the agent does and when to use it." \
+  --instructions-file /path/to/instructions-body.md \
+  --overwrite
+```
+
+This creates:
+
+- `.shared/agents/my-agent.md` — shared, tool-neutral agent definition
+- `.cursor/agents/my-agent.md` — Cursor wrapper
+- `.claude/agents/my-agent.md` — Claude Code wrapper
+- `.github/agents/my-agent.agent.md` — GitHub Copilot wrapper
+
+Validate immediately:
+
+```bash
+python skills/agent-creator/scripts/quick_validate.py --root . --name my-agent
+```
+
+See `skills/agent-creator/references/portable-agent-layout.md` for path conventions and wrapper templates.
 
 ## Standard install paths
 
@@ -166,12 +239,18 @@ Rules are `.mdc` files in `.cursor/rules/` with frontmatter controlling `globs` 
 
 ## Agents
 
-Custom agent definitions can live under each tool's agents folder (see **Standard install paths**). Reference examples are in `agents-ref/`.
+Portable custom agents use a shared-first layout similar to skills:
+
+- `.shared/agents/<name>.md` — canonical, tool-neutral definition
+- `.cursor/agents/<name>.md`, `.claude/agents/<name>.md`, `.github/agents/<name>.agent.md` — tool wrappers
+
+Use **agent-creator** to scaffold and validate new agents. Reference examples are in `agents-ref/`.
 
 ## Reference material
 
 - `skills-ref/` — skill packages you can copy, adapt, or install into your own projects
 - `agents-ref/` — agent role templates
-- `skills/skill-creator/references/` — portable layout, JSON schemas, workflow and output patterns
+- `skills/skill-creator/references/` — portable skill layout, JSON schemas, workflow and output patterns
+- `skills/agent-creator/references/` — portable agent layout and wrapper templates
 
 These reference folders are not wired into the portable install layout unless you install them explicitly.
