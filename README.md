@@ -7,9 +7,12 @@ This repository provides a **portable, shared-first layout** for AI-assisted dev
 ```
 repo/
 ├── AGENTS.md                          # LLM coding behavioral guidelines
-├── skills/                            # Bootstrap / meta skill sources (edit here, then install)
-│   ├── skill-creator/                 # skill-creator bootstrap package
-│   └── agent-creator/                 # agent-creator bootstrap package
+├── skills/                            # Bootstrap skill sources (edit here, then install)
+│   ├── skill-creator/                 # Meta: creates and improves skills
+│   ├── agent-creator/                 # Meta: creates and improves agents
+│   ├── code-review-plus/              # Example: full skill package + custom wrappers
+│   ├── cpp-coding/                    # Example: C++20 coding guidelines
+│   └── cpp-testing/                   # Example: C++20 GoogleTest/CMake testing
 ├── skills-ref/                        # Reference skill packages (not installed by default)
 ├── agents-ref/                        # Reference agent definitions (not installed by default)
 ├── .shared/
@@ -31,7 +34,7 @@ repo/
 
 | Path | Purpose |
 | --- | --- |
-| `skills/` | Bootstrap sources for meta packages like `skill-creator` and `agent-creator`. Edit here, then install into the portable layout. |
+| `skills/` | Bootstrap sources for portable skills. Author `SKILL.md` and bundled resources here, optionally add `wrappers/`, then install into `.shared/skills/` + tool wrappers. |
 | `.shared/skills/` | Canonical, tool-neutral skill packages. Bundled resources (`scripts/`, `references/`, `assets/`) live here only. |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | Tool-specific wrappers (`SKILL.md` only) that instruct the agent to read the shared skill. |
 | `skills-ref/` | Example and reference skills (Android, iOS, shader dev, code review, agent-creator, etc.) for copying or adaptation. |
@@ -40,7 +43,15 @@ repo/
 
 ## Installed skills
 
-This repo ships and installs two meta-skills:
+This repo ships bootstrap packages under `skills/` and installs them into the portable layout. Installed skills include:
+
+| Skill | Bootstrap source | Purpose |
+| --- | --- | --- |
+| `skill-creator` | `skills/skill-creator/` | Create, validate, package, and improve portable skills |
+| `agent-creator` | `skills/agent-creator/` | Create, validate, and improve portable custom agents |
+| `code-review-plus` | `skills/code-review-plus/` | Structured multi-scope code review |
+| `cpp-coding` | `skills/cpp-coding/` | C++20 coding against Core Guidelines |
+| `cpp-testing` | `skills/cpp-testing/` | C++20 GoogleTest/CMake testing |
 
 ### skill-creator
 
@@ -126,9 +137,91 @@ The script copies the bootstrap package to `.shared/skills/agent-creator/`, gene
 
 Reload each tool after install (same as skill-creator above).
 
-## Create a new portable skill
+## Install a skill from bootstrap (`skills/`)
 
-Use the installed **skill-creator** skill (or read `skills/skill-creator/SKILL.md`) and scaffold with:
+Use this workflow when a complete skill package already lives under `skills/<name>/` — the pattern used by `code-review-plus`, `cpp-coding`, and `cpp-testing`.
+
+### 1. Author the bootstrap package
+
+Create or edit the bootstrap tree at `skills/<name>/`:
+
+```
+skills/<name>/
+├── SKILL.md              # Tool-neutral skill (frontmatter: name, description)
+├── references/           # Optional: docs loaded on demand
+├── scripts/              # Optional: executable helpers
+├── assets/               # Optional: templates, binaries, etc.
+└── wrappers/             # Optional: custom tool wrappers (not copied to .shared/)
+    ├── cursor/SKILL.md
+    ├── claude/SKILL.md
+    └── github/SKILL.md
+```
+
+**Shared `SKILL.md` rules:**
+
+- Keep the body **tool-neutral** — no Cursor/Claude/Copilot-specific mechanics
+- Resolve `<SKILL_ROOT>` as the directory containing the skill's `SKILL.md`
+- Put bundled resources only under `references/`, `scripts/`, or `assets/`
+- Cross-link sibling skills with relative paths (e.g. `../cpp-testing/SKILL.md`) — these resolve after install under `.shared/skills/`
+
+**Custom wrappers (recommended):** add thin wrappers under `skills/<name>/wrappers/{cursor,claude,github}/SKILL.md` that point to `../../../.shared/skills/<name>/SKILL.md`, include discovery/reload notes, and document tool-specific mechanics. If omitted, `install_portable_skill.py` generates minimal default wrappers.
+
+See `skills/code-review-plus/wrappers/` or `skills/cpp-coding/wrappers/` for examples.
+
+### 2. Install into the portable layout
+
+From the repository root (requires `skill-creator` scripts):
+
+```bash
+python skills/skill-creator/scripts/install_portable_skill.py \
+  --root . \
+  --name <skill-name> \
+  --source skills/<skill-name> \
+  --overwrite
+```
+
+The script:
+
+1. Copies the bootstrap package to `.shared/skills/<skill-name>/` (excluding `wrappers/`)
+2. Writes tool wrappers to `.cursor/skills/<skill-name>/`, `.claude/skills/<skill-name>/`, and `.github/skills/<skill-name>/`
+3. Validates all four install paths with `quick_validate.py`
+
+Install multiple related skills in any order when they cross-reference each other — e.g. `cpp-coding` and `cpp-testing` both link via `../<sibling>/SKILL.md`.
+
+### 3. Validate (optional manual check)
+
+```bash
+for path in .shared/skills/<skill-name> \
+            .cursor/skills/<skill-name> \
+            .claude/skills/<skill-name> \
+            .github/skills/<skill-name>; do
+  python skills/skill-creator/scripts/quick_validate.py "$path"
+done
+```
+
+### 4. Reload each tool
+
+- **Cursor** — reload the window
+- **VS Code + Copilot** — reload the window
+- **Claude Code** — restart or reload the session
+
+### 5. Re-install after edits
+
+Edit the bootstrap source under `skills/<name>/`, then re-run the install command. The bootstrap tree remains the reinstall source; `.shared/skills/` and tool wrappers are generated outputs.
+
+**Example — install `cpp-coding` and `cpp-testing`:**
+
+```bash
+python skills/skill-creator/scripts/install_portable_skill.py \
+  --root . --name cpp-coding --source skills/cpp-coding --overwrite
+
+python skills/skill-creator/scripts/install_portable_skill.py \
+  --root . --name cpp-testing --source skills/cpp-testing --overwrite
+```
+
+## Create a new portable skill (from scratch)
+
+Use the installed **skill-creator** skill (or read `skills/skill-creator/SKILL.md`) when starting with an empty scaffold:
 
 ```bash
 python skills/skill-creator/scripts/create_skill.py --root . --name my-skill
