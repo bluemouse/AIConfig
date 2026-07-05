@@ -35,6 +35,8 @@ files unless the task requires them.
 - Legacy C codebases that cannot adopt modern C++ features
 - Embedded/bare-metal contexts where specific guidelines conflict with hardware constraints
   — adapt selectively and document tradeoffs
+- Deep allocator/ownership design (arenas, PMR, caller-owned APIs, sanitizer memory debugging)
+  — use [cpp-memory-guide](../cpp-memory-guide/SKILL.md)
 
 ## Cross-Cutting Principles
 
@@ -90,6 +92,7 @@ Run the quality bar in [build-and-verification.md](references/build-and-verifica
 | Readability, code smells, tests, comments, KISS/DRY/YAGNI | [code-quality.md](references/code-quality.md) |
 | Performance rules (Per.*) | [core-guidelines.md](references/core-guidelines.md#performance-per) |
 | CMake, sanitizers, clang-tidy, coverage | [build-and-verification.md](references/build-and-verification.md) |
+| Allocators, ownership APIs, move semantics, memory bugs | [cpp-memory-guide](../cpp-memory-guide/SKILL.md) |
 
 When a change spans multiple areas, read **every matching row** — e.g. generic templates
 need both [core-guidelines.md](references/core-guidelines.md) (T.*) and
@@ -118,6 +121,7 @@ The Verify workflow step (above) is satisfied only when part 2 is complete.
   testing notes; use [cpp-testing](../cpp-testing/SKILL.md) for test work)
 - [build-and-verification.md](references/build-and-verification.md) — Toolchain and quality
   gates
+- [cpp-memory-guide](../cpp-memory-guide/SKILL.md) — C++20 allocators, ownership, PMR, sanitizers (companion skill)
 - [cpp-testing](../cpp-testing/SKILL.md) — C++20 GoogleTest/CMake testing (companion skill)
 
 External reference: [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)

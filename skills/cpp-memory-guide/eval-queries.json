@@ -1,0 +1,122 @@
+[
+  {
+    "query": "make our particle system stop calling malloc per particle — hand it a buffer it just fills",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "caller-owns-memory / non-allocating API (C++ span/vector&)"
+  },
+  {
+    "query": "I want a per-frame scratch allocator I can reset every frame instead of freeing temporaries individually",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "arena / scratch / PMR monotonic reset"
+  },
+  {
+    "query": "add an object pool with a free list for our connection structs so allocation is O(1) and stable",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "pool + free list"
+  },
+  {
+    "query": "reserve a big virtual range and commit pages as the array grows so the pointers never move",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "virtual-memory reserve/commit growable storage"
+  },
+  {
+    "query": "who's supposed to free the node returned by get_node? we have a double-free somewhere",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "ownership / lifetimes / unique_ptr"
+  },
+  {
+    "query": "design the buffer-ownership convention for our parser so there are no leaks on error paths",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "ownership convention, caller-owns, RAII"
+  },
+  {
+    "query": "transfer ownership of this mesh handle from the loader to the scene graph with move semantics",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "unique_ptr move transfer"
+  },
+  {
+    "query": "wire std::pmr monotonic_buffer_resource into our JSON parse scratch so we stop heap thrashing",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "std::pmr scratch arena"
+  },
+  {
+    "query": "take std::span<uint8_t> in our decode API instead of allocating an internal buffer",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "span non-owning caller-provided API"
+  },
+  {
+    "query": "ASan says leak at exit in our C++ tool — how do I track down who owns this allocation",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "AddressSanitizer / LeakSanitizer diagnosis"
+  },
+  {
+    "query": "convert this AoS particle array to SoA so the update loop is cache-friendly",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: data layout / cache -> data-oriented-design-guide"
+  },
+  {
+    "query": "free nodes safely in our lock-free stack while other threads might still read them",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: lock-free reclamation -> lock-free-guide"
+  },
+  {
+    "query": "sub-allocate VkDeviceMemory by memory type and use a staging buffer for uploads",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: GPU device memory -> gpu-rendering-guide"
+  },
+  {
+    "query": "should I use a weakref or just let the GC collect this in our Python service?",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: GC-managed runtime owns lifetimes"
+  },
+  {
+    "query": "fix malloc/free mismatch in our legacy C parser module",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: raw C malloc in .c file -> memory-management-guide"
+  },
+  {
+    "query": "rename our C++ classes to follow Core Guidelines naming and add [[nodiscard]] on factories",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: general C++ style without memory focus -> cpp-coding"
+  },
+  {
+    "query": "we keep fragmenting the heap — can you route the level's allocations through one arena that frees on level unload",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "arena, lifetime-by-phase"
+  },
+  {
+    "query": "the engine should pass scratch space into the mesh builder instead of the builder allocating it",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "caller-provided work buffer"
+  },
+  {
+    "query": "should this factory return unique_ptr or raw T*? we're leaking on exception paths",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "RAII / make_unique / ownership"
+  },
+  {
+    "query": "split the hot and cold fields of this struct to shrink the cache working set",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: hot/cold layout -> data-oriented-design-guide"
+  }
+]
