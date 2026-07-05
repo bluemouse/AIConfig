@@ -1,0 +1,134 @@
+[
+  {
+    "query": "how do I group frame and material uniforms in Slang ParameterBlock so Vulkan gets separate descriptor sets and Metal gets argument buffers with binding 0 for the ordinary data",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: ParameterBlock descriptor-set layout and auto uniform buffer at binding 0"
+  },
+  {
+    "query": "write a .slang module with import and public/internal visibility and a compute entry point that compiles to SPIR-V and MSL",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Slang modules, access control, dual-backend entry points"
+  },
+  {
+    "query": "my engine uses slangc for SPIR-V but I need descriptor set and binding layout from C++ — how do I use ProgramLayout reflection after linking",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: C++ reflection API, slangc does not emit reflection"
+  },
+  {
+    "query": "gate a SPIR-V-only subgroup operation behind Slang capabilities with a Metal fallback using __target_switch",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: capabilities, cross-target portability, __target_switch"
+  },
+  {
+    "query": "give me slangc commands to compile vertexMain and fragmentMain to spirv and metal with glsl_460 profile",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: slangc multi-entry multi-target compile commands"
+  },
+  {
+    "query": "precompile stable Slang modules to .slang-module and link entry points at build time for faster startup",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: offline precompiled module workflow"
+  },
+  {
+    "query": "Slang compile fails with capability requirement incompatible with target — how do I fix [require] on a public interface method",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: capability validation and public method requirements"
+  },
+  {
+    "query": "after getEntryPointCode how do I use IMetaData isParameterLocationUsed to skip unused bindings in my Vulkan descriptor setup",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: post-compile IMetaData reflection"
+  },
+  {
+    "query": "review my .slang shader for Vulkan/Metal portability — hard-coded set/binding without reflection and mixed #include inside a module",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: slang-dev review checklist and modularity rules"
+  },
+  {
+    "query": "compute shader thread group size and dispatch bounds in Slang — numthreads and guarding out-of-range SV_DispatchThreadID",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Slang compute entry point conventions"
+  },
+  {
+    "query": "Metal MSL from Slang fails on argument buffers for descriptor arrays — what fallback pattern should I use",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Metal backend limitations and fallback design"
+  },
+  {
+    "query": "run a repeatable compile matrix for all entry points to SPIR-V and MSL from a JSON manifest",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: slang_compile_matrix.py workflow"
+  },
+  {
+    "query": "create VkDescriptorSetLayout and vkCreateGraphicsPipelines from my compiled SPIR-V after Slang reflection",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Vk* pipeline setup after SPIR-V exists -> vulkan-dev"
+  },
+  {
+    "query": "design a render graph that derives barriers from pass read/write declarations — API neutral",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: API-agnostic render graph -> gpu-rendering-guide"
+  },
+  {
+    "query": "write a GLSL ray marching SDF scene with soft shadows for ShaderToy",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: GLSL visual effects, not Slang engine integration"
+  },
+  {
+    "query": "how do I enable timeline semaphores and dynamic rendering in Vulkan 1.3 device creation",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: raw Vulkan device/features -> vulkan-dev"
+  },
+  {
+    "query": "what's the general binding frequency model for bindless material tables — no specific shader language",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: agnostic binding model -> gpu-rendering-guide"
+  },
+  {
+    "query": "IModule findEntryPointByName returns null — my entry point is missing [shader(\"compute\")] attribute, what API should I use instead",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: entry-point discovery and [shader] attribute requirement"
+  },
+  {
+    "query": "multi-target slangc pass with different VK vs METAL preprocessor defines — front-end runs once, how should I structure builds",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: multi-target preprocessor isolation rule"
+  },
+  {
+    "query": "SPIR-V validates but wrong colors — matrix layout row-major in SessionDesc vs column-major host struct from Slang reflection",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: layout/reflection debug path"
+  },
+  {
+    "query": "set up D3D12 root signatures and HLSL register binding for my deferred renderer",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: D3D12 primary target, out of slang-dev scope"
+  },
+  {
+    "query": "implement vkCmdPipelineBarrier2 layout transition from color attachment to shader read",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: Vulkan barrier API -> vulkan-dev"
+  }
+]
