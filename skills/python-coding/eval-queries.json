@@ -1,0 +1,146 @@
+[
+  {
+    "query": "write an argparse CLI that reads JSON from stdin and prints normalized records with exit code 2 on invalid input",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: argparse CLI design, stdin contract, exit codes"
+  },
+  {
+    "query": "fix mypy errors on this TypedDict to dataclass boundary in a Python 3.12 utility script",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: typing boundaries and static analysis for CLI utilities"
+  },
+  {
+    "query": "add pyproject.toml with ruff and pyright settings for a new src-layout CLI package targeting Python 3.12",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: pyproject.toml toolchain configuration"
+  },
+  {
+    "query": "my script calls subprocess with shell=True on user paths — refactor to safe argument lists and tests",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: subprocess safety and CLI refactor"
+  },
+  {
+    "query": "write pytest tests for main() exit codes and stderr messages when a config file is missing",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: pytest CLI boundary testing"
+  },
+  {
+    "query": "what uv commands should I use to add pytest ruff pyright and run this CLI tool in dev",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: uv workflow and dev dependency setup"
+  },
+  {
+    "query": "review this single-file Python utility for pathlib usage logging boundaries and destructive write flags",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: CLI review patterns within python-coding scope"
+  },
+  {
+    "query": "convert this script to use main(argv) -> int with raise SystemExit(main()) and separate parse_args",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: standard CLI entry-point pattern"
+  },
+  {
+    "query": "debug why my argparse script prints logs to stdout when piped into jq",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: stdout vs stderr and logging configuration"
+  },
+  {
+    "query": "package this command-line tool with a console script entry point and editable install instructions",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: packaging and console script metadata"
+  },
+  {
+    "query": "explain when I can use match/case vs dict dispatch in Python 3.12 for this CLI command parser",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: language-version feature choice for CLI code"
+  },
+  {
+    "query": "refactor this 400-line script into cli.py core.py and io.py without changing behavior",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: CLI utility module split and test seams"
+  },
+  {
+    "query": "add a --dry-run flag and require --write before deleting files in this Python cleanup utility",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: destructive safeguard patterns"
+  },
+  {
+    "query": "set up unittest discover tests only using the standard library for this small script",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: stdlib-only test workflow"
+  },
+  {
+    "query": "create a FastAPI service with async endpoints and SQLAlchemy models",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: web service framework, out of CLI utility scope"
+  },
+  {
+    "query": "build a Django admin dashboard with Celery background jobs",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Django web app, not CLI scripting"
+  },
+  {
+    "query": "clean this Jupyter notebook cells and plot pandas data with matplotlib",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: notebooks and data science workflow"
+  },
+  {
+    "query": "train a scikit-learn model pipeline and save it with joblib for batch inference",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: ML pipeline, not CLI utility engineering"
+  },
+  {
+    "query": "review this git diff for correctness only — do not rewrite the Python implementation",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: review-only -> code-review-plus"
+  },
+  {
+    "query": "pyproject requires-python is 3.12 but CI runs 3.11 — adjust type aliases and ruff target-version safely",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: version baseline and toolchain alignment"
+  },
+  {
+    "query": "pytest capsys test fails because logging.basicConfig runs at import time — fix CLI initialization",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: CLI/logging boundary bug triage"
+  },
+  {
+    "query": "should I use click instead of argparse for a new internal two-flag maintenance script with no existing deps",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: dependency and argparse policy decision"
+  },
+  {
+    "query": "deploy this FastAPI app to Kubernetes with Helm and ingress TLS",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: service deployment, not Python CLI coding"
+  },
+  {
+    "query": "write a React dashboard that calls our REST API with TypeScript hooks",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: frontend JavaScript, not Python CLI"
+  }
+]
