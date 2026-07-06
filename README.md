@@ -16,6 +16,8 @@ Install a bootstrap skill with `install_portable_skill.py` to generate the share
 
 ```
 repo/
+├── AGENTS.md                          # Tool-neutral agent guidance (architecture, commands)
+├── CLAUDE.md                          # Claude Code-specific guidance
 ├── coding-behavior-guidelines.md      # LLM coding behavioral guidelines
 ├── skills/                            # Bootstrap skills (author here, then install)
 │   ├── skill-creator/                 # Meta: creates and improves skills
@@ -46,6 +48,8 @@ repo/
 
 | Path | Purpose |
 | --- | --- |
+| `AGENTS.md` | Tool-neutral guidance for coding agents (architecture, scripts, editing conventions). |
+| `CLAUDE.md` | Claude Code-specific guidance; references `AGENTS.md` for shared repo rules. |
 | `skills/` | **Bootstrap skills** — edit here, then install to produce shared + tool skills. |
 | `.shared/skills/` | **Shared skills** — tool-neutral packages with full content (`scripts/`, `references/`, `assets/`). |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | **Tool skills** — one wrapper per tool (`SKILL.md` only) that directs the agent to the shared skill. |
@@ -406,6 +410,8 @@ Use **agent-creator** to scaffold and validate new agents.
 
 ## Further reading
 
+- `AGENTS.md` — architecture, common commands, and editing conventions for all coding agents
+- `CLAUDE.md` — Claude Code-specific discovery, evals, and wrapper workflow
 - `coding-behavior-guidelines.md` — Karpathy-inspired behavioral guidelines for coding agents
 - `skills/skill-creator/references/` — portable skill layout, JSON schemas, workflow and output patterns
 - `skills/agent-creator/references/` — portable agent layout and wrapper templates
