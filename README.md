@@ -369,6 +369,7 @@ Commands are plain Markdown files in `.cursor/commands/`. The filename becomes t
 | `/create-agent-creator` | Install the agent-creator meta-skill (shared + tool skills) |
 | `/create-bootstrap-skill` | Author a bootstrap skill under `skills/<name>/` from one or more templates (no install) |
 | `/create-tool-skill` | Install shared + tool skills from one or more bootstrap sources |
+| `/commit-message` | Draft compact and verbose commit messages for staged, working-tree, single-commit, or range scopes |
 
 **Create a bootstrap skill from templates:**
 
@@ -394,6 +395,24 @@ Use `--base` once for a single template, or repeat it to merge multiple skills i
 ```
 
 Repeat `--source` to install a cluster of cross-linked companion skills in one batch. After bootstrap edits, re-run `/create-tool-skill` to refresh the install.
+
+**Draft commit messages:**
+
+```text
+/commit-message
+
+/commit-message --working
+
+/commit-message --range main..HEAD
+
+/commit-message \
+  --staged \
+  --context @docs/plan.md \
+  --jira PROJ-123 \
+  --notes "Follow-up to yesterday's API change"
+```
+
+Default scope is staged changes. The command returns a compact one-liner and a verbose message; it does not commit unless you ask afterward.
 
 ## Rules (Cursor)
 

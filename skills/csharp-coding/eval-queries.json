@@ -1,0 +1,152 @@
+[
+  {
+    "query": "fix CS8602 nullable reference warning on this property access after a null check in my net8 class library",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: nullable flow analysis and C# compiler diagnostics"
+  },
+  {
+    "query": "review this ASP.NET minimal API endpoint for async cancellation and proper exception handling",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: C# async, CancellationToken, ASP.NET review patterns"
+  },
+  {
+    "query": "what dotnet commands should I run to restore build and test only the failing xunit project in this solution",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: dotnet CLI workflow and targeted test loop"
+  },
+  {
+    "query": "convert this mutable DTO class to a record with required init properties for net9",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: record, required, init idioms and LangVersion awareness"
+  },
+  {
+    "query": "my worker service deadlocks on .Result when calling an async repository method — how do I fix the C# code",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: async deadlock triage and blocking-on-async anti-pattern"
+  },
+  {
+    "query": "add Roslyn analyzer enforcement and dotnet format verify-no-changes to our CI for this csproj",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: analyzers, dotnet format, MSBuild project configuration"
+  },
+  {
+    "query": "explain when I can use collection expressions vs array literals in C# 12 for this net8 project",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: language-version gates and collection expression grammar"
+  },
+  {
+    "query": "write an integration test for this EF Core service using the repo's existing NUnit patterns",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: C# test strategy and framework-specific test code"
+  },
+  {
+    "query": "NuGet central package management is enabled — how do I add a package reference without breaking Directory.Packages.props",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: NuGet and MSBuild dependency hygiene"
+  },
+  {
+    "query": "refactor this long method into smaller testable units while keeping the public API stable",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: C# refactoring workflow and API stability"
+  },
+  {
+    "query": "enable PublishTrimmed and Native AOT safely for this console app — what project properties and tests do I need",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: publish, trimming, AOT compatibility checks"
+  },
+  {
+    "query": "pattern match on this discriminated result type with switch expression instead of nested ifs",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: C# pattern matching and switch expressions"
+  },
+  {
+    "query": "create a new sln with classlib and xunit test project wired with project reference and dotnet test",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: dotnet new/sln/add/test scaffold commands"
+  },
+  {
+    "query": "review my C# library for IDisposable misuse and HttpClient lifetime in DI",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: resource lifetime and DI best practices review"
+  },
+  {
+    "query": "fix CA2007 configure await analyzer warning — should I suppress or change the async method",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Roslyn analyzer triage and async policy"
+  },
+  {
+    "query": "implement RAII with unique_ptr and move semantics for this C++ resource wrapper",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: C++ ownership -> cpp-coding"
+  },
+  {
+    "query": "write CMakeLists.txt with cxx_std_20 and add GoogleTest target for my engine module",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: C++ build/test setup -> cpp-testing / cpp-coding"
+  },
+  {
+    "query": "design a render graph pass ordering model API neutral for Vulkan and D3D12",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: GPU rendering architecture -> gpu-rendering-guide"
+  },
+  {
+    "query": "configure GitHub Actions workflow to deploy Terraform to AWS without touching application code",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: pure DevOps/infra, no C# code"
+  },
+  {
+    "query": "explain Kotlin coroutine structured concurrency for Android ViewModel",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Kotlin/Android, not C#"
+  },
+  {
+    "query": "global.json pins SDK 8.0.403 but LangVersion is 12 — can I use primary constructors in this net8 library",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: LangVersion vs SDK vs feature availability"
+  },
+  {
+    "query": "dotnet test --filter DisplayName~Login fails with VSTest but works in IDE — triage the csproj and test SDK versions",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: test toolchain and failure triage"
+  },
+  {
+    "query": "ArgumentException.ThrowIfNullOrWhiteSpace vs manual null check — which should I use at public API boundaries",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: validation idioms and null safety"
+  },
+  {
+    "query": "set up VkDeviceMemory sub-allocation and staging buffers for texture upload",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: Vulkan GPU memory -> vulkan-dev"
+  },
+  {
+    "query": "add eslint and prettier rules for our React TypeScript frontend",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: JavaScript/TypeScript tooling, not C#"
+  }
+]
