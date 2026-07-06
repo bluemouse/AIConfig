@@ -26,10 +26,13 @@ repo/
 │   ├── cpp-coding/                    # C++20 coding guidelines
 │   ├── cpp-memory-guide/              # C++20 memory design and allocators
 │   ├── cpp-testing/                   # C++20 GoogleTest/CMake testing
+│   ├── csharp-coding/                 # C# and .NET coding guidelines
 │   ├── gpu-rendering-guide/           # API-agnostic GPU renderer architecture
+│   ├── qt-dev/                        # Qt 6 Widgets/CMake desktop UI for render tools
 │   ├── vulkan-dev/                    # Vulkan 1.3 development
 │   └── slang-dev/                     # Slang shader development (SPIR-V / MSL)
 ├── .shared/
+│   ├── agents/                        # Shared custom agents (canonical)
 │   └── skills/
 │       └── <skill-name>/              # Shared skill (canonical content after install)
 ├── .cursor/
@@ -51,6 +54,7 @@ repo/
 | `AGENTS.md` | Tool-neutral guidance for coding agents (architecture, scripts, editing conventions). |
 | `CLAUDE.md` | Claude Code-specific guidance; references `AGENTS.md` for shared repo rules. |
 | `skills/` | **Bootstrap skills** — edit here, then install to produce shared + tool skills. |
+| `.shared/agents/` | **Shared custom agents** — canonical agent definitions (edit directly). |
 | `.shared/skills/` | **Shared skills** — tool-neutral packages with full content (`scripts/`, `references/`, `assets/`). |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | **Tool skills** — one wrapper per tool (`SKILL.md` only) that directs the agent to the shared skill. |
 | `coding-behavior-guidelines.md` | Project-wide behavioral guidelines for coding agents (think first, simplicity, surgical changes). |
@@ -67,7 +71,9 @@ Bootstrap skills live under `skills/`. Installing one copies content to `.shared
 | `cpp-coding` | `skills/cpp-coding/` | C++20 coding against Core Guidelines |
 | `cpp-memory-guide` | `skills/cpp-memory-guide/` | C++20 memory design: RAII, allocators, PMR, sanitizers |
 | `cpp-testing` | `skills/cpp-testing/` | C++20 GoogleTest/CMake testing |
+| `csharp-coding` | `skills/csharp-coding/` | C# and .NET coding, toolchain, and testing |
 | `gpu-rendering-guide` | `skills/gpu-rendering-guide/` | API-agnostic explicit-API renderer architecture |
+| `qt-dev` | `skills/qt-dev/` | Qt 6 Widgets/CMake desktop UI for Vulkan/Metal render tools |
 | `vulkan-dev` | `skills/vulkan-dev/` | Vulkan 1.3 development, validation, and performance triage |
 | `slang-dev` | `skills/slang-dev/` | Slang shader authoring and C++ host integration (SPIR-V / MSL) |
 
@@ -79,8 +85,9 @@ Several installed skills cross-link as companions — install related skills tog
 | --- | --- | --- |
 | C++ | `cpp-coding`, `cpp-memory-guide`, `cpp-testing` | Style and concurrency → CPU memory/ownership → tests and CMake |
 | GPU rendering | `gpu-rendering-guide`, `vulkan-dev`, `slang-dev` | Renderer architecture → `Vk*` implementation → Slang shaders and reflection layout |
+| Qt desktop | `qt-dev`, `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` | Widgets/CMake UI shell → C++ idioms → viewport/Vulkan integration → renderer architecture |
 
-`cpp-coding` links to `cpp-memory-guide` for allocation and ownership. `gpu-rendering-guide` links to `vulkan-dev` for concrete Vulkan calls and to `slang-dev` for shader-system work. `slang-dev` links back to both for binding architecture and post-SPIR-V pipeline setup.
+`cpp-coding` links to `cpp-memory-guide` for allocation and ownership. `gpu-rendering-guide` links to `vulkan-dev` for concrete Vulkan calls and to `slang-dev` for shader-system work. `slang-dev` links back to both for binding architecture and post-SPIR-V pipeline setup. `qt-dev` links to `cpp-coding`, `cpp-testing`, `vulkan-dev`, and `gpu-rendering-guide` for non-Qt C++, tests, engine Vulkan, and render-graph work respectively.
 
 ### skill-creator
 
@@ -320,6 +327,7 @@ When adding assets to this repo or another project, use these locations:
 
 ### Shared (all tools)
 
+- `.shared/agents/<agent-name>.md` — shared custom agent (canonical)
 - `.shared/skills/<skill-name>/` — shared skill (full content)
 
 ### Cursor
@@ -425,7 +433,29 @@ Portable custom agents use a shared-first layout similar to skills:
 - `.shared/agents/<name>.md` — canonical, tool-neutral definition
 - `.cursor/agents/<name>.md`, `.claude/agents/<name>.md`, `.github/agents/<name>.agent.md` — tool wrappers
 
-Use **agent-creator** to scaffold and validate new agents.
+Use **agent-creator** to scaffold and validate new agents. Not every agent needs all three tool wrappers — some agents ship with only the layers you use (see `skill-bootstrapper` below).
+
+### skill-bootstrapper (Cursor)
+
+Automates the full portable skill pipeline in one agent run: bootstrap from templates → validate → self-review → install to shared + tool skills.
+
+| Location | Role |
+| --- | --- |
+| `.shared/agents/skill-bootstrapper.md` | Canonical agent instructions |
+| `.cursor/agents/skill-bootstrapper.md` | Cursor wrapper (reload window after install) |
+
+Select **skill-bootstrapper** from the Cursor agent picker (reload the window after adding the agent files). Example invocation:
+
+```text
+skill-bootstrapper my-skill \
+  --base skills-ref/my-skill \
+  --verify https://example.com/docs \
+  --overwrite
+```
+
+Default pipeline: bootstrap → review → install. Flags: `--bootstrap-only`, `--skip-review`, `--no-overwrite`. The agent does not commit unless you ask; use `/commit-message` when ready.
+
+Manual alternative: chain `/create-bootstrap-skill` then `/create-tool-skill` in chat.
 
 ## Further reading
 

@@ -25,6 +25,8 @@ Custom agents use **two** layers — no bootstrap directory:
 - **Shared:** `.shared/agents/<name>.md` (canonical, tool-neutral) — edit this file directly
 - **Tool:** `.cursor/agents/<name>.md`, `.claude/agents/<name>.md`, `.github/agents/<name>.agent.md` — wrappers generated or synced via `create_agent.py` (see `skills/agent-creator/scripts/create_agent.py`)
 
+Not every agent requires all three tool wrappers. For example, **`skill-bootstrapper`** ships with shared + Cursor wrapper only (`.shared/agents/skill-bootstrapper.md`, `.cursor/agents/skill-bootstrapper.md`) — validate those paths individually rather than with `quick_validate.py --root . --name skill-bootstrapper`, which expects all four files.
+
 | | Skills | Custom agents |
 | --- | --- | --- |
 | Authoritative source | `skills/<name>/` (bootstrap) | `.shared/agents/<name>.md` |
@@ -39,6 +41,7 @@ Some skills cross-link as companions — install and edit them together when tas
 
 - **C++:** `cpp-coding`, `cpp-memory-guide`, `cpp-testing`
 - **GPU rendering:** `gpu-rendering-guide`, `vulkan-dev`, `slang-dev`
+- **Qt desktop:** `qt-dev` (with `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` for non-Qt C++, engine Vulkan, and render-graph work)
 
 ## Common commands
 
@@ -74,6 +77,15 @@ python skills/agent-creator/scripts/create_agent.py --root . --name my-agent \
   --description "..." --instructions-file <path> --overwrite
 python skills/agent-creator/scripts/quick_validate.py --root . --name my-agent
 ```
+
+For agents with only some tool wrappers (e.g. Cursor-only), validate each existing file:
+
+```bash
+python skills/agent-creator/scripts/quick_validate.py .shared/agents/<name>.md
+python skills/agent-creator/scripts/quick_validate.py .cursor/agents/<name>.md
+```
+
+**Automate bootstrap + install (Cursor):** use the **skill-bootstrapper** custom agent (`.shared/agents/skill-bootstrapper.md`, `.cursor/agents/skill-bootstrapper.md`). It runs the bootstrap authoring workflow, validates, self-reviews, and calls `install_portable_skill.py` in one session. Manual alternative: `/create-bootstrap-skill` then `/create-tool-skill` (see [README.md](README.md)).
 
 **Package a shared skill for distribution:**
 
