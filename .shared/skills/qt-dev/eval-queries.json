@@ -1,0 +1,158 @@
+[
+  {
+    "query": "scaffold a Qt 6 Widgets desktop app with CMake qt_add_executable and a QMainWindow with dock widgets",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Qt 6 Widgets + CMake project setup"
+  },
+  {
+    "query": "embed my Vulkan engine viewport in a QWidget UI using createWindowContainer and QVulkanInstance",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: QWindow embedding and Vulkan surface integration"
+  },
+  {
+    "query": "review this QMainWindow for QObject ownership leaks and cross-thread signal connection mistakes",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Qt object model, ownership, queued connects"
+  },
+  {
+    "query": "my Qt Designer MainWindow.ui changes are not picked up — how do I wire AUTOUIC in CMake correctly",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Designer .ui files and AUTOUIC CMake workflow"
+  },
+  {
+    "query": "write a Qt Test with QSignalSpy for my SceneModel rowsInserted signal",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Qt Test + QSignalSpy patterns"
+  },
+  {
+    "query": "implement QVulkanWindowRenderer initSwapChainResources and startNextFrame for a simple triangle demo",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: QVulkanWindow integration path"
+  },
+  {
+    "query": "viewport goes black after resize on high-DPI monitor — check devicePixelRatio and swapchain sizing in my Qt Vulkan app",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: high-DPI viewport resize in Qt-hosted rendering"
+  },
+  {
+    "query": "add QRhiWidget preview panel that renders with Metal on macOS inside my widgets tool",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: QRhiWidget preview rendering path"
+  },
+  {
+    "query": "qt-cmake configure fails finding Qt6 Widgets — what CMAKE_PREFIX_PATH and find_package COMPONENTS do I need",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: qt-cmake and find_package Qt6 toolchain"
+  },
+  {
+    "query": "UI freezes when importing a large scene from a QFileDialog slot — move work off the GUI thread in Qt",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Qt threading and event loop responsiveness"
+  },
+  {
+    "query": "crash on exit when closing QWindow viewport — teardown order for VkSurfaceKHR and createWindowContainer",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Qt viewport lifetime and surface destruction"
+  },
+  {
+    "query": "migrate my Qt 5 qmake .pro project to Qt 6 CMake with qt_add_executable and Widgets",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Qt 6 CMake migration within Widgets scope"
+  },
+  {
+    "query": "build a QML Qt Quick Controls dashboard for my renderer settings",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: QML/Qt Quick excluded from qt-dev scope"
+  },
+  {
+    "query": "convert my Qt 5 qmake .pro project to use qmake on Qt 6",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: qmake/Qt 5 explicitly out of scope"
+  },
+  {
+    "query": "set up VkDeviceMemory sub-allocation and descriptor indexing for my Vulkan renderer",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Vulkan engine internals -> vulkan-dev"
+  },
+  {
+    "query": "design a render graph pass ordering model with bindless resource tables",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: renderer architecture -> gpu-rendering-guide"
+  },
+  {
+    "query": "add GoogleTest gmock tests for my engine math library with CMake FetchContent",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: GoogleTest-only setup -> cpp-testing"
+  },
+  {
+    "query": "explain C++20 concepts and std::span for a non-Qt header-only library",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: pure C++ without Qt -> cpp-coding"
+  },
+  {
+    "query": "replace QOpenGLWidget with a Vulkan viewport in my Qt 6 Widgets renderer tool",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: legacy OpenGL widget path adjacent but out of Vulkan/Metal focus"
+  },
+  {
+    "query": "write CMakeLists.txt with cxx_std_20 for my engine without any Qt dependencies",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: pure CMake/C++ without Qt -> cpp-coding"
+  },
+  {
+    "query": "use QNetworkAccessManager to download assets in my Qt app without touching the UI code",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Qt Network-only task without Widgets/CMake/rendering scope"
+  },
+  {
+    "query": "custom QWindow subclass with QSurface VulkanSurface and engine-owned VkSwapchainKHR — review my resize and exposeEvent handling",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: custom Vulkan QWindow production pattern"
+  },
+  {
+    "query": "add CTest target linking Qt6::Test for controller command validation with offscreen platform",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: Qt Test + CTest integration"
+  },
+  {
+    "query": "isolate CAMetalLayer adapter in .mm file behind QObject controller for macOS Metal engine in Qt widgets app",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: native Metal adapter in Qt shell"
+  },
+  {
+    "query": "migrate QWidget app to Qt Quick with StackView navigation",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: QML migration out of scope"
+  },
+  {
+    "query": "fix VkImageMemoryBarrier2 layout transition for depth attachment in render pass",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: Vulkan barrier API -> vulkan-dev"
+  }
+]
