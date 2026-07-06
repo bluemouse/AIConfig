@@ -23,11 +23,14 @@ repo/
 │   ├── skill-creator/                 # Meta: creates and improves skills
 │   ├── agent-creator/                 # Meta: creates and improves agents
 │   ├── code-review-plus/              # Structured multi-scope code review
+│   ├── commit-message-writer/         # Conventional Commit message drafting from git diffs
 │   ├── cpp-coding/                    # C++20 coding guidelines
 │   ├── cpp-memory-guide/              # C++20 memory design and allocators
 │   ├── cpp-testing/                   # C++20 GoogleTest/CMake testing
+│   ├── cmake-dev/                     # CMake 3.20+ target-based builds
 │   ├── csharp-coding/                 # C# and .NET coding guidelines
 │   ├── gpu-rendering-guide/           # API-agnostic GPU renderer architecture
+│   ├── python-coding/                 # Python 3.12+ CLI scripts and utilities
 │   ├── qt-dev/                        # Qt 6 Widgets/CMake desktop UI for render tools
 │   ├── vulkan-dev/                    # Vulkan 1.3 development
 │   └── slang-dev/                     # Slang shader development (SPIR-V / MSL)
@@ -68,11 +71,14 @@ Bootstrap skills live under `skills/`. Installing one copies content to `.shared
 | `skill-creator` | `skills/skill-creator/` | Create, validate, package, and improve portable skills |
 | `agent-creator` | `skills/agent-creator/` | Create, validate, and improve portable custom agents |
 | `code-review-plus` | `skills/code-review-plus/` | Structured multi-scope code review |
+| `commit-message-writer` | `skills/commit-message-writer/` | Draft Conventional Commit messages from staged/working diffs, commits, or ranges |
 | `cpp-coding` | `skills/cpp-coding/` | C++20 coding against Core Guidelines |
 | `cpp-memory-guide` | `skills/cpp-memory-guide/` | C++20 memory design: RAII, allocators, PMR, sanitizers |
 | `cpp-testing` | `skills/cpp-testing/` | C++20 GoogleTest/CMake testing |
+| `cmake-dev` | `skills/cmake-dev/` | CMake 3.20+ target-based builds, FetchContent, CTest, install/export |
 | `csharp-coding` | `skills/csharp-coding/` | C# and .NET coding, toolchain, and testing |
 | `gpu-rendering-guide` | `skills/gpu-rendering-guide/` | API-agnostic explicit-API renderer architecture |
+| `python-coding` | `skills/python-coding/` | Python 3.12+ CLI scripts: argparse, pyproject.toml, ruff, pyright, pytest |
 | `qt-dev` | `skills/qt-dev/` | Qt 6 Widgets/CMake desktop UI for Vulkan/Metal render tools |
 | `vulkan-dev` | `skills/vulkan-dev/` | Vulkan 1.3 development, validation, and performance triage |
 | `slang-dev` | `skills/slang-dev/` | Slang shader authoring and C++ host integration (SPIR-V / MSL) |
@@ -83,11 +89,12 @@ Several installed skills cross-link as companions — install related skills tog
 
 | Cluster | Skills | Relationship |
 | --- | --- | --- |
-| C++ | `cpp-coding`, `cpp-memory-guide`, `cpp-testing` | Style and concurrency → CPU memory/ownership → tests and CMake |
+| C++ | `cpp-coding`, `cpp-memory-guide`, `cpp-testing`, `cmake-dev` | CMake build graph → style and concurrency → CPU memory/ownership → GoogleTest/CTest |
 | GPU rendering | `gpu-rendering-guide`, `vulkan-dev`, `slang-dev` | Renderer architecture → `Vk*` implementation → Slang shaders and reflection layout |
 | Qt desktop | `qt-dev`, `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` | Widgets/CMake UI shell → C++ idioms → viewport/Vulkan integration → renderer architecture |
+| Git workflow | `commit-message-writer`, `code-review-plus` | Draft Conventional Commit messages → structured diff review (complementary, not overlapping) |
 
-`cpp-coding` links to `cpp-memory-guide` for allocation and ownership. `gpu-rendering-guide` links to `vulkan-dev` for concrete Vulkan calls and to `slang-dev` for shader-system work. `slang-dev` links back to both for binding architecture and post-SPIR-V pipeline setup. `qt-dev` links to `cpp-coding`, `cpp-testing`, `vulkan-dev`, and `gpu-rendering-guide` for non-Qt C++, tests, engine Vulkan, and render-graph work respectively.
+`cpp-coding` links to `cpp-memory-guide` for allocation and ownership. `cmake-dev` links to `cpp-coding` for source idioms and `cpp-testing` for `gtest_discover_tests` and test targets. `gpu-rendering-guide` links to `vulkan-dev` for concrete Vulkan calls and to `slang-dev` for shader-system work. `slang-dev` links back to both for binding architecture and post-SPIR-V pipeline setup. `qt-dev` links to `cpp-coding`, `cpp-testing`, `vulkan-dev`, and `gpu-rendering-guide` for non-Qt C++, tests, engine Vulkan, and render-graph work respectively. `commit-message-writer` links to `code-review-plus` for review-only tasks and does not auto-commit.
 
 ### skill-creator
 
@@ -248,7 +255,7 @@ Edit the bootstrap skill under `skills/<name>/`, then re-run the install command
 **Example — install the C++ cluster:**
 
 ```bash
-for skill in cpp-coding cpp-memory-guide cpp-testing; do
+for skill in cmake-dev cpp-coding cpp-memory-guide cpp-testing; do
   python skills/skill-creator/scripts/install_portable_skill.py \
     --root . --name "$skill" --source "skills/$skill" --overwrite
 done
@@ -377,7 +384,7 @@ Commands are plain Markdown files in `.cursor/commands/`. The filename becomes t
 | `/create-agent-creator` | Install the agent-creator meta-skill (shared + tool skills) |
 | `/create-bootstrap-skill` | Author a bootstrap skill under `skills/<name>/` from one or more templates (no install) |
 | `/create-tool-skill` | Install shared + tool skills from one or more bootstrap sources |
-| `/commit-message` | Draft compact and verbose commit messages for staged, working-tree, single-commit, or range scopes |
+| `/commit-message` | Draft compact and verbose commit messages for staged, working-tree, single-commit, or range scopes (same workflow as the `commit-message-writer` skill) |
 
 **Create a bootstrap skill from templates:**
 
@@ -420,7 +427,7 @@ Repeat `--source` to install a cluster of cross-linked companion skills in one b
   --notes "Follow-up to yesterday's API change"
 ```
 
-Default scope is staged changes. The command returns a compact one-liner and a verbose message; it does not commit unless you ask afterward.
+Default scope is staged changes. The command returns a compact one-liner and a verbose message; it does not commit unless you ask afterward. The same workflow is available as the installed **`commit-message-writer`** skill in Cursor, Claude Code, and Copilot when you are not using the slash command.
 
 ## Rules (Cursor)
 

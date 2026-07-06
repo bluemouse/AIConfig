@@ -39,9 +39,13 @@ Skills are discovered by frontmatter (`name`, `description`); an agent reads the
 
 Some skills cross-link as companions — install and edit them together when tasks span layers (install order does not matter):
 
-- **C++:** `cpp-coding`, `cpp-memory-guide`, `cpp-testing`
+- **C++:** `cpp-coding`, `cpp-memory-guide`, `cpp-testing`, `cmake-dev`
 - **GPU rendering:** `gpu-rendering-guide`, `vulkan-dev`, `slang-dev`
 - **Qt desktop:** `qt-dev` (with `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` for non-Qt C++, engine Vulkan, and render-graph work)
+- **Python:** `python-coding` (CLI scripts and utilities; standalone — no required companions in this repo)
+- **Git workflow:** `commit-message-writer` (draft Conventional Commit messages; complements `code-review-plus` for review-only tasks)
+
+See [README.md](README.md) for the full bootstrap skill table, cluster relationships, and install examples.
 
 ## Common commands
 
