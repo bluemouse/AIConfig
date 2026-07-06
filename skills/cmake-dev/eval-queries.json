@@ -1,0 +1,146 @@
+[
+  {
+    "query": "add FetchContent for fmt 10.x and link fmt::fmt to my executable in CMakeLists.txt",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: FetchContent declare/make available and target_link_libraries"
+  },
+  {
+    "query": "my library leaks Boost headers to consumers — fix PUBLIC vs PRIVATE on target_link_libraries",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: visibility propagation and transitive dependency leak"
+  },
+  {
+    "query": "write install(EXPORT) rules so downstreams can find_package(mylib) with mylib:: targets",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: install/export and package config"
+  },
+  {
+    "query": "organize a multi-directory CMake project with add_subdirectory for src and tests",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: project structure and subdirectory layout"
+  },
+  {
+    "query": "set BUILD_INTERFACE and INSTALL_INTERFACE include paths on my shared library target",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: generator expressions for public includes"
+  },
+  {
+    "query": "find_package OpenSSL CONFIG and link OpenSSL::SSL only when found",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: find_package optional dependency and imported targets"
+  },
+  {
+    "query": "require cxx_std_20 on my core library target instead of global CMAKE_CXX_STANDARD",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: target_compile_features on library target"
+  },
+  {
+    "query": "enable CTest and add_test for my unit test executable with a unit label",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: CTest registration and test properties"
+  },
+  {
+    "query": "create a header-only INTERFACE library with exported include directories",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: INTERFACE target and visibility"
+  },
+  {
+    "query": "use an OBJECT library for shared translation units linked into multiple targets",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: OBJECT library target type"
+  },
+  {
+    "query": "CMAKE_INSTALL_PREFIX changed but installed headers still point at old path — what to fix",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: install prefix configure-time behavior"
+  },
+  {
+    "query": "find_package keeps picking system Qt instead of /opt/qt6 — adjust search or prefix",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: find_package config search order and CMAKE_PREFIX_PATH"
+  },
+  {
+    "query": "add generator-expression warning flags for MSVC and GCC on my target_compile_options",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: genex per compiler on compile options"
+  },
+  {
+    "query": "review this root CMakeLists.txt for cmake_minimum_required 3.20 target-based style",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: modern CMake project review"
+  },
+  {
+    "query": "wire gtest_discover_tests in CMake for my tests target after FetchContent googletest",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: CMake test discovery wiring (build system side)"
+  },
+  {
+    "query": "write TEST_F and EXPECT_EQ tests for my parser class using GoogleMock",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: GTest/GMock source code -> cpp-testing"
+  },
+  {
+    "query": "fix this C++20 concept constraint and enum class refactor in header.h",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: C++ language/style -> cpp-coding"
+  },
+  {
+    "query": "add AddressSanitizer and coverage flags to my gtest target in CI",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: sanitizer/coverage test builds -> cpp-testing"
+  },
+  {
+    "query": "configure dotnet test and xunit filter for this net8 solution",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: .NET test toolchain -> csharp-coding"
+  },
+  {
+    "query": "set up Vulkan swapchain and render pass creation in C++",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Vulkan API code -> vulkan-dev"
+  },
+  {
+    "query": "use $<CONFIG:Debug> compile definitions on my static library target",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: generator expression on compile definitions"
+  },
+  {
+    "query": "FetchContent_Declare with URL_HASH and MakeAvailable for a pinned dependency",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: reproducible FetchContent pinning"
+  },
+  {
+    "query": "debug flaky gtest timing assertion and fix TEST body sleep",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: flaky test source/debug -> cpp-testing"
+  },
+  {
+    "query": "explain std::span lifetime rules when returning subviews from a vector",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: C++ memory/lifetime -> cpp-coding / cpp-memory-guide"
+  }
+]
