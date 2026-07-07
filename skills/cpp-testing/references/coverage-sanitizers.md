@@ -2,7 +2,7 @@
 
 Coverage instrumentation and sanitizer builds for test targets. General toolchain gates
 also live in
-[cpp-coding build-and-verification](../cpp-coding/references/build-and-verification.md).
+[cpp-coding build-and-verification](../../cpp-coding/references/build-and-verification.md).
 
 ## Contents
 

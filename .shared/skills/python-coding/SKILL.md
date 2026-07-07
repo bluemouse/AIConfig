@@ -30,8 +30,8 @@ or framework-heavy designs.
 
 - Web frameworks and services (Django, FastAPI, Flask, ASGI deployment) — use framework-specific guidance
 - Notebooks, Jupyter, data science, or ML pipelines — use domain-specific skills
-- Pure planning with no Python implementation ([plan-guide](../plan-guide/SKILL.md))
-- Cross-language debugging methodology without Python code changes ([debugging-guide](../debugging-guide/SKILL.md))
+- Pure planning with no Python implementation — planning and architecture docs without code changes
+- Cross-language debugging methodology without Python code changes — scientific debugging workflows outside Python source
 - Review-only diffs with no implementation ([code-review-plus](../code-review-plus/SKILL.md))
 - GUI apps, game engines, or large multi-service architectures unless the task is still a small CLI utility
 

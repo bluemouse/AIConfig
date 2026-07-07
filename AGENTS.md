@@ -46,7 +46,7 @@ Some skills cross-link as companions — install and edit them together when tas
 - **Qt desktop:** `qt-dev` (with `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` for non-Qt C++, engine Vulkan, and render-graph work)
 - **Python:** `python-coding` (CLI scripts and utilities; standalone — no required companions in this repo)
 - **Kotlin/JVM:** `kotlin-coding`, `kotlin-testing`, `gradle-dev` (with `gradle-android-dev` for Android Gradle Plugin builds)
-- **Git workflow:** `commit-message-writer` (draft Conventional Commit messages; complements `code-review-plus` for review-only tasks)
+- **Git workflow:** `commit-message-writer`, `git-guide`, `pull-request-guide` (with `code-review-plus` for review-only tasks)
 
 See [README.md](README.md) for the full bootstrap skill table, cluster relationships, and install examples.
 

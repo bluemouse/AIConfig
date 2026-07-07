@@ -23,8 +23,8 @@ libmypaint, and compatible stroke rendering engines. Read bundled references on 
 
 ## When NOT to Use
 
-- General native crash/UAF debugging with no painting-engine context — use
-  [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md)
+- General native crash/UAF debugging with no painting-engine context — scientific debugging
+  methodology outside MyPaint/libmypaint stroke or surface code
 - Standalone GPU renderer architecture (render graphs, bindless, frames-in-flight) without
   MyPaint surface/tile context — use
   [../gpu-rendering-guide/SKILL.md](../gpu-rendering-guide/SKILL.md)

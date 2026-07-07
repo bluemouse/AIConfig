@@ -1,0 +1,92 @@
+[
+  {
+    "query": "i've got a merge conflict in package-lock.json — help me resolve it",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "merge conflict resolution"
+  },
+  {
+    "query": "rebase my feature branch onto main and resolve the conflicts",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "rebase + conflict resolution"
+  },
+  {
+    "query": "create a worktree for the new auth feature",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "worktree create"
+  },
+  {
+    "query": "merge the worktree back into main",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "worktree merge"
+  },
+  {
+    "query": "push my branch and rebase onto main before opening the PR",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "push + rebase before PR"
+  },
+  {
+    "query": "clean up stale feature worktrees",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "worktree cleanup"
+  },
+  {
+    "query": "draft a conventional commit message for my staged changes",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: message drafting, use commit-message-writer"
+  },
+  {
+    "query": "write a good pull request description for this change",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: PR authoring, use pull-request-guide"
+  },
+  {
+    "query": "review this diff and tell me if the logic is correct",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: code review, use code-review-plus"
+  },
+  {
+    "query": "stash my changes so i can switch branches",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "git repo-state operation"
+  },
+  {
+    "query": "revert the last 3 commits",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "history rewrite"
+  },
+  {
+    "query": "what's the convention for naming feature branches here",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "branch workflow guidance"
+  },
+  {
+    "query": "commit and push with a proper message",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: message drafting is commit-message-writer; git mechanics alone would trigger"
+  },
+  {
+    "query": "abandon this feature worktree and document why",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "worktree abandon"
+  },
+  {
+    "query": "run gh pr create to open the PR on GitHub",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: host mechanics, out of scope"
+  }
+]

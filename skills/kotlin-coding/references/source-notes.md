@@ -26,5 +26,5 @@ Best-practice article:
 - Include Java interop only where it affects plain Kotlin/JVM correctness: platform types, arrays, `Optional`, annotations, and API shape.
 - Do not include Ktor, Spring, Android, Compose, KMP source sets, Kotlin/Native memory model, Kotlin/JS, browser, WebAssembly, backend deployment, or framework architecture.
 - Prefer progressive references instead of one large `SKILL.md` so the active model can load only the topic needed.
-- Test design, frameworks, mocks, property tests, coverage, and flaky-test triage are owned by the companion [kotlin-testing](../kotlin-testing/SKILL.md) skill; [testing-debugging.md](testing-debugging.md) covers compiler/runtime/performance debugging only.
-- Gradle build engineering is owned by [gradle-dev](../gradle-dev/SKILL.md); [tooling.md](tooling.md) covers project layout, `kotlinc`, and consumer compiler/lint commands.
+- Test design, frameworks, mocks, property tests, coverage, and flaky-test triage are owned by the companion [kotlin-testing](../../kotlin-testing/SKILL.md) skill; [testing-debugging.md](testing-debugging.md) covers compiler/runtime/performance debugging only.
+- Gradle build engineering is owned by [gradle-dev](../../gradle-dev/SKILL.md); [tooling.md](tooling.md) covers project layout, `kotlinc`, and consumer compiler/lint commands.

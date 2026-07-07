@@ -2,7 +2,7 @@
 
 Use this reference for Kotlin/JVM test-tool dependencies, test commands, coverage tasks, and report conventions.
 
-Use the companion [gradle-dev](../gradle-dev/SKILL.md) skill for general Gradle build engineering: wrapper, settings/build files, plugin management, version catalogs, dependency resolution, `tasks.test {}` lifecycle wiring, JVM test suites, CI/cache behavior, and custom Gradle tasks/plugins.
+Use the companion [gradle-dev](../../gradle-dev/SKILL.md) skill for general Gradle build engineering: wrapper, settings/build files, plugin management, version catalogs, dependency resolution, `tasks.test {}` lifecycle wiring, JVM test suites, CI/cache behavior, and custom Gradle tasks/plugins.
 
 ## Table of contents
 
@@ -23,7 +23,7 @@ This skill owns:
 - Debugging flaky tests and assertion failures.
 - Explaining deterministic test seams.
 
-Delegate to [gradle-dev](../gradle-dev/SKILL.md) for:
+Delegate to [gradle-dev](../../gradle-dev/SKILL.md) for:
 
 - Where to put plugin/dependency versions.
 - Version catalogs and repository policy.
@@ -86,7 +86,7 @@ Rules:
 - Add only the dependency needed for the chosen test style.
 - Prefer fakes over mocks before adding MockK.
 - Keep one dominant assertion DSL per test class or module.
-- Use [gradle-dev](../gradle-dev/SKILL.md) when these snippets need to be integrated into a complex build.
+- Use [gradle-dev](../../gradle-dev/SKILL.md) when these snippets need to be integrated into a complex build.
 
 ## 3. Test command patterns
 
@@ -107,7 +107,7 @@ Rules:
 - Use the smallest test command that reproduces a failure.
 - Use `--stacktrace` for task failures and `--info` for deeper Gradle/test execution diagnostics.
 - Use `--continuous` only for local feedback loops.
-- Use [gradle-dev](../gradle-dev/SKILL.md) for task discovery, custom test suites, filtering policy, CI command design, or cache behavior.
+- Use [gradle-dev](../../gradle-dev/SKILL.md) for task discovery, custom test suites, filtering policy, CI command design, or cache behavior.
 
 ## 4. Kover coverage
 
@@ -136,7 +136,7 @@ Coverage policy:
 - Cover public contracts, failure paths, boundary cases, and critical pure logic.
 - Exclude generated/configuration/adaptor code deliberately with comments.
 - Avoid chasing 100% coverage through brittle implementation-detail tests.
-- Use [gradle-dev](../gradle-dev/SKILL.md) for multi-project Kover wiring, plugin version placement, and CI integration.
+- Use [gradle-dev](../../gradle-dev/SKILL.md) for multi-project Kover wiring, plugin version placement, and CI integration.
 
 ## 5. Reports and CI handoff
 
@@ -154,15 +154,15 @@ CI guidance from this skill:
 - Keep flaky tests visible and owned.
 - Run coverage verification where coverage gates are part of project policy.
 
-Use [gradle-dev](../gradle-dev/SKILL.md) for exact CI cache keys, wrapper setup, Gradle daemon policy, parallelization, and task splitting.
+Use [gradle-dev](../../gradle-dev/SKILL.md) for exact CI cache keys, wrapper setup, Gradle daemon policy, parallelization, and task splitting.
 
 ## 6. Version policy
 
 - Use placeholders (`<kotest-version>`) unless the user supplies an existing catalog or asks for current exact versions.
 - Before recommending exact current versions, check official release sources or the project catalog.
 - Kotlin Gradle plugin, Kotlin compiler/stdlib, and test libraries should be compatible with the project's Gradle/JDK baseline.
-- JUnit Platform-based tools require the test task to use JUnit Platform; use [gradle-dev](../gradle-dev/SKILL.md) for the cleanest place to configure that across a build.
+- JUnit Platform-based tools require the test task to use JUnit Platform; use [gradle-dev](../../gradle-dev/SKILL.md) for the cleanest place to configure that across a build.
 
 ## 7. Command helper script
 
-This skill includes `scripts/kotlin_test_check.sh` for local command discovery. Default mode is `--dry-run` (prints commands without executing). Use `--quick` to run the primary test task; `--full` adds check, Kover, and lint/static-analysis tasks when configured. Use [gradle-dev](../gradle-dev/SKILL.md)'s helper for general Gradle project diagnosis.
+This skill includes `scripts/kotlin_test_check.sh` for local command discovery. Default mode is `--dry-run` (prints commands without executing). Use `--quick` to run the primary test task; `--full` adds check, Kover, and lint/static-analysis tasks when configured. Use [gradle-dev](../../gradle-dev/SKILL.md)'s helper for general Gradle project diagnosis.

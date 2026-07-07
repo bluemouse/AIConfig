@@ -24,14 +24,16 @@ updates, canvas/GPU integration, and live drawing performance. Read bundled refe
 
 ## When NOT to Use
 
-- General native crash/UAF debugging with no painting-engine context — use
-  [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md)
+- General native crash/UAF debugging with no painting-engine context — scientific debugging
+  methodology outside Krita brush/stroke/paintop code
 - Standalone GPU renderer architecture (render graphs, bindless, frames-in-flight) without
   Krita canvas/projection context — use
   [../gpu-rendering-guide/SKILL.md](../gpu-rendering-guide/SKILL.md)
 - Qt desktop UI work unrelated to stroke scheduling or paintops — use
   [../qt-dev/SKILL.md](../qt-dev/SKILL.md)
 - CMake/build setup for non-Krita C++ projects — use [../cmake-dev/SKILL.md](../cmake-dev/SKILL.md)
+- MyPaint/libmypaint stroke and dab scheduling — use
+  [../mypaint-engine-dev/SKILL.md](../mypaint-engine-dev/SKILL.md)
 - Krita build/environment setup only, with no brush-engine design or code changes
 
 ## Operating stance

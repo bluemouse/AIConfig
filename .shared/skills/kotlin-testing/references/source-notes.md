@@ -24,7 +24,7 @@ Corrected or scoped down:
 
 ## Kotlin-coding audit alignment
 
-This testing skill supersedes test-design content in [kotlin-coding/references/testing-debugging.md](../kotlin-coding/references/testing-debugging.md). It delegates production-language design questions to [kotlin-coding](../kotlin-coding/SKILL.md) and aligns with its rules:
+This testing skill supersedes test-design content in [kotlin-coding/references/testing-debugging.md](../../kotlin-coding/references/testing-debugging.md). It delegates production-language design questions to [kotlin-coding](../../kotlin-coding/SKILL.md) and aligns with its rules:
 
 - Prefer `val`, immutable public APIs, and explicit domain types.
 - Avoid unsafe `!!`; test nullability and platform-type boundaries.
@@ -43,4 +43,4 @@ This testing skill supersedes test-design content in [kotlin-coding/references/t
 
 ## Gradle integration update
 
-Detailed Gradle build engineering, task wiring, dependency/version catalog edits, CI, and cache behavior are delegated to the companion [gradle-dev](../gradle-dev/SKILL.md) skill to avoid duplication.
+Detailed Gradle build engineering, task wiring, dependency/version catalog edits, CI, and cache behavior are delegated to the companion [gradle-dev](../../gradle-dev/SKILL.md) skill to avoid duplication.

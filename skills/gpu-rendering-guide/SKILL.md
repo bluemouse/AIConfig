@@ -124,6 +124,8 @@ Paths below assume `<SKILL_ROOT>` is the directory containing this skill's `SKIL
 |------|------|
 | C++ CPU allocator (arenas, pools, ownership, PMR) | [../cpp-memory-guide/SKILL.md](../cpp-memory-guide/SKILL.md) |
 | Concrete Vulkan API (`Vk*`, `vkCmd*`, swapchain) | [../vulkan-dev/SKILL.md](../vulkan-dev/SKILL.md) |
+| Slang shader authoring and SPIR-V/MSL emission | [../slang-dev/SKILL.md](../slang-dev/SKILL.md) |
+| OpenUSD Hydra 2.0 scene-index pipelines | [../usd-hydra2-dev/SKILL.md](../usd-hydra2-dev/SKILL.md) |
 | GLSL shader effects and techniques | **shader-dev** — `.shared/skills/shader-dev/SKILL.md` when installed |
 | Immediate-mode UI draw stream to GPU | **imgui-guide** — `.shared/skills/imgui-guide/SKILL.md` when installed |
 
