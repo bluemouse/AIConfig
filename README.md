@@ -19,6 +19,8 @@ repo/
 ├── AGENTS.md                          # Tool-neutral agent guidance (architecture, commands)
 ├── CLAUDE.md                          # Claude Code-specific guidance
 ├── coding-behavior-guidelines.md      # LLM coding behavioral guidelines
+├── tools/
+│   └── install-skills.py              # Copy installed skills/agents to another project
 ├── skills/                            # Bootstrap skills (author here, then install)
 │   ├── skill-creator/                 # Meta: creates and improves skills
 │   ├── agent-creator/                 # Meta: creates and improves agents
@@ -61,6 +63,7 @@ repo/
 | `.shared/skills/` | **Shared skills** — tool-neutral packages with full content (`scripts/`, `references/`, `assets/`). |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | **Tool skills** — one wrapper per tool (`SKILL.md` only) that directs the agent to the shared skill. |
 | `coding-behavior-guidelines.md` | Project-wide behavioral guidelines for coding agents (think first, simplicity, surgical changes). |
+| `tools/install-skills.py` | Copy installed portable skills and agents from this repo into another project (CLI or GUI). |
 
 ## Bootstrap skills
 
@@ -360,6 +363,45 @@ Run commands as `/command-name` (filename without extension). Reload Cursor afte
 
 Reload VS Code after changes so Copilot picks up new files.
 
+## Install skills and agents to another project
+
+Use **`tools/install-skills.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.shared/skills/<name>/`, `.shared/agents/<name>.md`, and any tool wrappers that exist under `.cursor/`, `.claude/`, and `.github/`. It does **not** install bootstrap sources from `skills/<name>/` — run `install_portable_skill.py` here first, then distribute.
+
+**CLI** (from this repository root):
+
+```bash
+# Install all discovered skills and agents
+python tools/install-skills.py /path/to/other-project
+
+# Install selected skills or agents
+python tools/install-skills.py /path/to/other-project --skills cpp-coding vulkan-dev
+python tools/install-skills.py /path/to/other-project --agents skill-bootstrapper
+
+# Replace existing installs in the target
+python tools/install-skills.py /path/to/other-project --skills cpp-coding --override
+
+# Remove from the target
+python tools/install-skills.py /path/to/other-project --skills cpp-coding --uninstall
+python tools/install-skills.py /path/to/other-project --agents skill-bootstrapper --uninstall
+```
+
+| Flag | Behavior |
+| --- | --- |
+| `TARGET` | Destination project root (required in CLI mode) |
+| `--skills NAME ...` | Skill slugs to install or uninstall (default: all discovered) |
+| `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
+| `--override` | Replace existing paths in the target; without it, skip and report |
+| `--uninstall` | Remove the selected skills and agents from the target |
+| *(no arguments)* | Open a tkinter GUI with the same options |
+
+Without `--override`, existing paths in the target are skipped. The script refuses to install into this AIConfig repo itself. Reload each tool in the target project after install.
+
+**GUI:**
+
+```bash
+python tools/install-skills.py
+```
+
 ## Skills
 
 Skills are folders with a `SKILL.md` (YAML frontmatter: `name`, `description`) plus optional bundled resources. The agent discovers skills from frontmatter and loads the body progressively when relevant.
@@ -368,10 +410,16 @@ Skills are folders with a `SKILL.md` (YAML frontmatter: `name`, `description`) p
 
 **Standalone:** copy the full skill folder into one tool path (e.g. `.cursor/skills/<name>/` or `~/.cursor/skills/<name>/`) without the shared-first layout.
 
-Package a shared skill for distribution:
+**Package a shared skill for distribution:**
 
 ```bash
 python skills/skill-creator/scripts/package_skill.py .shared/skills/my-skill
+```
+
+**Copy installed skills and agents to another project** (shared + tool wrappers; see [Install skills and agents to another project](#install-skills-and-agents-to-another-project)):
+
+```bash
+python tools/install-skills.py /path/to/other-project
 ```
 
 ## Commands (Cursor)

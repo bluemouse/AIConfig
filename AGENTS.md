@@ -31,6 +31,7 @@ Not every agent requires all three tool wrappers. For example, **`skill-bootstra
 | --- | --- | --- |
 | Authoritative source | `skills/<name>/` (bootstrap) | `.shared/agents/<name>.md` |
 | Install / scaffold | `install_portable_skill.py` | `create_agent.py` |
+| Distribute to another project | `tools/install-skills.py` (copies installed shared + wrappers) | same |
 | Hand-edit shared layer? | No (regenerated from bootstrap) | Yes (canonical) |
 
 Skills are discovered by frontmatter (`name`, `description`); an agent reads the `description` to decide when to load the full `SKILL.md` body. Description wording is load-bearing — `skill-creator`'s eval tooling (`run_eval.py`) tests whether a description reliably triggers on target phrases.
@@ -96,6 +97,17 @@ python skills/agent-creator/scripts/quick_validate.py .cursor/agents/<name>.md
 ```bash
 python skills/skill-creator/scripts/package_skill.py .shared/skills/my-skill
 ```
+
+**Copy installed skills and agents to another project** (from this repo root; copies `.shared/` plus tool wrappers — not bootstrap sources):
+
+```bash
+python tools/install-skills.py /path/to/other-project
+python tools/install-skills.py /path/to/other-project --skills cpp-coding vulkan-dev --override
+python tools/install-skills.py /path/to/other-project --agents skill-bootstrapper --uninstall
+python tools/install-skills.py   # GUI when no arguments
+```
+
+Omit `--skills` and `--agents` to install or uninstall all names discovered under `.cursor/`, `.claude/`, and `.github/`. Without `--override`, existing target paths are skipped. See [README.md](README.md#install-skills-and-agents-to-another-project) for full flag reference.
 
 **Trigger-eval a skill description:**
 
