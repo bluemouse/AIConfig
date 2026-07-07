@@ -1,0 +1,128 @@
+[
+  {
+    "query": "implement an HdSingleInputFilteringSceneIndexBase that overlays primvars/displayColor on gprims and tell me which HdDataSourceLocatorSet to dirty when the source color changes",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: filtering scene index + primvar overlay + dirty locators"
+  },
+  {
+    "query": "my custom HdSceneIndexBase GetPrim and GetChildPrimPaths disagree after runtime edits — what notices and locator rules fix traversal consistency",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: scene-index contract + observer notices"
+  },
+  {
+    "query": "write compile-ready C++ to author a mesh prim with HdMeshSchema topology, points primvar, and HdRetainedTypedSampledDataSource values for Hydra 2.0",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: schema authoring + retained datasources"
+  },
+  {
+    "query": "how do I register an HdSceneIndexPlugin in plugInfo.json and implement _AppendSceneIndex for Storm with RegisterSceneIndexForRenderer",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: scene-index plugin C++ + registry + plugInfo"
+  },
+  {
+    "query": "migrating off HdRenderDelegate — can I wrap our old delegate with HdRenderDelegateAdapterRenderer and expose a scene index through HdSceneIndexAdapterSceneDelegate",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Hydra 1.0 to 2.0 bridge APIs"
+  },
+  {
+    "query": "UsdPreviewSurface opacity below 1 and opacityThreshold for cutouts — what material network datasource layout and dirty locators does Storm expect in Hydra 2.0",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: material opacity/threshold + Storm tags + dirtying"
+  },
+  {
+    "query": "when should I use displayOpacity primvar vs material opacity for semitransparency in Storm, and what HdDataSourceLocator do I dirty on change",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: transparency path selection + dirtying"
+  },
+  {
+    "query": "author true Hydra instancing with HdInstancerTopologySchema prototypes and instanceIndices plus instance-rate primvars — what dirty locators when transforms change",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: instancer topology schema + dirtying"
+  },
+  {
+    "query": "review this Hydra 2.0 snippet for hallucinated HdTokenDataSource::New calls and missing HdContainerDataSourceEditor::ComputeDirtyLocators after Finish()",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: source verification + common false APIs"
+  },
+  {
+    "query": "debug why my UsdStage mesh binds /Materials/Glass but the terminal scene index still shows no materialBindings — which usdImaging filters should I inspect",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: USD imaging chain debugging"
+  },
+  {
+    "query": "use HdRetainedSceneIndex AddPrims and DirtyPrims to publish runtime mesh edits with the right PrimsAdded and PrimsDirtied notices",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: retained scene index mutable authoring"
+  },
+  {
+    "query": "mesh render color depends on a material prim parameter — how do I wire HdDependencySchema and HdDependencyForwardingSceneIndex so material dirties propagate",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: dependency forwarding + cross-prim dirtying"
+  },
+  {
+    "query": "what is the API-agnostic render graph model for grouping passes and deriving barriers from resource lifetimes — no OpenUSD APIs",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: renderer architecture -> gpu-rendering-guide"
+  },
+  {
+    "query": "give me VkImageMemoryBarrier2 layout transitions for sampling a color attachment in Vulkan 1.3",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Vulkan API specifics -> vulkan-dev"
+  },
+  {
+    "query": "how do I author UsdGeomMesh points and primvars in a USD layer file for a shot — no Hydra scene index",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: USD stage authoring without Hydra consumption"
+  },
+  {
+    "query": "set up CMake FetchContent to build OpenUSD with imaging enabled for my app",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: build system wiring, not Hydra runtime APIs"
+  },
+  {
+    "query": "write a Python script to traverse a UsdStage and export prim paths to JSON",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: USD scripting utility without Hydra scene-index work"
+  },
+  {
+    "query": "HdxTaskControllerSceneIndex vs legacy HdxTaskController — which should my Hydra 2.0 viewport app use and where do render tasks enter the scene-index graph",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: Hdx task-controller integration"
+  },
+  {
+    "query": "HdMaterialSchemaTokens->universalRenderContext is confusing — show the material datasource tree for UsdPreviewSurface with the correct empty-token container and allPurpose materialBindings",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: universal render context + material bindings layout"
+  },
+  {
+    "query": "design a bindless descriptor indexing strategy for material textures in my Vulkan renderer",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: Vulkan bindless design -> vulkan-dev"
+  },
+  {
+    "query": "explain frames-in-flight and GPU-driven culling architecture without naming Hydra or USD classes",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: agnostic GPU renderer architecture -> gpu-rendering-guide"
+  }
+]
