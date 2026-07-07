@@ -1,0 +1,86 @@
+[
+  {
+    "query": "where does a stylus event enter MyPaint and reach libmypaint stroke_to",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "event path: BrushworkModeMixin -> Brushwork -> SimplePaintingLayer -> Brush -> architecture.md"
+  },
+  {
+    "query": "my .myb brush preset parses but unknown settings are ignored — is that expected in libmypaint",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": ".myb version 3 rules and unknown-setting handling -> brush-engine.md"
+  },
+  {
+    "query": "dab count changes mid-stroke when radius mapping is active — what loop must I preserve for parity",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "dab scheduler recompute loop and partial carry -> brush-engine.md"
+  },
+  {
+    "query": "smudge reads stale pixels under the brush — should get_color flush pending tile ops first",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "get_color flush before pickup -> brush-engine.md / surface-layer-gpu.md"
+  },
+  {
+    "query": "how do I add a Vulkan tile surface backend for libmypaint dabs without rewriting the brush core",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "GPU surface strategy leaving brush core on CPU -> surface-layer-gpu.md"
+  },
+  {
+    "query": "viewport mirroring shows correctly but painted symmetry is wrong — where is symmetry state propagated",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "symmetry vs viewport mirroring split -> architecture.md"
+  },
+  {
+    "query": "design a stroke renderer for a new painting app inspired by MyPaint's dab engine",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "general painting-engine blueprint from MyPaint invariants -> SKILL.md output patterns"
+  },
+  {
+    "query": "what files should I read first in libmypaint for mapping curve extrapolation and dab scheduling",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "libmypaint source reading order -> source-map.md"
+  },
+  {
+    "query": "write a CMakeLists for our C++ Vulkan game renderer",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: CMake/Vulkan build -> cmake-dev / vulkan-dev, not MyPaint brush engine"
+  },
+  {
+    "query": "how do I fix KisPaintOp spacing on curved strokes in Krita",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Krita paintop -> krita-engine-dev, not libmypaint"
+  },
+  {
+    "query": "libmypaint pigment paint_mode gives different results on GPU vs CPU tiles — how do I validate parity",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "spectral pigment parity and golden tests -> performance-validation.md / brush-engine.md"
+  },
+  {
+    "query": "BrushInfo changes in the UI are not reaching live dab dynamics — what propagates settings into Brush",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "BrushInfo observer sync into native mappings -> architecture.md"
+  },
+  {
+    "query": "explain premultiplied 32768 RGBA tiles and blend pass order in mypaint-tiled-surface",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "tile format and composite ordering -> surface-layer-gpu.md"
+  },
+  {
+    "query": "mypaint_brush_stroke_to linear flag and eotf handling for HSV dynamics in linear sRGB",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "linear color path via lib/brush.py -> architecture.md / brush-engine.md"
+  }
+]

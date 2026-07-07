@@ -42,6 +42,7 @@ Some skills cross-link as companions — install and edit them together when tas
 
 - **C++:** `cpp-coding`, `cpp-memory-guide`, `cpp-testing`, `cmake-dev`
 - **GPU rendering:** `gpu-rendering-guide`, `vulkan-dev`, `slang-dev`
+- **Painting engines:** `mypaint-engine-dev`, `krita-engine-dev` (with `gpu-rendering-guide` for standalone GPU renderer architecture beyond app-specific stroke paths)
 - **Qt desktop:** `qt-dev` (with `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` for non-Qt C++, engine Vulkan, and render-graph work)
 - **Python:** `python-coding` (CLI scripts and utilities; standalone — no required companions in this repo)
 - **Git workflow:** `commit-message-writer` (draft Conventional Commit messages; complements `code-review-plus` for review-only tasks)
@@ -90,7 +91,7 @@ python skills/agent-creator/scripts/quick_validate.py .shared/agents/<name>.md
 python skills/agent-creator/scripts/quick_validate.py .cursor/agents/<name>.md
 ```
 
-**Automate bootstrap + install (Cursor):** use the **skill-bootstrapper** custom agent (`.shared/agents/skill-bootstrapper.md`, `.cursor/agents/skill-bootstrapper.md`). It runs the bootstrap authoring workflow, validates, self-reviews, and calls `install_portable_skill.py` in one session. Manual alternative: `/create-bootstrap-skill` then `/create-tool-skill` (see [README.md](README.md)).
+**Automate bootstrap + install (Cursor):** use the **skill-bootstrapper** custom agent (`.shared/agents/skill-bootstrapper.md`, `.cursor/agents/skill-bootstrapper.md`). It reads templates from `skills-ref/<name>/` or other `--base` paths, writes bootstrap output to `skills/<name>/`, validates, self-reviews, and calls `install_portable_skill.py` in one session. Manual alternative: `/create-bootstrap-skill` then `/create-tool-skill` (see [README.md](README.md)).
 
 **Package a shared skill for distribution:**
 
@@ -116,6 +117,8 @@ cd skills/skill-creator && python -m scripts.run_eval \
   --skill-path ../../.shared/skills/<name> \
   --eval-set ../../skills/<name>/eval-queries.json
 ```
+
+Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths.
 
 See [README.md](README.md) for Cursor slash commands (`/create-bootstrap-skill`, `/create-tool-skill`, etc.) that wrap these workflows.
 

@@ -32,10 +32,13 @@ repo/
 │   ├── cmake-dev/                     # CMake 3.20+ target-based builds
 │   ├── csharp-coding/                 # C# and .NET coding guidelines
 │   ├── gpu-rendering-guide/           # API-agnostic GPU renderer architecture
+│   ├── krita-engine-dev/              # Krita brush engines, paintops, stroke scheduling
+│   ├── mypaint-engine-dev/            # MyPaint/libmypaint brush engine and tiled surfaces
 │   ├── python-coding/                 # Python 3.12+ CLI scripts and utilities
 │   ├── qt-dev/                        # Qt 6 Widgets/CMake desktop UI for render tools
 │   ├── vulkan-dev/                    # Vulkan 1.3 development
 │   └── slang-dev/                     # Slang shader development (SPIR-V / MSL)
+├── skills-ref/                        # Staging skill templates (read-only input for skill-bootstrapper)
 ├── .shared/
 │   ├── agents/                        # Shared custom agents (canonical)
 │   └── skills/
@@ -59,6 +62,7 @@ repo/
 | `AGENTS.md` | Tool-neutral guidance for coding agents (architecture, scripts, editing conventions). |
 | `CLAUDE.md` | Claude Code-specific guidance; references `AGENTS.md` for shared repo rules. |
 | `skills/` | **Bootstrap skills** — edit here, then install to produce shared + tool skills. |
+| `skills-ref/` | **Staging templates** — read-only drafts for **skill-bootstrapper**; output lands in `skills/<name>/`. |
 | `.shared/agents/` | **Shared custom agents** — canonical agent definitions (edit directly). |
 | `.shared/skills/` | **Shared skills** — tool-neutral packages with full content (`scripts/`, `references/`, `assets/`). |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | **Tool skills** — one wrapper per tool (`SKILL.md` only) that directs the agent to the shared skill. |
@@ -81,6 +85,8 @@ Bootstrap skills live under `skills/`. Installing one copies content to `.shared
 | `cmake-dev` | `skills/cmake-dev/` | CMake 3.20+ target-based builds, FetchContent, CTest, install/export |
 | `csharp-coding` | `skills/csharp-coding/` | C# and .NET coding, toolchain, and testing |
 | `gpu-rendering-guide` | `skills/gpu-rendering-guide/` | API-agnostic explicit-API renderer architecture |
+| `krita-engine-dev` | `skills/krita-engine-dev/` | Krita brush engines, paintops, stroke scheduling, tiled compositing, canvas/GPU display |
+| `mypaint-engine-dev` | `skills/mypaint-engine-dev/` | MyPaint/libmypaint brush engine, `.myb` presets, dab scheduling, tiled surfaces, parity testing |
 | `python-coding` | `skills/python-coding/` | Python 3.12+ CLI scripts: argparse, pyproject.toml, ruff, pyright, pytest |
 | `qt-dev` | `skills/qt-dev/` | Qt 6 Widgets/CMake desktop UI for Vulkan/Metal render tools |
 | `vulkan-dev` | `skills/vulkan-dev/` | Vulkan 1.3 development, validation, and performance triage |
@@ -94,10 +100,11 @@ Several installed skills cross-link as companions — install related skills tog
 | --- | --- | --- |
 | C++ | `cpp-coding`, `cpp-memory-guide`, `cpp-testing`, `cmake-dev` | CMake build graph → style and concurrency → CPU memory/ownership → GoogleTest/CTest |
 | GPU rendering | `gpu-rendering-guide`, `vulkan-dev`, `slang-dev` | Renderer architecture → `Vk*` implementation → Slang shaders and reflection layout |
+| Painting engines | `mypaint-engine-dev`, `krita-engine-dev`, `gpu-rendering-guide` | App-specific stroke/dab paths (MyPaint or Krita) → tiled compositing and parity → GPU surface/display strategy |
 | Qt desktop | `qt-dev`, `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` | Widgets/CMake UI shell → C++ idioms → viewport/Vulkan integration → renderer architecture |
 | Git workflow | `commit-message-writer`, `code-review-plus` | Draft Conventional Commit messages → structured diff review (complementary, not overlapping) |
 
-`cpp-coding` links to `cpp-memory-guide` for allocation and ownership. `cmake-dev` links to `cpp-coding` for source idioms and `cpp-testing` for `gtest_discover_tests` and test targets. `gpu-rendering-guide` links to `vulkan-dev` for concrete Vulkan calls and to `slang-dev` for shader-system work. `slang-dev` links back to both for binding architecture and post-SPIR-V pipeline setup. `qt-dev` links to `cpp-coding`, `cpp-testing`, `vulkan-dev`, and `gpu-rendering-guide` for non-Qt C++, tests, engine Vulkan, and render-graph work respectively. `commit-message-writer` links to `code-review-plus` for review-only tasks and does not auto-commit.
+`cpp-coding` links to `cpp-memory-guide` for allocation and ownership. `cmake-dev` links to `cpp-coding` for source idioms and `cpp-testing` for `gtest_discover_tests` and test targets. `gpu-rendering-guide` links to `vulkan-dev` for concrete Vulkan calls and to `slang-dev` for shader-system work. `slang-dev` links back to both for binding architecture and post-SPIR-V pipeline setup. `mypaint-engine-dev` and `krita-engine-dev` are complementary painting-engine guides (MyPaint/libmypaint vs KDE/krita); each links to `gpu-rendering-guide` for standalone renderer architecture and lists the other as a near-miss. `qt-dev` links to `cpp-coding`, `cpp-testing`, `vulkan-dev`, and `gpu-rendering-guide` for non-Qt C++, tests, engine Vulkan, and render-graph work respectively. `commit-message-writer` links to `code-review-plus` for review-only tasks and does not auto-commit.
 
 ### skill-creator
 
@@ -268,6 +275,15 @@ done
 
 ```bash
 for skill in gpu-rendering-guide vulkan-dev slang-dev; do
+  python skills/skill-creator/scripts/install_portable_skill.py \
+    --root . --name "$skill" --source "skills/$skill" --overwrite
+done
+```
+
+**Example — install the painting-engine skills:**
+
+```bash
+for skill in mypaint-engine-dev krita-engine-dev; do
   python skills/skill-creator/scripts/install_portable_skill.py \
     --root . --name "$skill" --source "skills/$skill" --overwrite
 done
@@ -502,9 +518,10 @@ Automates the full portable skill pipeline in one agent run: bootstrap from temp
 Select **skill-bootstrapper** from the Cursor agent picker (reload the window after adding the agent files). Example invocation:
 
 ```text
-skill-bootstrapper my-skill \
-  --base skills-ref/my-skill \
-  --verify https://example.com/docs \
+skill-bootstrapper mypaint-engine-dev \
+  --base skills-ref/mypaint-engine-dev \
+  --verify https://github.com/mypaint/mypaint \
+  --verify https://github.com/mypaint/libmypaint \
   --overwrite
 ```
 
