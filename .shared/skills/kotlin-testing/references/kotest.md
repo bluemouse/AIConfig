@@ -1,0 +1,242 @@
+# Kotest Patterns
+
+## Table of contents
+
+1. When to use Kotest
+2. Setup
+3. Spec style selection
+4. Matchers
+5. Data-driven tests
+6. Property tests
+7. Lifecycle and isolation
+8. Team conventions
+
+## 1. When to use Kotest
+
+Use Kotest when the project benefits from:
+
+- Kotlin-first DSLs and readable nested test structure.
+- Rich matchers for collections, strings, exceptions, and domain objects.
+- Built-in data-driven and property-based testing.
+- Behavior/spec-style tests that read as documentation.
+
+Do not introduce Kotest just for one trivial test if the module already standardizes on `kotlin.test` or JUnit.
+
+## 2. Setup
+
+```kotlin
+dependencies {
+    testImplementation("io.kotest:kotest-runner-junit5:<kotest-version>")
+    testImplementation("io.kotest:kotest-assertions-core:<kotest-version>")
+    testImplementation("io.kotest:kotest-property:<kotest-version>")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+```
+
+## 3. Spec style selection
+
+Default recommendations:
+
+- `FunSpec`: general-purpose, easy to scan, good default.
+- `StringSpec`: simplest flat tests.
+- `DescribeSpec`: good for grouping one function/class with contexts.
+- `BehaviorSpec`: use for BDD-style Given/When/Then flows.
+- `FreeSpec`: flexible nested structure; useful for complex behavior trees.
+
+Prefer one style per module or test package unless there is a clear reason.
+
+### FunSpec
+
+```kotlin
+package com.example.money
+
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.assertions.throwables.shouldThrow
+
+class MoneyTest : FunSpec({
+    test("adds amounts with the same currency") {
+        Money.cents(100, "USD") + Money.cents(25, "USD") shouldBe Money.cents(125, "USD")
+    }
+
+    test("rejects adding different currencies") {
+        shouldThrow<IllegalArgumentException> {
+            Money.cents(100, "USD") + Money.cents(100, "EUR")
+        }
+    }
+})
+```
+
+### DescribeSpec
+
+```kotlin
+class PortParserTest : DescribeSpec({
+    describe("parsePort") {
+        context("valid input") {
+            it("accepts minimum port") {
+                parsePort("1") shouldBe 1
+            }
+        }
+
+        context("invalid input") {
+            it("rejects zero") {
+                parsePort("0") shouldBe null
+            }
+        }
+    }
+})
+```
+
+### BehaviorSpec
+
+```kotlin
+class OrderStateTest : BehaviorSpec({
+    Given("a draft order") {
+        val order = Order.draft()
+
+        When("it is submitted") {
+            val result = order.submit()
+
+            Then("it becomes pending") {
+                result.status shouldBe OrderStatus.Pending
+            }
+        }
+    }
+})
+```
+
+Use `When`/`Then` capitalized forms or backticks around `when` because `when` is a Kotlin keyword.
+
+## 4. Matchers
+
+Common matchers:
+
+```kotlin
+actual shouldBe expected
+actual shouldNotBe unexpected
+name shouldStartWith "Al"
+name shouldContain "lic"
+items shouldHaveSize 3
+items shouldContainExactly listOf("a", "b")
+items.shouldBeEmpty()
+value.shouldNotBeNull()
+value.shouldBeInstanceOf<Result.Success>()
+count shouldBeGreaterThan 0
+```
+
+Exception assertion:
+
+```kotlin
+val error = shouldThrow<IllegalArgumentException> {
+    parsePort("0")
+}
+error.message shouldBe "port must be in 1..65535"
+```
+
+Custom matcher pattern:
+
+```kotlin
+fun beValidPort() = object : io.kotest.matchers.Matcher<Int> {
+    override fun test(value: Int) = io.kotest.matchers.MatcherResult(
+        value in 1..65535,
+        { "$value should be a valid TCP port" },
+        { "$value should not be a valid TCP port" },
+    )
+}
+```
+
+## 5. Data-driven tests
+
+```kotlin
+import io.kotest.datatest.withData
+
+class DateParserTest : FunSpec({
+    context("valid dates") {
+        withData(
+            "2026-01-15" to LocalDate(2026, 1, 15),
+            "2026-12-31" to LocalDate(2026, 12, 31),
+        ) { (raw, expected) ->
+            parseDate(raw) shouldBe expected
+        }
+    }
+
+    context("invalid dates") {
+        withData(
+            nameFn = { "rejects '$it'" },
+            "not-a-date",
+            "2026-13-01",
+            "",
+        ) { raw ->
+            shouldThrow<IllegalArgumentException> { parseDateStrict(raw) }
+        }
+    }
+})
+```
+
+Use data tests when each case follows the same Arrange/Act/Assert shape.
+
+## 6. Property tests
+
+```kotlin
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.int
+import io.kotest.property.arbitrary.list
+import io.kotest.property.checkAll
+
+class SortingPropertiesTest : FunSpec({
+    test("sorting is idempotent") {
+        checkAll(Arb.list(Arb.int())) { values ->
+            values.sorted().sorted() shouldBe values.sorted()
+        }
+    }
+})
+```
+
+Good property candidates:
+
+- Encoding/decoding round trips.
+- Normalization is idempotent.
+- Sorting result is ordered and preserves elements.
+- Parser accepts values generated by formatter.
+- Adding zero/empty identity values does not change result.
+
+Rules:
+
+- Constrain generators to valid domain ranges.
+- Add targeted examples for known edge cases; property tests do not replace examples.
+- Preserve failure seeds/replay data when debugging.
+
+## 7. Lifecycle and isolation
+
+```kotlin
+class RegistryTest : FunSpec({
+    lateinit var registry: Registry
+
+    beforeTest {
+        registry = Registry()
+    }
+
+    test("stores value") {
+        registry.add("a")
+        registry.values shouldBe listOf("a")
+    }
+})
+```
+
+Rules:
+
+- Keep fixtures local when possible.
+- Use `beforeTest` for fresh mutable state.
+- Avoid shared state across tests unless immutable.
+- Configure isolation intentionally if project conventions require it.
+
+## 8. Team conventions
+
+- Choose one primary Kotest style and document exceptions.
+- Use Kotest matchers consistently; avoid falling back to JUnit assertions in the same class.
+- Keep nested specs shallow enough to understand failure names.
+- Do not overuse BDD ceremony for simple pure functions.

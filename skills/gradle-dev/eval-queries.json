@@ -1,0 +1,74 @@
+[
+  {
+    "query": "migrate build.gradle to build.gradle.kts with version catalog and convention plugin",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Kotlin DSL and build logic -> kotlin-dsl-build-logic.md"
+  },
+  {
+    "query": "dependencyInsight shows conflicting kotlin-stdlib versions across subprojects",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "dependency resolution -> dependencies-versioning.md"
+  },
+  {
+    "query": "configuration cache fails on afterEvaluate task wiring — lazy alternative",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "lazy tasks and config cache -> performance-troubleshooting.md / kotlin-dsl-build-logic.md"
+  },
+  {
+    "query": "wire JVM test suite plugin for integrationTest and attach to check",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Gradle test task wiring -> tasks-testing-ci.md"
+  },
+  {
+    "query": "kotlin jvm plugin jvmToolchain and compilerOptions allWarningsAsErrors setup",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Kotlin Gradle plugin -> kotlin-gradle.md"
+  },
+  {
+    "query": "CI should use gradlew --no-daemon check with build cache keys",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "CI command design -> tasks-testing-ci.md / performance-troubleshooting.md"
+  },
+  {
+    "query": "write MockK verify block for suspend function call counts",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Kotlin test design -> kotlin-testing"
+  },
+  {
+    "query": "refactor data class copy semantics for immutable domain model",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Kotlin language design -> kotlin-coding"
+  },
+  {
+    "query": "R8 minifyEnabled release build missing keep rule for reflection",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Android R8/AGP -> gradle-android-dev"
+  },
+  {
+    "query": "lintDebug fails on missing namespace in com.android.library module",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: AGP lint/namespace -> gradle-android-dev"
+  },
+  {
+    "query": "custom Gradle task with @CacheableTask inputs outputs and TestKit functional test",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "incremental/cacheable tasks -> tasks-testing-ci.md"
+  },
+  {
+    "query": "gradle wrapper upgrade compatibility with JDK 21 toolchain",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "wrapper and toolchain -> core-build-model.md / kotlin-gradle.md"
+  }
+]

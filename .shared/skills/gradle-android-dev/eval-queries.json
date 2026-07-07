@@ -1,0 +1,74 @@
+[
+  {
+    "query": "AGP upgrade broke Android Studio sync — Gradle Kotlin plugin compatibility matrix",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "AGP migration -> agp-versions-migration.md"
+  },
+  {
+    "query": "add product flavor dimension and debug variant source set overlay",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "variants and source sets -> variants-source-sets-dependencies.md"
+  },
+  {
+    "query": "release assembleRelease fails R8 Missing class after dependency upgrade",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "R8/minification -> testing-lint-release.md / troubleshooting.md"
+  },
+  {
+    "query": "set namespace compileSdk minSdk in com.android.library module build.gradle.kts",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Android DSL baseline -> android-build-model.md"
+  },
+  {
+    "query": "testDebugUnitTest vs connectedDebugAndroidTest — which Gradle task for local JVM tests",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Android test task mapping -> testing-lint-release.md"
+  },
+  {
+    "query": "reduce variant count and resource processing cost for faster Android builds",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Android performance -> performance-ci.md"
+  },
+  {
+    "query": "dependencyResolutionManagement in settings.gradle.kts for all subprojects",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: general Gradle repositories -> gradle-dev"
+  },
+  {
+    "query": "write Kotest tests for ViewModel with runTest and fake repository",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plain Kotlin test design -> kotlin-testing"
+  },
+  {
+    "query": "fix sealed class when exhaustiveness in domain model",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Kotlin language -> kotlin-coding"
+  },
+  {
+    "query": "configuration cache problems warn on custom Gradle plugin task",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: general Gradle config cache -> gradle-dev"
+  },
+  {
+    "query": "signingConfig release without committing keystore passwords",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "signing policy -> testing-lint-release.md"
+  },
+  {
+    "query": "manifest merge conflict between library and app module",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "manifest/resource troubleshooting -> troubleshooting.md"
+  }
+]

@@ -102,9 +102,10 @@ Several installed skills cross-link as companions — install related skills tog
 | GPU rendering | `gpu-rendering-guide`, `vulkan-dev`, `slang-dev` | Renderer architecture → `Vk*` implementation → Slang shaders and reflection layout |
 | Painting engines | `mypaint-engine-dev`, `krita-engine-dev`, `gpu-rendering-guide` | App-specific stroke/dab paths (MyPaint or Krita) → tiled compositing and parity → GPU surface/display strategy |
 | Qt desktop | `qt-dev`, `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` | Widgets/CMake UI shell → C++ idioms → viewport/Vulkan integration → renderer architecture |
+| Kotlin/JVM | `kotlin-coding`, `kotlin-testing`, `gradle-dev`, `gradle-android-dev` | Language/stdlib/API design → test frameworks and flakes → Gradle build engineering → AGP variants, lint, R8 |
 | Git workflow | `commit-message-writer`, `code-review-plus` | Draft Conventional Commit messages → structured diff review (complementary, not overlapping) |
 
-`cpp-coding` links to `cpp-memory-guide` for allocation and ownership. `cmake-dev` links to `cpp-coding` for source idioms and `cpp-testing` for `gtest_discover_tests` and test targets. `gpu-rendering-guide` links to `vulkan-dev` for concrete Vulkan calls and to `slang-dev` for shader-system work. `slang-dev` links back to both for binding architecture and post-SPIR-V pipeline setup. `mypaint-engine-dev` and `krita-engine-dev` are complementary painting-engine guides (MyPaint/libmypaint vs KDE/krita); each links to `gpu-rendering-guide` for standalone renderer architecture and lists the other as a near-miss. `qt-dev` links to `cpp-coding`, `cpp-testing`, `vulkan-dev`, and `gpu-rendering-guide` for non-Qt C++, tests, engine Vulkan, and render-graph work respectively. `commit-message-writer` links to `code-review-plus` for review-only tasks and does not auto-commit.
+`cpp-coding` links to `cpp-memory-guide` for allocation and ownership. `cmake-dev` links to `cpp-coding` for source idioms and `cpp-testing` for `gtest_discover_tests` and test targets. `gpu-rendering-guide` links to `vulkan-dev` for concrete Vulkan calls and to `slang-dev` for shader-system work. `slang-dev` links back to both for binding architecture and post-SPIR-V pipeline setup. `mypaint-engine-dev` and `krita-engine-dev` are complementary painting-engine guides (MyPaint/libmypaint vs KDE/krita); each links to `gpu-rendering-guide` for standalone renderer architecture and lists the other as a near-miss. `qt-dev` links to `cpp-coding`, `cpp-testing`, `vulkan-dev`, and `gpu-rendering-guide` for non-Qt C++, tests, engine Vulkan, and render-graph work respectively. `kotlin-coding` links to `kotlin-testing` for test design, `gradle-dev` for Gradle build engineering, and `gradle-android-dev` for AGP builds. `kotlin-testing` defers Gradle wiring to `gradle-dev` and production API design to `kotlin-coding`. `gradle-dev` links to `gradle-android-dev` for AGP and to `kotlin-testing` for Kotlin test patterns. `gradle-android-dev` defers shared Gradle rules to `gradle-dev` and plain JVM test design to `kotlin-testing`. `commit-message-writer` links to `code-review-plus` for review-only tasks and does not auto-commit.
 
 ### skill-creator
 
@@ -239,7 +240,7 @@ The script:
 2. Writes tool skills to `.cursor/skills/<skill-name>/`, `.claude/skills/<skill-name>/`, and `.github/skills/<skill-name>/`
 3. Validates the shared skill and all three tool skills with `quick_validate.py`
 
-Install multiple related skills in any order when they cross-reference each other — e.g. the C++ cluster (`cpp-coding`, `cpp-memory-guide`, `cpp-testing`) or the GPU stack (`gpu-rendering-guide`, `vulkan-dev`, `slang-dev`) link via `../<sibling>/SKILL.md`.
+Install multiple related skills in any order when they cross-reference each other — e.g. the C++ cluster (`cpp-coding`, `cpp-memory-guide`, `cpp-testing`), the Kotlin/Gradle cluster (`kotlin-coding`, `kotlin-testing`, `gradle-dev`, `gradle-android-dev`), or the GPU stack (`gpu-rendering-guide`, `vulkan-dev`, `slang-dev`) link via `../<sibling>/SKILL.md`.
 
 ### 3. Validate (optional manual check)
 
@@ -279,6 +280,17 @@ for skill in gpu-rendering-guide vulkan-dev slang-dev; do
     --root . --name "$skill" --source "skills/$skill" --overwrite
 done
 ```
+
+**Example — install the Kotlin/Gradle cluster:**
+
+```bash
+for skill in kotlin-coding kotlin-testing gradle-dev gradle-android-dev; do
+  python skills/skill-creator/scripts/install_portable_skill.py \
+    --root . --name "$skill" --source "skills-ref/$skill" --overwrite
+done
+```
+
+(After bootstrapping from `skills-ref/` into `skills/<name>/`, use `--source skills/<name>` instead.)
 
 **Example — install the painting-engine skills:**
 

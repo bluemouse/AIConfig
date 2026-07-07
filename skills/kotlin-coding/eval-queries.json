@@ -1,0 +1,74 @@
+[
+  {
+    "query": "refactor this sealed class hierarchy so when is exhaustive without an else branch",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Kotlin language modeling -> patterns.md / language-grammar.md"
+  },
+  {
+    "query": "why does smart cast fail on this mutable property and how do I fix the type model",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "compiler/nullability semantics -> language-grammar.md / testing-debugging.md"
+  },
+  {
+    "query": "choose between Sequence and List for this multi-step collection pipeline on 10k items",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "stdlib API selection -> stdlib-api.md / best-practices.md"
+  },
+  {
+    "query": "review this Kotlin extension function for API clarity and null safety",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "code review workflow -> best-practices.md / patterns.md"
+  },
+  {
+    "query": "compile hello.kt with kotlinc and run it without Gradle",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "kotlinc workflow -> tooling.md"
+  },
+  {
+    "query": "NullPointerException from Java platform type at Kotlin boundary — how do I model this safely",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "runtime debugging and Java interop -> testing-debugging.md / patterns.md"
+  },
+  {
+    "query": "write Kotest property tests for this parser with MockK suspend mocks",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: test design/frameworks -> kotlin-testing, not kotlin-coding"
+  },
+  {
+    "query": "add kotest and kover dependencies to build.gradle.kts and wire tasks.test useJUnitPlatform",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Gradle build engineering -> gradle-dev, not kotlin-coding"
+  },
+  {
+    "query": "fix configuration cache failure in settings.gradle.kts repositories block",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Gradle cache/configuration -> gradle-dev"
+  },
+  {
+    "query": "AGP sync fails after upgrading compileSdk — where do I set namespace and SDK levels",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Android Gradle Plugin -> gradle-android-dev"
+  },
+  {
+    "query": "design structured concurrency for this coroutine scope without GlobalScope",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "coroutines as language guidance -> patterns.md"
+  },
+  {
+    "query": "explicitApi and allWarningsAsErrors for a public Kotlin library — what compiler options matter",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "compiler options consumer view -> tooling.md; build wiring -> gradle-dev if asked"
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "query": "write Kotest FunSpec tests with property testing for this email validator",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Kotest spec and property tests -> kotest.md / test-process.md"
+  },
+  {
+    "query": "mock suspend repository with MockK and verify coEvery call order",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "MockK coroutine mocks -> mockk-fakes.md"
+  },
+  {
+    "query": "flaky runTest passes locally but fails in CI — virtual time and dispatcher injection",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "coroutine flake triage -> coroutine-testing.md / debugging-flaky-tests.md"
+  },
+  {
+    "query": "add regression test before fixing this off-by-one parser bug",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "TDD/regression workflow -> test-process.md"
+  },
+  {
+    "query": "configure Kover coverage gate and koverVerify in Gradle",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Kover coverage policy -> tooling.md; full Gradle wiring may involve gradle-dev"
+  },
+  {
+    "query": "kotlin.test table-driven tests for boundary ports without extra libraries",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "baseline kotlin.test patterns -> kotlin-test-junit.md / test-data-patterns.md"
+  },
+  {
+    "query": "fix settings.gradle.kts dependencyResolutionManagement and version catalog for test deps",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Gradle build engineering -> gradle-dev"
+  },
+  {
+    "query": "model errors with sealed interface instead of exceptions in production API",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: production Kotlin design -> kotlin-coding"
+  },
+  {
+    "query": "connectedDebugAndroidTest task fails — emulator setup in CI",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Android Gradle test tasks -> gradle-android-dev"
+  },
+  {
+    "query": "enable configuration cache for Gradle test task parallel forks",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Gradle CI/cache -> gradle-dev"
+  },
+  {
+    "query": "test Flow emissions with runTest advanceUntilIdle without Thread.sleep",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "Flow coroutine tests -> coroutine-testing.md"
+  },
+  {
+    "query": "prefer fake clock over mock for deterministic timeout tests",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "fakes vs mocks -> mockk-fakes.md"
+  }
+]
