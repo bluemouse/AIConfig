@@ -1,0 +1,86 @@
+[
+  {
+    "query": "where in the Krita source does a freehand brush stroke get scheduled after tablet input",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Krita stroke scheduling: KisToolFreehandHelper, KisImage::startStroke, KisStrokesQueue -> architecture-map.md"
+  },
+  {
+    "query": "I'm adding a custom paintop plugin to Krita — what classes do I need to implement and register",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "new paintop plugin: KisPaintOp, factory, registry, settings widget -> implementation-playbooks.md"
+  },
+  {
+    "query": "my brush spacing looks wrong on curves but fine on straight lines in Krita — what should I check",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "spacing/timing contract: KisDistanceInformation, updateSpacingImpl vs paintAt -> core-classes-and-contracts.md"
+  },
+  {
+    "query": "dab generation is slow when painting live in Krita — is the OpenGL canvas the bottleneck",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "separate CPU dab hot path from OpenGL display layer -> pixel-layer-gpu-performance.md"
+  },
+  {
+    "query": "how do I design a stroke system for a new painting app inspired by Krita's architecture",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "general painting-engine design from Krita lessons -> implementation-playbooks.md playbook C"
+  },
+  {
+    "query": "KisBrushOp async dabs aren't showing up at canvas edges in wrap-around mode",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "wrap-around dirty rects and async flush -> architecture-map.md cross-cutting features"
+  },
+  {
+    "query": "what file should I read first to understand KisPaintOp::paintAt and KisResourcesSnapshot",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "source navigation and class contracts -> source-reading-map.md / core-classes-and-contracts.md"
+  },
+  {
+    "query": "our brush preset changes mid-stroke when the user picks a different resource from the docker",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "stroke-local KisResourcesSnapshot vs GUI resource lookups -> Core Krita invariants"
+  },
+  {
+    "query": "write a CMakeLists for our C++ game engine's Vulkan renderer",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: CMake/Vulkan build -> cmake-dev / vulkan-dev, not Krita brush engine"
+  },
+  {
+    "query": "how do I add a dark mode toggle to our Qt settings dialog",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: general Qt UI -> qt-dev, not stroke/paintop internals"
+  },
+  {
+    "query": "the stroke queue deadlocks when I cancel a LOD buddy stroke mid-paint — where do I look in krita source",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "LOD buddy strokes and scheduler lifecycle -> architecture-map.md / source-reading-map.md"
+  },
+  {
+    "query": "I need to register a new KisPaintOpFactory and wire linked brush resources for threaded painting",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "plugin registration and resource snapshotting -> implementation-playbooks.md playbook B"
+  },
+  {
+    "query": "explain how pixels flow from KisPaintInformation through dab compositing to the OpenGL canvas update",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "end-to-end raster stroke flow -> architecture-map.md"
+  },
+  {
+    "query": "fix this Python script that parses JSON config files for our CI pipeline",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: Python scripting -> python-coding, not Krita engine"
+  }
+]
