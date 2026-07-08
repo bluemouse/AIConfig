@@ -1,0 +1,62 @@
+[
+  {
+    "query": "create Vulkan swapchain from Android Surface ANativeWindow",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "setup surface device"
+  },
+  {
+    "query": "VK_KHR_android_surface and required WSI extensions on Android",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Android Vulkan extensions"
+  },
+  {
+    "query": "Android Vulkan Profile AVP 2022 baseline for image filter app",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "AVP selection"
+  },
+  {
+    "query": "AHardwareBuffer import into Vulkan texture for camera preview filter",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "camera media image interop"
+  },
+  {
+    "query": "wide color Display P3 swapchain format on Android Vulkan",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "wide color HDR"
+  },
+  {
+    "query": "Vulkan validation layers debug build Android NDK",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "performance validation release"
+  },
+  {
+    "query": "painting engine tile-based Vulkan renderer architecture on Android",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "renderer architecture sync"
+  },
+  {
+    "query": "VkImageMemoryBarrier2 layout transition general to shader read",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "generic Vulkan API -> vulkan-dev"
+  },
+  {
+    "query": "render graph pass scheduling and frames-in-flight design",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "architecture -> gpu-rendering-guide"
+  },
+  {
+    "query": "JNI RegisterNatives for native image processor",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "JNI -> android-ndk-dev"
+  }
+]

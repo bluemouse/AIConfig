@@ -1,0 +1,68 @@
+[
+  {
+    "query": "build a Jetpack Compose camera preview screen with CameraX and permission handling",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Compose + CameraX app-layer guidance"
+  },
+  {
+    "query": "design ViewModel and repository layers for a photo editing Android app",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "architecture and quality reference"
+  },
+  {
+    "query": "migrate my app to Android 16 edge-to-edge and predictive back navigation",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Android 16/API 36 behavior changes"
+  },
+  {
+    "query": "painting app with Compose Canvas vs native renderer — which approach",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "painting and image processing defaults"
+  },
+  {
+    "query": "Media3 playback lifecycle in Compose with DisposableEffect cleanup",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "ui-camera-media reference"
+  },
+  {
+    "query": "Android Photo Picker vs READ_MEDIA_IMAGES permission for gallery access",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "permissions and storage guidance"
+  },
+  {
+    "query": "memory budget for large image decode and bitmap caching in Android",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "performance-release-checklist"
+  },
+  {
+    "query": "fix R8 minification rules in release build.gradle.kts",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "AGP/R8 -> gradle-android-dev"
+  },
+  {
+    "query": "write JNI bridge for native image filter in C++",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "JNI/NDK -> android-ndk-dev"
+  },
+  {
+    "query": "Vulkan swapchain recreation on Android surface resize",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "Vulkan -> android-vulkan-dev"
+  },
+  {
+    "query": "Kotlin sealed class exhaustiveness in plain JVM module",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "plain Kotlin -> kotlin-coding"
+  }
+]

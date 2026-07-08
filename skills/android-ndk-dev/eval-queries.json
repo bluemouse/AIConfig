@@ -1,0 +1,62 @@
+[
+  {
+    "query": "add CMake externalNativeBuild to Android app module with JNI bridge",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "CMake Gradle JNI setup"
+  },
+  {
+    "query": "UnsatisfiedLinkError loading native library on arm64-v8a device",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "JNI and ABI packaging"
+  },
+  {
+    "query": "16 KB page size alignment for native .so libraries Play Store requirement",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "16 KB page-size compliance"
+  },
+  {
+    "query": "JNI direct ByteBuffer marshaling between Kotlin and C++ image filter",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct buffer boundary"
+  },
+  {
+    "query": "AddressSanitizer build for Android NDK native crash debugging",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "debugging-profiling-release"
+  },
+  {
+    "query": "native thread attach JNIEnv JavaVM callback to Kotlin",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "native memory threads reference"
+  },
+  {
+    "query": "CameraX ImageProxy YUV planes to native C++ processor",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "camera media image pipeline"
+  },
+  {
+    "query": "Jetpack Compose screen state hoisting for camera preview",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "app layer -> android-dev"
+  },
+  {
+    "query": "Vulkan swapchain OUT_OF_DATE handling on Android",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "Vulkan -> android-vulkan-dev"
+  },
+  {
+    "query": "com.android.application productFlavors in build.gradle.kts",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "AGP -> gradle-android-dev"
+  }
+]

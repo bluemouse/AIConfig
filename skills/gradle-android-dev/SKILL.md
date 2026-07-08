@@ -22,7 +22,7 @@ Always rely on [gradle-dev](../gradle-dev/SKILL.md) for shared Gradle concepts. 
 - General Gradle build engineering without Android/AGP context — [gradle-dev](../gradle-dev/SKILL.md)
 - Plain Kotlin/JVM test design, Kotest/MockK, or flaky-test triage — [kotlin-testing](../kotlin-testing/SKILL.md)
 - Kotlin language/API design in Android source — [kotlin-coding](../kotlin-coding/SKILL.md)
-- Android UI/framework architecture, Compose, or Espresso test **code** — platform skills such as `android-native-dev` when available; this skill maps Android Gradle test **tasks** only
+- Android UI/framework architecture, Compose, or Espresso test **code** — [android-dev](../android-dev/SKILL.md) for app-layer Kotlin/Compose; [android-ndk-dev](../android-ndk-dev/SKILL.md) and [android-vulkan-dev](../android-vulkan-dev/SKILL.md) for native/GPU test code boundaries. This skill maps Android Gradle test **tasks** only.
 
 ## Default workflow
 

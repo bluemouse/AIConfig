@@ -30,6 +30,7 @@ This skill is the concrete **Vulkan 1.3 implementation** layer: the `Vk*` object
 - High-level engine runtime or web/driver-managed 3D (WebGL, high-level frameworks)
 - GLSL shader-effect authoring (SDF, lighting, post) — out of scope here
 - CPU-side C++ allocator/ownership design (arenas, PMR, smart pointers) — use [`../cpp-memory-guide/SKILL.md`](../cpp-memory-guide/SKILL.md)
+- Android `Surface`/`ANativeWindow` WSI, AHardwareBuffer interop, Android Vulkan Profiles, wide color — use [`../android-vulkan-dev/SKILL.md`](../android-vulkan-dev/SKILL.md)
 
 ## Operating Principles
 
@@ -124,5 +125,6 @@ This skill is the concrete **Vulkan 1.3 implementation** layer: the `Vk*` object
 | API-agnostic renderer architecture (render graph, sync model, memory strategy) | [`../gpu-rendering-guide/SKILL.md`](../gpu-rendering-guide/SKILL.md) |
 | General C++20 style, Core Guidelines, build/verification | [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md) |
 | C++ CPU allocator principle behind the sub-allocator (arenas, pools, PMR) | [`../cpp-memory-guide/SKILL.md`](../cpp-memory-guide/SKILL.md) |
+| Android surface lifecycle, WSI, AHB interop, AVP, wide color | [`../android-vulkan-dev/SKILL.md`](../android-vulkan-dev/SKILL.md) |
 
 Relative paths above resolve from `.shared/skills/vulkan-dev/` when installed (or `skills/vulkan-dev/` in bootstrap layout). Wrappers point to the shared copy; read companions from the same `.shared/skills/<name>/` tree when available.

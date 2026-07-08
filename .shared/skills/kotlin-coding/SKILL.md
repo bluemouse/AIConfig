@@ -22,6 +22,7 @@ Do not provide Android, KMP, Kotlin/Native, Kotlin/JS/Web, Compose, Ktor, server
 - Kotlin test design, Kotest/MockK setup, property tests, Kover, or flaky-test triage — [kotlin-testing](../kotlin-testing/SKILL.md)
 - Gradle build engineering, version catalogs, task wiring, CI, or build/configuration cache — [gradle-dev](../gradle-dev/SKILL.md)
 - Android Gradle Plugin, AGP variants, lint, R8, or Android Studio sync — [gradle-android-dev](../gradle-android-dev/SKILL.md)
+- Android app architecture, Jetpack Compose, CameraX/Media3, permissions, or SDK framework code — [android-dev](../android-dev/SKILL.md)
 
 ## Default workflow
 
@@ -106,6 +107,7 @@ scripts/kotlin_project_check.sh --full
 - Use [kotlin-testing](../kotlin-testing/SKILL.md) for test design, framework choice, mocks/fakes, coroutine tests, property tests, coverage, and flaky-test debugging.
 - Use [gradle-dev](../gradle-dev/SKILL.md) for Gradle build engineering, version catalogs, task wiring, CI, and build/configuration cache.
 - Use [gradle-android-dev](../gradle-android-dev/SKILL.md) for Android Gradle Plugin and Android build topics.
+- Use [android-dev](../android-dev/SKILL.md) for Android app architecture, Compose, and SDK framework code.
 
 ## References
 

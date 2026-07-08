@@ -23,6 +23,7 @@ API-agnostic architecture for a low-level GPU renderer. The concepts hold across
 - GLSL shader effect authoring — use **shader-dev**
 - WebGL-only or driver-managed rendering with no explicit memory/sync ownership
 - CPU-side C++ allocator/ownership design (arenas, PMR, smart pointers) — use [cpp-memory-guide](../cpp-memory-guide/SKILL.md) (GPU device memory stays in [references/gpu-memory-strategy.md](references/gpu-memory-strategy.md))
+- Android Vulkan renderer (`Surface`, swapchain lifecycle, AHB interop, AVP) — use [android-vulkan-dev](../android-vulkan-dev/SKILL.md)
 
 ## Requirements
 
@@ -124,6 +125,7 @@ Paths below assume `<SKILL_ROOT>` is the directory containing this skill's `SKIL
 |------|------|
 | C++ CPU allocator (arenas, pools, ownership, PMR) | [../cpp-memory-guide/SKILL.md](../cpp-memory-guide/SKILL.md) |
 | Concrete Vulkan API (`Vk*`, `vkCmd*`, swapchain) | [../vulkan-dev/SKILL.md](../vulkan-dev/SKILL.md) |
+| Android Vulkan platform (surface, WSI, AHB, AVP) | [../android-vulkan-dev/SKILL.md](../android-vulkan-dev/SKILL.md) |
 | Slang shader authoring and SPIR-V/MSL emission | [../slang-dev/SKILL.md](../slang-dev/SKILL.md) |
 | OpenUSD Hydra 2.0 scene-index pipelines | [../usd-hydra2-dev/SKILL.md](../usd-hydra2-dev/SKILL.md) |
 | GLSL shader effects and techniques | **shader-dev** — `.shared/skills/shader-dev/SKILL.md` when installed |

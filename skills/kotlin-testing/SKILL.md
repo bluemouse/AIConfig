@@ -21,7 +21,8 @@ Do not provide Android, KMP, Kotlin/Native, Kotlin/JS/Web, browser, UI, device, 
 
 - Gradle build-file edits, version catalogs, task wiring, CI cache policy, or configuration cache — [gradle-dev](../gradle-dev/SKILL.md)
 - Production Kotlin language/API design without test changes — [kotlin-coding](../kotlin-coding/SKILL.md)
-- Android instrumentation/UI test code or AGP test task wiring — [gradle-android-dev](../gradle-android-dev/SKILL.md)
+- Android instrumentation/UI test code (Compose, Espresso, Robolectric patterns) — [android-dev](../android-dev/SKILL.md)
+- Android Gradle test **task** wiring (`testDebugUnitTest`, `connectedDebugAndroidTest`) — [gradle-android-dev](../gradle-android-dev/SKILL.md)
 
 ## Default workflow
 
@@ -114,6 +115,7 @@ When asked to fix failing tests, return:
 - Use [kotlin-coding](../kotlin-coding/SKILL.md) for production Kotlin language/API/design work.
 - Use [gradle-dev](../gradle-dev/SKILL.md) for Gradle build engineering, version catalogs, task wiring, CI, and build/configuration cache.
 - Use [gradle-android-dev](../gradle-android-dev/SKILL.md) for Android Gradle test task names and AGP-specific test wiring only.
+- Use [android-dev](../android-dev/SKILL.md) for Android instrumentation/UI test code and Compose testing patterns.
 
 ## References
 
