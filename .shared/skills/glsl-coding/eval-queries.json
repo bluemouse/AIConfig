@@ -1,0 +1,98 @@
+[
+  {
+    "query": "my fragment shader uses gl_FragColor and won't compile on OpenGL 4.6 core — what's the modern replacement",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: legacy identifier migration, explicit layout(location) out"
+  },
+  {
+    "query": "explain layout(set=1, binding=2) for a uniform buffer in Vulkan GLSL and what must match on the host",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Vulkan GLSL descriptor layout and pipeline-layout contract"
+  },
+  {
+    "query": "vertex and fragment shaders disagree on varying locations — how do I fix the interface mismatch",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "cross-stage interface matching, explicit locations"
+  },
+  {
+    "query": "should I put per-draw model matrix in push constants or a UBO in Vulkan GLSL",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "push constant vs uniform block frequency and packing guidance"
+  },
+  {
+    "query": "teach a junior what the vertex shader stage actually does and what it can see",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "teaching workflow, glsl-modern-primer stage mental model"
+  },
+  {
+    "query": "glslangValidator says noise is not valid when compiling to SPIR-V — what do I use instead",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "SPIR-V constraint from spec mappings: noise() removed"
+  },
+  {
+    "query": "help me build a ray-marched SDF scene with soft shadows in GLSL",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "negative: creative effect pipeline → shader-guide, not language/layout skill"
+  },
+  {
+    "query": "how do I compile a Slang ParameterBlock to SPIR-V and read descriptor offsets from reflection",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "negative: Slang authoring → slang-dev"
+  },
+  {
+    "query": "VkDescriptorSetLayout creation fails because shader bindings don't match — walk me through vkCreateDescriptorSetLayout",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "negative: Vk* host API → vulkan-dev; glsl-coding only owns shader-side declarations"
+  },
+  {
+    "query": "our render graph should derive barriers from pass read/write declarations — how should passes declare resources",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "negative: renderer architecture → gpu-rendering-guide"
+  },
+  {
+    "query": "review this compute shader for std430 SSBO alignment and workgroup size choices",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "compute stage review: layout, memory, workgroup sizing"
+  },
+  {
+    "query": "Vulkan fragment shader samples upside down compared to OpenGL — is origin_upper_left the issue",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "coordinate convention difference between OpenGL and Vulkan GLSL"
+  },
+  {
+    "query": "what specialization constant layout should I use for tile size decided at pipeline creation",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "layout(constant_id) specialization constants per SPIR-V mappings"
+  },
+  {
+    "query": "cosine palette and domain warping for organic blob SDF shapes",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "negative: procedural effect technique → shader-guide"
+  },
+  {
+    "query": "glGetUniformLocation returns -1 for my mat4 uniform in OpenGL — is the uniform optimized out or is my program wrong",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "OpenGL uniform linkage and static-use / program binding pitfalls"
+  },
+  {
+    "query": "write a minimal tessellation control and evaluation shader pair with explicit locations",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "tessellation stage skeletons and patch/barrier semantics"
+  }
+]

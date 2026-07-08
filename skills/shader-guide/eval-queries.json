@@ -1,0 +1,98 @@
+[
+  {
+    "query": "help me build a ray-marched SDF scene with soft shadows and ambient occlusion in a fragment shader",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: ray marching + SDF + shadow/AO creative effect pipeline"
+  },
+  {
+    "query": "I want procedural FBM terrain with an atmospheric sky and Gerstner waves at the shoreline",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "landscape recipe: terrain-rendering + procedural-noise + atmospheric-scattering + water-ocean"
+  },
+  {
+    "query": "how do I make a reaction-diffusion Turing pattern that evolves each frame on the GPU",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "cellular-automata + multipass-buffer simulation effect"
+  },
+  {
+    "query": "stylized 2D SDF shapes with cosine palette coloring and kaleidoscope symmetry",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "sdf-2d + color-palette + polar-uv-manipulation stylized art"
+  },
+  {
+    "query": "volume ray marching for clouds with procedural noise density",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "volumetric-rendering + procedural-noise natural phenomenon"
+  },
+  {
+    "query": "add bloom and ACES tone mapping after my shader renders a scene",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "post-processing stack for creative fragment effects"
+  },
+  {
+    "query": "voronoi cracked-earth pattern with color remapping",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "voronoi-cellular-noise + color-palette procedural pattern"
+  },
+  {
+    "query": "my ray march loop hits max steps everywhere — how do I debug the distance field",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "shader-debugging + sdf-tricks for creative effect triage"
+  },
+  {
+    "query": "what layout(set=1,binding=3) should I use for my Vulkan descriptor set",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "negative: Vulkan descriptor layout → glsl-coding / vulkan-dev, not effect authoring"
+  },
+  {
+    "query": "our renderer hand-writes barriers before every pass — how should the render graph derive ordering",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "negative: render graph architecture → gpu-rendering-guide"
+  },
+  {
+    "query": "how do I compile a Slang ParameterBlock to SPIR-V and reflect descriptor offsets",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "negative: Slang production shader pipeline → slang-dev"
+  },
+  {
+    "query": "explain layout(location=0) in/out varyings for a junior learning GLSL vertex-fragment interfaces",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "negative: GLSL language teaching → glsl-coding without creative effect context"
+  },
+  {
+    "query": "domain warp an SDF with FBM noise to get organic blob shapes",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "domain-warping + procedural-noise + sdf-3d organic forms"
+  },
+  {
+    "query": "ping-pong framebuffer fluid advection pass reading previous frame velocity",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "fluid-simulation + multipass-buffer GPU effect"
+  },
+  {
+    "query": "Monte Carlo path tracing with bounce limits in a fragment shader",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "path-tracing-gi creative lighting effect"
+  },
+  {
+    "query": "fix my OpenGL shader link error: undefined reference to varying texCoord",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "negative: GLSL interface/link debugging without effect technique → glsl-coding"
+  }
+]

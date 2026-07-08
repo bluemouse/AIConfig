@@ -41,7 +41,7 @@ Skills are discovered by frontmatter (`name`, `description`); an agent reads the
 Some skills cross-link as companions — install and edit them together when tasks span layers (install order does not matter):
 
 - **C++:** `cpp-coding`, `cpp-memory-guide`, `cpp-testing`, `cmake-dev`
-- **GPU rendering:** `gpu-rendering-guide`, `vulkan-dev`, `slang-dev`, `usd-hydra2-dev` (Hydra 2.0 scene-index work with `gpu-rendering-guide` for API-agnostic renderer architecture)
+- **GPU rendering:** `gpu-rendering-guide`, `vulkan-dev`, `slang-dev`, `shader-guide`, `glsl-coding`, `usd-hydra2-dev` (Hydra 2.0 scene-index work with `gpu-rendering-guide` for API-agnostic renderer architecture; creative GLSL effects with `shader-guide`, GLSL language/layout with `glsl-coding`)
 - **Painting engines:** `mypaint-engine-dev`, `krita-engine-dev` (with `gpu-rendering-guide` for standalone GPU renderer architecture beyond app-specific stroke paths)
 - **Qt desktop:** `qt-dev` (with `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` for non-Qt C++, engine Vulkan, and render-graph work)
 - **Python:** `python-coding` (CLI scripts and utilities; standalone — no required companions in this repo)

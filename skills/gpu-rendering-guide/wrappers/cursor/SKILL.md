@@ -41,7 +41,8 @@ If bootstrap source exists at `skills/gpu-rendering-guide/`, use that path for `
 |------|------|
 | C++ CPU allocator (arenas, pools, ownership, PMR) | `.shared/skills/cpp-memory-guide/SKILL.md` |
 | Concrete Vulkan API | `.shared/skills/vulkan-dev/SKILL.md` |
-| GLSL shader effects | `.shared/skills/shader-dev/SKILL.md` when installed |
+| GLSL language and SPIR-V layouts | `.shared/skills/glsl-coding/SKILL.md` when installed |
+| GLSL shader effects | `.shared/skills/shader-guide/SKILL.md` when installed |
 | Immediate-mode UI draw stream | `.shared/skills/imgui-guide/SKILL.md` when installed |
 
 Install companions with `install_portable_skill.py` when bootstrap sources exist under `skills/<name>/`.

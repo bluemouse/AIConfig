@@ -22,7 +22,8 @@ Prioritize correctness, reflection-validated layout, and measurable performance.
 
 - Raw `Vk*` pipeline/descriptor/swapchain setup — [`../vulkan-dev/SKILL.md`](../vulkan-dev/SKILL.md)
 - API-agnostic renderer architecture (render graph, binding model, frames-in-flight) — [`../gpu-rendering-guide/SKILL.md`](../gpu-rendering-guide/SKILL.md)
-- GLSL ShaderToy-style visual effects (SDF, ray marching, post) — out of scope
+- Raw GLSL source, layouts, and GLSL-to-SPIR-V compile issues — [`../glsl-coding/SKILL.md`](../glsl-coding/SKILL.md)
+- GLSL creative effect authoring (SDF, ray marching, procedural post) — use [`../shader-guide/SKILL.md`](../shader-guide/SKILL.md)
 - D3D12, CUDA, CPU, or WebGPU as primary targets — mention only for comparison or capability context
 - General C++20 style or CPU allocator design — [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md)
 
