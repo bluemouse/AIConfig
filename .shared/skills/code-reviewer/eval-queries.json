@@ -1,0 +1,86 @@
+[
+  {
+    "query": "review my staged diff for bugs and security issues",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: staged scope code review"
+  },
+  {
+    "query": "run a deep code review on my branch against main",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: deep effort plus commit range"
+  },
+  {
+    "query": "check this commit for regressions",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: single commit review"
+  },
+  {
+    "query": "review interactively — ask me scope and effort first",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: interactive mode trigger"
+  },
+  {
+    "query": "is this diff ready to merge",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: merge-readiness review phrasing"
+  },
+  {
+    "query": "post my review findings on GitHub with gh api",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: GitHub delivery -> github-guide"
+  },
+  {
+    "query": "write a PR description for this change",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: PR description craft -> pull-request-guide"
+  },
+  {
+    "query": "rebase my branch onto main",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: git workflow -> git-guide"
+  },
+  {
+    "query": "draft a conventional commit for staged changes",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: commit message drafting -> commit-message-writer"
+  },
+  {
+    "query": "open a PR with gh pr create",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: GitHub PR delivery -> github-guide"
+  },
+  {
+    "query": "review this PR and post the findings on GitHub",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: craft first via code-reviewer, github-guide is delivery-only"
+  },
+  {
+    "query": "look over my unstaged changes for security and design issues",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: unstaged scope with multi-lens review"
+  },
+  {
+    "query": "any issues in the last commit before I push",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: HEAD commit review phrasing"
+  },
+  {
+    "query": "implement the JWT refresh endpoint with pytest coverage",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: implementation task, not code review"
+  }
+]

@@ -24,16 +24,15 @@ content of your response — don't bury them under process narration.
 
 Every invocation resolves three independent inputs before any review work starts:
 
-- **Source** — *what* to diff. Required. If it can't be determined, always ask before
-  proceeding — guessing wrong here wastes the entire review.
+- **Source** — *what* to diff. Infer from context when possible; otherwise defaults to
+  **staged changes** (`git diff --staged`). Do not prompt unless the user explicitly
+  wants a guided, interactive setup (see **Interactive Mode** below).
 - **Scope** — *which* lenses to apply. Optional; defaults to all six scopes if
-  unspecified. Never blocks on its own — only a missing source forces a question.
+  unspecified.
 - **Effort** — *how deep* to dig. Optional; defaults to `standard` if unspecified.
 
-This resolution is intentionally asymmetric: getting the source wrong invalidates the
-whole review, so it's the one thing worth interrupting for. Scope and effort have safe,
-useful defaults, so don't ask about them unless the user explicitly wants a guided,
-interactive setup (see **Interactive Mode** below).
+All three axes have safe defaults. Don't ask about any of them unless the user
+explicitly wants a guided, interactive setup (see **Interactive Mode** below).
 
 ## Resolving The Source (Review Target)
 
@@ -65,7 +64,16 @@ needed — impacted call sites and dependents, tests added/changed/missing, and 
 change matches any intent implied by the current chat session.
 
 **Resolution rule**: if the source is unspecified and cannot be inferred from context,
-always ask before doing anything else. Present this menu:
+default to **staged changes** (`git diff --staged`) and proceed — state the assumed
+target in the **Review Target** section of the output. Do not interrupt to ask unless
+**Interactive Mode** is triggered.
+
+When the user names a target explicitly, or context makes one clear (e.g. "review my
+branch against main" → commit range; "look at the last commit" → HEAD), use that instead
+of the default.
+
+For **Interactive Mode** only, present this menu if the user hasn't already named a
+target:
 
 ```
 1. Staged changes
@@ -112,7 +120,7 @@ option. Its checklist is at the bottom of
 
 **Default**: if the user doesn't name a scope, run all six — this matches the always-run
 default that a full review implies. Do not prompt just because scope alone is
-unspecified; only a missing source forces a question.
+unspecified.
 
 ## Selecting Effort
 
@@ -154,8 +162,8 @@ Let's set this up:
 3. How deep? (basic / standard / deep — default: standard)
 ```
 
-Outside of interactive mode, only the source is gated behind a mandatory question; scope
-and effort default silently per the rules above.
+Outside of interactive mode, source, scope, and effort all default silently per the
+rules above.
 
 ## Context Rules
 
@@ -172,7 +180,8 @@ it does not replace direct inspection of the changes.
 
 ## Review Workflow
 
-1. **Resolve source** — per the rules above; ask if it can't be determined.
+1. **Resolve source** — per the rules above; default to staged changes if it can't be
+   determined.
 2. **Resolve scope & effort** — defaults, or the interactive menu if triggered.
 3. **Gather the diff and context** — run the resolved git command(s); read surrounding
    code, call sites, and existing tests as needed.
