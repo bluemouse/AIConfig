@@ -47,7 +47,7 @@ Some skills cross-link as companions — install and edit them together when tas
 - **Python:** `python-coding` (CLI scripts and utilities; standalone — no required companions in this repo)
 - **Kotlin/JVM:** `kotlin-coding`, `kotlin-testing`, `gradle-dev` (with `gradle-android-dev` for Android Gradle Plugin builds)
 - **Android:** `android-dev`, `android-ndk-dev`, `android-vulkan-dev` (with `kotlin-coding`, `kotlin-testing`, `gradle-android-dev` for language/tests/build; `vulkan-dev` and `gpu-rendering-guide` for generic Vulkan API and renderer architecture)
-- **Git workflow:** `commit-message-writer`, `git-guide`, `pull-request-guide` (with `code-review-plus` for review-only tasks)
+- **Git workflow:** `commit-message-writer`, `git-guide`, `pull-request-guide`, `code-review-plus`, `github-guide` (craft: commit messages → git mechanics → PR authoring → diff review; delivery on GitHub: `gh pr create`, post review, resolve threads)
 - **Meeting notes:** `minutes-writer` (with `pull-request-guide` and `commit-message-writer` for adjacent authoring tasks; does not create tickets or publish docs unless asked)
 
 See [README.md](README.md) for the full bootstrap skill table, cluster relationships, and install examples.

@@ -292,6 +292,32 @@ issues likely exist but weren't surfaced).
 
 Concise summary of overall risk, merge readiness, and the most important next actions.
 
+## Posting to GitHub
+
+This skill produces the **review content** — findings, severity, and merge verdict — as an
+in-chat report. It does not call `gh` or post to GitHub itself.
+
+When the user asks to **post the review on GitHub** (or "submit review comments on the PR",
+"REQUEST_CHANGES on GitHub", etc.) and the repo remote is GitHub:
+
+1. Finish this skill's review workflow and return the full Output Contract first — unless
+   findings from a prior run in the same session are already complete.
+2. Hand off to **[github-guide](../github-guide/SKILL.md)** for delivery. Read its
+   [review-post.md](../github-guide/references/review-post.md) reference and map each
+   finding per the **Handoff from code-review-plus** section in
+   [github-guide](../github-guide/SKILL.md) (full verdict table):
+   - `critical` → `**critical (blocking):**` prefix; `REQUEST_CHANGES` when reviewing
+     **someone else's** PR, `COMMENT` on **your own** PR (GitHub returns 422 otherwise)
+   - `important` → `**important:**`; `suggestion` → `**suggestion:**`
+   - file+line locations → inline `comments[]`; unanchored findings → summary body only
+3. Confirm auth and PR number (`gh auth status`, `gh pr view`) before posting.
+
+For a combined "review this PR and post on GitHub" request, run both skills in that order
+— do not skip the in-chat report unless the user explicitly asks to post silently.
+
+On non-GitHub hosts, say this handoff applies only to GitHub and suggest the host's own
+tooling when available.
+
 ## Output Rules
 
 - Findings must be the primary content of the response.
@@ -303,9 +329,17 @@ Concise summary of overall risk, merge readiness, and the most important next ac
   testing gaps.
 - Do not rewrite or patch the code unless the user explicitly asks for that in a
   follow-up request — this skill only proposes fixes, it doesn't apply them.
-- Posting findings as PR review comments is out of scope — this skill produces an
-  in-chat report only. If asked, say so unless your tool wrapper documents a supported
-  path.
+- Posting findings to GitHub is a separate delivery step — see **Posting to GitHub** above
+  and hand off to [github-guide](../github-guide/SKILL.md) when the user asks to submit
+  the review on a GitHub-hosted repo.
+
+## Companion Skills
+
+| Task | Path |
+| --- | --- |
+| Post review to GitHub (`gh api`, inline comments, resolve threads) | [../github-guide/SKILL.md](../github-guide/SKILL.md) |
+| PR description, sizing, self-review | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |
+| Commit, push, rebase, worktrees | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
 
 ## Resources
 

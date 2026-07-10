@@ -66,11 +66,17 @@ wrong, Why it matters, and Proposed fix, because the orchestrator only receives 
 text message.
 ```
 
-## PR review comments
+## Posting to GitHub
 
-Unlike Cursor's built-in `/code-review --comment` flag, this skill produces an in-chat
-report only. If the user asks to post findings as PR comments, say this skill does not
-support that — suggest they copy findings manually or use `/code-review --comment`.
+This skill produces the in-chat review report. When the user asks to post findings as PR
+review comments on a **GitHub** repo, finish the review first, then follow the shared
+skill's **Posting to GitHub** section and hand off to
+[github-guide](../../../.shared/skills/github-guide/SKILL.md) (or the installed
+`.cursor/skills/github-guide/SKILL.md` wrapper).
+
+On Cursor, you may also suggest the built-in `/code-review --comment` for a quick native
+post — but prefer `github-guide` when the user needs `REQUEST_CHANGES`, multi-comment
+batching, or thread resolution via `gh api`.
 
 ## Wrapper policy
 

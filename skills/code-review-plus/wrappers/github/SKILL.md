@@ -48,11 +48,13 @@ run scope passes **sequentially** in one session — Copilot has no subagent API
 Do not skip the verify or gap-sweep stages just because passes were sequential — they are
 what separate `deep` from `standard`.
 
-## PR review comments
+## Posting to GitHub
 
-This skill produces an in-chat report only. If the user asks to post findings as PR
-review comments, say this skill does not support that — suggest they copy findings into
-the PR manually.
+This skill produces the in-chat review report. When the user asks to post findings as PR
+review comments on a **GitHub** repo, finish the review first, then follow the shared
+skill's **Posting to GitHub** section and hand off to
+[github-guide](../../../.shared/skills/github-guide/SKILL.md) (or the installed
+`.github/skills/github-guide/SKILL.md` wrapper).
 
 ## Wrapper policy
 

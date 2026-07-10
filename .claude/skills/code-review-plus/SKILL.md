@@ -56,6 +56,14 @@ If you are on Claude.ai rather than Claude Code: no parallel subagents. At `deep
 run scope passes sequentially yourself, keeping notes separate per scope, then dedup,
 verify, and gap-sweep per the shared skill.
 
+## Posting to GitHub
+
+This skill produces the in-chat review report. When the user asks to post findings as PR
+review comments on a **GitHub** repo, finish the review first, then follow the shared
+skill's **Posting to GitHub** section and hand off to
+[github-guide](../../../.shared/skills/github-guide/SKILL.md) (or the installed
+`.claude/skills/github-guide/SKILL.md` wrapper).
+
 ## Wrapper policy
 
 - Edit cross-tool review behavior in `../../../.shared/skills/code-review-plus/`

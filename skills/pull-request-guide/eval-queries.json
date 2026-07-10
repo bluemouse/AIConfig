@@ -33,7 +33,7 @@
     "query": "review this pull request and tell me if the logic is correct",
     "should_trigger": false,
     "split": "train",
-    "rationale": "reviewer side, use code-review-guide"
+    "rationale": "reviewer side, use code-review-plus"
   },
   {
     "query": "rebase my branch onto main and resolve the conflicts",
