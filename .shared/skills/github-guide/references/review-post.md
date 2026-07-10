@@ -2,7 +2,7 @@
 
 ## Guideline
 
-Batch the summary body, every line-anchored inline comment, and the verdict into ONE `POST .../pulls/{n}/reviews` object — anchored to the PR HEAD sha. This posts the findings produced by **[code-review-plus](../../code-review-plus/SKILL.md)**; that skill owns the review content — this file maps severity to GitHub bodies and submits them.
+Batch the summary body, every line-anchored inline comment, and the verdict into ONE `POST .../pulls/{n}/reviews` object — anchored to the PR HEAD sha. This posts the findings produced by **[code-reviewer](../../code-reviewer/SKILL.md)**; that skill owns the review content — this file maps severity to GitHub bodies and submits them.
 
 ## Rationale
 
@@ -22,13 +22,13 @@ gh api --method POST repos/{owner}/{repo}/pulls/123/reviews \
   -f 'comments[][body]=**critical (blocking):** guard against null here.'
 ```
 
-## Map code-review-plus findings
+## Map code-reviewer findings
 
-After `code-review-plus` returns its Output Contract, translate each finding:
+After `code-reviewer` returns its Output Contract, translate each finding:
 
-1. **Inline comments** — one per finding that has `Location: path:line`. Set `path`, `line`, `side=RIGHT` (default), and compose `body` as `{severity prefix} {What's wrong}. {Why it matters}. {Proposed fix}` using the table in the parent skill's **Handoff from code-review-plus** section.
+1. **Inline comments** — one per finding that has `Location: path:line`. Set `path`, `line`, `side=RIGHT` (default), and compose `body` as `{severity prefix} {What's wrong}. {Why it matters}. {Proposed fix}` using the table in the parent skill's **Handoff from code-reviewer** section.
 2. **Summary `body`** — Overall Verdict, a Findings bullet list (with "(see inline)" for anchored items), and material open questions.
-3. **`event`** — per the parent skill's **Handoff from code-review-plus** verdict table: `REQUEST_CHANGES` for any `critical` finding on someone else's PR; `APPROVE` when merge-ready; default to `COMMENT` when posting actionable inline feedback; on your own PR use `COMMENT` only (never `APPROVE` or `REQUEST_CHANGES`).
+3. **`event`** — per the parent skill's **Handoff from code-reviewer** verdict table: `REQUEST_CHANGES` for any `critical` finding on someone else's PR; `APPROVE` when merge-ready; default to `COMMENT` when posting actionable inline feedback; on your own PR use `COMMENT` only (never `APPROVE` or `REQUEST_CHANGES`).
 
 Example mapping from one `critical` finding at `src/app.ts:42`:
 
@@ -87,4 +87,4 @@ Take them from the response `html_url`; never reconstruct anchors by hand:
 
 ### Related
 
-[../code-review-plus/SKILL.md](../../code-review-plus/SKILL.md), [review-resolve.md](./review-resolve.md), [auth.md](./auth.md)
+[../code-reviewer/SKILL.md](../../code-reviewer/SKILL.md), [review-resolve.md](./review-resolve.md), [auth.md](./auth.md)

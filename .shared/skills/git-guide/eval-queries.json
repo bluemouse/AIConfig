@@ -51,7 +51,7 @@
     "query": "review this diff and tell me if the logic is correct",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: code review, use code-review-plus"
+    "rationale": "near-miss: code review, use code-reviewer"
   },
   {
     "query": "stash my changes so i can switch branches",

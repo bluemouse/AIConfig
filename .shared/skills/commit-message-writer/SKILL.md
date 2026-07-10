@@ -30,7 +30,7 @@ explicitly requests a commit in the same or a follow-up message.
 ## When NOT to Use
 
 - Code review or diff analysis without a commit message — use
-  [../code-review-plus/SKILL.md](../code-review-plus/SKILL.md)
+  [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 - Auto-committing, staging, pushing, or worktree/merge/rebase workflows — use
   [../git-guide/SKILL.md](../git-guide/SKILL.md)
 - Splitting a branch into PRs — use [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md)

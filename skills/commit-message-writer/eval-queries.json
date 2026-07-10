@@ -81,7 +81,7 @@
     "query": "review this git diff for security issues before I merge",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: code review -> code-review-plus"
+    "rationale": "near-miss: code review -> code-reviewer"
   },
   {
     "query": "resolve merge conflict in main.cpp and commit the result",

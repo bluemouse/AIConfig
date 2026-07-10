@@ -10,7 +10,7 @@ paths to `references/` from that directory.
 
 How to realize a pull request and its review on GitHub from the shell. This is the host-**delivery** tier: it does not teach the craft, only how to land it on GitHub.
 
-- _What the review finds and how severe it is_ (findings, scopes, merge readiness) belongs to **[code-review-plus](../code-review-plus/SKILL.md)**.
+- _What the review finds and how severe it is_ (findings, scopes, merge readiness) belongs to **[code-reviewer](../code-reviewer/SKILL.md)**.
 - _What a good PR description says_ (sizing, how-tested, tradeoffs, self-review) belongs to **[pull-request-guide](../pull-request-guide/SKILL.md)**.
 - _The local-git push and rebase_ that get a clean branch onto the remote belong to **[git-guide](../git-guide/SKILL.md)**'s push reference.
 
@@ -22,12 +22,12 @@ This skill only takes those finished artifacts and posts them through `gh` / `gh
 - Posting a structured PR review with inline comments via `gh api … /pulls/{n}/reviews`
 - Resolving or replying on review threads (`resolveReviewThread`, GraphQL)
 - GitHub / `gh` auth setup, token scoping (classic vs fine-grained PAT), or GHES env vars
-- Mapping and posting findings from a prior `code-review-plus` run onto an open PR
+- Mapping and posting findings from a prior `code-reviewer` run onto an open PR
 
 ## When NOT to Use
 
 - **Reviewing a diff or judging severity / findings** — use
-  [code-review-plus](../code-review-plus/SKILL.md)
+  [code-reviewer](../code-reviewer/SKILL.md)
 - **Writing PR descriptions, sizing, or self-review narrative** — use
   [pull-request-guide](../pull-request-guide/SKILL.md)
 - **Commit, push, rebase, conflicts, or worktrees** — use
@@ -57,7 +57,7 @@ When this skill fires:
 - **Open a PR** — `gh pr create --base <target> --head <source> --title … --body-file -` auto-pushes the branch if it isn't on the remote and sets reviewers/labels/assignees in one call; the raw `POST /repos/{owner}/{repo}/pulls` does NOT push. See [references/create.md](references/create.md).
 - **Push / rebase first** — the clean branch is [git-guide](../git-guide/SKILL.md)'s job; this skill assumes the source branch builds on the latest target. See [git-guide push reference](../git-guide/references/push.md).
 - **Post a structured review** — `gh pr review` only carries the summary + verdict; batch the summary, every inline comment, and the verdict into one `gh api … /pulls/{n}/reviews` object. See [references/review-post.md](references/review-post.md).
-- **Write the review content with code-review-plus** — findings, severity, and merge verdict are `code-review-plus`'s; this skill maps them to GitHub bodies and submits them (see **Handoff from code-review-plus** below).
+- **Write the review content with code-reviewer** — findings, severity, and merge verdict are `code-reviewer`'s; this skill maps them to GitHub bodies and submits them (see **Handoff from code-reviewer** below).
 - **Write the PR body with pull-request-guide** — `gh pr create --body-file` takes a description authored per `pull-request-guide`.
 - **Resolve a thread** — GraphQL-only `resolveReviewThread` by thread node id (`PRRT_…`), matched by id never by line; list threads with `pullRequest.reviewThreads`. See [references/review-resolve.md](references/review-resolve.md).
 - **Scope the token per operation** — push needs Contents: write; open-PR / post-review need Pull requests: write; resolve also needs Contents: read & write on a fine-grained token. See [references/auth.md](references/auth.md).
@@ -76,20 +76,20 @@ When this skill fires:
 - GitHub Enterprise Server uses **GH_ENTERPRISE_TOKEN** / GITHUB_ENTERPRISE_TOKEN, not GH_TOKEN — mixing them is the classic "works on github.com, 401 on GHES".
 - Insufficient permission on a **private** repo returns 404 (not 403) — GitHub hides existence; read the `X-Accepted-GitHub-Permissions` header (`gh api -i <endpoint>`) for the exact required permission.
 
-## Handoff from code-review-plus
+## Handoff from code-reviewer
 
 When the user wants a PR reviewed **and posted on GitHub**, run the two skills in order:
 
-1. **[code-review-plus](../code-review-plus/SKILL.md)** — review the PR diff (typically `git diff <base>...<head>` or the open PR's changed files) and produce the in-chat Output Contract.
+1. **[code-reviewer](../code-reviewer/SKILL.md)** — review the PR diff (typically `git diff <base>...<head>` or the open PR's changed files) and produce the in-chat Output Contract.
 2. **This skill** — map those findings to one atomic `POST .../pulls/{n}/reviews` call. Read [references/review-post.md](references/review-post.md) for the full anchor model and examples.
 
-Do not re-review the diff here — only translate and post. If findings already exist in chat from a prior `code-review-plus` run, skip straight to mapping and posting.
+Do not re-review the diff here — only translate and post. If findings already exist in chat from a prior `code-reviewer` run, skip straight to mapping and posting.
 
 ### Severity → inline comment body
 
 Prefix each inline `comments[].body` with the finding's severity label:
 
-| `code-review-plus` severity | Inline prefix | Blocking? |
+| `code-reviewer` severity | Inline prefix | Blocking? |
 | --- | --- | --- |
 | `critical` | `**critical (blocking):**` | Yes — drives `REQUEST_CHANGES` (not on self-review; use `COMMENT`) |
 | `important` | `**important:**` | No |
@@ -116,7 +116,7 @@ Only findings with a resolvable **file + line** become inline comments. Findings
 
 ### Summary body
 
-Build the review-level `body` from the `code-review-plus` report:
+Build the review-level `body` from the `code-reviewer` report:
 
 - Lead with **Overall Verdict** (merge readiness, top risks).
 - Add a **Findings** bullet list: severity, `path:line`, one-line summary, and "(see inline)" when anchored inline.
@@ -166,6 +166,6 @@ Each reference is a trigger — read only the one matching the user's intent; do
 
 | Task | Path |
 | --- | --- |
-| Review diff / produce findings | [../code-review-plus/SKILL.md](../code-review-plus/SKILL.md) |
+| Review diff / produce findings | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
 | PR description, sizing, self-review | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |
 | Commit, push, rebase, worktrees | [../git-guide/SKILL.md](../git-guide/SKILL.md) |

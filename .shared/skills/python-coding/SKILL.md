@@ -32,7 +32,7 @@ or framework-heavy designs.
 - Notebooks, Jupyter, data science, or ML pipelines — use domain-specific skills
 - Pure planning with no Python implementation — planning and architecture docs without code changes
 - Cross-language debugging methodology without Python code changes — scientific debugging workflows outside Python source
-- Review-only diffs with no implementation ([code-review-plus](../code-review-plus/SKILL.md))
+- Review-only diffs with no implementation ([code-reviewer](../code-reviewer/SKILL.md))
 - GUI apps, game engines, or large multi-service architectures unless the task is still a small CLI utility
 
 ## Operating model

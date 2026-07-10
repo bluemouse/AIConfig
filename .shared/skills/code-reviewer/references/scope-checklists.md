@@ -1,6 +1,6 @@
 # Scope Checklists
 
-Detailed checklist per selectable scope, used by `code-review-plus`'s `SKILL.md`. Read
+Detailed checklist per selectable scope, used by `code-reviewer`'s `SKILL.md`. Read
 the section for a scope right before running that scope's pass. At `deep` effort, paste
 the relevant section's bullets verbatim into that scope's subagent prompt — the subagent
 does not have this file loaded.

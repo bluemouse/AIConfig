@@ -27,13 +27,13 @@ the task requires them.
 - **Drafting Conventional Commit messages** — use
   [commit-message-writer](../commit-message-writer/SKILL.md)
 - **Reviewer-side feedback or structured diff review** — use
-  [code-review-plus](../code-review-plus/SKILL.md)
+  [code-reviewer](../code-reviewer/SKILL.md)
 - **Host-specific PR creation** (`gh pr create`, `az repos pr create`, etc.) — use
   `github-guide` or host tooling when installed
 
 Host mechanics (creating the PR on the platform, linking work items) live in your git
 host's own tooling. Branch and commit work lives in `git-guide`; reviewer feedback lives
-in `code-review-plus`.
+in `code-reviewer`.
 
 ## Essentials
 
@@ -99,4 +99,4 @@ Part of the flag-perf set: !123, !124.
 |------|------|
 | Git commit, push, rebase, worktrees | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
 | Draft Conventional Commit messages | [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) |
-| Reviewer-side structured diff review | [../code-review-plus/SKILL.md](../code-review-plus/SKILL.md) |
+| Reviewer-side structured diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |

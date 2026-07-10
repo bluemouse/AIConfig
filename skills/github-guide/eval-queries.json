@@ -75,7 +75,7 @@
     "query": "how should I label review feedback as blocking vs nit and structure the summary",
     "should_trigger": false,
     "split": "validation",
-    "rationale": "near-miss: review content/findings craft, use code-review-plus"
+    "rationale": "near-miss: review content/findings craft, use code-reviewer"
   },
   {
     "query": "what should I write in the PR description and how do I split a large change",
@@ -87,7 +87,7 @@
     "query": "review this PR and post the findings on GitHub",
     "should_trigger": false,
     "split": "validation",
-    "rationale": "near-miss: craft first via code-review-plus, then github-guide delivery"
+    "rationale": "near-miss: craft first via code-reviewer, then github-guide delivery"
   },
   {
     "query": "post my review findings as a GitHub PR review with inline comments using gh api",

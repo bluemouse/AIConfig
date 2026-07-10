@@ -8,22 +8,22 @@ Use this guide when creating or reviewing skills that should work across GitHub 
 repo/
   .shared/
     skills/
-      code-review-plus/
+      code-reviewer/
         SKILL.md
         scripts/
         references/
         assets/
   .claude/
     skills/
-      code-review-plus/
+      code-reviewer/
         SKILL.md
   .cursor/
     skills/
-      code-review-plus/
+      code-reviewer/
         SKILL.md
   .github/
     skills/
-      code-review-plus/
+      code-reviewer/
         SKILL.md
 ```
 
@@ -33,7 +33,7 @@ repo/
 
 ```markdown
 ---
-name: code-review-plus
+name: code-reviewer
 description: Reviews code changes for correctness, safety, maintainability, and test coverage. Use after implementation or before opening a pull request.
 ---
 
@@ -71,17 +71,17 @@ Use the same `name` and `description` frontmatter in each wrapper unless the use
 
 ```markdown
 ---
-name: code-review-plus
+name: code-reviewer
 description: Reviews code changes for correctness, safety, maintainability, and test coverage. Use after implementation or before opening a pull request.
 ---
 
-# code-review-plus wrapper for Cursor
+# code-reviewer wrapper for Cursor
 
 This is a tool-specific wrapper. The canonical shared skill is:
 
-`../../../.shared/skills/code-review-plus/SKILL.md`
+`../../../.shared/skills/code-reviewer/SKILL.md`
 
-Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<SKILL_ROOT>` as `../../../.shared/skills/code-review-plus/` and resolve paths to `scripts/`, `references/`, and `assets/` from that shared skill directory.
+Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<SKILL_ROOT>` as `../../../.shared/skills/code-reviewer/` and resolve paths to `scripts/`, `references/`, and `assets/` from that shared skill directory.
 
 ## Cursor-specific information
 
@@ -91,7 +91,7 @@ Reload the Cursor window after adding or editing this skill so the agent redisco
 
 - Do not treat this wrapper as the full skill specification.
 - Prefer the shared skill whenever this wrapper and the shared skill conflict.
-- Keep edits to common behavior in `../../../.shared/skills/code-review-plus/`.
+- Keep edits to common behavior in `../../../.shared/skills/code-reviewer/`.
 - Keep only Cursor-specific information in this wrapper.
 ```
 
@@ -118,28 +118,28 @@ Scaffold a portable skill in a repository:
 ```bash
 python skills/skill-creator/scripts/create_skill.py \
   --root /path/to/repo \
-  --name code-review-plus \
+  --name code-reviewer \
   --overwrite
 ```
 
 This creates:
 
-- `.shared/skills/code-review-plus/` with `SKILL.md`, `scripts/`, `references/`, and `assets/`
-- `.cursor/skills/code-review-plus/SKILL.md`
-- `.claude/skills/code-review-plus/SKILL.md`
-- `.github/skills/code-review-plus/SKILL.md`
+- `.shared/skills/code-reviewer/` with `SKILL.md`, `scripts/`, `references/`, and `assets/`
+- `.cursor/skills/code-reviewer/SKILL.md`
+- `.claude/skills/code-reviewer/SKILL.md`
+- `.github/skills/code-reviewer/SKILL.md`
 
 Validate:
 
 ```bash
-python skills/skill-creator/scripts/quick_validate.py .shared/skills/code-review-plus
-python skills/skill-creator/scripts/quick_validate.py .cursor/skills/code-review-plus
+python skills/skill-creator/scripts/quick_validate.py .shared/skills/code-reviewer
+python skills/skill-creator/scripts/quick_validate.py .cursor/skills/code-reviewer
 ```
 
 Package the shared skill for distribution:
 
 ```bash
-python skills/skill-creator/scripts/package_skill.py .shared/skills/code-review-plus
+python skills/skill-creator/scripts/package_skill.py .shared/skills/code-reviewer
 ```
 
 ## Notes on portability

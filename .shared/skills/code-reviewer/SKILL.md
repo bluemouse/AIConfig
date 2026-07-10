@@ -1,9 +1,9 @@
 ---
-name: code-review-plus
+name: code-reviewer
 description: Review git diffs and commits — staged changes, unstaged changes, the full working tree, the last commit, a specific commit, or a commit range — and return a structured, findings-first report with proposed fixes. Use whenever the user asks to review code, review a diff, review staged/unstaged/working-tree changes, review a commit or commit range, do a code review, or asks for a security/performance/design/test review of recent changes — even if they don't say "code review" explicitly (e.g. "check this diff", "look over my changes", "any issues in this commit", "is this ready to merge", "review my branch against main"). Supports six selectable review scopes (design, correctness, maintainability, security, performance, tests), three effort levels (basic, standard, deep), and an interactive mode that asks up front what to review, in what scope, and how deep before starting — say "review interactively" or "guided review" to trigger it.
 ---
 
-# Code Review++
+# Code Reviewer
 
 Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve
 paths to `references/`, `scripts/`, and `assets/` from that directory.
@@ -304,7 +304,7 @@ When the user asks to **post the review on GitHub** (or "submit review comments 
    findings from a prior run in the same session are already complete.
 2. Hand off to **[github-guide](../github-guide/SKILL.md)** for delivery. Read its
    [review-post.md](../github-guide/references/review-post.md) reference and map each
-   finding per the **Handoff from code-review-plus** section in
+   finding per the **Handoff from code-reviewer** section in
    [github-guide](../github-guide/SKILL.md) (full verdict table):
    - `critical` → `**critical (blocking):**` prefix; `REQUEST_CHANGES` when reviewing
      **someone else's** PR, `COMMENT` on **your own** PR (GitHub returns 422 otherwise)

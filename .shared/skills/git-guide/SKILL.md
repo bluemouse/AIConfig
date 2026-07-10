@@ -28,7 +28,7 @@ requires them.
 - **Authoring PR descriptions, sizing, or self-review** — use
   [pull-request-guide](../pull-request-guide/SKILL.md)
 - **Structured diff review without git operations** — use
-  [code-review-plus](../code-review-plus/SKILL.md)
+  [code-reviewer](../code-reviewer/SKILL.md)
 - **Host-specific PR/MR creation** — use `github-guide` or `gitlab-guide` when installed
 
 ## Core Principles
@@ -91,5 +91,5 @@ requires them.
 |------|------|
 | Draft Conventional Commit messages from diffs | [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) |
 | PR description, sizing, self-review | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |
-| Structured diff review | [../code-review-plus/SKILL.md](../code-review-plus/SKILL.md) |
+| Structured diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
 | GitHub PR/review delivery (`gh pr create`, post review) | [../github-guide/SKILL.md](../github-guide/SKILL.md) |
