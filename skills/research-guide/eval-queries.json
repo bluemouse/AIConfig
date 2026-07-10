@@ -63,13 +63,13 @@
     "query": "create an implementation plan with subplans for the auth refactor",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: plan-document lifecycle -> plan-guide"
+    "rationale": "near-miss: implementation plan authoring -> plan-guide"
   },
   {
-    "query": "run plan-research on the codebase for hardening opportunities",
+    "query": "audit the implementation plan before we execute it",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: codebase plan-research -> plan-guide"
+    "rationale": "near-miss: plan audit -> plan-reviewer"
   },
   {
     "query": "write meeting minutes from this design review transcript",
@@ -84,15 +84,15 @@
     "rationale": "validation positive: explore options phrasing"
   },
   {
-    "query": "critique the plan document and generate subplans",
+    "query": "turn this research report into an implementation plan",
     "should_trigger": false,
     "split": "validation",
-    "rationale": "validation negative: plan lifecycle boundary"
+    "rationale": "validation negative: implementation planning -> plan-guide"
   },
   {
-    "query": "harden and align this module before we write the plan",
+    "query": "review this implementation plan for execution readiness",
     "should_trigger": false,
     "split": "validation",
-    "rationale": "validation negative: codebase hardening -> plan-guide"
+    "rationale": "validation negative: plan audit -> plan-reviewer"
   }
 ]

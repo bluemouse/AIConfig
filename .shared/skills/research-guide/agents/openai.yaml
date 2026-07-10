@@ -1,5 +1,0 @@
-interface:
-  display_name: "Research Guide"
-  short_description: "Interactive research and brainstorming before implementation planning."
-  icon: "🔎"
-  primary_color: "#2F5DA8"

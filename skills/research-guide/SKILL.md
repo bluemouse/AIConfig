@@ -1,6 +1,6 @@
 ---
 name: research-guide
-description: "Use when interactively researching, brainstorming, or hardening a feature idea, product concept, app design, technical spec, requirement set, architecture direction, or roadmap item before implementation planning — through iterative agreement gates until a finalized research report is ready. Triggers on prompts to research an idea, brainstorm requirements, explore alternatives, author a spec, clarify trade-offs, validate assumptions, define scope, or produce a research report — even when the user doesn't say 'research'. Does not trigger on plan-document lifecycle work (plan-create, subplans, plan-continue), codebase hardening audits, or code diff review."
+description: "Use when interactively researching, brainstorming, or hardening a feature idea, product concept, app design, technical spec, requirement set, architecture direction, or roadmap item before implementation planning — through iterative agreement gates until a finalized research report is ready. Triggers on prompts to research an idea, brainstorm requirements, explore alternatives, author a spec, clarify trade-offs, validate assumptions, define scope, or produce a research report — even when the user doesn't say 'research'. Does not trigger on implementation plan authoring, plan-reviewer audit, or code diff review."
 ---
 
 # Research Guide
@@ -23,12 +23,13 @@ Your job is to **research and agree a research report**, not to write implementa
 
 ## When NOT to Use
 
-- **Implementation planning or plan documents** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md) for plan-document lifecycle (`plan-research`, `plan-create`, subplans, `plan-continue`, codebase hardening audits)
+- **Implementation planning** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md) to turn a research report into an executable implementation plan
+- **Auditing an implementation plan** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
 - **Auditing a finished research report** — use [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
 - **Code or diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 - **Git, PR, or commit work** — use [../git-guide/SKILL.md](../git-guide/SKILL.md), [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md), or [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md)
 
-**Boundary vs plan-guide:** this skill runs conversational discovery with agreement gates and outputs a research report. **plan-guide** owns the plan-document lifecycle and codebase research operations after requirements are settled.
+**Boundary vs plan-guide:** this skill runs conversational discovery with agreement gates and outputs a research report. [../plan-guide/SKILL.md](../plan-guide/SKILL.md) authors implementation plans and runs the plan-reviewer repair loop after requirements are settled.
 
 ## Companion Skills
 

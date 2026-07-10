@@ -1,0 +1,98 @@
+[
+  {
+    "query": "review this implementation plan before execution",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: review plan before execution"
+  },
+  {
+    "query": "audit plan tasks for completeness and traceability",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: audit plan tasks"
+  },
+  {
+    "query": "produce a Guide handoff packet for plan-guide",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Guide handoff packet"
+  },
+  {
+    "query": "validate this work plan for execution readiness",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: validate execution readiness"
+  },
+  {
+    "query": "check whether this migration plan is safe to execute",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: migration plan safety check"
+  },
+  {
+    "query": "gate approval for the refactor plan — any blockers?",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: gate approval trigger"
+  },
+  {
+    "query": "critique the task decomposition and verification matrix",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: critique decomposition"
+  },
+  {
+    "query": "audit this bug-fix plan against the source requirements",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: source alignment audit"
+  },
+  {
+    "query": "review the research report for planning readiness",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: research report review -> research-reviewer"
+  },
+  {
+    "query": "write the implementation plan from this spec",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: write plan -> plan-guide"
+  },
+  {
+    "query": "brainstorm alternatives for the API redesign",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: brainstorming -> research-guide"
+  },
+  {
+    "query": "code review my staged diff",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: code diff review -> code-reviewer"
+  },
+  {
+    "query": "revise the plan using plan-reviewer findings",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan repair -> plan-guide"
+  },
+  {
+    "query": "is this technical plan ready for a developer to implement?",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: developer readiness check"
+  },
+  {
+    "query": "turn this research report into tasks with verification",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: plan authoring -> plan-guide"
+  },
+  {
+    "query": "challenge assumptions in the discovery report",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: research audit -> research-reviewer"
+  }
+]

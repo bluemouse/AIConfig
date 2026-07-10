@@ -1,6 +1,6 @@
 ---
 name: research-reviewer
-description: "Use when reviewing, auditing, or validating a research report produced by research-guide or similar discovery workflows before implementation planning — assessing completeness, consistency, evidence quality, risk awareness, and planning readiness across product, user, technical, security, data, compliance, operations, or domain-specific concerns. Triggers on prompts to review a research report, validate requirements, audit assumptions, challenge conclusions, find gaps, assign severity, produce required revisions, or decide whether a report is ready for an implementation plan — even when the user doesn't say 'research review'. Does not trigger on brainstorming new ideas, code diff review, or plan-document lifecycle work."
+description: "Use when reviewing, auditing, or validating a research report produced by research-guide or similar discovery workflows before implementation planning — assessing completeness, consistency, evidence quality, risk awareness, and planning readiness across product, user, technical, security, data, compliance, operations, or domain-specific concerns. Triggers on prompts to review a research report, validate requirements, audit assumptions, challenge conclusions, find gaps, assign severity, produce required revisions, or decide whether a report is ready for an implementation plan — even when the user doesn't say 'research review'. Does not trigger on brainstorming new ideas, implementation plan authoring, plan-reviewer audit, or code diff review."
 ---
 
 # Research Reviewer
@@ -25,12 +25,14 @@ Your job is to **audit a research report and produce a review-report**, not to w
 
 - **Brainstorming or authoring research** — use [../research-guide/SKILL.md](../research-guide/SKILL.md)
 - **Code or diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-- **Writing or critiquing implementation plans** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md) for plan-document lifecycle (`plan-create`, subplans, `plan-critique`, `plan-continue`)
+- **Writing implementation plans** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
+- **Auditing an implementation plan before execution** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
 
 ## Companion Skills
 
 - Primary input from [../research-guide/SKILL.md](../research-guide/SKILL.md)
 - After accept verdict: hand off to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) for implementation planning
+- After [../plan-guide/SKILL.md](../plan-guide/SKILL.md) produces a plan: optional audit via [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
 - For code changes during execution: [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 
 ## Operating posture

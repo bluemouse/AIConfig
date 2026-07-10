@@ -1,0 +1,98 @@
+[
+  {
+    "query": "turn this research report into an implementation plan",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: research report to implementation plan"
+  },
+  {
+    "query": "decompose this feature into tasks with verification steps",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: task decomposition with verification"
+  },
+  {
+    "query": "map these requirements to implementation tasks and acceptance checks",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: requirements mapping trigger"
+  },
+  {
+    "query": "revise the plan from plan-reviewer findings",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: repair loop from reviewer"
+  },
+  {
+    "query": "write an executable implementation plan for the auth refactor",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: write implementation plan"
+  },
+  {
+    "query": "create a task breakdown with traceability from the spec",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: task breakdown from spec"
+  },
+  {
+    "query": "define verification matrix and acceptance checks for this bug fix plan",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: verification matrix"
+  },
+  {
+    "query": "repair the implementation plan using this Guide handoff packet",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Guide handoff repair"
+  },
+  {
+    "query": "brainstorm requirements for the notification feature",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: brainstorming -> research-guide"
+  },
+  {
+    "query": "review this research report for gaps before we plan",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: research report audit -> research-reviewer"
+  },
+  {
+    "query": "audit the implementation plan before execution",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan audit -> plan-reviewer"
+  },
+  {
+    "query": "code review my PR for security issues",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: code diff review -> code-reviewer"
+  },
+  {
+    "query": "implement the auth middleware from this plan",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: code implementation out of scope"
+  },
+  {
+    "query": "turn the agreed spec into ordered tasks an engineer can execute",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: ordered executable tasks"
+  },
+  {
+    "query": "validate this implementation plan for execution readiness",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: plan validation -> plan-reviewer"
+  },
+  {
+    "query": "explore alternatives for the checkout redesign iteratively",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: interactive research -> research-guide"
+  }
+]

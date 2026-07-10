@@ -49,7 +49,7 @@ Some skills cross-link as companions — install and edit them together when tas
 - **Android:** `android-dev`, `android-ndk-dev`, `android-vulkan-dev` (with `kotlin-coding`, `kotlin-testing`, `gradle-android-dev` for language/tests/build; `vulkan-dev` and `gpu-rendering-guide` for generic Vulkan API and renderer architecture)
 - **Git workflow:** `commit-message-writer`, `git-guide`, `pull-request-guide`, `code-reviewer`, `github-guide` (craft: commit messages → git mechanics → PR authoring → diff review; delivery on GitHub: `gh pr create`, post review, resolve threads)
 - **Meeting notes:** `minutes-writer` (with `pull-request-guide` and `commit-message-writer` for adjacent authoring tasks; does not create tickets or publish docs unless asked)
-- **Research workflow:** `research-guide`, `research-reviewer`, `plan-guide` (interactive discovery and research report → readiness audit → plan-document lifecycle; defers code review to `code-reviewer`)
+- **Research workflow:** `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer` (interactive discovery and research report → readiness audit → implementation plan → plan audit → execution; defers code review to `code-reviewer`)
 
 See [README.md](README.md) for the full bootstrap skill table, cluster relationships, and install examples.
 
@@ -122,7 +122,7 @@ cd skills/skill-creator && python -m scripts.run_eval \
   --eval-set ../../skills/<name>/eval-queries.json
 ```
 
-Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer`, `commit-message-writer`, `code-reviewer`, `github-guide`, `research-guide`, and `research-reviewer` ship `eval-queries.json` for description trigger testing. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
+Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer`, `commit-message-writer`, `code-reviewer`, `github-guide`, `research-guide`, `research-reviewer`, `plan-guide`, and `plan-reviewer` ship `eval-queries.json` for description trigger testing. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
 
 See [README.md](README.md) for Cursor slash commands (`/create-bootstrap-skill`, `/create-tool-skill`, etc.) that wrap these workflows.
 
