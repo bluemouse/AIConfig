@@ -1,6 +1,6 @@
 ---
 name: plan-executor
-description: "Use when executing a provided implementation plan in the current git working tree \u2014 decomposing it into independent units, dispatching concurrent subagents through agent-runner when possible, integrating on the current branch without creating or switching branches unless explicitly requested, running verifications, and producing an implementation report. Triggers on prompts to implement a written plan, execute plan tasks, or run an approved implementation plan on the current branch. Does not trigger on plan authoring, plan-reviewer audit, generic parallel dispatch without a plan, or post-implementation diff review."
+description: "Use when executing a provided implementation plan in the current git working tree \u2014 decomposing it into independent units, dispatching concurrent subagents through agent-runner when possible, integrating on the current branch without creating or switching branches unless explicitly requested, running verifications, and producing an implementation report. Triggers on prompts to implement a written plan, execute plan tasks, or run an approved implementation plan on the current branch. Does not trigger on plan authoring, plan-reviewer audit, generic parallel dispatch without a plan, post-execution correctness audit (implementation-auditor), or post-implementation diff review."
 ---
 
 # plan-executor wrapper for Claude Code

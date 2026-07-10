@@ -1,0 +1,74 @@
+[
+  {
+    "query": "audit this implementation against the plan with fresh test evidence",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: implementation audit with test evidence"
+  },
+  {
+    "query": "check requirement coverage before claiming completion",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: requirement coverage audit before completion"
+  },
+  {
+    "query": "produce an audit report mapping tests to requirements",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: audit report with requirement mapping"
+  },
+  {
+    "query": "validate this bug fix with fresh test commands and requirement mapping",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: bug fix validation audit"
+  },
+  {
+    "query": "run an evidence-based correctness audit after plan execution",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: post-plan-execution audit"
+  },
+  {
+    "query": "review my staged diff for bugs",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: diff review -> code-reviewer"
+  },
+  {
+    "query": "execute this implementation plan on the current branch",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan execution -> plan-executor"
+  },
+  {
+    "query": "implement this feature test-first with red-green-refactor",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: TDD coaching -> test-driven-dev-guide"
+  },
+  {
+    "query": "audit this plan before execution",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: pre-execution plan audit -> plan-reviewer"
+  },
+  {
+    "query": "write an implementation plan from this spec",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan authoring -> plan-guide"
+  },
+  {
+    "query": "map each acceptance criterion to test evidence and report gaps",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: requirement-to-test mapping audit"
+  },
+  {
+    "query": "review my commit for security issues",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: security diff review -> code-reviewer"
+  }
+]

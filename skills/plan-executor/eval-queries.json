@@ -82,5 +82,11 @@
     "should_trigger": true,
     "split": "validation",
     "rationale": "validation positive: execute plan with review handoff in report"
+  },
+  {
+    "query": "audit requirement coverage with fresh test evidence after plan execution",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: post-execution audit -> implementation-auditor"
   }
 ]

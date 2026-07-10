@@ -1,0 +1,74 @@
+[
+  {
+    "query": "implement this feature test-first with red-green-refactor",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: TDD feature implementation"
+  },
+  {
+    "query": "write a failing regression test before fixing this bug",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: regression test before bug fix"
+  },
+  {
+    "query": "was this code written test-first?",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: test-first verification"
+  },
+  {
+    "query": "guide me through red-green-refactor for this behavior change",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: red-green-refactor coaching"
+  },
+  {
+    "query": "verify the test fails for the right reason before implementing",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: verify red state"
+  },
+  {
+    "query": "audit requirement coverage with test commands",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: correctness audit -> implementation-auditor"
+  },
+  {
+    "query": "review my commit for security issues",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: diff review -> code-reviewer"
+  },
+  {
+    "query": "execute plan tasks on the current branch",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan execution -> plan-executor"
+  },
+  {
+    "query": "configure GoogleTest and CMake test targets",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: C++ test setup -> cpp-testing"
+  },
+  {
+    "query": "set up kotlin.test and JUnit Platform for this module",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: Kotlin test setup -> kotlin-testing"
+  },
+  {
+    "query": "write the smallest production change to make this failing test pass",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: green phase minimal implementation"
+  },
+  {
+    "query": "produce an audit report mapping tests to requirements",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: post-implementation audit -> implementation-auditor"
+  }
+]

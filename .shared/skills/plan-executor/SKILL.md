@@ -1,6 +1,6 @@
 ---
 name: plan-executor
-description: "Use when executing a provided implementation plan in the current git working tree — decomposing it into independent units, dispatching concurrent subagents through agent-runner when possible, integrating on the current branch without creating or switching branches unless explicitly requested, running verifications, and producing an implementation report. Triggers on prompts to implement a written plan, execute plan tasks, or run an approved implementation plan on the current branch. Does not trigger on plan authoring, plan-reviewer audit, generic parallel dispatch without a plan, or post-implementation diff review."
+description: "Use when executing a provided implementation plan in the current git working tree — decomposing it into independent units, dispatching concurrent subagents through agent-runner when possible, integrating on the current branch without creating or switching branches unless explicitly requested, running verifications, and producing an implementation report. Triggers on prompts to implement a written plan, execute plan tasks, or run an approved implementation plan on the current branch. Does not trigger on plan authoring, plan-reviewer audit, generic parallel dispatch without a plan, post-execution correctness audit (implementation-auditor), or post-implementation diff review."
 ---
 
 # Plan Executor
@@ -27,6 +27,8 @@ Your job is to **execute an implementation plan and produce an implementation re
 - **Pre-execution plan audit** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
 - **Generic parallel dispatch without a plan** — use [../agent-runner/SKILL.md](../agent-runner/SKILL.md)
 - **Post-implementation diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
+- **Post-execution correctness audit** — use
+  [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md)
 - **Commit, push, branch, or worktree operations** — use [../git-guide/SKILL.md](../git-guide/SKILL.md)
 
 ## Overview
@@ -143,6 +145,9 @@ Use [references/implementation-report-template.md](references/implementation-rep
 - Verification commands and outcomes.
 - Known failures, skipped checks, assumptions, risks, and review focus areas.
 - Suggested next manual tests or code-review checkpoints.
+- When requirement-level proof is needed beyond the integration report, suggest
+  [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) before
+  [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md).
 
 Do not create a report file in the repository unless the user or plan asks for one. Otherwise, provide the report in the final response.
 
@@ -172,4 +177,5 @@ Stop and ask for help when:
 | Pre-execution plan audit | [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) |
 | Parallel subagent dispatch | [../agent-runner/SKILL.md](../agent-runner/SKILL.md) |
 | Post-implementation diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
+| Post-execution correctness audit | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |
 | Commit, push, branch, worktree | [../git-guide/SKILL.md](../git-guide/SKILL.md) |

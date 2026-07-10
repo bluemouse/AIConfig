@@ -346,6 +346,7 @@ tooling when available.
 
 | Task | Path |
 | --- | --- |
+| Pre-review correctness audit | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |
 | Post review to GitHub (`gh api`, inline comments, resolve threads) | [../github-guide/SKILL.md](../github-guide/SKILL.md) |
 | PR description, sizing, self-review | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |
 | Commit, push, rebase, worktrees | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
