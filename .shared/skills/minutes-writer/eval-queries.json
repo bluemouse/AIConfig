@@ -1,0 +1,128 @@
+[
+  {
+    "query": "draft minutes from this meeting transcript",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: draft minutes from transcript"
+  },
+  {
+    "query": "write up the architecture review as MoM",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: MoM for architecture review"
+  },
+  {
+    "query": "meeting recap for yesterday's incident follow-up",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: meeting recap trigger synonym"
+  },
+  {
+    "query": "format these notes into professional meeting minutes",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: format notes into minutes"
+  },
+  {
+    "query": "revise these minutes to separate decisions from discussion",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: revise minutes for fidelity"
+  },
+  {
+    "query": "validate these minutes against the transcript",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: validate minutes fidelity"
+  },
+  {
+    "query": "executive summary minutes for the roadmap review",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: executive output variant"
+  },
+  {
+    "query": "brief meeting summary from the standup transcript",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: brief summary variant"
+  },
+  {
+    "query": "decision-oriented minutes for the API design meeting",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: decision-oriented output variant"
+  },
+  {
+    "query": "write up the meeting from this Zoom transcript and agenda",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: write up the meeting trigger"
+  },
+  {
+    "query": "turn this engineering planning call into meeting minutes with action items",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: planning meeting minutes with actions"
+  },
+  {
+    "query": "clean up these rough design review notes into formal minutes",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: formalize rough notes"
+  },
+  {
+    "query": "create Jira tickets from these meeting notes",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: ticket creation, not minutes drafting"
+  },
+  {
+    "query": "publish meeting notes to Confluence",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: publish workflow, not minutes drafting"
+  },
+  {
+    "query": "write a PR description for this feature",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: PR authoring -> pull-request-guide"
+  },
+  {
+    "query": "draft a conventional commit for my staged changes",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: commit message -> commit-message-writer"
+  },
+  {
+    "query": "extract action items only — no full minutes",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: action-item-only extraction"
+  },
+  {
+    "query": "summarize this article about microservices architecture",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: non-meeting summarization"
+  },
+  {
+    "query": "produce MoM from the attached transcript for the platform sync",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: MoM variant phrasing"
+  },
+  {
+    "query": "turn this transcript into tasks in Jira for the team",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: Jira task creation boundary"
+  },
+  {
+    "query": "give me a short recap of what we decided in the retro",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: recap with decisions focus"
+  }
+]

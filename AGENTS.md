@@ -48,6 +48,7 @@ Some skills cross-link as companions — install and edit them together when tas
 - **Kotlin/JVM:** `kotlin-coding`, `kotlin-testing`, `gradle-dev` (with `gradle-android-dev` for Android Gradle Plugin builds)
 - **Android:** `android-dev`, `android-ndk-dev`, `android-vulkan-dev` (with `kotlin-coding`, `kotlin-testing`, `gradle-android-dev` for language/tests/build; `vulkan-dev` and `gpu-rendering-guide` for generic Vulkan API and renderer architecture)
 - **Git workflow:** `commit-message-writer`, `git-guide`, `pull-request-guide` (with `code-review-plus` for review-only tasks)
+- **Meeting notes:** `minutes-writer` (with `pull-request-guide` and `commit-message-writer` for adjacent authoring tasks; does not create tickets or publish docs unless asked)
 
 See [README.md](README.md) for the full bootstrap skill table, cluster relationships, and install examples.
 
@@ -120,7 +121,7 @@ cd skills/skill-creator && python -m scripts.run_eval \
   --eval-set ../../skills/<name>/eval-queries.json
 ```
 
-Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
+Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer` and `commit-message-writer` ship `eval-queries.json` for description trigger testing. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
 
 See [README.md](README.md) for Cursor slash commands (`/create-bootstrap-skill`, `/create-tool-skill`, etc.) that wrap these workflows.
 
