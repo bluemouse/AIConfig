@@ -1,0 +1,92 @@
+[
+  {
+    "query": "fix these three unrelated test failures in parallel",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: independent test failures with parallel dispatch"
+  },
+  {
+    "query": "delegate debugging across separate subsystems concurrently",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: concurrent delegation across subsystems"
+  },
+  {
+    "query": "run independent implementation tasks with disjoint file ownership",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: disjoint write scopes and parallel implementation"
+  },
+  {
+    "query": "dispatch agents to fix failures in three separate test files at once",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: explicit multi-agent dispatch"
+  },
+  {
+    "query": "split this work into parallel subagents and integrate the results",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: partition, dispatch, integrate workflow"
+  },
+  {
+    "query": "review my staged diff deeply for security and design issues",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: structured diff review -> code-reviewer"
+  },
+  {
+    "query": "run parallel code reviews on these three modules",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: parallel diff review -> code-reviewer"
+  },
+  {
+    "query": "run skill evals with baseline subagents",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: skill eval loop -> skill-creator"
+  },
+  {
+    "query": "research this feature and produce an implementation plan",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: research/plan workflow -> research-guide or research-plan-harness"
+  },
+  {
+    "query": "create a feature worktree for this branch",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: git worktree mechanics -> git-guide"
+  },
+  {
+    "query": "optimize this skill description with run_loop.py",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: skill improvement loop -> skill-creator"
+  },
+  {
+    "query": "audit my implementation plan before execution",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: plan audit -> plan-reviewer"
+  },
+  {
+    "query": "run read-only audits of src/ and tests/ directories in parallel",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: parallel read-only directory audits"
+  },
+  {
+    "query": "spawn subagents to investigate unrelated API and UI bugs together",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: unrelated domains delegated concurrently"
+  },
+  {
+    "query": "start the research planning harness for this new feature",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: fixed harness pipeline -> research-plan-harness"
+  }
+]
