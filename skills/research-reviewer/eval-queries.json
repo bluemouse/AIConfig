@@ -1,0 +1,98 @@
+[
+  {
+    "query": "review this research report for implementation readiness",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: review research report"
+  },
+  {
+    "query": "audit assumptions in the product spec before planning",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: audit assumptions"
+  },
+  {
+    "query": "is this requirements doc ready for implementation planning",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: planning readiness question"
+  },
+  {
+    "query": "find gaps in the research report and assign severity",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: gap finding with severity"
+  },
+  {
+    "query": "validate the evidence and risks in this discovery document",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: validate evidence and risks"
+  },
+  {
+    "query": "challenge the conclusions in our feature research report",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: challenge conclusions"
+  },
+  {
+    "query": "hard review of the architecture research — compliance-sensitive domain",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: aggressive audit posture"
+  },
+  {
+    "query": "decide whether we can proceed to plan from this research report",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: proceed-to-plan verdict"
+  },
+  {
+    "query": "brainstorm a new feature idea for the dashboard",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: brainstorming -> research-guide"
+  },
+  {
+    "query": "code review my PR for regressions",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: code review -> code-reviewer"
+  },
+  {
+    "query": "write the implementation plan with milestones and subplans",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan authoring -> plan-guide"
+  },
+  {
+    "query": "critique the plan document adversarially",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan critique -> plan-guide"
+  },
+  {
+    "query": "research alternatives for the payment integration interactively",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: interactive research -> research-guide"
+  },
+  {
+    "query": "audit this spec for planning blockers and weak evidence",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: audit spec phrasing"
+  },
+  {
+    "query": "run plan-validate on the approved parent plan",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: plan validation -> plan-guide"
+  },
+  {
+    "query": "produce required revisions list from the research review",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: required revisions output"
+  }
+]

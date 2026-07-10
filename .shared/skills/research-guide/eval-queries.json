@@ -1,0 +1,98 @@
+[
+  {
+    "query": "brainstorm requirements for the new notification feature",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: brainstorm requirements before planning"
+  },
+  {
+    "query": "research this feature idea and explore alternatives before we plan",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: research idea with alternatives"
+  },
+  {
+    "query": "help me clarify trade-offs for the architecture direction",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: clarify trade-offs trigger"
+  },
+  {
+    "query": "validate my assumptions about user adoption for this product concept",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: validate assumptions"
+  },
+  {
+    "query": "produce a research report we can hand to implementation planning",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: research report output"
+  },
+  {
+    "query": "author a spec for the mobile onboarding flow through interactive research",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: author spec via research"
+  },
+  {
+    "query": "define scope and non-goals for the API redesign idea",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: define scope trigger"
+  },
+  {
+    "query": "challenge this roadmap item — grill me on hidden assumptions",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: aggressive posture research"
+  },
+  {
+    "query": "review my staged diff for bugs and security issues",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: code diff review -> code-reviewer"
+  },
+  {
+    "query": "review this research report for gaps before we plan",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: audit finished report -> research-reviewer"
+  },
+  {
+    "query": "create an implementation plan with subplans for the auth refactor",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan-document lifecycle -> plan-guide"
+  },
+  {
+    "query": "run plan-research on the codebase for hardening opportunities",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: codebase plan-research -> plan-guide"
+  },
+  {
+    "query": "write meeting minutes from this design review transcript",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: meeting minutes -> minutes-writer"
+  },
+  {
+    "query": "let's explore options for the checkout redesign iteratively",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: explore options phrasing"
+  },
+  {
+    "query": "critique the plan document and generate subplans",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: plan lifecycle boundary"
+  },
+  {
+    "query": "harden and align this module before we write the plan",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: codebase hardening -> plan-guide"
+  }
+]

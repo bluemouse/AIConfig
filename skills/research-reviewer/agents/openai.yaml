@@ -1,0 +1,5 @@
+interface:
+  display_name: "Research Reviewer"
+  short_description: "Audit research reports before implementation planning."
+  icon: "📋"
+  primary_color: "#4A5568"
