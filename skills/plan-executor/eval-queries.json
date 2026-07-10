@@ -1,0 +1,86 @@
+[
+  {
+    "query": "execute this implementation plan on the current branch",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: execute plan on current branch"
+  },
+  {
+    "query": "implement the approved plan without creating a new branch",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: implement approved plan current branch"
+  },
+  {
+    "query": "run plan tasks and produce an implementation report",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: run plan tasks with report"
+  },
+  {
+    "query": "implement the written plan and verify the changes",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: implement written plan"
+  },
+  {
+    "query": "decompose this plan into units and execute them",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: decompose and execute plan"
+  },
+  {
+    "query": "write an implementation plan from this spec",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan authoring -> plan-guide"
+  },
+  {
+    "query": "review this implementation plan before execution",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: pre-execution audit -> plan-reviewer"
+  },
+  {
+    "query": "dispatch parallel subagents to fix unrelated test failures",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: generic parallel dispatch -> agent-runner"
+  },
+  {
+    "query": "review my staged diff for bugs",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: diff review -> code-reviewer"
+  },
+  {
+    "query": "create a feature worktree for this plan",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: git worktree -> git-guide"
+  },
+  {
+    "query": "audit plan tasks for execution readiness",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: plan audit -> plan-reviewer"
+  },
+  {
+    "query": "execute plan unit 2 and unit 4 in parallel on the current branch",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: parallel plan unit execution"
+  },
+  {
+    "query": "brainstorm requirements for the new feature",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: research -> research-guide"
+  },
+  {
+    "query": "run the implementation plan and hand off for code review",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: execute plan with review handoff in report"
+  }
+]

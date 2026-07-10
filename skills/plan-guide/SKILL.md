@@ -26,7 +26,7 @@ Your job is to **author and repair implementation plans**, not to implement code
 - **Interactive research or brainstorming** — use [../research-guide/SKILL.md](../research-guide/SKILL.md)
 - **Auditing a research report** — use [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
 - **Auditing an implementation plan before execution** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
-- **Code implementation** — out of scope for this skill
+- **Code implementation** — use [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
 - **Code or diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 
 **Boundary vs legacy template:** this bootstrap skill authors **implementation plans** and runs the plan-reviewer repair loop. It is not the legacy plan-document lifecycle template at repo root `references/skills/plan-guide/SKILL.md` (`plan-research`, `plan-create`, `plan-continue`).

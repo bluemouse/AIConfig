@@ -34,6 +34,7 @@ Your job is to **audit an implementation plan and produce a review-report with a
 - Compare against research-report context from [../research-guide/SKILL.md](../research-guide/SKILL.md)
 - Upstream research audit: [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
 - For code review during execution: [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
+- For plan execution after audit: [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
 
 Treat plans from [../plan-guide/SKILL.md](../plan-guide/SKILL.md) as the preferred input format. Compare the plan against the source research-report, spec, requirements, bug report, issue, or codebase context when available.
 

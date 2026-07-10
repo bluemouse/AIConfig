@@ -1,0 +1,3 @@
+interface:
+  display_name: "Plan Executor"
+  short_description: "Execute implementation plans with parallel units and review reports."
