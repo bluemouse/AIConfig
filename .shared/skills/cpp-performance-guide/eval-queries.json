@@ -1,0 +1,128 @@
+[
+  {
+    "query": "our particle update loop got 40% slower after the last merge — help me profile it and find the real bottleneck",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "C++ performance regression: baseline, profile, bottleneck evidence"
+  },
+  {
+    "query": "perf stat shows high cache misses in the renderer hot path — what should I measure next and how do I fix locality",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "cache miss investigation with perf counters"
+  },
+  {
+    "query": "write a Google Benchmark for this kernel and compare before/after JSON so we can gate regressions in CI",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Google Benchmark setup and JSON comparison"
+  },
+  {
+    "query": "clang isn't vectorizing our inner loop at -O3 — collect optimization remarks and tell me what to change",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "compiler remarks / vectorization codegen"
+  },
+  {
+    "query": "malloc shows up at the top of the flamegraph in our request handler — how do I reduce allocation churn",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "allocation hotspot from profiling"
+  },
+  {
+    "query": "the service scales badly past 8 threads — help me check false sharing, contention, and NUMA placement",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "parallel scaling / contention / NUMA"
+  },
+  {
+    "query": "frame time spiked in our game loop after the physics change — walk me through Tracy or perf to isolate the stall",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "frame-time profiling for native/game workload"
+  },
+  {
+    "query": "clean build takes 12 minutes now — profile compile time and suggest CMake changes that actually help",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "compile-time performance investigation"
+  },
+  {
+    "query": "p99 latency doubled on the matching engine after we switched containers — benchmark both paths with evidence",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "latency regression with before/after measurement"
+  },
+  {
+    "query": "run perf record on our binary and help me read the flamegraph to find where CPU time goes",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "perf record / flamegraph workflow"
+  },
+  {
+    "query": "review this diff for performance issues before we ship — flag hot-path smells even if we can't run benchmarks here",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "static performance review checklist"
+  },
+  {
+    "query": "our Qt app stutters resizing the viewport — profile the main thread and find what's blocking the event loop",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Qt/desktop main-thread stall profiling"
+  },
+  {
+    "query": "the exporter crashes on the second project but the first one works — where do I even start debugging",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: defect triage without perf target -> debugging-guide"
+  },
+  {
+    "query": "improve our landing page LCP and Core Web Vitals — the hero image is slow",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: web frontend performance, not C++ runtime"
+  },
+  {
+    "query": "add GoogleTest coverage for the parser edge cases we fixed last week",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: test authoring -> cpp-testing"
+  },
+  {
+    "query": "design a per-frame arena allocator so temporaries reset every tick instead of hitting the heap",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: memory/allocator design without measured perf investigation -> cpp-memory-guide"
+  },
+  {
+    "query": "optimize this Python data pipeline — pandas groupby is the bottleneck",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: non-C++ performance work"
+  },
+  {
+    "query": "run ASan and tell me which allocation site is leaking on shutdown",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: sanitizer leak hunt, not runtime perf optimization"
+  },
+  {
+    "query": "this regression appeared in the last 200 commits — bisect to find which change broke correctness",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: git bisect for correctness regression, not perf measurement"
+  },
+  {
+    "query": "after enabling OpenMP the sum is wrong on some inputs — measure scaling and validate numerical tolerance",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "parallel perf change needs scaling curve and correctness validation"
+  },
+  {
+    "query": "RelWithDebInfo vs Release — set up reproducible benchmark commands and a compact before/after report",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "release-like build + measurement contract + report template"
+  }
+]

@@ -40,7 +40,7 @@ Skills are discovered by frontmatter (`name`, `description`); an agent reads the
 
 Some skills cross-link as companions — install and edit them together when tasks span layers (install order does not matter):
 
-- **C++:** `cpp-coding`, `cpp-memory-guide`, `cpp-testing`, `cmake-dev`
+- **C++:** `cpp-coding`, `cpp-memory-guide`, `cpp-testing`, `cpp-performance-guide`, `cmake-dev`
 - **GPU rendering:** `gpu-rendering-guide`, `vulkan-dev`, `slang-dev`, `shader-guide`, `glsl-coding`, `usd-hydra2-dev` (Hydra 2.0 scene-index work with `gpu-rendering-guide` for API-agnostic renderer architecture; creative GLSL effects with `shader-guide`, GLSL language/layout with `glsl-coding`)
 - **Painting engines:** `mypaint-engine-dev`, `krita-engine-dev` (with `gpu-rendering-guide` for standalone GPU renderer architecture beyond app-specific stroke paths)
 - **Qt desktop:** `qt-dev` (with `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` for non-Qt C++, engine Vulkan, and render-graph work)
@@ -124,7 +124,7 @@ cd skills/skill-creator && python -m scripts.run_eval \
   --eval-set ../../skills/<name>/eval-queries.json
 ```
 
-Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer`, `commit-message-writer`, `code-reviewer`, `github-guide`, `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor`, `implementation-auditor`, `test-driven-dev-guide`, `debugging-guide`, and `agent-runner` ship `eval-queries.json` for description trigger testing. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
+Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer`, `commit-message-writer`, `code-reviewer`, `github-guide`, `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor`, `implementation-auditor`, `test-driven-dev-guide`, `debugging-guide`, `cpp-performance-guide`, and `agent-runner` ship `eval-queries.json` for description trigger testing. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
 
 See [README.md](README.md) for Cursor slash commands (`/create-bootstrap-skill`, `/create-tool-skill`, etc.) that wrap these workflows.
 
