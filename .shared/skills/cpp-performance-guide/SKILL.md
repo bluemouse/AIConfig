@@ -9,7 +9,26 @@ Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. 
 
 Optimize by evidence, not intuition. Preserve correctness first, then improve the bottleneck that measurements identify.
 
+Target **C++20** unless the project explicitly uses another standard. Load bundled references on demand — do not read every reference file unless the task needs it.
+
 For general C++20 style, see [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md). For allocation and ownership design, see [`../cpp-memory-guide/SKILL.md`](../cpp-memory-guide/SKILL.md). For regression tests and Google Benchmark targets, see [`../cpp-testing/SKILL.md`](../cpp-testing/SKILL.md). For root-cause diagnosis before optimizing, see [`../debugging-guide/SKILL.md`](../debugging-guide/SKILL.md).
+
+## Grounding
+
+C++ performance is usually limited by one of: doing too much work, touching too much memory, waiting on synchronization or I/O, or blocking the CPU/compiler from executing efficiently. Measure first, then fix the limiting factor — not the code that merely looks slow.
+
+| Limiting factor | Typical evidence | First reference |
+|---|---|---|
+| Excess work / algorithm | time grows faster than input; high instruction count | [cpp-language-patterns.md](references/cpp-language-patterns.md) |
+| Memory / locality | cache misses; Backend Bound → Memory | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md) |
+| Allocations | `malloc`/`new` in flamegraph or heap profile | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md), [cpp-memory-guide](../cpp-memory-guide/SKILL.md) |
+| Branch prediction | high branch-miss rate; Bad Speculation in top-down | [cpp-language-patterns.md](references/cpp-language-patterns.md#branch-prediction), [measurement-and-benchmarking.md](references/measurement-and-benchmarking.md) |
+| Contention / scaling | poor thread scaling; mutex/atomics in profile | [parallelism-and-contention.md](references/parallelism-and-contention.md) |
+| False sharing | poor scaling with little logical sharing; `perf c2c` hits | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md#false-sharing) |
+| I/O / syscalls | per-item open/close, logging, DB in profile | [cpp-language-patterns.md](references/cpp-language-patterns.md#io-and-syscalls) |
+| Codegen / vectorization | missed vectorization; low IPC on compute-bound loops | [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md) |
+
+**Experience routing:** new to performance work — follow the default workflow and grounding table; use the hotspot index and [review-checklist.md](references/review-checklist.md) for diff review. Experienced — start at measurement or compiler references when the bottleneck class is already known.
 
 ## When to Use
 
@@ -72,12 +91,7 @@ If benchmarks or profilers cannot run in the environment, state that plainly and
    - Use flamegraphs or profiler timelines to locate hotspots before editing.
    - For long-running or frame-based programs, consider Tracy zones and native timeline profilers.
 
-6. **Load only the relevant reference**
-   - CPU hotspot or benchmark setup: [measurement-and-benchmarking.md](references/measurement-and-benchmarking.md), [tool-recipes.md](references/tool-recipes.md)
-   - Missed inlining/vectorization/codegen or build tuning: [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md)
-   - Memory, cache, allocations, false sharing: [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md)
-   - Poor scaling, contention, atomics, NUMA, parallelism: [parallelism-and-contention.md](references/parallelism-and-contention.md)
-   - Source-level performance review: [cpp-language-patterns.md](references/cpp-language-patterns.md), [review-checklist.md](references/review-checklist.md)
+6. **Load only the relevant reference** — see [Reference routing](#reference-routing) or the [hotspot index](#hotspot-index).
 
 7. **Choose the least invasive fix in this order**
    1. remove unnecessary work
@@ -116,16 +130,23 @@ If benchmarks or profilers cannot run in the environment, state that plainly and
 - Do not use sanitizer timings as final performance numbers.
 - Do not replace readable code with clever code unless the measured gain matters.
 
-## Common hotspot playbook
+## Hotspot index
 
-- `malloc`, `operator new`, allocator locks in top frames: reserve/reuse storage, use views, hoist allocation, use arenas or `std::pmr`, or test allocator alternatives.
-- Cache misses or wide basic loops with low useful work: shrink working set, improve data layout, split hot/cold fields, use contiguous storage, consider SoA.
-- Branch misses: sort/group data, simplify conditions, remove unpredictable branches, use hints only after proof.
-- `std::map`, `std::list`, pointer-rich graphs in hot paths: consider flat/contiguous/hash structures.
-- Repeated sort/parse/query/recompute in loops: precompute, cache with clear invalidation, incrementally update, or batch.
-- `std::function`, virtual dispatch, `dynamic_cast`, `shared_ptr` churn in hot loops: use concrete types, templates, `function_ref`, variants, ownership simplification, or devirtualization.
-- Mutexes, atomics, shared counters: shard, use thread-local accumulation plus reduce, minimize critical sections, batch writes, and check false sharing.
-- I/O/logging/database per item: batch, buffer, stream once, hold handles, async only when it simplifies the measured bottleneck.
+Quick map from profile evidence to references — apply fixes only after measurement.
+
+| Evidence in profile | Likely cause | Read |
+|---|---|---|
+| `malloc` / `new` / allocator locks | allocation churn | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md) |
+| cache misses; memory-bound top-down | layout, working set, pointer chasing | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md) |
+| branch misses; Bad Speculation | unpredictable branches | [cpp-language-patterns.md](references/cpp-language-patterns.md#branch-prediction) |
+| `std::map` / `std::list` / scattered pointers | poor locality containers | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md), [cpp-language-patterns.md](references/cpp-language-patterns.md) |
+| repeated sort/parse/query in loops | excess work | [cpp-language-patterns.md](references/cpp-language-patterns.md) |
+| `std::function` / virtual / `shared_ptr` in inner loops | type erasure or dispatch | [cpp-language-patterns.md](references/cpp-language-patterns.md) |
+| mutex / atomics / poor thread scaling | lock contention | [parallelism-and-contention.md](references/parallelism-and-contention.md) |
+| false sharing; cache-line bouncing | adjacent mutable fields | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md#false-sharing) |
+| I/O / logging / DB per item | syscall or sync overhead | [cpp-language-patterns.md](references/cpp-language-patterns.md#io-and-syscalls) |
+| missed vectorization / unexpected calls in loops | codegen | [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md) |
+| large binary / slow startup | static init, link bloat, cold-start stalls | [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md#binary-size-and-startup) |
 
 ## Bundled scripts
 
@@ -140,13 +161,15 @@ Execute scripts with `bash`; do not inline their contents.
 | `scripts/collect-compiler-remarks.sh <clang|gcc> <out-dir> -- <compile-cmd>` | collect optimization/vectorization remarks for one compile command |
 | `scripts/compare_benchmark_json.py before.json after.json` | compare Google Benchmark JSON or simple metric JSON files; prefer `*_mean` aggregate rows when using repetitions (see [measurement-and-benchmarking.md](references/measurement-and-benchmarking.md)) |
 
-## References
+## Reference routing
 
-- [measurement-and-benchmarking.md](references/measurement-and-benchmarking.md): benchmark hygiene, perf counters, top-down triage, Google Benchmark, noise control.
-- [tool-recipes.md](references/tool-recipes.md): copy-paste profiler recipes for Linux, macOS/iOS, Windows, Android, Qt, game/rendering, and non-PMU environments.
-- [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md): CMake build modes, frame pointers, optimization remarks, assembly inspection, PGO, LTO, BOLT.
-- [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md): locality, SoA/AoS, `std::pmr`, allocator alternatives, false sharing, cache behavior.
-- [parallelism-and-contention.md](references/parallelism-and-contention.md): OpenMP, oneTBB, `std::execution`, atomics, locks, NUMA, race validation.
-- [cpp-language-patterns.md](references/cpp-language-patterns.md): C++ source-level patterns and anti-patterns.
-- [review-checklist.md](references/review-checklist.md): static review rubric when code cannot be run.
-- [performance-report.md](references/performance-report.md): final report template.
+| Task | Read |
+|---|---|
+| Baseline, benchmarks, perf counters, noise | [measurement-and-benchmarking.md](references/measurement-and-benchmarking.md) |
+| Platform profiler commands | [tool-recipes.md](references/tool-recipes.md) |
+| Build flags, remarks, vectorization, PGO/LTO/BOLT, binary size | [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md) |
+| Layout, SoA/AoS, allocations, false sharing | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md) |
+| Threads, atomics, NUMA, scaling | [parallelism-and-contention.md](references/parallelism-and-contention.md) |
+| Source smells and fixes | [cpp-language-patterns.md](references/cpp-language-patterns.md) |
+| Diff review without running code | [review-checklist.md](references/review-checklist.md) |
+| Final report | [performance-report.md](references/performance-report.md) |

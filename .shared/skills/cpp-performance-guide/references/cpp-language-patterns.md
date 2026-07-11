@@ -1,5 +1,7 @@
 # C++ Language Patterns and Anti-patterns
 
+Source-level performance review for hot paths. For container and layout tradeoffs, see [memory-layout-and-allocations.md](memory-layout-and-allocations.md). For thread scaling and atomics, see [parallelism-and-contention.md](parallelism-and-contention.md).
+
 ## Table of contents
 - Hot path review mindset
 - Algorithms and recomputation
@@ -7,8 +9,9 @@
 - Ownership and type erasure
 - Strings and formatting
 - Virtual dispatch and inlining
+- Branch prediction
 - Exceptions, RTTI, and logging
-- I/O
+- I/O and syscalls
 
 ## Hot path review mindset
 
@@ -35,7 +38,7 @@ Prefer:
 
 ## Containers and lookups
 
-Smells and fixes:
+Container choice and locality details: [memory-layout-and-allocations.md](memory-layout-and-allocations.md#containers). Source-level smells:
 
 - `std::map` in hot lookups -> consider `std::unordered_map` or a flat hash map if ordering is not needed.
 - `std::list` traversal -> prefer `std::vector`/`std::deque` unless splice/stable iterator requirements dominate.
@@ -91,6 +94,19 @@ Options when measured hot:
 - use `std::variant` + `std::visit` when alternatives are closed,
 - mark tiny helpers inline only when profiling/codegen shows call overhead or missed optimization.
 
+## Branch prediction
+
+Symptoms: high `branch-misses / branches` ratio, or Bad Speculation in top-down metrics.
+
+Prefer:
+
+- sort or group data so the hot path follows one predictable branch,
+- split hot/cold paths instead of one branchy loop,
+- replace data-dependent branches with table lookup or bitmask tests when measured,
+- hoist invariant checks out of inner loops.
+
+Use `[[likely]]` / `[[unlikely]]` or compiler branch hints only after branch-miss evidence — wrong hints can hurt.
+
 ## Exceptions, RTTI, and logging
 
 Do not remove error handling for speed unless invariants are enforced elsewhere. In hot paths, avoid:
@@ -100,7 +116,7 @@ Do not remove error handling for speed unless invariants are enforced elsewhere.
 - logging per iteration,
 - building expensive diagnostic strings unless enabled.
 
-## I/O
+## I/O and syscalls
 
 Smells:
 

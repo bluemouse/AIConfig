@@ -7,6 +7,7 @@
 - Assembly inspection
 - Vectorization and aliasing
 - LTO, PGO, AutoFDO, and BOLT
+- Binary size and startup
 - Compile-time performance
 
 ## Build configurations
@@ -130,6 +131,18 @@ cmake --build build-pgo-use -j
 ```
 
 BOLT can improve code layout for large binaries when profile data is representative. Use it late, with before/after evidence.
+
+## Binary size and startup
+
+When the metric is binary size, link time, or cold-start latency:
+
+- measure with `size`, `bloaty`, `llvm-size`, or load-time tracing — not only steady-state loops,
+- audit static initialization order and heavy global constructors,
+- defer optional subsystem registration until first use when safe,
+- prefer header-light interfaces; split rarely used features into separate targets,
+- use LTO/PGO for speed only after representative startup and size measurements.
+
+Do not strip symbols needed for production profiling without an alternative plan.
 
 ## Compile-time performance
 

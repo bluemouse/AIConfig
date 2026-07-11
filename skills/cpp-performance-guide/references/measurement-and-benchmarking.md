@@ -140,12 +140,12 @@ Ratios to inspect:
 
 Use the same workload and build. Report both absolute numbers and percentage delta.
 
-For Google Benchmark JSON:
+For Google Benchmark JSON (from `<SKILL_ROOT>/scripts/`):
 
 ```bash
 ./bench --benchmark_format=json --benchmark_repetitions=10 > before.json
 ./bench --benchmark_format=json --benchmark_repetitions=10 > after.json
-python scripts/compare_benchmark_json.py before.json after.json
+python <SKILL_ROOT>/scripts/compare_benchmark_json.py before.json after.json
 ```
 
 When using repetitions, prefer aggregate rows before comparing:
