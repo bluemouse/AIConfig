@@ -28,6 +28,10 @@ files unless the task requires them.
 - Enforcing consistent style across a C++ codebase
 - Choosing between language features (e.g. `enum` vs `enum class`, raw pointer vs smart
   pointer)
+- Diagnosing native C++ runtime failures while actively writing or reviewing C++ — when
+  reproduction is already established or the failure is confined to code under edit; use
+  [debugging-guide](../debugging-guide/SKILL.md) first if repro or root-cause workflow is
+  not established (see workflow step 4 and [native-debugging.md](references/native-debugging.md))
 
 ## When NOT to Use
 
@@ -35,8 +39,12 @@ files unless the task requires them.
 - Legacy C codebases that cannot adopt modern C++ features
 - Embedded/bare-metal contexts where specific guidelines conflict with hardware constraints
   — adapt selectively and document tradeoffs
-- Deep allocator/ownership design (arenas, PMR, caller-owned APIs, sanitizer memory debugging)
-  — use [cpp-memory-guide](../cpp-memory-guide/SKILL.md)
+- Allocator/ownership design, memory leaks, ownership conventions, or LSan/ASan
+  allocation-site diagnosis — use [cpp-memory-guide](../cpp-memory-guide/SKILL.md)
+- General defect investigation without a C++ coding focus — use
+  [debugging-guide](../debugging-guide/SKILL.md) first for repro, hypotheses, and minimal fix
+- Performance-only tuning without a correctness defect — use
+  [cpp-performance-guide](../cpp-performance-guide/SKILL.md)
 
 ## Cross-Cutting Principles
 
@@ -82,6 +90,20 @@ Run the quality bar in [build-and-verification.md](references/build-and-verifica
 - Static analysis and sanitizers pass when available
 - Tests cover new behavior and important edge paths
 
+### 4. Debug native failures (when applicable)
+
+When the task involves crashes, sanitizer output, undefined behavior, or debugger-only
+state while writing or reviewing C++:
+
+1. If reproduction or root-cause workflow is not established, start with
+   [debugging-guide](../debugging-guide/SKILL.md).
+2. Apply C++ toolchain techniques in
+   [native-debugging.md](references/native-debugging.md) — debug symbols, GDB/LLDB,
+   sanitizers, core dumps, and typical lifetime/UB root causes.
+3. After the fix is confirmed, add regression tests via
+   [cpp-testing](../cpp-testing/SKILL.md) and rerun sanitizer-enabled builds per
+   [build-and-verification.md](references/build-and-verification.md).
+
 ## Reference Routing
 
 | Task | Read |
@@ -92,7 +114,9 @@ Run the quality bar in [build-and-verification.md](references/build-and-verifica
 | Readability, code smells, tests, comments, KISS/DRY/YAGNI | [code-quality.md](references/code-quality.md) |
 | Performance rules (Per.*) | [core-guidelines.md](references/core-guidelines.md#performance-per) |
 | CMake, sanitizers, clang-tidy, coverage | [build-and-verification.md](references/build-and-verification.md) |
+| Native crashes, GDB/LLDB, sanitizers, UB, core dumps | [native-debugging.md](references/native-debugging.md) |
 | Allocators, ownership APIs, move semantics, memory bugs | [cpp-memory-guide](../cpp-memory-guide/SKILL.md) |
+| Structured debugging method, repro, bisect, debug report | [debugging-guide](../debugging-guide/SKILL.md) |
 
 When a change spans multiple areas, read **every matching row** — e.g. generic templates
 need both [core-guidelines.md](references/core-guidelines.md) (T.*) and
@@ -101,7 +125,8 @@ and modern-cpp20.
 
 ## Quick Completion Checklist
 
-Two-part gate — complete **both** before marking C++ work done:
+Complete **both** parts before marking ordinary C++ work done; add part 3 when a native
+crash or UB was fixed:
 
 1. **Core Guidelines** — rule checklist in
    [core-guidelines.md](references/core-guidelines.md#quick-reference-checklist)
@@ -109,8 +134,11 @@ Two-part gate — complete **both** before marking C++ work done:
 2. **Build and verification** — toolchain checklist in
    [build-and-verification.md](references/build-and-verification.md#verification-checklist)
    (C++20 build, warnings, static analysis, sanitizers, tests, coverage)
+3. **Native crash/UB fix (when applicable)** — verification checklist in
+   [native-debugging.md](references/native-debugging.md#verification)
 
-The Verify workflow step (above) is satisfied only when part 2 is complete.
+The Verify workflow step (above) is satisfied when part 2 is complete; include part 3 when
+workflow step 4 applied.
 
 ## Resources
 
@@ -121,7 +149,11 @@ The Verify workflow step (above) is satisfied only when part 2 is complete.
   testing notes; use [cpp-testing](../cpp-testing/SKILL.md) for test work)
 - [build-and-verification.md](references/build-and-verification.md) — Toolchain and quality
   gates
-- [cpp-memory-guide](../cpp-memory-guide/SKILL.md) — C++20 allocators, ownership, PMR, sanitizers (companion skill)
+- [native-debugging.md](references/native-debugging.md) — Native C++ crash/UB diagnosis with
+  debuggers and sanitizers (companion to debugging-guide)
+- [cpp-memory-guide](../cpp-memory-guide/SKILL.md) — C++20 allocators, ownership, PMR (companion skill)
 - [cpp-testing](../cpp-testing/SKILL.md) — C++20 GoogleTest/CMake testing (companion skill)
+- [debugging-guide](../debugging-guide/SKILL.md) — Evidence-driven root-cause debugging before patching (companion skill)
+- [cpp-performance-guide](../cpp-performance-guide/SKILL.md) — Measured C++ performance work when there is no correctness defect (companion skill)
 
 External reference: [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)

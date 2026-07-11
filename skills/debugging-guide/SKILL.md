@@ -1,6 +1,6 @@
 ---
 name: debugging-guide
-description: "Use when diagnosing a software defect before fixing it — reproducing or shrinking failures, tracing root cause with evidence, ranking hypotheses, choosing prevention-by-design tripwires, writing regression tests, applying a minimal fix, and verifying with commands. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, failing tests, build failures, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging and zero-on-shutdown leak checks, dangling-pointer crashes, buffer-overwrite classes, and integration failures — even when the user does not say debugging. Does not trigger on strict TDD coaching (test-driven-dev-guide), post-implementation audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), performance profiling without a defect, or greenfield ownership API design (cpp-memory-guide)."
+description: "Use when diagnosing a software defect before fixing it — reproducing or shrinking failures, tracing root cause with evidence, ranking hypotheses, choosing prevention-by-design tripwires, writing regression tests, applying a minimal fix, and verifying with commands. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, failing tests, build failures, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging and zero-on-shutdown leak checks, dangling-pointer crashes, buffer-overwrite classes, and integration failures — even when the user does not say debugging. Does not trigger on strict TDD coaching (test-driven-dev-guide), post-implementation audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), performance profiling without a defect, greenfield ownership API design (cpp-memory-guide), or native-only GDB/LLDB recipe steps while already editing C++ (cpp-coding native-debugging)."
 ---
 
 # Debugging Guide
@@ -100,6 +100,11 @@ For multi-component systems, instrument boundaries first: UI to app, app to serv
 
 Load `references/diagnostic-techniques.md` for tracing, differential comparison, bisecting, and bug-class-specific tactics.
 Load `references/instrumentation-and-checks.md` when adding assertions, sanitizers, or tripwires — instrument to surface the fault **earlier** or where it is cheaper to act on, not to restate what the crash already showed.
+
+When reproduction exists and the defect is in **native C++**, load GDB/LLDB, sanitizer,
+and core-dump steps from
+[../cpp-coding/references/native-debugging.md](../cpp-coding/references/native-debugging.md)
+(via [../cpp-coding/SKILL.md](../cpp-coding/SKILL.md)).
 
 ### 6. Compare against working patterns
 
@@ -225,3 +230,4 @@ Load these references on demand:
 - `references/diagnostic-techniques.md` — tracing, comparison, bisection, bug-class table
 - `references/gotchas.md` — common misreadings and anti-patterns
 - `references/debugging-report.md` — final report template
+- [../cpp-coding/references/native-debugging.md](../cpp-coding/references/native-debugging.md) — C++ GDB/LLDB, sanitizers, core dumps (after repro exists; via [cpp-coding](../cpp-coding/SKILL.md))

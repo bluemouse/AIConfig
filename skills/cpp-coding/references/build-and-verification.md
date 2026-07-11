@@ -94,6 +94,10 @@ ctest --output-on-failure
 
 All tests should pass clean — no reported leaks or undefined behavior.
 
+When debugging a crash or sanitizer failure during implementation, follow the diagnostic
+workflow in [native-debugging.md](native-debugging.md) and the root-cause method in
+[debugging-guide](../../debugging-guide/SKILL.md).
+
 ## Test coverage
 
 - Use **gcov/llvm-cov** or project CI coverage reporting.

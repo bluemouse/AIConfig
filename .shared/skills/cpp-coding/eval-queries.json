@@ -1,0 +1,122 @@
+[
+  {
+    "query": "review this C++ diff for Core Guidelines violations before I merge",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "C++ code review against Core Guidelines"
+  },
+  {
+    "query": "should this API return std::optional or throw for a missing file — what's idiomatic C++20",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "language alternative / error-handling style choice"
+  },
+  {
+    "query": "refactor this enum to enum class and update the switch statements",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "enum vs enum class idiomatic refactor"
+  },
+  {
+    "query": "implement a move constructor and move assignment for this resource-owning class",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Rule of 0/3/5 / move semantics while implementing"
+  },
+  {
+    "query": "replace this raw loop with ranges and a concept constraint on the template parameter",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "C++20 ranges + concepts idioms"
+  },
+  {
+    "query": "I'm editing Parser.cpp and GDB shows a dangling reference in this frame — what commands inspect the owner",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: GDB toolchain -> debugging-guide or native-debugging body, not description"
+  },
+  {
+    "query": "while refactoring MeshLoader.cpp what LLDB commands show whether this iterator is still valid",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: LLDB toolchain -> debugging-guide or cpp-coding body, not description"
+  },
+  {
+    "query": "add const correctness and std::span to this buffer API per Core Guidelines",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "RAII/borrow idioms and API design while coding"
+  },
+  {
+    "query": "this header pulls in half the project — how should I split includes and forward declarations",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "SF.* header conventions / compile hygiene"
+  },
+  {
+    "query": "write a small RAII wrapper for this Win32 HANDLE following our C++ style",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "RAII resource wrapper implementation"
+  },
+  {
+    "query": "ASan reports use-after-free in our parser — walk me through root cause before I change any code",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: systematic root-cause debugging -> debugging-guide"
+  },
+  {
+    "query": "this regression appeared in the last 200 commits — bisect to find which change broke the test",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: bisect/repro workflow -> debugging-guide"
+  },
+  {
+    "query": "ASan says leak at exit in our C++ tool — how do I track down who owns this allocation",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: leak/ownership diagnosis -> cpp-memory-guide"
+  },
+  {
+    "query": "design a per-frame arena allocator so temporaries reset every tick instead of hitting the heap",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: allocator/ownership design -> cpp-memory-guide"
+  },
+  {
+    "query": "profile cache misses in our particle update loop and suggest layout fixes",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: performance investigation -> cpp-performance-guide"
+  },
+  {
+    "query": "add GoogleTest coverage for the parser edge cases we fixed last week",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: test authoring -> cpp-testing"
+  },
+  {
+    "query": "our exporter crashes on the second project — where do I even start debugging",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: no repro / general defect triage -> debugging-guide"
+  },
+  {
+    "query": "configure FetchContent and cxx_std_20 on our library target in CMakeLists.txt",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: CMake build wiring -> cmake-dev"
+  },
+  {
+    "query": "I'm implementing TokenStream.cpp — use std::variant or a small class hierarchy for token types",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "C++20 design choice while implementing"
+  },
+  {
+    "query": "I have a repro in Geometry.cpp — what -g -O0 flags and ctest command should I use while fixing this segfault",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: debug-build flags -> native-debugging body, not description"
+  }
+]
