@@ -24,6 +24,7 @@
   - Scope modes (`--staged`, `--working`, `--commit`, `--range`) and context flags → `references/input-and-scope.md`
   - Git command tables per scope → `references/git-evidence.md`
   - Compact / Verbose / Suggested command output structure → `references/output-format.md`
+  - Cross-assistant style contract → `references/message-style-contract.md`
   - Draft-only safety (no commit unless asked) → `SKILL.md`, `references/failure-and-guardrails.md`
 
 ## git-guide commit reference (synthesis metadata)

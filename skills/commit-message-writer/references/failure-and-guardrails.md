@@ -25,13 +25,20 @@
 - Dump a raw file list as the commit message
 - Contradict session context or supplied plan/ticket intent when the diff is ambiguous
 - Auto-commit immediately — unlike some git automation flows, this skill always drafts first
+- Add AI or tool attribution footers — no `Co-authored-by`, `Signed-off-by`, or similar lines
+  naming Cursor, Claude, Copilot, ChatGPT, or any other assistant or automation client
+- Include non-change content — no assistant sign-offs, drafting disclaimers, or meta-commentary
+  in Compact, Verbose, or Suggested command bodies
+- Vary output shape by host — Cursor, Claude Code, and Copilot must return the same envelope
+- Open with "This commit …" or dump raw file lists — follow [message-style-contract.md](message-style-contract.md)
 
 ## Split commits
 
 When the diff contains unrelated changes (e.g. feature + unrelated formatting + docs typo):
 
-1. State that the diff mixes unrelated work
-2. Suggest logical split points (by concern or directory)
+1. Record in `Context used:` with `note=` that the diff mixes unrelated work
+2. Suggest logical split points (by concern or directory) in that note or the Verbose body
+   when drafting for one slice only
 3. Offer to draft separate Compact/Verbose pairs per split if the user wants
 
 Do not blend unrelated intent into one message to "get it done."

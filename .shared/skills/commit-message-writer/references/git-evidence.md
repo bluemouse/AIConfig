@@ -34,7 +34,8 @@ Run for all scopes except single `--commit` when redundant:
 | Command | Purpose |
 | --- | --- |
 | `git status --short` | Sanity check for unstaged/untracked noise |
-| `git log -5 --oneline` | Recent message style on this branch |
+| `git log -10 --oneline` | Recent message style on this branch |
+| `git log -10 --format=fuller` | Body layout (prose vs bullets), scopes, footers |
 | `git branch --show-current` | Branch name may hint at feature scope |
 
 ## Large diffs
@@ -45,16 +46,20 @@ For very large diffs, prioritize:
 2. Hunk headers and file-level intent
 3. Session/context over reading every line
 
-Note in output when the diff was sampled due to size.
+Record in `Context used:` with `note=` when the diff was sampled due to size.
 
 ## Repo style discovery
 
-Read `git log -5 --oneline` (and `--format=fuller` when types/scopes are unclear) to detect:
+Read `git log -10 --oneline` and `--format=fuller` when types/scopes or body layout are
+unclear to detect:
 
 - Whether the repo uses Conventional Commit type prefixes
-- Common scopes (e.g. `feat(api):`, `fix(renderer):`)
+- Common scopes (e.g. `feat(skills):`, `docs(workflow):`)
 - Subject casing and length habits
-- Whether bodies or footers are common
+- Whether bodies use prose paragraphs or bullet lists
+- Whether footers are common
 
-Follow the detected pattern when clear. Do not invent scopes or ticket ids the user did not
-supply.
+Follow the detected pattern when clear, subject to
+[message-style-contract.md](message-style-contract.md). Do not invent scopes or ticket ids
+the user did not supply. Do not import host-specific commit templates when they conflict
+with repo history.

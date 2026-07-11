@@ -1,5 +1,9 @@
 # Conventional Commits
 
+Apply [message-style-contract.md](message-style-contract.md) for cross-assistant subject/body
+layout, length limits, and forbidden patterns. This file covers type selection and format
+grammar.
+
 ## Contents
 
 - [Format](#format)
@@ -50,15 +54,19 @@ Default to `chore` only when no more specific type fits.
 
 ## Subject rules
 
+Follow [message-style-contract.md](message-style-contract.md) § Subject line. Summary:
+
 - Imperative mood ("add", "fix", "remove" — not "added" or "adds")
 - Lowercase after the type prefix (consistent with repo style when it differs)
-- ≤ ~72 characters
+- ≤ 72 characters
 - No trailing period
 - Optional scope in parentheses when it clarifies intent: `feat(auth): add jwt refresh`
 
 ## Body and footers
 
-**Verbose body only** — complete sentences covering:
+Follow [message-style-contract.md](message-style-contract.md) § Body structure. Summary:
+
+**Verbose body only** — prose paragraphs by default (1–3), covering:
 
 - Motivation (*why*)
 - Approach or notable design choice
@@ -66,9 +74,13 @@ Default to `chore` only when no more specific type fits.
 - Breaking changes (or defer to footer)
 - Tests run or recommended when relevant
 
-Reference ticket ids in the verbose body when provided (e.g. `Refs PROJ-456`).
+Use bullet lists only when the style contract allows (parallel deliverables, test
+evidence, migration steps). Reference ticket ids in the verbose body when provided
+(e.g. `Refs PROJ-456`).
 
-Footers follow git trailer convention when needed (`Reviewed-by:`, `Refs:`, etc.).
+Footers follow git trailer convention when needed (`BREAKING CHANGE:`, `Refs:`, etc.) and
+must stay change-related. Never add `Co-authored-by`, `Signed-off-by`, or other attribution
+for an AI client or coding assistant.
 
 ## Breaking changes
 
@@ -126,11 +138,12 @@ BREAKING CHANGE: v1 /users routes removed; clients must migrate to v2.
 
 ## Repo alignment
 
-When recent `git log` shows a clear local pattern:
+When recent `git log -10` on the current branch shows a clear local pattern:
 
 - Match presence or absence of type prefixes
 - Match scope conventions
-- Match body/footer habits
+- Match body layout (prose vs bullets) and footer habits
 
 When the repo does not use Conventional Commits consistently, still produce valid
 Conventional Commit drafts unless the user asks to match a non-standard legacy style exactly.
+Do not let host-specific habits override detected repo style or the style contract.
