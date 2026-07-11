@@ -32,6 +32,26 @@ def find_project_root() -> Path:
     return current
 
 
+def _matches_skill_trigger(
+    payload: str | dict,
+    skill_name: str,
+    clean_name: str,
+    tool_name: str,
+) -> bool:
+    """Return True when a Skill/Read tool call targets the eval skill."""
+    if tool_name == "Skill":
+        if isinstance(payload, dict):
+            skill = payload.get("skill", "")
+            return clean_name in skill or skill == skill_name
+        return clean_name in payload or f'"{skill_name}"' in payload
+    if tool_name == "Read":
+        if isinstance(payload, dict):
+            path = payload.get("file_path", "")
+            return clean_name in path or f"/{skill_name}/" in path or path.endswith(f"/{skill_name}")
+        return clean_name in payload or skill_name in payload
+    return False
+
+
 def run_single_query(
     query: str,
     skill_name: str,
@@ -84,6 +104,7 @@ def run_single_query(
 
         process = subprocess.Popen(
             cmd,
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             cwd=project_root,
@@ -93,16 +114,17 @@ def run_single_query(
         triggered = False
         start_time = time.time()
         buffer = ""
-        # Track state for stream event detection
         pending_tool_name = None
         accumulated_json = ""
 
         try:
             while time.time() - start_time < timeout:
                 if process.poll() is not None:
-                    remaining = process.stdout.read()
-                    if remaining:
-                        buffer += remaining.decode("utf-8", errors="replace")
+                    while True:
+                        extra = os.read(process.stdout.fileno(), 8192)
+                        if not extra:
+                            break
+                        buffer += extra.decode("utf-8", errors="replace")
                     break
 
                 ready, _, _ = select.select([process.stdout], [], [], 1.0)
@@ -119,13 +141,11 @@ def run_single_query(
                     line = line.strip()
                     if not line:
                         continue
-
                     try:
                         event = json.loads(line)
                     except json.JSONDecodeError:
                         continue
 
-                    # Early detection via stream events
                     if event.get("type") == "stream_event":
                         se = event.get("event", {})
                         se_type = se.get("type", "")
@@ -137,23 +157,41 @@ def run_single_query(
                                 if tool_name in ("Skill", "Read"):
                                     pending_tool_name = tool_name
                                     accumulated_json = ""
-                                else:
-                                    return False
 
                         elif se_type == "content_block_delta" and pending_tool_name:
                             delta = se.get("delta", {})
                             if delta.get("type") == "input_json_delta":
                                 accumulated_json += delta.get("partial_json", "")
-                                if clean_name in accumulated_json:
+                                if _matches_skill_trigger(
+                                    accumulated_json,
+                                    skill_name,
+                                    clean_name,
+                                    pending_tool_name,
+                                ):
                                     return True
 
-                        elif se_type in ("content_block_stop", "message_stop"):
-                            if pending_tool_name:
-                                return clean_name in accumulated_json
-                            if se_type == "message_stop":
-                                return False
+                        elif se_type == "content_block_stop":
+                            if pending_tool_name and _matches_skill_trigger(
+                                accumulated_json,
+                                skill_name,
+                                clean_name,
+                                pending_tool_name,
+                            ):
+                                return True
+                            pending_tool_name = None
+                            accumulated_json = ""
 
-                    # Fallback: full assistant message
+                        elif se_type == "message_stop":
+                            if pending_tool_name and _matches_skill_trigger(
+                                accumulated_json,
+                                skill_name,
+                                clean_name,
+                                pending_tool_name,
+                            ):
+                                return True
+                            pending_tool_name = None
+                            accumulated_json = ""
+
                     elif event.get("type") == "assistant":
                         message = event.get("message", {})
                         for content_item in message.get("content", []):
@@ -161,14 +199,10 @@ def run_single_query(
                                 continue
                             tool_name = content_item.get("name", "")
                             tool_input = content_item.get("input", {})
-                            if tool_name == "Skill" and clean_name in tool_input.get("skill", ""):
-                                triggered = True
-                            elif tool_name == "Read" and clean_name in tool_input.get("file_path", ""):
-                                triggered = True
-                            return triggered
-
-                    elif event.get("type") == "result":
-                        return triggered
+                            if tool_name in ("Skill", "Read") and _matches_skill_trigger(
+                                tool_input, skill_name, clean_name, tool_name
+                            ):
+                                return True
         finally:
             # Clean up process on any exit path (return, exception, timeout)
             if process.poll() is None:

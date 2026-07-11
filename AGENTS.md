@@ -50,7 +50,7 @@ Some skills cross-link as companions — install and edit them together when tas
 - **Git workflow:** `commit-message-writer`, `git-guide`, `pull-request-guide`, `code-reviewer`, `github-guide` (craft: commit messages → git mechanics → PR authoring → diff review; delivery on GitHub: `gh pr create`, post review, resolve threads)
 - **Meeting notes:** `minutes-writer` (with `pull-request-guide` and `commit-message-writer` for adjacent authoring tasks; does not create tickets or publish docs unless asked)
 - **Research workflow:** `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor` (interactive discovery and research report → readiness audit → implementation plan → plan audit → execution; defers correctness audit to `implementation-auditor` and diff review to `code-reviewer`)
-- **Implementation quality:** `test-driven-dev-guide`, `implementation-auditor`, `code-reviewer` (TDD during implementation → evidence-based correctness audit → structured diff review)
+- **Implementation quality:** `test-driven-dev-guide`, `debugging-guide`, `implementation-auditor`, `code-reviewer` (TDD during implementation → systematic root-cause debugging → evidence-based correctness audit → structured diff review)
 - **Parallel execution:** `agent-runner` (with `code-reviewer`, `git-guide`, `skill-creator`, and `research-plan-harness` as near-misses — defers diff review, git mechanics, skill evals, and harness orchestration respectively)
 
 See [README.md](README.md) for the full bootstrap skill table, cluster relationships, and install examples.
@@ -124,7 +124,7 @@ cd skills/skill-creator && python -m scripts.run_eval \
   --eval-set ../../skills/<name>/eval-queries.json
 ```
 
-Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer`, `commit-message-writer`, `code-reviewer`, `github-guide`, `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor`, `implementation-auditor`, `test-driven-dev-guide`, and `agent-runner` ship `eval-queries.json` for description trigger testing. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
+Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer`, `commit-message-writer`, `code-reviewer`, `github-guide`, `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor`, `implementation-auditor`, `test-driven-dev-guide`, `debugging-guide`, and `agent-runner` ship `eval-queries.json` for description trigger testing. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
 
 See [README.md](README.md) for Cursor slash commands (`/create-bootstrap-skill`, `/create-tool-skill`, etc.) that wrap these workflows.
 

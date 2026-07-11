@@ -1,0 +1,134 @@
+[
+  {
+    "query": "our exporter crashes opening the second project but the first one is fine — where do I even start",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "systematic debugging: establish a repro, step before the crash"
+  },
+  {
+    "query": "I'm debugging a read access violation and the pointer's memory is all 0xdddddddd — what does that mean and what should I check next",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "freed-memory fill pattern at a mapped address = use-after-free"
+  },
+  {
+    "query": "the packaging command crashes but it's slow — can you help me find a smaller way to trigger it",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "shrink to a minimal deterministic repro"
+  },
+  {
+    "query": "this regression appeared sometime in the last 200 commits, how do I find which change broke it",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "git bisect on a deterministic repro"
+  },
+  {
+    "query": "CI started failing on the auth integration test after yesterday's deploy — help me find the root cause",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "integration failure: reproduce, trace boundary, minimal fix"
+  },
+  {
+    "query": "the API returns 500 only when the request body has an empty array — walk me through debugging it",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "edge-case defect: repro, classify, regression test, minimal fix"
+  },
+  {
+    "query": "while debugging repeated buffer overwrites, what design would make the bad write fault instantly instead of corrupting neighbors",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "prevention-by-design for overwrite class during active debugging"
+  },
+  {
+    "query": "I keep editing things at random trying to make the crash go away and it's not working",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "flailing vs hypothesis-driven debugging"
+  },
+  {
+    "query": "this bug only shows up once an hour and I can't catch it in the debugger — how do I make it reproducible",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "intermittent: stress, determinism, circular log, record/replay"
+  },
+  {
+    "query": "while debugging this crash, where should I add assertions so a bad precondition fails at the call site instead of corrupting state later",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "assertions/invariants as tripwires during active debugging"
+  },
+  {
+    "query": "I'm debugging a memory leak — walk me through file/line allocation tags and a zero-on-shutdown counter to find it",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "allocation instrumentation for leak detection while chasing a bug"
+  },
+  {
+    "query": "I'm debugging dangling-pointer crashes on shutdown — is skipping destroy a real fix or just hiding the root cause",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "prevention reflection: never-free hides bugs; proper teardown exposes them"
+  },
+  {
+    "query": "guide me through strict red-green-refactor for this bug fix — write the failing test first",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: strict TDD coaching -> test-driven-dev-guide"
+  },
+  {
+    "query": "audit whether my bug fix actually satisfies all the acceptance criteria and run the verification commands",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: post-implementation correctness audit -> implementation-auditor"
+  },
+  {
+    "query": "review my diff for the crash fix before I merge",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: structured diff review -> code-reviewer"
+  },
+  {
+    "query": "execute step 3 of the implementation plan on this branch",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan execution -> plan-executor"
+  },
+  {
+    "query": "design the ownership convention for our parser buffers so there are no leaks or double-frees on error paths",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: lifetime/ownership design -> cpp-memory-guide, not finding a bug"
+  },
+  {
+    "query": "the update loop is too slow, profile it and tell me which cache misses to fix",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: profiling for speed without a defect"
+  },
+  {
+    "query": "I have a 100% repro of a use-after-free; walk me through forming a hypothesis and confirming it before I touch the code",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "hypothesis, one change, confirm before fixing"
+  },
+  {
+    "query": "make our engine tick a deterministic function of its inputs so the same input replays the same crash every time",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "designing for determinism + replay for intermittent bugs"
+  },
+  {
+    "query": "the build broke after upgrading webpack — narrow down which config change caused it",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "build/config regression: reproduce, bisect or differential compare"
+  },
+  {
+    "query": "convert this AoS particle array to SoA so the hot loop is cache friendly",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: data layout for performance without a defect"
+  }
+]
