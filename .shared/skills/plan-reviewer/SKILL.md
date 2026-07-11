@@ -124,7 +124,7 @@ Every material finding must include:
 - Recommended plan-guide action: revise plan, ask user, inspect codebase, research upstream, narrow scope, split plan, accept as execution risk, or re-review.
 - Owner suggestion when useful.
 
-Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `validated`, `conditionally validated`, `needs revision`, or `blocked`. Never validate when source requirements, core tasks, or critical verification are missing.
+Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `validated`, `conditionally validated`, `needs revision`, or `blocked`. Never validate when source requirements, core tasks, or critical verification are missing. When essential source context is absent or unverifiable, the verdict cannot be `validated` or `conditionally validated`; use `needs revision` or `blocked` and record the missing context as a blocker finding.
 
 ### 5. Produce the review-report
 
@@ -145,6 +145,8 @@ Review gate: choose one:
 ```
 
 If the verdict is blocked or needs revision, do not offer execution as ready. If the verdict is conditionally validated, make the accepted execution risks explicit before any execution handoff.
+
+Re-review sequence: after a `blocked` verdict, the repaired plan must be re-reviewed before execution. After `needs revision`, re-review the updated plan unless every finding was trivial and self-evidently fixed. After `conditionally validated`, re-review only if the conditions changed the plan's structure or risk; otherwise proceed with the accepted risks recorded.
 
 ## Quality bar
 

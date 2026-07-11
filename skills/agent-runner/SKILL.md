@@ -16,6 +16,7 @@ Delegate one independent problem domain per subagent. Give every subagent only t
 - Parallel implementation, debugging, or research across separate files or subsystems
 - Read-only repository audits split by directory or ownership
 - Multiple unrelated test failures, components, or research questions that can be checked independently
+- Dispatching independent execution units for [../plan-executor/SKILL.md](../plan-executor/SKILL.md) when the plan has parallelizable waves and the host supports concurrent subagents
 
 ## When NOT to Use
 

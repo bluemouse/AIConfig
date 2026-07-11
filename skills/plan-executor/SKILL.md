@@ -110,6 +110,8 @@ If concurrent subagents are unavailable, execute the units directly in dependenc
 
 ### 5. Implement and integrate
 
+Before implementing a unit, read the plan's test discipline for its tasks. For tasks marked `mandatory`, apply strict red-green-refactor by following [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md): write and observe a failing test before the production change. For `suggested`/`optional`/`n/a` tasks, follow the plan's verification steps without full TDD coaching. If the plan does not specify test discipline, default bug fixes and risky logic changes to test-first and note the assumption in the report.
+
 For direct or parent-led work:
 
 1. Mark the active unit as in progress.
@@ -131,8 +133,10 @@ After all units are integrated:
 - Run every verification command specified by the plan.
 - Run the most relevant existing test/build/lint/typecheck commands for touched areas.
 - Prefer targeted verification first, then broader verification when cost is reasonable.
-- If verification fails, debug within the plan's scope. Retry after fixes.
-- If verification remains blocked or failing, stop expanding scope and report the exact failure, likely cause, and next debugging step.
+- If verification fails, first retry within the plan's scope: re-read the failing task, correct an obvious execution mistake, and rerun.
+- If the failure is not an obvious execution mistake and its cause is unclear, switch to [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) to prove root cause, apply the minimal fix, then resume execution.
+- If the plan itself is unsafe, impossible, internally inconsistent, or contradicts the repository, stop and return to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) with an execution-blocker report instead of forcing the plan through.
+- If verification remains blocked or failing after these steps, stop expanding scope and report the exact failure, likely cause, and next debugging step.
 
 ### 7. Produce implementation report
 

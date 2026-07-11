@@ -301,6 +301,19 @@ issues likely exist but weren't surfaced).
 
 Concise summary of overall risk, merge readiness, and the most important next actions.
 
+## Routing Findings Back
+
+Findings that need code changes route back into the lifecycle by type. State the recommended
+route in the report so the fix does not stall:
+
+- Missing or incorrect behavior → implementation via [../plan-executor/SKILL.md](../plan-executor/SKILL.md) or a direct scoped edit.
+- Regression, crash, or unexplained failure → [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) to prove root cause before changing code.
+- Design or architecture mismatch → [../plan-guide/SKILL.md](../plan-guide/SKILL.md) to plan the repair.
+- Missing or weak tests → [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md), or [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) for requirement-level proof.
+
+After the author applies fixes, re-run this skill on the amended diff before delivery. This
+skill does not apply the fixes itself.
+
 ## Posting to GitHub
 
 This skill produces the **review content** — findings, severity, and merge verdict — as an

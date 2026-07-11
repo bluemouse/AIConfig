@@ -41,6 +41,19 @@ MCP workflows unless the user explicitly requests that in the same or a follow-u
 - **General narrative summary** with no metadata, decisions, or action sections — not this
   skill unless the user wants conventional minutes format
 
+## Companion Skills
+
+Minutes are a source of decisions, not the end of the trail. After producing minutes, the
+recorded decisions and action items can feed downstream lifecycle work (this skill only
+writes the record; it does not create tickets, publish docs, or send messages):
+
+| Downstream use | Skill |
+| --- | --- |
+| Product/scope decisions into a research report | [../research-guide/SKILL.md](../research-guide/SKILL.md) |
+| Constraints and action items into an implementation plan | [../plan-guide/SKILL.md](../plan-guide/SKILL.md) |
+| Commitments as verification criteria | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |
+| Delivery notes for a PR/MR | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |
+
 ## Purpose
 
 This skill applies to general technology-topic meetings, not only sync meetings. Example

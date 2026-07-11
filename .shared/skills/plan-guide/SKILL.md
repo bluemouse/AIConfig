@@ -129,6 +129,7 @@ Define the approach before tasks:
 - Interface contracts that later tasks rely on.
 - Data, migration, compatibility, and rollout strategy when applicable.
 - Testing and validation strategy.
+- Test discipline per task: decide whether each task should be built test-first. Mark it `mandatory` (write and observe a failing test before production code), `suggested`, `optional`, or `n/a` (for example non-code or config-only tasks). Default risky, logic-heavy, or bug-fix tasks to `mandatory` so the executor knows to apply strict red-green-refactor via [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md).
 
 If multiple approaches are viable and the choice materially affects cost, risk, UX, architecture, or compatibility, present the decision and ask before finalizing the plan.
 
@@ -144,6 +145,7 @@ For each task, include:
 - Interfaces consumed and produced, including names, signatures, schemas, events, flags, or contracts when known.
 - Implementation steps with concrete actions.
 - Tests or checks to add or run.
+- Test discipline: `mandatory` | `suggested` | `optional` | `n/a`.
 - Verification command, manual check, or expected observable result.
 - Acceptance criteria satisfied by the task.
 - Risks, rollback, or stop conditions when relevant.

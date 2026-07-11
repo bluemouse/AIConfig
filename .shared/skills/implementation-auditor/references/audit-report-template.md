@@ -58,3 +58,10 @@ Verdict rules:
 - `pass with risks`: core evidence passed, but limited environment, skipped tests, minor gaps, or low-confidence areas remain.
 - `blocked`: audit cannot reach a correctness conclusion because required validation could not run.
 - `fail`: implementation defect, failing relevant test, unmet requirement, or critical missing test evidence.
+
+Next-action routing by verdict (state in "Recommended next actions"):
+
+- `pass` -> code-reviewer for diff review, then delivery.
+- `pass with risks` -> code-reviewer with the listed risks as review focus.
+- `fail` -> plan-executor for missing behavior, or debugging-guide for a failure/regression; then re-audit.
+- `blocked` -> resolve the missing environment/dependency and re-audit; do not proceed to delivery.

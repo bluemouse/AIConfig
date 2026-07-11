@@ -182,6 +182,8 @@ The report must include:
 - tests/commands run with results;
 - residual risk and follow-up.
 
+After the fix is verified, hand off deliberately: for complex or shared-code fixes, route to [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) for requirement-level correctness proof, then to [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) for the fix diff before delivery. For a small, well-contained fix with a passing regression test, a direct [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) pass is enough. Record the chosen next step in the report's Next Step field.
+
 ## Gotchas
 
 Load `references/gotchas.md` for the full list. High-signal items:

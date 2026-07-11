@@ -75,6 +75,19 @@ Default to read-only auditing. Do not modify implementation files unless the use
    - Include commands run, results, coverage by requirement, defects, risks, and actionable next steps.
    - Make the verdict evidence-weighted: `pass`, `pass with risks`, `blocked`, or `fail`.
 
+## Boundary with code review
+
+This skill proves **whether requirements are met** with fresh evidence: requirement coverage, correctness, and test-to-behavior mapping. It does not judge diff quality, design, readability, or maintainability — that is [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md). When both are wanted, audit first (outcome proof), then review the diff.
+
+## Verdict routing
+
+End every audit by routing on the verdict so defects are not carried forward:
+
+- `pass` — proceed to [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) for diff review, then delivery.
+- `pass with risks` — proceed to [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md), and pass the named risks in as explicit review focus.
+- `fail` — return to implementation: [../plan-executor/SKILL.md](../plan-executor/SKILL.md) for missing or incomplete behavior, or [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) when a test fails or a regression appears and the cause is unclear. Re-audit after the fix.
+- `blocked` — do not report pass. Document exactly what could not run and why; resolve the environment, credentials, devices, or dependencies, then re-audit.
+
 ## Evidence rules
 
 - Fresh command output is required for any statement that tests, builds, linters, or type checks pass.

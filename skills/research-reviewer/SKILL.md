@@ -32,6 +32,7 @@ Your job is to **audit a research report and produce a review-report**, not to w
 
 - Primary input from [../research-guide/SKILL.md](../research-guide/SKILL.md)
 - After accept verdict: hand off to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) for implementation planning
+- On `needs revision` or `blocked` (or unaccepted `conditionally ready`): return to [../research-guide/SKILL.md](../research-guide/SKILL.md) with a handoff packet per [references/research-guide-handoff-contract.md](references/research-guide-handoff-contract.md)
 - After [../plan-guide/SKILL.md](../plan-guide/SKILL.md) produces a plan: optional audit via [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
 - For code changes during execution: [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 
@@ -127,6 +128,10 @@ Review gate: choose one:
 ```
 
 Do not continue past the gate until the user answers.
+
+### 6. Hand back to research-guide on non-ready verdicts
+
+For `needs revision` and `blocked` verdicts — and for `conditionally ready` when the conditions are not already accepted — produce a handoff packet using [references/research-guide-handoff-contract.md](references/research-guide-handoff-contract.md). The packet gives [../research-guide/SKILL.md](../research-guide/SKILL.md) a concrete, prioritized revision path back to planning readiness without re-reading the full review. State whether re-review is required before planning.
 
 ## Verdict rules
 

@@ -40,6 +40,9 @@ Use this exact compact structure at the end of a debugging task.
 
 ## Residual Risk and Follow-up
 - [unverified area, remaining risk, or none]
+
+## Next Step
+[recommended handoff: re-run plan-executor for remaining work | implementation-auditor for correctness proof on complex/shared fixes | code-reviewer for the fix diff | none needed]
 ```
 
 Report rules:

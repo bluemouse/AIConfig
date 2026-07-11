@@ -38,8 +38,11 @@ framework-specific test infrastructure.
 ### Plan execution
 
 During [../plan-executor/SKILL.md](../plan-executor/SKILL.md) runs, follow the plan's
-verification steps. Apply strict red-green-refactor per unit when the plan or user requires
-TDD; otherwise defer full TDD coaching to explicit user request.
+verification steps. Apply strict red-green-refactor per unit when the plan marks a task's
+test discipline as `mandatory`, or when the user requires TDD; otherwise defer full TDD
+coaching to explicit user request. In this subordinate mode, keep the red-green evidence in
+the execution notes and return control to the executor after each unit reaches green
+instead of driving the whole plan.
 
 ## Core rule
 

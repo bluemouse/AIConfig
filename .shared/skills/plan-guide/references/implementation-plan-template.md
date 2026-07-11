@@ -67,6 +67,7 @@ Use this structure for a plan that should be executable by a developer, engineer
   2. [Concrete action.]
 - Tests/checks:
   - [Exact test/check to add or run when known.]
+- Test discipline: mandatory | suggested | optional | n/a
 - Verification:
   - Command/check: `[exact command or manual check]`
   - Expected result: [observable result]
