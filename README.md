@@ -442,6 +442,10 @@ python tools/install-skills.py /path/to/other-project
 python tools/install-skills.py /path/to/other-project --skills cpp-coding vulkan-dev
 python tools/install-skills.py /path/to/other-project --agents skill-bootstrapper
 
+# Install workflow bundles (see tools/bundles.md and tools/bundles.json)
+python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow
+python tools/install-skills.py /path/to/other-project --bundles extended-dev-workflow --override
+
 # Replace existing installs in the target
 python tools/install-skills.py /path/to/other-project --skills cpp-coding --override
 
@@ -453,13 +457,14 @@ python tools/install-skills.py /path/to/other-project --agents skill-bootstrappe
 | Flag | Behavior |
 | --- | --- |
 | `TARGET` | Destination project root (required in CLI mode) |
-| `--skills NAME ...` | Skill slugs to install or uninstall (default: all discovered) |
+| `--bundles ID ...` | Bundle ids from [tools/bundles.json](tools/bundles.json); resolves to skills only (see [tools/bundles.md](tools/bundles.md)) |
+| `--skills NAME ...` | Skill slugs to install or uninstall (default: all discovered unless `--bundles` is set) |
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
 | `--override` | Replace existing paths in the target; without it, skip and report |
 | `--uninstall` | Remove the selected skills and agents from the target |
-| *(no arguments)* | Open a tkinter GUI with the same options |
+| *(no arguments)* | Open a tkinter GUI with skill/agent checkboxes and a **Bundles** panel for workflow batch selection |
 
-Without `--override`, existing paths in the target are skipped. The script refuses to install into this AIConfig repo itself. Reload each tool in the target project after install.
+Without `--override`, existing paths in the target are skipped. The script refuses to install into this AIConfig repo itself. Reload each tool in the target project after install. Bundle definitions live in [tools/bundles.md](tools/bundles.md) (human-readable) and [tools/bundles.json](tools/bundles.json) (machine-readable).
 
 **GUI:**
 

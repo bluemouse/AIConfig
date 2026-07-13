@@ -1,6 +1,6 @@
-# Development Workflow Skill Bundles
+# Development Workflow
 
-This guide defines the core and extended skill bundles for a classic software development workflow:
+This guide describes how to run a classic software development workflow using the skill bundles defined in [tools/bundles.md](tools/bundles.md):
 
 ```text
 research -> plan -> implement -> test/debug -> QA -> PR
@@ -10,55 +10,8 @@ It is intentionally stack-neutral. Add language, platform, framework, or domain-
 
 Use this guide when developing a software feature, new product requirement, bug report, product spec, or similarly scoped engineering change.
 
-## Bundle Summary
-
-### Core Bundle
-
-The core bundle is the minimum workflow set a team should rely on for ordinary feature, bug, and product-spec development. Not every skill fires on every task, but every skill covers a responsibility that appears regularly in healthy delivery work.
-
-| Skill | Primary role | Use when |
-| --- | --- | --- |
-| [research-guide](skills/research-guide/SKILL.md) | Discovery and requirements shaping | The idea, requirement, or product direction is still unclear |
-| [plan-guide](skills/plan-guide/SKILL.md) | Implementation planning | Requirements, specs, or bug context must become executable tasks |
-| [plan-executor](skills/plan-executor/SKILL.md) | Plan execution | An implementation plan is ready to run in the current working tree |
-| [test-driven-dev-guide](skills/test-driven-dev-guide/SKILL.md) | Test-first implementation | The change should be developed through red-green-refactor |
-| [debugging-guide](skills/debugging-guide/SKILL.md) | Root-cause debugging | There is a defect, failing test, build failure, crash, regression, or flaky behavior |
-| [implementation-auditor](skills/implementation-auditor/SKILL.md) | Requirement and evidence audit | Code changes need proof against acceptance criteria before claiming done |
-| [code-reviewer](skills/code-reviewer/SKILL.md) | Structured diff review | A diff, commit, branch, or PR needs reviewer-side risk analysis |
-| [commit-message-writer](skills/commit-message-writer/SKILL.md) | Commit narrative | A Conventional Commit message is needed from staged, unstaged, or committed changes |
-| [git-guide](skills/git-guide/SKILL.md) | Git mechanics | Staging, committing, pushing, rebasing, resolving conflicts, or worktrees are needed |
-| [pull-request-guide](skills/pull-request-guide/SKILL.md) | PR authoring | The change needs a clear review-ready PR/MR description, testing evidence, or split advice |
-
-### Extended Bundle
-
-The extended bundle adds quality gates, collaboration support, parallel execution, and host-specific delivery. Use it for high-risk work, cross-team work, complex plans, expensive changes, ambiguous research, or formal review processes.
-
-The extended bundle is the core bundle plus:
-
-| Skill | Primary role | Use when |
-| --- | --- | --- |
-| [research-reviewer](skills/research-reviewer/SKILL.md) | Research readiness audit | A research report must be validated before planning starts |
-| [plan-reviewer](skills/plan-reviewer/SKILL.md) | Plan readiness audit | A plan must be checked before execution by a developer or AI agent |
-| [agent-runner](skills/agent-runner/SKILL.md) | Parallel workstream coordination | Independent research, implementation, debug, or audit tasks can run concurrently |
-| [minutes-writer](skills/minutes-writer/SKILL.md) | Meeting and decision record | Engineering discussions need grounded minutes, decisions, and action items |
-| [github-guide](skills/github-guide/SKILL.md) | GitHub delivery | A GitHub PR or review must be created, updated, commented on, or resolved through `gh` / `gh api` |
-
-## Choosing Core vs Extended
-
-Use the core bundle for normal work when:
-
-- The requirement is small or moderately sized.
-- The system impact is local and reversible.
-- The team can review the result directly from the diff and tests.
-- The plan does not require formal sign-off.
-
-Use the extended bundle when:
-
-- The product direction is ambiguous or politically important.
-- The change affects security, privacy, compliance, data migration, public APIs, production reliability, or cross-team contracts.
-- The plan will be executed by someone who was not part of the original discussion.
-- Multiple independent subsystems, test failures, or research tracks can be split safely.
-- A formal PR process, GitHub inline review posting, or meeting record is required.
+Skill bundle membership and selection guidance live in [tools/bundles.md](tools/bundles.md).
+Machine-readable bundle configuration is in [tools/bundles.json](tools/bundles.json).
 
 ## Operational Workflow
 
@@ -468,12 +421,7 @@ Minimum habit:
 
 ## Practical Defaults
 
-- Default to the core bundle for ordinary feature and bug work.
-- Add [research-reviewer](skills/research-reviewer/SKILL.md) when research will drive expensive or irreversible work.
-- Add [plan-reviewer](skills/plan-reviewer/SKILL.md) when execution risk is higher than normal.
-- Add [agent-runner](skills/agent-runner/SKILL.md) only when workstreams are genuinely independent.
-- Add [minutes-writer](skills/minutes-writer/SKILL.md) when decisions are made in meetings or chat and need a durable record.
-- Add [github-guide](skills/github-guide/SKILL.md) only when the delivery host is GitHub and `gh` or `gh api` mechanics are part of the task.
+- Default to the core bundle for ordinary feature and bug work. See [tools/bundles.md](tools/bundles.md) for bundle membership and when to add extended-bundle skills.
 
 The safest default sequence for meaningful product work is:
 

@@ -8,6 +8,9 @@ Copies the shared-first layout (.shared/ plus tool wrappers under .cursor/, .cla
 Examples:
     python tools/install-skills.py /path/to/other-project
     python tools/install-skills.py /path/to/other-project --skills cpp-coding vulkan-dev
+    python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow
+    python tools/install-skills.py /path/to/other-project --bundles extended-dev-workflow --override
+    python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow --skills cpp-coding
     python tools/install-skills.py /path/to/other-project --agents skill-bootstrapper --uninstall
     python tools/install-skills.py   # GUI when no arguments
 """
@@ -15,15 +18,17 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
 import sys
 import tkinter as tk
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, ttk
+from typing import Literal
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -61,9 +66,41 @@ RELOAD_REMINDER = (
     "rediscovers the installed skills and agents."
 )
 
+BUNDLES_JSON = Path(__file__).resolve().parent / "bundles.json"
+
+BundleSelectionState = Literal["all", "none", "partial"]
+
 
 class InstallSkillsError(Exception):
     """Raised for user-correctable errors."""
+
+
+@dataclass(frozen=True)
+class SkillBundle:
+    id: str
+    name: str
+    description: str
+    skills: frozenset[str]
+
+
+def bundle_selection_state(
+    members: Sequence[str],
+    selected: Callable[[str], bool],
+) -> BundleSelectionState:
+    """Return whether all, none, or some bundle members are selected."""
+    if not members:
+        return "none"
+    selected_count = sum(1 for name in members if selected(name))
+    if selected_count == 0:
+        return "none"
+    if selected_count == len(members):
+        return "all"
+    return "partial"
+
+
+def bundle_toggle_target_state(current: BundleSelectionState) -> bool:
+    """Return the selection value to apply when a bundle toggle is clicked."""
+    return current != "all"
 
 
 @dataclass
@@ -92,6 +129,124 @@ def slugify_name(value: str) -> str:
     return normalized
 
 
+def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[SkillBundle]:
+    """Load workflow skill bundles from bundles.json."""
+    if not path.is_file():
+        raise InstallSkillsError(f"Bundle config not found: {path}")
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise InstallSkillsError(f"Invalid bundle config {path}: {exc}") from exc
+
+    if not isinstance(payload, dict):
+        raise InstallSkillsError(f"Invalid bundle config {path}: root must be an object.")
+
+    base_skills = _load_bundle_base_registry(path, payload.get("bases"))
+
+    raw_bundles = payload.get("bundles")
+    if not isinstance(raw_bundles, list) or not raw_bundles:
+        raise InstallSkillsError(f"Invalid bundle config {path}: 'bundles' must be a non-empty list.")
+
+    bundles: list[SkillBundle] = []
+    seen_ids: set[str] = set()
+    for index, entry in enumerate(raw_bundles):
+        if not isinstance(entry, dict):
+            raise InstallSkillsError(
+                f"Invalid bundle config {path}: bundles[{index}] must be an object."
+            )
+
+        missing = [key for key in ("id", "name", "description") if key not in entry]
+        if missing:
+            raise InstallSkillsError(
+                f"Invalid bundle config {path}: bundles[{index}] missing keys: {', '.join(missing)}"
+            )
+
+        bundle_id = slugify_name(str(entry["id"]))
+        if bundle_id in seen_ids:
+            raise InstallSkillsError(f"Invalid bundle config {path}: duplicate bundle id {bundle_id!r}.")
+        seen_ids.add(bundle_id)
+
+        resolved_skills = set()
+        raw_bundle_bases = entry.get("bases", [])
+        if raw_bundle_bases is None:
+            raw_bundle_bases = []
+        if not isinstance(raw_bundle_bases, list):
+            raise InstallSkillsError(
+                f"Invalid bundle config {path}: bundles[{index}] bases must be a list."
+            )
+        for base_id in raw_bundle_bases:
+            base_key = slugify_name(str(base_id))
+            if base_key not in base_skills:
+                raise InstallSkillsError(
+                    f"Invalid bundle config {path}: bundles[{index}] references unknown base {base_key!r}."
+                )
+            resolved_skills.update(base_skills[base_key])
+
+        if "skills" in entry:
+            raw_skills = entry["skills"]
+            if not isinstance(raw_skills, list):
+                raise InstallSkillsError(
+                    f"Invalid bundle config {path}: bundles[{index}] skills must be a list."
+                )
+            resolved_skills.update(slugify_name(str(skill)) for skill in raw_skills)
+
+        if not raw_bundle_bases and "skills" not in entry:
+            raise InstallSkillsError(
+                f"Invalid bundle config {path}: bundles[{index}] must define bases and/or skills."
+            )
+        if not resolved_skills:
+            raise InstallSkillsError(
+                f"Invalid bundle config {path}: bundles[{index}] resolved to an empty skill set."
+            )
+
+        bundles.append(
+            SkillBundle(
+                id=bundle_id,
+                name=str(entry["name"]).strip(),
+                description=str(entry["description"]).strip(),
+                skills=frozenset(resolved_skills),
+            )
+        )
+
+    return bundles
+
+
+def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, frozenset[str]]:
+    """Parse the top-level bases registry from bundles.json."""
+    if raw_bases is None:
+        return {}
+    if not isinstance(raw_bases, list):
+        raise InstallSkillsError(f"Invalid bundle config {path}: 'bases' must be a list.")
+
+    base_skills: dict[str, frozenset[str]] = {}
+    for index, entry in enumerate(raw_bases):
+        if not isinstance(entry, dict):
+            raise InstallSkillsError(
+                f"Invalid bundle config {path}: bases[{index}] must be an object."
+            )
+
+        missing = [key for key in ("id", "skills") if key not in entry]
+        if missing:
+            raise InstallSkillsError(
+                f"Invalid bundle config {path}: bases[{index}] missing keys: {', '.join(missing)}"
+            )
+
+        base_id = slugify_name(str(entry["id"]))
+        if base_id in base_skills:
+            raise InstallSkillsError(f"Invalid bundle config {path}: duplicate base id {base_id!r}.")
+
+        raw_skills = entry["skills"]
+        if not isinstance(raw_skills, list) or not raw_skills:
+            raise InstallSkillsError(
+                f"Invalid bundle config {path}: bases[{index}] skills must be a non-empty list."
+            )
+
+        base_skills[base_id] = frozenset(slugify_name(str(skill)) for skill in raw_skills)
+
+    return base_skills
+
+
 def normalize_names(values: Iterable[str]) -> list[str]:
     seen: set[str] = set()
     ordered: list[str] = []
@@ -101,6 +256,42 @@ def normalize_names(values: Iterable[str]) -> list[str]:
             seen.add(slug)
             ordered.append(slug)
     return ordered
+
+
+def resolve_bundle_skills(
+    bundle_ids: Sequence[str],
+    *,
+    path: Path = BUNDLES_JSON,
+) -> list[str]:
+    """Resolve bundle ids from bundles.json into a deduplicated skill list."""
+    bundles = load_skill_bundles(path)
+    by_id = {bundle.id: bundle for bundle in bundles}
+    resolved: set[str] = set()
+    for raw_id in bundle_ids:
+        bundle_id = slugify_name(str(raw_id))
+        if bundle_id not in by_id:
+            known = ", ".join(sorted(by_id))
+            raise InstallSkillsError(
+                f"Unknown bundle {bundle_id!r}. Known bundles: {known}"
+            )
+        resolved.update(by_id[bundle_id].skills)
+    return normalize_names(resolved)
+
+
+def resolve_cli_skills(
+    *,
+    bundle_ids: Sequence[str] | None,
+    skill_names: Sequence[str] | None,
+) -> list[str]:
+    """Resolve CLI skill selection from bundles, explicit names, or all discovered skills."""
+    combined: list[str] = []
+    if bundle_ids:
+        combined.extend(resolve_bundle_skills(bundle_ids))
+    if skill_names:
+        combined.extend(normalize_names(skill_names))
+    if combined:
+        return normalize_names(combined)
+    return discover_skills()
 
 
 def discover_skills() -> list[str]:
@@ -374,6 +565,9 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
             "Examples:\n"
             "  python tools/install-skills.py /path/to/project\n"
             "  python tools/install-skills.py /path/to/project --skills cpp-coding\n"
+            "  python tools/install-skills.py /path/to/project --bundles core-dev-workflow\n"
+            "  python tools/install-skills.py /path/to/project --bundles extended-dev-workflow --override\n"
+            "  python tools/install-skills.py /path/to/project --bundles core-dev-workflow --skills cpp-coding\n"
             "  python tools/install-skills.py /path/to/project --uninstall --agents skill-bootstrapper\n"
             "\n"
             "Run without arguments to open the GUI."
@@ -385,10 +579,19 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help="Destination project root.",
     )
     parser.add_argument(
+        "--bundles",
+        nargs="+",
+        metavar="ID",
+        help=(
+            "Bundle ids from bundles.json to install or uninstall "
+            "(skills only; agents still default to all unless --agents is set)."
+        ),
+    )
+    parser.add_argument(
         "--skills",
         nargs="+",
         metavar="NAME",
-        help="Skill names to install or uninstall (default: all discovered skills).",
+        help="Skill names to install or uninstall (default: all discovered skills unless --bundles is set).",
     )
     parser.add_argument(
         "--agents",
@@ -418,7 +621,10 @@ def run_cli(argv: Sequence[str]) -> int:
 
     try:
         target = Path(args.target).expanduser().resolve()
-        skills = normalize_names(args.skills) if args.skills else discover_skills()
+        skills = resolve_cli_skills(
+            bundle_ids=args.bundles,
+            skill_names=args.skills,
+        )
         agents = normalize_names(args.agents) if args.agents else discover_agents()
         code, message = run_operation(
             target=target,
@@ -449,8 +655,12 @@ class InstallSkillsApp:
         self.target_var = tk.StringVar()
         self.mode_var = tk.StringVar(value="install")
         self.override_var = tk.BooleanVar(value=False)
+        self._syncing_bundle_selection = False
+        self.skill_bundles = load_skill_bundles()
+        self._bundle_buttons: dict[str, ttk.Checkbutton] = {}
 
         self._build_ui()
+        self._sync_bundle_toggles()
 
     def _build_ui(self) -> None:
         outer = ttk.Frame(self.root, padding=12)
@@ -472,6 +682,7 @@ class InstallSkillsApp:
             items=self.skills,
             var_map=self.skill_vars,
             column=0,
+            skill_selection=True,
         )
         self._add_checkbox_list(
             lists,
@@ -480,6 +691,8 @@ class InstallSkillsApp:
             var_map=self.agent_vars,
             column=1,
         )
+
+        self._add_bundles_panel(outer)
 
         options = ttk.LabelFrame(outer, text="Options", padding=8)
         options.pack(fill=tk.X, pady=8)
@@ -503,6 +716,19 @@ class InstallSkillsApp:
         self.log = scrolledtext.ScrolledText(log_frame, height=12, state=tk.DISABLED)
         self.log.pack(fill=tk.BOTH, expand=True)
 
+    def _add_bundles_panel(self, parent: ttk.Frame) -> None:
+        bundles = ttk.LabelFrame(parent, text="Bundles", padding=8)
+        bundles.pack(fill=tk.X, pady=(0, 8))
+
+        for bundle in self.skill_bundles:
+            button = ttk.Checkbutton(
+                bundles,
+                text=bundle.name,
+                command=lambda skills=bundle.skills: self._toggle_bundle(skills),
+            )
+            button.pack(anchor=tk.W)
+            self._bundle_buttons[bundle.id] = button
+
     def _add_checkbox_list(
         self,
         parent: ttk.Frame,
@@ -511,6 +737,7 @@ class InstallSkillsApp:
         items: list[str],
         var_map: dict[str, tk.BooleanVar],
         column: int,
+        skill_selection: bool = False,
     ) -> None:
         frame = ttk.LabelFrame(parent, text=title, padding=8)
         frame.grid(row=0, column=column, sticky="nsew", padx=(0, 8 if column == 0 else 0))
@@ -519,16 +746,28 @@ class InstallSkillsApp:
 
         controls = ttk.Frame(frame)
         controls.pack(fill=tk.X, pady=(0, 6))
-        ttk.Button(
-            controls,
-            text="Select all",
-            command=lambda: self._set_all(var_map, True),
-        ).pack(side=tk.LEFT)
-        ttk.Button(
-            controls,
-            text="Select none",
-            command=lambda: self._set_all(var_map, False),
-        ).pack(side=tk.LEFT, padx=6)
+        if skill_selection:
+            ttk.Button(
+                controls,
+                text="Select all",
+                command=lambda: self._set_all_skills(True),
+            ).pack(side=tk.LEFT)
+            ttk.Button(
+                controls,
+                text="Select none",
+                command=lambda: self._set_all_skills(False),
+            ).pack(side=tk.LEFT, padx=6)
+        else:
+            ttk.Button(
+                controls,
+                text="Select all",
+                command=lambda: self._set_all(var_map, True),
+            ).pack(side=tk.LEFT)
+            ttk.Button(
+                controls,
+                text="Select none",
+                command=lambda: self._set_all(var_map, False),
+            ).pack(side=tk.LEFT, padx=6)
 
         canvas = tk.Canvas(frame, highlightthickness=0)
         scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=canvas.yview)
@@ -545,6 +784,8 @@ class InstallSkillsApp:
         for item in items:
             var = tk.BooleanVar(value=True)
             var_map[item] = var
+            if skill_selection:
+                var.trace_add("write", lambda *_args: self._on_skill_selection_changed())
             ttk.Checkbutton(inner, text=item, variable=var).pack(anchor=tk.W)
 
         if not items:
@@ -553,6 +794,63 @@ class InstallSkillsApp:
     def _set_all(self, var_map: dict[str, tk.BooleanVar], value: bool) -> None:
         for var in var_map.values():
             var.set(value)
+
+    def _set_all_skills(self, value: bool) -> None:
+        self._syncing_bundle_selection = True
+        try:
+            self._set_all(self.skill_vars, value)
+        finally:
+            self._syncing_bundle_selection = False
+        self._sync_bundle_toggles()
+
+    def _bundle_present_members(self, members: frozenset[str]) -> list[str]:
+        return sorted(name for name in members if name in self.skill_vars)
+
+    def _toggle_bundle(self, members: frozenset[str]) -> None:
+        present = self._bundle_present_members(members)
+        if not present:
+            return
+        state = bundle_selection_state(present, lambda name: self.skill_vars[name].get())
+        new_value = bundle_toggle_target_state(state)
+        self._syncing_bundle_selection = True
+        try:
+            for name in present:
+                self.skill_vars[name].set(new_value)
+        finally:
+            self._syncing_bundle_selection = False
+        self._sync_bundle_toggles()
+
+    def _on_skill_selection_changed(self) -> None:
+        if self._syncing_bundle_selection:
+            return
+        self._sync_bundle_toggles()
+
+    def _apply_bundle_toggle_state(
+        self,
+        widget: ttk.Checkbutton,
+        state: BundleSelectionState,
+    ) -> None:
+        if state == "all":
+            widget.state(["!alternate", "selected"])
+        elif state == "none":
+            widget.state(["!alternate", "!selected"])
+        else:
+            widget.state(["alternate", "!selected"])
+
+    def _sync_bundle_toggles(self) -> None:
+        if not self._bundle_buttons:
+            return
+
+        for bundle in self.skill_bundles:
+            button = self._bundle_buttons.get(bundle.id)
+            if button is None:
+                continue
+            members = self._bundle_present_members(bundle.skills)
+            state = bundle_selection_state(
+                members,
+                lambda name: self.skill_vars[name].get(),
+            )
+            self._apply_bundle_toggle_state(button, state)
 
     def _browse_target(self) -> None:
         selected = filedialog.askdirectory(title="Select target project root")
@@ -619,7 +917,13 @@ def run_gui() -> int:
         )
         return 2
 
-    InstallSkillsApp(root)
+    try:
+        InstallSkillsApp(root)
+    except InstallSkillsError as exc:
+        root.destroy()
+        messagebox.showerror("Bundle config error", str(exc))
+        return 2
+
     root.mainloop()
     return 0
 

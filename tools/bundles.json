@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "bases": [
+    {
+      "id": "core-dev-workflow",
+      "skills": [
+        "research-guide",
+        "plan-guide",
+        "plan-executor",
+        "test-driven-dev-guide",
+        "debugging-guide",
+        "implementation-auditor",
+        "code-reviewer",
+        "commit-message-writer",
+        "git-guide",
+        "pull-request-guide"
+      ]
+    }
+  ],
+  "bundles": [
+    {
+      "id": "core-dev-workflow",
+      "name": "Core dev workflow bundle",
+      "description": "Minimum workflow set for ordinary feature, bug, and product-spec development.",
+      "bases": ["core-dev-workflow"]
+    },
+    {
+      "id": "extended-dev-workflow",
+      "name": "Extended dev workflow bundle",
+      "description": "Core bundle plus quality gates, collaboration support, parallel execution, and GitHub delivery.",
+      "bases": ["core-dev-workflow"],
+      "skills": [
+        "research-reviewer",
+        "plan-reviewer",
+        "agent-runner",
+        "minutes-writer",
+        "github-guide"
+      ]
+    }
+  ]
+}
