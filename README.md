@@ -20,7 +20,11 @@ repo/
 ├── CLAUDE.md                          # Claude Code-specific guidance
 ├── coding-behavior-guidelines.md      # LLM coding behavioral guidelines
 ├── tools/
-│   └── install-skills.py              # Copy installed skills/agents to another project
+│   ├── install-skills.py              # Copy installed skills/agents to another project
+│   ├── bundles.json                   # Machine-readable workflow bundle definitions
+│   ├── bundles.md                     # Human-readable bundle documentation
+│   ├── test_install_skills_bundles.py
+│   └── test_install_skills_tooltips.py
 ├── skills/                            # Bootstrap skills (author here, then install)
 │   ├── skill-creator/                 # Meta: creates and improves skills
 │   ├── agent-creator/                 # Meta: creates and improves agents
@@ -471,6 +475,11 @@ Without `--override`, existing paths in the target are skipped. The script refus
 ```bash
 python tools/install-skills.py
 ```
+
+- Checkboxes start **unchecked**
+- **Bundles** panel: batch toggles plus Select all/none
+- **Help** (right side of each panel): descriptions for current selections; partial bundles labeled `(partial)`
+- **Hover tooltips** on individual checkboxes
 
 ## Skills
 

@@ -24,6 +24,7 @@ import re
 import shutil
 import sys
 import tkinter as tk
+import yaml
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -101,6 +102,41 @@ def bundle_selection_state(
 def bundle_toggle_target_state(current: BundleSelectionState) -> bool:
     """Return the selection value to apply when a bundle toggle is clicked."""
     return current != "all"
+
+
+def format_selection_help(
+    entries: Sequence[tuple[str, str]],
+    *,
+    empty_message: str,
+) -> str:
+    """Format selected item names and descriptions for the Help window."""
+    if not entries:
+        return empty_message
+
+    blocks: list[str] = []
+    for name, description in entries:
+        body = description.strip() or "(No description available.)"
+        underline = "=" * len(name)
+        blocks.append(f"{name}\n{underline}\n{body}")
+    return "\n\n".join(blocks) + "\n"
+
+
+def bundle_help_entries(
+    bundles: Sequence[SkillBundle],
+    *,
+    present_members: Callable[[frozenset[str]], Sequence[str]],
+    is_selected: Callable[[str], bool],
+) -> list[tuple[str, str]]:
+    """Return display name and description tuples for bundles with any selected skills."""
+    entries: list[tuple[str, str]] = []
+    for bundle in bundles:
+        members = present_members(bundle.skills)
+        state = bundle_selection_state(members, is_selected)
+        if state == "none":
+            continue
+        display_name = bundle.name if state == "all" else f"{bundle.name} (partial)"
+        entries.append((display_name, bundle.description))
+    return entries
 
 
 @dataclass
@@ -320,6 +356,70 @@ def discover_agents() -> list[str]:
             elif suffix == ".md" and child.suffix == ".md" and not child.name.endswith(".agent.md"):
                 names.add(child.stem)
     return sorted(names)
+
+
+def parse_frontmatter(content: str) -> dict | None:
+    """Parse YAML frontmatter from a skill or agent markdown file."""
+    if not content.startswith("---"):
+        return None
+
+    match = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
+    if not match:
+        return None
+
+    try:
+        frontmatter = yaml.safe_load(match.group(1))
+    except yaml.YAMLError:
+        return None
+
+    if not isinstance(frontmatter, dict):
+        return None
+
+    return frontmatter
+
+
+def read_description_from_markdown(path: Path) -> str | None:
+    """Return the frontmatter description from a markdown file, if present."""
+    if not path.is_file():
+        return None
+
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+    frontmatter = parse_frontmatter(content)
+    if frontmatter is None:
+        return None
+
+    description = frontmatter.get("description")
+    if not isinstance(description, str):
+        return None
+
+    stripped = description.strip()
+    return stripped or None
+
+
+def load_skill_descriptions(names: Sequence[str]) -> dict[str, str]:
+    """Map skill slugs to descriptions from shared SKILL.md frontmatter."""
+    descriptions: dict[str, str] = {}
+    for name in names:
+        path = REPO_ROOT / ".shared/skills" / name / "SKILL.md"
+        description = read_description_from_markdown(path)
+        if description is not None:
+            descriptions[name] = description
+    return descriptions
+
+
+def load_agent_descriptions(names: Sequence[str]) -> dict[str, str]:
+    """Map agent slugs to descriptions from shared agent markdown frontmatter."""
+    descriptions: dict[str, str] = {}
+    for name in names:
+        path = REPO_ROOT / ".shared/agents" / f"{name}.md"
+        description = read_description_from_markdown(path)
+        if description is not None:
+            descriptions[name] = description
+    return descriptions
 
 
 def validate_target(source: Path, target: Path, *, create: bool) -> Path:
@@ -641,6 +741,66 @@ def run_cli(argv: Sequence[str]) -> int:
     return code
 
 
+class HoverTooltip:
+    """Show wrapped text in a delayed popup when the pointer hovers over a widget."""
+
+    def __init__(self, widget: tk.Widget, text: str, *, delay_ms: int = 400) -> None:
+        self.widget = widget
+        self.text = text.strip()
+        self.delay_ms = delay_ms
+        self._tooltip: tk.Toplevel | None = None
+        self._after_id: str | None = None
+
+        if not self.text:
+            return
+
+        widget.bind("<Enter>", self._on_enter, add="+")
+        widget.bind("<Leave>", self._on_leave, add="+")
+
+    def _on_enter(self, _event: tk.Event) -> None:
+        self._cancel_pending()
+        self._after_id = self.widget.after(self.delay_ms, self._show)
+
+    def _on_leave(self, _event: tk.Event) -> None:
+        self._cancel_pending()
+        self._hide()
+
+    def _cancel_pending(self) -> None:
+        if self._after_id is not None:
+            self.widget.after_cancel(self._after_id)
+            self._after_id = None
+
+    def _show(self) -> None:
+        self._after_id = None
+        if self._tooltip is not None:
+            return
+
+        tooltip = tk.Toplevel(self.widget)
+        tooltip.wm_overrideredirect(True)
+        label = tk.Label(
+            tooltip,
+            text=self.text,
+            justify=tk.LEFT,
+            wraplength=420,
+            relief=tk.SOLID,
+            borderwidth=1,
+            padx=8,
+            pady=6,
+        )
+        label.pack()
+        tooltip.update_idletasks()
+
+        x = self.widget.winfo_pointerx() + 16
+        y = self.widget.winfo_pointery() + 16
+        tooltip.geometry(f"+{x}+{y}")
+        self._tooltip = tooltip
+
+    def _hide(self) -> None:
+        if self._tooltip is not None:
+            self._tooltip.destroy()
+            self._tooltip = None
+
+
 class InstallSkillsApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
@@ -649,6 +809,8 @@ class InstallSkillsApp:
 
         self.skills = discover_skills()
         self.agents = discover_agents()
+        self.skill_descriptions = load_skill_descriptions(self.skills)
+        self.agent_descriptions = load_agent_descriptions(self.agents)
         self.skill_vars: dict[str, tk.BooleanVar] = {}
         self.agent_vars: dict[str, tk.BooleanVar] = {}
 
@@ -658,6 +820,7 @@ class InstallSkillsApp:
         self._syncing_bundle_selection = False
         self.skill_bundles = load_skill_bundles()
         self._bundle_buttons: dict[str, ttk.Checkbutton] = {}
+        self._help_window: tk.Toplevel | None = None
 
         self._build_ui()
         self._sync_bundle_toggles()
@@ -683,6 +846,8 @@ class InstallSkillsApp:
             var_map=self.skill_vars,
             column=0,
             skill_selection=True,
+            descriptions=self.skill_descriptions,
+            help_command=self._show_skills_help,
         )
         self._add_checkbox_list(
             lists,
@@ -690,6 +855,8 @@ class InstallSkillsApp:
             items=self.agents,
             var_map=self.agent_vars,
             column=1,
+            descriptions=self.agent_descriptions,
+            help_command=self._show_agents_help,
         )
 
         self._add_bundles_panel(outer)
@@ -720,6 +887,20 @@ class InstallSkillsApp:
         bundles = ttk.LabelFrame(parent, text="Bundles", padding=8)
         bundles.pack(fill=tk.X, pady=(0, 8))
 
+        controls = ttk.Frame(bundles)
+        controls.pack(fill=tk.X, pady=(0, 6))
+        ttk.Button(
+            controls,
+            text="Select all",
+            command=lambda: self._set_all_bundled_skills(True),
+        ).pack(side=tk.LEFT)
+        ttk.Button(
+            controls,
+            text="Select none",
+            command=lambda: self._set_all_bundled_skills(False),
+        ).pack(side=tk.LEFT, padx=6)
+        ttk.Button(controls, text="Help", command=self._show_bundles_help).pack(side=tk.RIGHT)
+
         for bundle in self.skill_bundles:
             button = ttk.Checkbutton(
                 bundles,
@@ -728,6 +909,8 @@ class InstallSkillsApp:
             )
             button.pack(anchor=tk.W)
             self._bundle_buttons[bundle.id] = button
+            if bundle.description.strip():
+                HoverTooltip(button, bundle.description)
 
     def _add_checkbox_list(
         self,
@@ -738,6 +921,8 @@ class InstallSkillsApp:
         var_map: dict[str, tk.BooleanVar],
         column: int,
         skill_selection: bool = False,
+        descriptions: dict[str, str] | None = None,
+        help_command: Callable[[], None] | None = None,
     ) -> None:
         frame = ttk.LabelFrame(parent, text=title, padding=8)
         frame.grid(row=0, column=column, sticky="nsew", padx=(0, 8 if column == 0 else 0))
@@ -768,6 +953,8 @@ class InstallSkillsApp:
                 text="Select none",
                 command=lambda: self._set_all(var_map, False),
             ).pack(side=tk.LEFT, padx=6)
+        if help_command is not None:
+            ttk.Button(controls, text="Help", command=help_command).pack(side=tk.RIGHT)
 
         canvas = tk.Canvas(frame, highlightthickness=0)
         scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=canvas.yview)
@@ -782,11 +969,16 @@ class InstallSkillsApp:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         for item in items:
-            var = tk.BooleanVar(value=True)
+            var = tk.BooleanVar(value=False)
             var_map[item] = var
             if skill_selection:
                 var.trace_add("write", lambda *_args: self._on_skill_selection_changed())
-            ttk.Checkbutton(inner, text=item, variable=var).pack(anchor=tk.W)
+            button = ttk.Checkbutton(inner, text=item, variable=var)
+            button.pack(anchor=tk.W)
+            if descriptions is not None:
+                description = descriptions.get(item)
+                if description:
+                    HoverTooltip(button, description)
 
         if not items:
             ttk.Label(inner, text="(none discovered)").pack(anchor=tk.W)
@@ -799,6 +991,24 @@ class InstallSkillsApp:
         self._syncing_bundle_selection = True
         try:
             self._set_all(self.skill_vars, value)
+        finally:
+            self._syncing_bundle_selection = False
+        self._sync_bundle_toggles()
+
+    def _all_bundled_skill_names(self) -> list[str]:
+        names: set[str] = set()
+        for bundle in self.skill_bundles:
+            names.update(self._bundle_present_members(bundle.skills))
+        return sorted(names)
+
+    def _set_all_bundled_skills(self, value: bool) -> None:
+        present = self._all_bundled_skill_names()
+        if not present:
+            return
+        self._syncing_bundle_selection = True
+        try:
+            for name in present:
+                self.skill_vars[name].set(value)
         finally:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
@@ -865,6 +1075,64 @@ class InstallSkillsApp:
 
     def _selected(self, var_map: dict[str, tk.BooleanVar]) -> list[str]:
         return sorted(name for name, var in var_map.items() if var.get())
+
+    def _help_entries_for_selection(
+        self,
+        names: Sequence[str],
+        descriptions: dict[str, str],
+    ) -> list[tuple[str, str]]:
+        return [(name, descriptions.get(name, "")) for name in names]
+
+    def _show_help_window(self, title: str, content: str) -> None:
+        if self._help_window is not None:
+            try:
+                if self._help_window.winfo_exists():
+                    self._help_window.destroy()
+            except tk.TclError:
+                pass
+            self._help_window = None
+
+        window = tk.Toplevel(self.root)
+        window.title(title)
+        window.minsize(520, 360)
+        window.transient(self.root)
+        self._help_window = window
+
+        frame = ttk.Frame(window, padding=12)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        text = scrolledtext.ScrolledText(frame, wrap=tk.WORD, width=72, height=18)
+        text.pack(fill=tk.BOTH, expand=True)
+        text.insert(tk.END, content)
+        text.bind("<Key>", lambda _event: "break")
+
+        actions = ttk.Frame(frame)
+        actions.pack(fill=tk.X, pady=(8, 0))
+        ttk.Button(actions, text="Close", command=window.destroy).pack(side=tk.RIGHT)
+
+        window.lift()
+        window.focus_force()
+
+    def _show_skills_help(self) -> None:
+        names = self._selected(self.skill_vars)
+        entries = self._help_entries_for_selection(names, self.skill_descriptions)
+        content = format_selection_help(entries, empty_message="No skills selected.")
+        self._show_help_window("Skills — Help", content)
+
+    def _show_agents_help(self) -> None:
+        names = self._selected(self.agent_vars)
+        entries = self._help_entries_for_selection(names, self.agent_descriptions)
+        content = format_selection_help(entries, empty_message="No agents selected.")
+        self._show_help_window("Agents — Help", content)
+
+    def _show_bundles_help(self) -> None:
+        entries = bundle_help_entries(
+            self.skill_bundles,
+            present_members=self._bundle_present_members,
+            is_selected=lambda name: self.skill_vars[name].get(),
+        )
+        content = format_selection_help(entries, empty_message="No bundles selected.")
+        self._show_help_window("Bundles — Help", content)
 
     def _run(self) -> None:
         target_text = self.target_var.get().strip()
