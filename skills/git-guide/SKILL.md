@@ -34,7 +34,7 @@ requires them.
 ## Core Principles
 
 - **Message drafting is separate** — use [commit-message-writer](../commit-message-writer/SKILL.md) for Conventional Commit composition; this skill handles git mechanics once a message exists
-- **Isolated Development** — use worktrees for feature branches, see [references/worktree-create.md](references/worktree-create.md)
+- **Isolated Development** — use worktrees for feature branches only when the current branch is `main`, `master`, or `dev`; always ask the user to confirm before creating — see [references/worktree-create.md](references/worktree-create.md)
 - **Validate Before Merge** — run the project's typecheck/lint/build/test, see [references/worktree-validate.md](references/worktree-validate.md)
 - **Publish and Rebase** — push a branch upstream and rebase onto the base before opening a PR / MR, see [references/push.md](references/push.md)
 
@@ -53,7 +53,7 @@ requires them.
 
 ## Worktree Operations
 
-- **Create** — `<worktree>-feature-<name>` directory with branch, see [references/worktree-create.md](references/worktree-create.md)
+- **Create** — `<worktree>-feature-<name>` directory with branch; only from `main`, `master`, or `dev`, and only after user confirmation — see [references/worktree-create.md](references/worktree-create.md)
 - **Commit** — commit in a worktree with plan context for the message body, see [references/worktree-commit.md](references/worktree-commit.md)
 - **Validate** — pre-merge validation checkpoint, see [references/worktree-validate.md](references/worktree-validate.md)
 - **Merge** — merge feature back to source branch, see [references/worktree-merge.md](references/worktree-merge.md)
