@@ -10,7 +10,8 @@ Use roles as review lenses. Do not stage a dialogue. Select a compact set of rol
 | Source Alignment Auditor | Source context is provided or claimed. | Requirement coverage, non-goal respect, scope drift, source-to-task traceability. | Which source requirement is missing or contradicted? |
 | Task Decomposition Reviewer | Always. | Task boundaries, sequencing, dependencies, independent verifiability. | Could one task be rejected while another is approved? |
 | Technical Feasibility Reviewer | Architecture, codebase, data, dependencies, APIs, or integrations matter. | Feasibility, interfaces, migration, compatibility, complexity, implementation risks. | What would break if this is implemented as written? |
-| Verification Reviewer | Always. | Testability, commands, expected outcomes, acceptance coverage, regression protection. | How would the implementer prove the task works? |
+| Test Design Reviewer | Always for [../../plan-guide/SKILL.md](../../plan-guide/SKILL.md) plans. | TDD-first test design section, red-phase specs, requirement-to-failing-test-or-check traceability, test discipline, Tests Designer collaboration evidence. | Which requirement lacks a planned failing test or verification check? |
+| Verification Reviewer | Always. | Validation commands, manual checks, observability, expected outcomes, verification matrix coverage beyond automated tests. | How would the implementer prove the task works end-to-end? |
 | Risk and Release Reviewer | Production, users, data, migration, rollout, or operations matter. | Rollback, flags, observability, security/privacy, support, runbooks, release gates. | What failure mode is unhandled? |
 | Execution Readiness Reviewer | Always before execution. | Completeness for a fresh engineer or AI agent, stop conditions, handoff clarity. | What would the executor have to invent? |
 
@@ -28,9 +29,9 @@ Use roles as review lenses. Do not stage a dialogue. Select a compact set of rol
 
 ## Role selection rules
 
-- Use 5-7 roles for most reviews.
-- Use fewer roles for small, low-risk plans.
+- Use 6-8 roles for most reviews; include Test Design Reviewer for plans from plan-guide.
+- Use fewer optional/specialist roles for small, low-risk plans; keep Test Design Reviewer for plan-guide output.
 - Add specialized roles only when they can find issues a general reviewer would miss.
 - Include Source Alignment Auditor when a research-report, spec, requirement set, or bug report is available.
 - Include Domain Specialist when the user names a domain or the plan clearly implies one.
-- In aggressive mode, strengthen Source Alignment Auditor, Verification Reviewer, and Risk and Release Reviewer.
+- In aggressive mode, strengthen Source Alignment Auditor, Test Design Reviewer, Verification Reviewer, and Risk and Release Reviewer.

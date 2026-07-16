@@ -27,8 +27,7 @@ framework-specific test infrastructure.
 
 ## When NOT to Use
 
-- **Multi-unit plan execution** — use [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
-  unless the user explicitly requests strict TDD (see Plan execution below)
+- **Multi-unit plan execution** — use [../plan-executor/SKILL.md](../plan-executor/SKILL.md); apply TDD per plan task discipline (see Plan execution below)
 - **Post-implementation correctness audit** — use
   [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md)
 - **Structured diff or commit review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
@@ -39,10 +38,11 @@ framework-specific test infrastructure.
 
 During [../plan-executor/SKILL.md](../plan-executor/SKILL.md) runs, follow the plan's
 verification steps. Apply strict red-green-refactor per unit when the plan marks a task's
-test discipline as `mandatory`, or when the user requires TDD; otherwise defer full TDD
-coaching to explicit user request. In this subordinate mode, keep the red-green evidence in
-the execution notes and return control to the executor after each unit reaches green
-instead of driving the whole plan.
+test discipline as `mandatory` (the default for code-producing work from
+[../plan-guide/SKILL.md](../plan-guide/SKILL.md)) or when test discipline is omitted on a
+code task. Use `n/a` only for explicitly non-code or check-only config/infra tasks. In
+this subordinate mode, keep the red-green evidence in the execution notes and return
+control to the executor after each unit reaches green instead of driving the whole plan.
 
 ## Core rule
 

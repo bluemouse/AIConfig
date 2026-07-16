@@ -6,6 +6,7 @@ Use these prompts when the plan involves the domain. Select only relevant checks
 
 - Does the plan identify modules, interfaces, dependencies, and sequencing?
 - Does each task have a concrete implementation and verification path?
+- For plan-guide plans: does each code-producing task specify red-phase failing tests before production steps?
 - Are test commands and expected outcomes specific?
 - Are compatibility, release, rollback, and observability addressed?
 - Does the plan avoid inventing repository facts not present in context?

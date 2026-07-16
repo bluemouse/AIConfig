@@ -36,10 +36,20 @@ Reject or revise the plan if it contains:
 - File paths, commands, functions, types, or schemas that are invented without inspection or clearly labeled as assumptions in a draft plan.
 - A ready status while blocker questions remain.
 
+## Test design and TDD quality
+
+- TDD is mandatory for every code-producing task: red-phase failing test(s) are specified before production implementation steps.
+- Tests Designer collaboration with Requirements Mapper, Architecture Planner, Task Decomposer, and Verification Planner is reflected in the plan — not implied.
+- Every must-have requirement maps to at least one planned failing test or verification check and at least one verification step.
+- Planned tests name test file paths, test identifiers, scenarios, and expected failure or assertion intent when the repository context allows.
+- Test discipline is `mandatory` for code tasks; `n/a` appears only for non-code tasks or config/infra tasks verified by command/check-based validation, with explicit justification.
+- Task boundaries support independent red-green-refactor cycles per [../../test-driven-dev-guide/SKILL.md](../../test-driven-dev-guide/SKILL.md).
+- Edge cases, negative paths, and regression scenarios from the source context are covered in test design — not deferred.
+
 ## Verification quality
 
 - Acceptance criteria are testable.
-- Verification matrix covers requirements and high-risk tasks.
+- Verification matrix covers requirements, planned tests, and high-risk tasks.
 - Commands include expected outcomes when known.
 - Manual checks are specific enough for another person to reproduce.
 - Performance, security, accessibility, migration, observability, and rollback checks are included when relevant.

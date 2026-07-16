@@ -36,6 +36,12 @@
     "rationale": "direct: task breakdown from spec"
   },
   {
+    "query": "plan TDD tests and red-phase specs before decomposing implementation tasks",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: TDD-first test design during planning"
+  },
+  {
     "query": "define verification matrix and acceptance checks for this bug fix plan",
     "should_trigger": true,
     "split": "train",

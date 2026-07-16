@@ -1,6 +1,6 @@
 ---
 name: plan-reviewer
-description: "Use when reviewing, auditing, or validating an implementation plan before execution by a developer, engineer, or AI agent — checking correctness, completeness, consistency with source research/spec/requirements, task decomposition, file precision, testability, risk controls, and execution readiness. Triggers on prompts to review an implementation plan, validate a work plan, audit plan tasks, approve execution readiness, or produce a Guide handoff packet — even when the user doesn't say 'plan review'. Does not trigger on brainstorming, research-report review, writing plans, or code diff review."
+description: "Use when reviewing, auditing, or validating an implementation plan before execution by a developer, engineer, or AI agent — checking correctness, completeness, consistency with source research/spec/requirements, TDD test design, task decomposition, file precision, testability, risk controls, and execution readiness. Triggers on prompts to review an implementation plan, validate a work plan, audit plan tasks, approve execution readiness, or produce a Guide handoff packet — even when the user doesn't say 'plan review'. Does not trigger on brainstorming, research-report review, writing plans, or code diff review."
 ---
 
 # Plan Reviewer
@@ -30,7 +30,7 @@ Your job is to **audit an implementation plan and produce a review-report with a
 
 ## Companion Skills
 
-- Primary input from [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
+- Primary input from [../plan-guide/SKILL.md](../plan-guide/SKILL.md) — enforce its TDD-first test design contract
 - Compare against research-report context from [../research-guide/SKILL.md](../research-guide/SKILL.md)
 - Upstream research audit: [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
 - For code review during execution: [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
@@ -48,7 +48,7 @@ Always:
 - Validate the plan against the source context, not against personal style preferences.
 - Focus on whether an implementer can execute the plan correctly without inventing missing decisions.
 - Distinguish blocker, major, minor, question, and nit findings.
-- Identify contradictions, missing steps, vague tasks, untestable criteria, invalid sequencing, and unsupported assumptions.
+- Identify contradictions, missing steps, vague tasks, untestable criteria, missing red-phase tests, invalid sequencing, and unsupported assumptions.
 - Use domain-specific reviewer roles when the plan implies specialized knowledge.
 - Prefer actionable findings with exact affected task ids, sections, files, or requirements.
 - Reject false readiness. A polished plan can still be unsafe to execute.
@@ -72,7 +72,8 @@ Extract:
 - Goal, scope, non-goals, and first executable slice.
 - Requirements, acceptance criteria, and source traceability matrix.
 - Implementation strategy, architecture boundaries, interfaces, and dependencies.
-- Task list, task ids, files, steps, tests, verification, and stop conditions.
+- Test design section (TDD-first matrix, collaboration notes, red-phase specs; required for plan-guide plans — record a finding if missing).
+- Task list, task ids, files, steps, red-phase tests, test discipline, verification, and stop conditions.
 - Verification matrix.
 - Risk, rollout, rollback, migration, observability, and support notes.
 - Reviewer feedback status from prior loops.
@@ -88,6 +89,7 @@ Default roles:
 - Source Alignment Auditor
 - Task Decomposition Reviewer
 - Technical Feasibility Reviewer
+- Test Design Reviewer
 - Verification Reviewer
 - Risk and Release Reviewer
 - Execution Readiness Reviewer
@@ -105,7 +107,8 @@ Core lenses:
 - **Task actionability**: a fresh implementer can execute each task without guessing what to build.
 - **Task right-sizing**: tasks are reviewable and independently verifiable; independent subsystems are not tangled.
 - **Technical feasibility**: architecture, data flow, integration, compatibility, migration, and performance assumptions are credible.
-- **Verification quality**: tests and checks are concrete, expected outcomes are clear, and acceptance criteria are covered.
+- **Test design quality** (plans from [../plan-guide/SKILL.md](../plan-guide/SKILL.md)): Test design section present; must-have requirements map to planned failing tests or verification checks; code tasks specify red-phase tests before production steps; test discipline is `mandatory` or justified `n/a`; Tests Designer collaboration is reflected; vague “add tests” placeholders are absent.
+- **Verification quality**: validation commands and checks are concrete, expected outcomes are clear, and acceptance criteria are covered beyond automated tests alone.
 - **Risk and release readiness**: rollout, rollback, observability, support, security, privacy, compliance, and operational concerns are handled when relevant.
 - **Execution-agent readiness**: tasks contain enough local context for another AI agent to implement one task without reading the whole conversation.
 - **Review-loop hygiene**: prior reviewer findings have visible and credible dispositions.
@@ -124,7 +127,7 @@ Every material finding must include:
 - Recommended plan-guide action: revise plan, ask user, inspect codebase, research upstream, narrow scope, split plan, accept as execution risk, or re-review.
 - Owner suggestion when useful.
 
-Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `validated`, `conditionally validated`, `needs revision`, or `blocked`. Never validate when source requirements, core tasks, or critical verification are missing. When essential source context is absent or unverifiable, the verdict cannot be `validated` or `conditionally validated`; use `needs revision` or `blocked` and record the missing context as a blocker finding.
+Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `validated`, `conditionally validated`, `needs revision`, or `blocked`. Never validate when source requirements, core tasks, critical verification, or mandatory TDD test design for code-producing work is missing. When essential source context is absent or unverifiable, the verdict cannot be `validated` or `conditionally validated`; use `needs revision` or `blocked` and record the missing context as a blocker finding.
 
 ### 5. Produce the review-report
 

@@ -1,6 +1,6 @@
 ---
 name: plan-guide
-description: "Use when turning a research report, spec, requirements, bug report, or technical context into an executable implementation plan — decomposing work into ordered tasks, mapping requirements to implementation, defining verification and acceptance checks, or revising a plan from plan-reviewer findings before execution. Triggers on prompts to write an implementation plan, create a task breakdown, map requirements to tasks, define verification for a feature, or repair a plan from reviewer feedback — even when the user doesn't say 'plan'. Does not trigger on interactive research, research-report audit, code implementation, or code diff review."
+description: "Use when turning a research report, spec, requirements, bug report, or technical context into an executable implementation plan — decomposing work into ordered tasks, mapping requirements to implementation, designing TDD-first tests, defining verification and acceptance checks, or revising a plan from plan-reviewer findings before execution. Triggers on prompts to write an implementation plan, create a task breakdown, map requirements to tasks, plan tests for a feature, define verification for a feature, or repair a plan from reviewer feedback — even when the user doesn't say 'plan'. Does not trigger on interactive research, research-report audit, code implementation, or code diff review."
 ---
 
 # Plan Guide
@@ -12,7 +12,7 @@ Use this skill to turn an approved research-report, spec, requirement set, bug r
 
 ## Primary Directive
 
-Your job is to **author and repair implementation plans**, not to implement code, audit research reports, or review code diffs. Do not claim a plan is ready when source context, requirements, decisions, or verification criteria are missing.
+Your job is to **author and repair implementation plans**, not to implement code, audit research reports, or review code diffs. Every ready-to-execute plan **mandates test-driven development (TDD)** for code-producing work: each task specifies failing tests to write before production changes. Do not claim a plan is ready when source context, requirements, decisions, planned tests, or verification criteria are missing.
 
 ## When to Use
 
@@ -35,6 +35,7 @@ Your job is to **author and repair implementation plans**, not to implement code
 
 - Preferred input from [../research-guide/SKILL.md](../research-guide/SKILL.md); optional audit via [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
 - Quality loop with [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
+- Mandatory TDD execution discipline via [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md)
 - For code review during execution: [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 
 Treat reports from [../research-guide/SKILL.md](../research-guide/SKILL.md) as the preferred upstream input. Treat reports from [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) as repair instructions for the planning loop.
@@ -51,7 +52,8 @@ Always:
 - Inspect available codebase or project context before asking the user for facts that can be discovered.
 - Ask one material question at a time when a missing decision blocks a correct plan.
 - Prefer a blocked planning report over a false-ready plan.
-- Make every must-have requirement traceable to at least one task and one verification step.
+- Make every must-have requirement traceable to at least one task, at least one planned failing test or verification check (verification check for check-only requirements), and one verification step.
+- Plan TDD-first: for every code-producing task, specify the failing test(s) to write before any production change.
 - Make every task independently understandable by a fresh implementer.
 - Include exact file paths, interfaces, commands, and expected outcomes when the repository or execution context is available.
 - If exact codebase details are unavailable, mark the plan as draft or discovery-gated rather than pretending paths or commands are known.
@@ -59,18 +61,21 @@ Always:
 
 ## Planning roles
 
-Use roles as analytical lenses, not as theatrical personas. Select the roles needed for the current plan or repair iteration.
+Use roles as analytical lenses, not as theatrical personas. Core roles including **Tests Designer** are always active for implementation plans; add **Domain Specialist** lenses when the domain requires them.
 
 Default roles:
 - **Plan Lead**: drive planning mode, choose scope, manage readiness, and synthesize the final plan.
 - **Requirements Mapper**: trace source requirements, acceptance criteria, constraints, and non-goals to plan tasks.
 - **Architecture Planner**: define the implementation approach, boundaries, interfaces, dependencies, and sequencing.
+- **Tests Designer**: aggressively design failing tests, test scenarios, fixtures, and edge cases from requirements, input context, and the planned implementation — before tasks are finalized.
 - **Task Decomposer**: split work into cohesive, reviewable tasks with clear dependencies and independently testable deliverables.
-- **Verification Planner**: define tests, validation commands, expected outcomes, and acceptance checks.
+- **Verification Planner**: define validation commands, manual checks, expected outcomes, observability signals, and acceptance checks that complement automated tests.
 - **Risk and Release Planner**: cover migration, rollout, rollback, observability, support, security, privacy, and operational risk.
 - **Execution Handoff Recorder**: preserve assumptions, task order, stop conditions, and the review status for the implementer.
 
-Add a **Domain Specialist** when the plan involves specialized domains such as graphics/rendering, AI, data, security, privacy, compliance, infrastructure, devops, UX, mobile, performance, enterprise workflow, finance, healthcare, or education. Use [references/planning-roles.md](references/planning-roles.md) for role details.
+**Tests Designer collaboration (mandatory):** Tests Designer MUST iteratively collaborate with Requirements Mapper, Architecture Planner, Task Decomposer, and Verification Planner until test design, task boundaries, and verification coverage align. Run this loop during workflow steps 5–7 — not as a one-pass afterthought. See [references/planning-roles.md](references/planning-roles.md) for role details and collaboration rules.
+
+Add a **Domain Specialist** when the plan involves specialized domains such as graphics/rendering, AI, data, security, privacy, compliance, infrastructure, devops, UX, mobile, performance, enterprise workflow, finance, healthcare, or education.
 
 ## Workflow
 
@@ -128,12 +133,31 @@ Define the approach before tasks:
 - Boundaries between modules, components, services, or phases.
 - Interface contracts that later tasks rely on.
 - Data, migration, compatibility, and rollout strategy when applicable.
-- Testing and validation strategy.
-- Test discipline per task: decide whether each task should be built test-first. Mark it `mandatory` (write and observe a failing test before production code), `suggested`, `optional`, or `n/a` (for example non-code or config-only tasks). Default risky, logic-heavy, or bug-fix tasks to `mandatory` so the executor knows to apply strict red-green-refactor via [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md).
+- TDD execution discipline: all code-producing tasks use strict red-green-refactor via [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md). Mark test discipline `n/a` only when a task has no production code to test — for example pure documentation, or config/infra changes verified by command/check-based validation (lint, parse, plan dry-run, schema validate) rather than unit tests — and state why.
 
 If multiple approaches are viable and the choice materially affects cost, risk, UX, architecture, or compatibility, present the decision and ask before finalizing the plan.
 
-### 6. Decompose work
+### 6. Design tests iteratively (TDD-first)
+
+Before finalizing tasks, run an iterative test-design pass led by **Tests Designer** in collaboration with **Requirements Mapper**, **Architecture Planner**, **Task Decomposer**, and **Verification Planner**:
+
+1. **Requirements Mapper → Tests Designer**: map each acceptance criterion and must-have requirement to concrete test scenarios, including negative and edge cases.
+2. **Architecture Planner → Tests Designer**: translate module boundaries, interfaces, and integration points into unit, integration, and contract test scope.
+3. **Tests Designer → Task Decomposer**: propose test slices and red-phase specs that inform task boundaries and sequencing.
+4. **Task Decomposer → Tests Designer**: refine per-task failing tests as deliverables and dependencies become concrete.
+5. **Tests Designer ↔ Verification Planner**: align automated test plans with manual checks, commands, observability validation, and the verification matrix; close coverage gaps.
+6. **Iterate** until every must-have requirement has at least one planned failing test or verification check (verification check for check-only requirements verified by checks only), task boundaries support independent red-green cycles, and verification coverage is complete.
+
+For each planned test, specify when known:
+- Test id, type (unit/integration/e2e/contract), and requirement ids covered.
+- Test file path and test name or description.
+- Arrange/act/assert intent and expected failure message or assertion before implementation exists.
+- Fixtures, mocks, test data, or golden references needed.
+- Dependencies on earlier tasks or test infrastructure.
+
+Do not finalize the plan while test design and task decomposition disagree. Resolve conflicts in this loop before step 7.
+
+### 7. Decompose work
 
 Create a cohesive task sequence. Use tasks that are large enough to carry a meaningful review gate and small enough to be independently implemented and verified.
 
@@ -143,9 +167,10 @@ For each task, include:
 - Dependencies on earlier tasks.
 - Files to create, modify, or inspect. Use exact paths when known.
 - Interfaces consumed and produced, including names, signatures, schemas, events, flags, or contracts when known.
-- Implementation steps with concrete actions.
-- Tests or checks to add or run.
-- Test discipline: `mandatory` | `suggested` | `optional` | `n/a`.
+- Red-phase tests to write first: exact test file, test name, scenario, and expected failure before production code.
+- Implementation steps with concrete actions (production code only after the red-phase test exists).
+- Supplementary checks to add or run (manual, integration, observability).
+- Test discipline: `mandatory` (default for all code-producing tasks) | `n/a` (non-code or config/infra verified by checks only — justify).
 - Verification command, manual check, or expected observable result.
 - Acceptance criteria satisfied by the task.
 - Risks, rollback, or stop conditions when relevant.
@@ -153,27 +178,28 @@ For each task, include:
 
 Avoid fixed-length plans. Use as many tasks as required, but split the plan when independent subsystems should be planned separately.
 
-### 7. Produce the implementation plan
+### 8. Produce the implementation plan
 
-Use [references/implementation-plan-template.md](references/implementation-plan-template.md) as the default structure. Adapt sections to the actual task while preserving traceability, verification, and handoff readiness.
+Use [references/implementation-plan-template.md](references/implementation-plan-template.md) as the default structure. Adapt sections to the actual task while preserving traceability, test design, verification, and handoff readiness.
 
 Include:
 - Planning readiness and review status.
 - Source traceability.
 - Architecture and execution strategy.
+- Test design (TDD-first scenarios and red-phase specs).
 - Task breakdown.
 - Requirement-to-task matrix.
 - Verification matrix.
 - Risk, rollout, rollback, and observability notes.
-- Execution handoff with stop conditions.
+- Execution handoff with stop conditions and TDD evidence requirements.
 
-### 8. Self-review before handoff
+### 9. Self-review before handoff
 
 Before presenting the plan, run the checklist in [references/plan-quality-checklist.md](references/plan-quality-checklist.md).
 
 Fix issues inline when possible. If any blocker remains, mark the plan as blocked or draft instead of ready.
 
-### 9. Collaborate with plan-reviewer
+### 10. Collaborate with plan-reviewer
 
 [../plan-guide/SKILL.md](../plan-guide/SKILL.md) and [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) form a quality loop:
 
@@ -185,7 +211,7 @@ Fix issues inline when possible. If any blocker remains, mark the plan as blocke
 
 When a [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) report is provided, never ignore blocker or major findings. Every material finding needs a disposition: resolved, needs user decision, needs codebase inspection, needs upstream research, accepted as execution risk, rejected with rationale, or still blocking.
 
-### 10. End with a plan gate
+### 11. End with a plan gate
 
 After each complete plan or repair iteration, end with one gate unless the user explicitly requested only the final artifact:
 

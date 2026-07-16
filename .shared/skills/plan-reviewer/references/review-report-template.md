@@ -43,9 +43,13 @@ Use this structure for the review output. Keep it concise, but include enough de
 - Interface or file precision issues:
 - Parallelization or critical-path notes:
 
-## 6. Verification and risk check
+## 6. Test design and verification check
+- Test design section (TDD-first matrix, collaboration notes):
+- Requirement → planned failing test or verification check coverage:
+- Red-phase test gaps (code tasks missing failing tests before production steps):
+- Test discipline issues (`mandatory` vs unjustified `n/a`):
 - Acceptance criteria coverage:
-- Test/verification gaps:
+- Verification matrix gaps:
 - Rollout, rollback, observability, security, privacy, or migration gaps:
 - Domain-specific concerns:
 

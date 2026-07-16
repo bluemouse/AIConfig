@@ -1,6 +1,6 @@
 # Implementation Plan Template
 
-Use this structure for a plan that should be executable by a developer, engineer, or AI agent. Adapt section depth to scope, but do not omit traceability, task details, verification, and readiness.
+Use this structure for a plan that should be executable by a developer, engineer, or AI agent. Adapt section depth to scope, but do not omit traceability, test design, task details, verification, and readiness.
 
 ```markdown
 # Implementation Plan: [Feature / Fix / Change Name]
@@ -27,9 +27,9 @@ Use this structure for a plan that should be executable by a developer, engineer
 [Smallest coherent implementation slice if the full scope is large.]
 
 ## 3. Source traceability
-| source id / section | requirement, decision, or constraint | plan coverage | verification coverage |
-|---|---|---|---|
-|  |  | task ids | test/check ids |
+| source id / section | requirement, decision, or constraint | plan coverage | test ids (§6) | verification ids (§8) |
+|---|---|---|---|---|
+|  |  | task ids | t-xxx | v-xxx |
 
 ## 4. Assumptions and decisions
 ### Confirmed decisions
@@ -50,9 +50,18 @@ Use this structure for a plan that should be executable by a developer, engineer
 - Data model or migration notes:
 - Compatibility and rollout approach:
 - Observability and support approach:
+- TDD execution discipline: mandatory for all code-producing tasks via red-green-refactor
 - Alternatives rejected:
 
-## 6. Work breakdown
+## 6. Test design (TDD-first)
+
+| test id | type | requirement ids | test file | test name / scenario | red-phase expected failure | fixtures / notes |
+|---|---|---|---|---|---|---|
+| t-001 | unit/integration/e2e/contract |  |  |  |  |  |
+
+Collaboration notes: [How Tests Designer aligned with Requirements Mapper, Architecture Planner, Task Decomposer, and Verification Planner.]
+
+## 7. Work breakdown
 
 ### Task pg-001: [Concrete task title]
 - Purpose:
@@ -63,11 +72,14 @@ Use this structure for a plan that should be executable by a developer, engineer
 - Interfaces consumed:
 - Interfaces produced:
 - Implementation steps:
-  1. [Concrete action.]
-  2. [Concrete action.]
-- Tests/checks:
-  - [Exact test/check to add or run when known.]
-- Test discipline: mandatory | suggested | optional | n/a
+  1. Write failing test(s): [test file, name, scenario — must fail before production code.]
+  2. [Minimal production change to pass the test.]
+  3. [Refactor or integrate as needed.]
+- Red-phase tests (write first):
+  - [Exact test file, test name, scenario, expected failure.]
+- Supplementary checks:
+  - [Manual, integration, or observability check when needed.]
+- Test discipline: mandatory | n/a (non-code or config/infra verified by checks only — justify)
 - Verification:
   - Command/check: `[exact command or manual check]`
   - Expected result: [observable result]
@@ -78,27 +90,27 @@ Use this structure for a plan that should be executable by a developer, engineer
 
 [Repeat tasks with stable ids.]
 
-## 7. Verification matrix
+## 8. Verification matrix
 | id | type | command or check | expected result | covers |
 |---|---|---|---|---|
 | v-001 | unit/integration/e2e/manual/performance/security/observability |  |  | requirement/task ids |
 
-## 8. Risk, rollout, and rollback
+## 9. Risk, rollout, and rollback
 | risk | likelihood | impact | mitigation | rollback or fallback | owner/phase |
 |---|---|---|---|---|---|
 |  | high/medium/low | high/medium/low |  |  |  |
 
-## 9. Execution handoff
+## 10. Execution handoff
 - Recommended execution order:
 - Parallelizable work:
 - Critical path:
 - Required preflight checks:
 - Stop conditions:
-- Evidence the implementer must collect:
+- TDD evidence the implementer must collect: failing test output before production code, passing test after each task
 - Review checkpoints:
 - Post-implementation validation:
 
-## 10. Reviewer feedback status
+## 11. Reviewer feedback status
 [Include when a plan-reviewer report was provided.]
 - Latest verdict and confidence:
 - Findings resolved:

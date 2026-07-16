@@ -1,6 +1,6 @@
 ---
 name: plan-guide
-description: "Use when turning a research report, spec, requirements, bug report, or technical context into an executable implementation plan \u2014 decomposing work into ordered tasks, mapping requirements to implementation, defining verification and acceptance checks, or revising a plan from plan-reviewer findings before execution. Triggers on prompts to write an implementation plan, create a task breakdown, map requirements to tasks, define verification for a feature, or repair a plan from reviewer feedback \u2014 even when the user doesn't say 'plan'. Does not trigger on interactive research, research-report audit, code implementation, or code diff review."
+description: "Use when turning a research report, spec, requirements, bug report, or technical context into an executable implementation plan \u2014 decomposing work into ordered tasks, mapping requirements to implementation, designing TDD-first tests, defining verification and acceptance checks, or revising a plan from plan-reviewer findings before execution. Triggers on prompts to write an implementation plan, create a task breakdown, map requirements to tasks, plan tests for a feature, define verification for a feature, or repair a plan from reviewer feedback \u2014 even when the user doesn't say 'plan'. Does not trigger on interactive research, research-report audit, code implementation, or code diff review."
 ---
 
 # plan-guide wrapper for Claude Code

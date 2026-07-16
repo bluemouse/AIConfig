@@ -9,8 +9,9 @@ Use these roles as lenses. Do not produce separate speeches from each role; synt
 | Plan Lead | Always | Planning mode, readiness, scope, output shape, loop control. |
 | Requirements Mapper | Any source requirements exist | Requirement coverage, priority, acceptance criteria, non-goal conflicts, traceability. |
 | Architecture Planner | Existing system, new architecture, integrations, APIs, or data contracts matter | Boundaries, interfaces, dependencies, sequencing, compatibility, migration. |
-| Task Decomposer | Always | Cohesive task slices, dependency order, review checkpoints, independently testable deliverables. |
-| Verification Planner | Always | Unit/integration/e2e/manual/observability checks, expected outcomes, coverage of acceptance criteria. |
+| Tests Designer | Always (implementation plans) | TDD-first test scenarios from requirements and architecture; red-phase specs; edge and negative cases; test file/name/fixture plans; collaboration with Requirements Mapper, Architecture Planner, Task Decomposer, and Verification Planner. |
+| Task Decomposer | Always | Cohesive task slices, dependency order, review checkpoints, independently testable deliverables shaped by planned failing tests. |
+| Verification Planner | Always | Validation commands, manual checks, observability signals, expected outcomes, verification matrix; complements Tests Designer automated test plans. |
 | Risk and Release Planner | Rollout, migration, production, security, reliability, or users are affected | Risk controls, rollback, feature flags, telemetry, support, operational readiness. |
 | Execution Handoff Recorder | Always | Assumptions, stop conditions, commands, handoff notes, review status. |
 
@@ -28,10 +29,25 @@ Add one or more specialists only when they materially change the plan.
 | Performance Specialist | Latency, throughput, memory, rendering frame time, scaling, benchmarking. | Metrics, representative workloads, budgets, profiling, regressions, thresholds. |
 | Migration / Compatibility Specialist | Schema changes, API changes, file formats, backward compatibility. | Versioning, dual-write/read, migration reversibility, data safety, compatibility tests. |
 
+## Tests Designer collaboration loop
+
+Tests Designer is mandatory for every implementation plan. Do not treat test design as a final polish step.
+
+Run an iterative loop with these roles until test plans, tasks, and verification align:
+
+1. **Requirements Mapper → Tests Designer**: acceptance criteria and constraints become test scenarios.
+2. **Architecture Planner → Tests Designer**: boundaries and interfaces become unit, integration, and contract test scope.
+3. **Tests Designer → Task Decomposer**: red-phase test slices inform task boundaries and order.
+4. **Task Decomposer → Tests Designer**: concrete deliverables refine per-task failing tests.
+5. **Tests Designer ↔ Verification Planner**: automated tests plus manual checks, commands, and observability cover every must-have requirement.
+6. **Repeat** until conflicts between test design, architecture, and task decomposition are resolved.
+
+Tests Designer owns aggressive automated test planning. Verification Planner owns the broader verification matrix (manual, performance, security, observability, rollout checks). Neither role substitutes for the other.
+
 ## Role selection rules
 
-- Use 4-6 roles for most plans.
+- Use 5-7 roles for most plans; Tests Designer is always active for implementation plans.
 - Add a Domain Specialist when the domain is explicit, implied, or requested.
-- Strengthen Requirements Mapper and Verification Planner for plan-reviewer repair iterations.
+- Strengthen Requirements Mapper, Tests Designer, and Verification Planner for plan-reviewer repair iterations.
 - Strengthen Architecture Planner and Risk and Release Planner for high-risk or cross-system work.
 - State active roles in the plan preface or planning notes when useful.
