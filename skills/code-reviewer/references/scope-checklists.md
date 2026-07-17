@@ -194,6 +194,9 @@ actually trying to do.
   in, formatting-only changes mixed into a behavioral diff
 - Requirement drift: the implementation diverges from an earlier discussed design or
   constraint without an explanation
+- Missing documentation: public API, config, or user-visible behavior changed without
+  corresponding README, doc comment, or changelog update when the repo documents similar
+  changes elsewhere
 
 ## Conditional Extensions (apply when the change type matches)
 

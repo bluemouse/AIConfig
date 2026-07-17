@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Review git diffs and commits — staged changes, unstaged changes, the full working tree, the last commit, a specific commit, or a commit range — and return a structured, findings-first report with proposed fixes. Use whenever the user asks to review code, review a diff, review staged/unstaged/working-tree changes, review a commit or commit range, do a code review, or asks for a security/performance/design/test review of recent changes — even if they don't say "code review" explicitly (e.g. "check this diff", "look over my changes", "any issues in this commit", "is this ready to merge", "review my branch against main"). Supports six selectable review scopes (design, correctness, maintainability, security, performance, tests), three effort levels (basic, standard, deep), and an interactive mode that asks up front what to review, in what scope, and how deep before starting — say "review interactively" or "guided review" to trigger it.
+description: Review git diffs and commits — staged changes, unstaged changes, branch changes (pre-push vs default branch), the full working tree, the last commit, a specific commit, or a commit range — and return a structured, findings-first report with proposed fixes. Use whenever the user asks to review code, review a diff, review staged/unstaged/working-tree/branch changes, review a commit or commit range, do a code review, or asks for a security/performance/design/test review of recent changes — even if they don't say "code review" explicitly (e.g. "check this diff", "look over my changes", "any issues before I push", "is this ready to merge", "review my branch against main"). Supports six selectable review scopes (design, correctness, maintainability, security, performance, tests), three effort levels (basic, standard, deep), and an interactive mode that asks up front what to review, in what scope, and how deep before starting — say "review interactively" or "guided review" to trigger it.
 ---
 
 # Code Reviewer
@@ -19,6 +19,10 @@ Your job is to review code changes, not to implement them.
 Use a reviewer mindset. Prioritize bugs, regressions, design risks, security issues,
 missing tests, and maintainability concerns over cosmetic nits. Findings are the primary
 content of your response — don't bury them under process narration.
+
+Follow `<SKILL_ROOT>/references/review-principles.md` for reviewer mindset, context
+gathering, finding quality, constructive feedback, and PR hygiene — it is mandatory for
+every review, not optional depth reading.
 
 ## How This Skill Is Configured
 
@@ -44,8 +48,28 @@ explicitly wants a guided, interactive setup (see **Interactive Mode** below).
 | 4 | Last commit (HEAD) | `git show HEAD` (equivalently `git diff HEAD~1..HEAD`) |
 | 5 | Specific commit | `git show <sha-or-ref>` |
 | 6 | Range of commits | see below |
+| 7 | Branch changes (pre-push) | see below |
 
-**Range of commits** is the one case beyond a single diff:
+**Branch changes (pre-push)** — everything on the current branch since it diverged from a
+base ref, **plus** all local uncommitted edits (staged and unstaged). This is the usual
+"review before I push" or "review my branch" target.
+
+1. Resolve `<base>`: use a base the user named (e.g. `main`); otherwise infer the repo's
+   default branch (`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null`, or
+   `origin/main` / `origin/master`, or local `main` / `master`).
+2. Compute merge-base: `MB=$(git merge-base HEAD <base>)`.
+3. Gather the patch: `git diff "$MB"` — diff from merge-base to the current working tree
+   (includes committed branch commits and local index/worktree changes).
+4. Surface untracked files: `git status --porcelain` (same as other targets — diff never
+   shows untracked content).
+5. Record in the report: target `branch changes`, base ref, merge-base sha, and the
+   resolved command `git diff $(git merge-base HEAD <base>)`.
+
+Phrases like "review my branch," "before I push," "pre-push review," or "review against
+main" map here when the user means their full branch delta — not only staged hunks or a
+single commit.
+
+**Range of commits** (#6) is for explicit ref ranges beyond the branch-changes default:
 
 - Two-dot (`A..B`): every commit reachable from `B` but not `A` — use for "diff literally
   from A's tree to B's tree."
@@ -59,9 +83,10 @@ explicitly wants a guided, interactive setup (see **Interactive Mode** below).
   different between the two refs since they diverged (`A...B`), or a literal diff from
   A's tree to B's tree (`A..B`)?"
 
-Once the target is resolved: inspect the patch first, then read surrounding code as
-needed — impacted call sites and dependents, tests added/changed/missing, and whether the
-change matches any intent implied by the current chat session.
+Once the target is resolved: gather context per **Review Principles** (commit/PR
+metadata, project norms), inspect the patch, then read surrounding code as needed —
+impacted call sites and dependents, tests added/changed/missing, and whether the change
+matches any intent implied by the current chat session.
 
 **Resolution rule**: if the source is unspecified and cannot be inferred from context,
 default to **staged changes** (`git diff --staged`) and proceed — state the assumed
@@ -69,8 +94,8 @@ target in the **Review Target** section of the output. Do not interrupt to ask u
 **Interactive Mode** is triggered.
 
 When the user names a target explicitly, or context makes one clear (e.g. "review my
-branch against main" → commit range; "look at the last commit" → HEAD), use that instead
-of the default.
+branch against main" or "before I push" → branch changes; "look at the last commit" →
+HEAD; explicit `A..B` / `A...B` → commit range), use that instead of the default.
 
 For **Interactive Mode** only, present this menu if the user hasn't already named a
 target:
@@ -82,11 +107,75 @@ target:
 4. Last commit (HEAD)
 5. Specific commit
 6. Range of commits
+7. Branch changes (pre-push vs default/base branch)
 ```
 
 - If they pick 5: ask for the commit SHA or ref.
 - If they pick 6: ask "What's the range? Give me a base and tip (e.g. `main..my-branch`
   or `main...my-branch`), or tell me how many recent commits (e.g. 'last 5 commits')."
+- If they pick 7: ask for the base ref only when it isn't obvious (default: repo default
+  branch).
+
+## Empty Or Blocked Diff
+
+After gathering the patch, handle these cases before running scope passes:
+
+**Empty diff** — no changed hunks and no relevant untracked files:
+
+- Stop the review workflow; do not produce a full report.
+- Tell the user in one sentence that there was nothing to review (state the resolved
+  target and command).
+- Optionally note if untracked files were listed but the user did not ask to include them.
+
+**Blocked diff** — git commands fail (not a repo, unknown ref, merge-base missing, dirty
+state blocking checkout, etc.) or the patch is unusably empty while `git status` shows
+changes:
+
+1. State the blocker briefly.
+2. Fall back to **natural-language review**: build a change list from `git status
+   --porcelain`, `git diff --name-only`, recent `git log`, or paths the user named in
+   chat. Read those files directly.
+3. Write a `Change description` block — one header per file
+   (`<path> (added|modified|deleted|renamed)`) with bullets of what changed; mention
+   line ranges when known.
+4. Proceed with the review against that description; mark the report target as
+   `natural-language fallback` and list which files were read instead of a unified diff.
+5. Do not silently pretend a git diff succeeded.
+
+**Untracked-only changes** — status shows new files but no diff hunks:
+
+- Read the untracked files (or ask once whether to include them if the set is large).
+- Note in **Review target** that coverage is untracked-file review, not a git patch.
+
+## Large-Diff Handling
+
+Measure patch size after gathering (approximate changed lines from diff output, plus
+changed file count from `git diff --name-only` / status). When the change is large, adapt
+before scope passes — do not skim the entire patch in one pass.
+
+**Thresholds** (either triggers large-diff mode):
+
+- **> ~500 changed lines** in the unified diff, or
+- **> ~20 changed files**
+
+**Strategy**:
+
+1. **Triage files by risk** — review highest-risk paths first: auth/authz, security
+   boundaries, concurrency, migrations/schema, public API surface, dependency manifests,
+   config defaults, error handling on new code paths. Defer generated code, lockfiles-only
+   churn, and pure formatting unless a selected scope requires them.
+2. **Chunk the work** — at `standard`/`deep`, review file-by-file or by logical
+   directory; at `basic`, triage then skim only the top-risk files within the finding cap.
+3. **Read surrounding code per chunk** — call sites and tests for each chunk before moving
+   on; do not load the whole repo.
+4. **Record coverage gaps** — in the report **Review target** section, list files or
+   areas reviewed vs deferred; if large-diff mode forced truncation, say so explicitly
+   under **Effort used**.
+5. **Finding caps still apply** — large diffs do not raise caps; prioritize severity over
+   breadth.
+
+If the user asked for `deep` on a very large diff, run parallel scope passes **per chunk**
+or per high-risk file group rather than pasting the entire diff into each subagent prompt.
 
 ## Selecting Scope
 
@@ -156,7 +245,7 @@ else:
 ```
 Let's set this up:
 1. What should I review? (staged / unstaged / all changes / last commit / specific
-   commit / commit range)
+   commit / commit range / branch changes)
 2. Which scopes? (design, correctness, maintainability, security, performance, tests —
    default: all six)
 3. How deep? (basic / standard / deep — default: standard)
@@ -183,8 +272,11 @@ it does not replace direct inspection of the changes.
 1. **Resolve source** — per the rules above; default to staged changes if it can't be
    determined.
 2. **Resolve scope & effort** — defaults, or the interactive menu if triggered.
-3. **Gather the diff and context** — run the resolved git command(s); read surrounding
-   code, call sites, and existing tests as needed.
+3. **Gather context and the diff** — read `<SKILL_ROOT>/references/review-principles.md`
+   (**Context to gather first**); run the resolved git command(s); apply **Empty Or
+   Blocked Diff** rules if the patch is empty or git fails; apply **Large-Diff Handling**
+   when thresholds are met; run focused automated checks when feasible and record
+   results; read surrounding code, call sites, and existing tests as needed.
 4. **Run the review**, branching by effort:
    - `basic`: one combined pass across selected scopes, no verify.
    - `standard`: Scope & Intent Alignment, then one pass per selected scope, then a
@@ -192,10 +284,12 @@ it does not replace direct inspection of the changes.
    - `deep`: Scope & Intent Alignment (inline, by you — see next section for why), then
      parallel per-scope passes (or sequential if your tool has no parallel agents), then
      dedup, then adversarial verify, then a gap-sweep pass.
-5. **Validate findings** (standard/deep) — verify each against the diff and surrounding
-   code, prefer concrete evidence over speculation, distinguish confirmed issues from open
-   questions, and dedupe across scopes.
-6. **Assemble and return the Output Contract** below.
+5. **Validate findings** (standard/deep) — apply the **Finding quality bar** from
+   `review-principles.md`: verify each against the diff and surrounding code, prefer
+   concrete evidence over speculation, distinguish confirmed issues from open questions,
+   and dedupe across scopes.
+6. **Assemble and return the report** using
+   `<SKILL_ROOT>/references/review-report-template.md` (see **Output Contract**).
 
 ## Deep Effort: Parallel Scope Passes
 
@@ -263,43 +357,15 @@ Cap the final merged, verified list at **15–20** findings.
 
 ## Output Contract
 
-Return a code review report in chat after the review finishes. Findings-first; keep
-process narration brief by comparison.
+Return a code review report in chat after the review finishes. **Use
+`<SKILL_ROOT>/references/review-report-template.md` as the single source of truth** for
+section order, field names, severity labels, and formatting — unless the user requested
+a different format. Findings-first; keep process narration brief.
 
-### Review Target
+When git diff was empty, follow **Empty Or Blocked Diff** instead of emitting a full
+template. When large-diff mode truncated coverage, fill in the template's coverage fields.
 
-State exactly what was reviewed: target type, the resolved git command/ref(s), the effort
-level used, and which scopes were covered.
-
-### Findings
-
-List confirmed findings first, ordered by severity. For each:
-
-- Severity: `critical`, `important`, or `suggestion`
-- Scope: `design`, `correctness`, `maintainability`, `security`, `performance`, `tests`,
-  or `scope-intent-alignment`
-- Location: file and line references when available
-- What is wrong
-- Why it matters
-- Proposed fix, improvement, or resolution
-- Verdict (`deep` effort only): `CONFIRMED` or `PLAUSIBLE`
-
-### Open Questions Or Assumptions
-
-Include only items that could materially change the review outcome.
-
-### Scope Summary
-
-One line per scope actually run: what it found, or "no issues found."
-
-### Effort Used
-
-Echo the effort tier, and note explicitly if the finding cap was hit (more lower-severity
-issues likely exist but weren't surfaced).
-
-### Overall Verdict
-
-Concise summary of overall risk, merge readiness, and the most important next actions.
+Do not duplicate the template body here — read it before assembling the report.
 
 ## Routing Findings Back
 
@@ -322,8 +388,9 @@ in-chat report. It does not call `gh` or post to GitHub itself.
 When the user asks to **post the review on GitHub** (or "submit review comments on the PR",
 "REQUEST_CHANGES on GitHub", etc.) and the repo remote is GitHub:
 
-1. Finish this skill's review workflow and return the full Output Contract first — unless
-   findings from a prior run in the same session are already complete.
+1. Finish this skill's review workflow and return the full report per
+   `review-report-template.md` first — unless findings from a prior run in the same
+   session are already complete.
 2. Hand off to **[github-guide](../github-guide/SKILL.md)** for delivery. Read its
    [review-post.md](../github-guide/references/review-post.md) reference and map each
    finding per the **Handoff from code-reviewer** section in
@@ -342,13 +409,19 @@ tooling when available.
 
 ## Output Rules
 
+- Apply **Finding quality bar** and **Constructive feedback** from
+  `review-principles.md` to every finding.
 - Findings must be the primary content of the response.
 - Keep summaries brief compared with the findings section.
 - Prefer concrete, actionable fixes over vague advice.
 - Reference exact files and lines when practical.
 - Call out missing tests explicitly when change risk warrants it.
+- Do not report style or formatting nits unless they violate documented project norms or
+  hide a real defect.
 - If no findings are discovered, say that explicitly and mention any residual risks or
   testing gaps.
+- Note substantive strengths in **What went well** when present — briefly, without filler
+  praise.
 - Do not rewrite or patch the code unless the user explicitly asks for that in a
   follow-up request — this skill only proposes fixes, it doesn't apply them.
 - Posting findings to GitHub is a separate delivery step — see **Posting to GitHub** above
@@ -365,6 +438,12 @@ tooling when available.
 | Commit, push, rebase, worktrees | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
 
 ## Resources
+
+`<SKILL_ROOT>/references/review-principles.md` — mandatory reviewer mindset, context
+gathering, finding quality bar, constructive feedback, and PR hygiene.
+
+`<SKILL_ROOT>/references/review-report-template.md` — default structure for the final
+in-chat report.
 
 `<SKILL_ROOT>/references/scope-checklists.md` has the full bullet list per scope — read it
 before running any scope's pass, and required verbatim in parallel pass prompts at `deep`
