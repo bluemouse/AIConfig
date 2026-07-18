@@ -11,6 +11,7 @@ Examples:
     python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow
     python tools/install-skills.py /path/to/other-project --bundles extended-dev-workflow --override
     python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow --skills cpp-coding
+    python tools/install-skills.py /path/to/other-project --bundles target-bundle
     python tools/install-skills.py /path/to/other-project --agents skill-bootstrapper --uninstall
     python tools/install-skills.py   # GUI when no arguments
 """
@@ -68,6 +69,13 @@ RELOAD_REMINDER = (
 )
 
 BUNDLES_JSON = Path(__file__).resolve().parent / "bundles.json"
+
+TARGET_BUNDLE_ID = "target-bundle"
+TARGET_BUNDLE_NAME = "Target bundle"
+TARGET_BUNDLE_DESCRIPTION = (
+    "Skills currently installed in the selected target project "
+    "(matching this AIConfig catalog)."
+)
 
 BundleSelectionState = Literal["all", "none", "partial"]
 
@@ -294,19 +302,36 @@ def normalize_names(values: Iterable[str]) -> list[str]:
     return ordered
 
 
+def known_bundle_ids(path: Path = BUNDLES_JSON) -> list[str]:
+    """Return sorted bundle ids from bundles.json plus the dynamic target bundle."""
+    return sorted({bundle.id for bundle in load_skill_bundles(path)} | {TARGET_BUNDLE_ID})
+
+
 def resolve_bundle_skills(
     bundle_ids: Sequence[str],
     *,
     path: Path = BUNDLES_JSON,
+    target_root: Path | None = None,
 ) -> list[str]:
     """Resolve bundle ids from bundles.json into a deduplicated skill list."""
     bundles = load_skill_bundles(path)
     by_id = {bundle.id: bundle for bundle in bundles}
+    normalized_bundle_ids = normalize_names(bundle_ids)
     resolved: set[str] = set()
     for raw_id in bundle_ids:
         bundle_id = slugify_name(str(raw_id))
+        if bundle_id == TARGET_BUNDLE_ID:
+            if target_root is None:
+                raise InstallSkillsError("Target bundle requires a target project path.")
+            target_skills = build_target_bundle(target_root).skills
+            if not target_skills and normalized_bundle_ids == [TARGET_BUNDLE_ID]:
+                raise InstallSkillsError(
+                    "Target bundle: no matching installed skills found in target project."
+                )
+            resolved.update(target_skills)
+            continue
         if bundle_id not in by_id:
-            known = ", ".join(sorted(by_id))
+            known = ", ".join(known_bundle_ids(path))
             raise InstallSkillsError(
                 f"Unknown bundle {bundle_id!r}. Known bundles: {known}"
             )
@@ -318,16 +343,53 @@ def resolve_cli_skills(
     *,
     bundle_ids: Sequence[str] | None,
     skill_names: Sequence[str] | None,
+    target_root: Path | None = None,
 ) -> list[str]:
     """Resolve CLI skill selection from bundles, explicit names, or all discovered skills."""
     combined: list[str] = []
     if bundle_ids:
-        combined.extend(resolve_bundle_skills(bundle_ids))
+        combined.extend(resolve_bundle_skills(bundle_ids, target_root=target_root))
     if skill_names:
         combined.extend(normalize_names(skill_names))
-    if combined:
+    if bundle_ids or skill_names:
         return normalize_names(combined)
     return discover_skills()
+
+
+def discover_skills_in_project(project_root: Path) -> list[str]:
+    """Return skill slugs installed under project_root/.shared/skills/."""
+    names: set[str] = set()
+    shared_root = project_root / ".shared" / "skills"
+    if not shared_root.is_dir():
+        return []
+    for child in shared_root.iterdir():
+        if child.is_dir() and (child / "SKILL.md").is_file():
+            names.add(child.name)
+    return sorted(names)
+
+
+def build_target_bundle(
+    target_root: Path,
+    *,
+    available_skills: Sequence[str] | None = None,
+) -> SkillBundle:
+    """Build the dynamic target bundle from installed skills in the target project."""
+    if available_skills is None:
+        available_skills = discover_skills()
+    available_set = set(available_skills)
+    installed = discover_skills_in_project(target_root)
+    members = frozenset(name for name in installed if name in available_set)
+    return SkillBundle(
+        id=TARGET_BUNDLE_ID,
+        name=TARGET_BUNDLE_NAME,
+        description=TARGET_BUNDLE_DESCRIPTION,
+        skills=members,
+    )
+
+
+def resolve_target_bundle_skills(target_root: Path) -> list[str]:
+    """Return sorted skills for the dynamic target bundle."""
+    return sorted(build_target_bundle(target_root).skills)
 
 
 def discover_skills() -> list[str]:
@@ -668,6 +730,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
             "  python tools/install-skills.py /path/to/project --bundles core-dev-workflow\n"
             "  python tools/install-skills.py /path/to/project --bundles extended-dev-workflow --override\n"
             "  python tools/install-skills.py /path/to/project --bundles core-dev-workflow --skills cpp-coding\n"
+            "  python tools/install-skills.py /path/to/project --bundles target-bundle\n"
             "  python tools/install-skills.py /path/to/project --uninstall --agents skill-bootstrapper\n"
             "\n"
             "Run without arguments to open the GUI."
@@ -683,7 +746,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         nargs="+",
         metavar="ID",
         help=(
-            "Bundle ids from bundles.json to install or uninstall "
+            "Bundle ids from bundles.json or target-bundle to install or uninstall "
             "(skills only; agents still default to all unless --agents is set)."
         ),
     )
@@ -724,6 +787,7 @@ def run_cli(argv: Sequence[str]) -> int:
         skills = resolve_cli_skills(
             bundle_ids=args.bundles,
             skill_names=args.skills,
+            target_root=target,
         )
         agents = normalize_names(args.agents) if args.agents else discover_agents()
         code, message = run_operation(
@@ -800,6 +864,10 @@ class HoverTooltip:
             self._tooltip.destroy()
             self._tooltip = None
 
+    def set_text(self, text: str) -> None:
+        """Update tooltip text shown on the next hover."""
+        self.text = text.strip()
+
 
 class InstallSkillsApp:
     def __init__(self, root: tk.Tk) -> None:
@@ -820,10 +888,14 @@ class InstallSkillsApp:
         self._syncing_bundle_selection = False
         self.skill_bundles = load_skill_bundles()
         self._bundle_buttons: dict[str, ttk.Checkbutton] = {}
+        self._target_bundle: SkillBundle | None = None
+        self._target_bundle_button: ttk.Checkbutton | None = None
+        self._target_bundle_tooltip: HoverTooltip | None = None
         self._help_window: tk.Toplevel | None = None
 
         self._build_ui()
-        self._sync_bundle_toggles()
+        self.target_var.trace_add("write", lambda *_args: self._refresh_target_bundle())
+        self._refresh_target_bundle()
 
     def _build_ui(self) -> None:
         outer = ttk.Frame(self.root, padding=12)
@@ -912,6 +984,20 @@ class InstallSkillsApp:
             if bundle.description.strip():
                 HoverTooltip(button, bundle.description)
 
+        target_button = ttk.Checkbutton(
+            bundles,
+            text=TARGET_BUNDLE_NAME,
+            state=tk.DISABLED,
+            command=self._toggle_target_bundle,
+        )
+        target_button.pack(anchor=tk.W)
+        self._target_bundle_button = target_button
+        self._bundle_buttons[TARGET_BUNDLE_ID] = target_button
+        self._target_bundle_tooltip = HoverTooltip(
+            target_button,
+            "Set a target project to scan installed skills.",
+        )
+
     def _add_checkbox_list(
         self,
         parent: ttk.Frame,
@@ -995,9 +1081,15 @@ class InstallSkillsApp:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
 
+    def _effective_bundles(self) -> list[SkillBundle]:
+        bundles = list(self.skill_bundles)
+        if self._target_bundle is not None:
+            bundles.append(self._target_bundle)
+        return bundles
+
     def _all_bundled_skill_names(self) -> list[str]:
         names: set[str] = set()
-        for bundle in self.skill_bundles:
+        for bundle in self._effective_bundles():
             names.update(self._bundle_present_members(bundle.skills))
         return sorted(names)
 
@@ -1030,6 +1122,68 @@ class InstallSkillsApp:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
 
+    def _toggle_target_bundle(self) -> None:
+        if self._target_bundle is None:
+            return
+        self._toggle_bundle(self._target_bundle.skills)
+
+    def _update_target_bundle_tooltip(self, text: str) -> None:
+        if self._target_bundle_tooltip is not None:
+            self._target_bundle_tooltip.set_text(text)
+
+    def _refresh_target_bundle(self) -> None:
+        button = self._target_bundle_button
+        if button is None:
+            return
+
+        self._target_bundle = None
+        target_text = self.target_var.get().strip()
+        if not target_text:
+            button.state(["disabled"])
+            self._update_target_bundle_tooltip("Set a target project to scan installed skills.")
+            self._sync_bundle_toggles()
+            return
+
+        try:
+            target = Path(target_text).expanduser().resolve()
+        except (OSError, RuntimeError):
+            button.state(["disabled"])
+            self._update_target_bundle_tooltip("Invalid target path.")
+            self._sync_bundle_toggles()
+            return
+
+        if not target.exists() or not target.is_dir():
+            button.state(["disabled"])
+            self._update_target_bundle_tooltip("Target must be an existing directory.")
+            self._sync_bundle_toggles()
+            return
+
+        try:
+            validate_target(REPO_ROOT, target, create=False)
+        except InstallSkillsError as exc:
+            button.state(["disabled"])
+            self._update_target_bundle_tooltip(str(exc))
+            self._sync_bundle_toggles()
+            return
+
+        bundle = build_target_bundle(target, available_skills=self.skills)
+        if not bundle.skills:
+            button.state(["disabled"])
+            self._update_target_bundle_tooltip(
+                f"{TARGET_BUNDLE_DESCRIPTION} No matching installed skills found in target."
+            )
+            self._sync_bundle_toggles()
+            return
+
+        self._target_bundle = bundle
+        button.state(["!disabled"])
+        count = len(bundle.skills)
+        skill_word = "skill" if count == 1 else "skills"
+        self._update_target_bundle_tooltip(
+            f"{TARGET_BUNDLE_DESCRIPTION} {count} {skill_word} installed in target."
+        )
+        self._sync_bundle_toggles()
+
     def _on_skill_selection_changed(self) -> None:
         if self._syncing_bundle_selection:
             return
@@ -1051,7 +1205,7 @@ class InstallSkillsApp:
         if not self._bundle_buttons:
             return
 
-        for bundle in self.skill_bundles:
+        for bundle in self._effective_bundles():
             button = self._bundle_buttons.get(bundle.id)
             if button is None:
                 continue
@@ -1061,6 +1215,10 @@ class InstallSkillsApp:
                 lambda name: self.skill_vars[name].get(),
             )
             self._apply_bundle_toggle_state(button, state)
+
+        target_button = self._bundle_buttons.get(TARGET_BUNDLE_ID)
+        if target_button is not None and self._target_bundle is None:
+            self._apply_bundle_toggle_state(target_button, "none")
 
     def _browse_target(self) -> None:
         selected = filedialog.askdirectory(title="Select target project root")
@@ -1127,7 +1285,7 @@ class InstallSkillsApp:
 
     def _show_bundles_help(self) -> None:
         entries = bundle_help_entries(
-            self.skill_bundles,
+            self._effective_bundles(),
             present_members=self._bundle_present_members,
             is_selected=lambda name: self.skill_vars[name].get(),
         )

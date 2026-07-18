@@ -461,7 +461,7 @@ python tools/install-skills.py /path/to/other-project --agents skill-bootstrappe
 | Flag | Behavior |
 | --- | --- |
 | `TARGET` | Destination project root (required in CLI mode) |
-| `--bundles ID ...` | Bundle ids from [tools/bundles.json](tools/bundles.json); resolves to skills only (see [tools/bundles.md](tools/bundles.md)) |
+| `--bundles ID ...` | Bundle ids from [tools/bundles.json](tools/bundles.json) or `target-bundle`; resolves to skills only (see [tools/bundles.md](tools/bundles.md)) |
 | `--skills NAME ...` | Skill slugs to install or uninstall (default: all discovered unless `--bundles` is set) |
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
 | `--override` | Replace existing paths in the target; without it, skip and report |
@@ -477,7 +477,7 @@ python tools/install-skills.py
 ```
 
 - Checkboxes start **unchecked**
-- **Bundles** panel: batch toggles plus Select all/none
+- **Bundles** panel: batch toggles plus Select all/none; **Target bundle** appears after a valid target project path is set and selects skills already installed in that project
 - **Help** (right side of each panel): descriptions for current selections; partial bundles labeled `(partial)`
 - **Hover tooltips** on individual checkboxes
 

@@ -39,6 +39,22 @@ python tools/install-skills.py /path/to/project --bundles core-dev-workflow --sk
 - Combine with `--skills` to add individual skills beyond the bundle.
 - Agents are independent: `--bundles` does not limit agents. Pass `--agents` to select specific agents; otherwise all discovered agents are included.
 
+### Target bundle (dynamic)
+
+The **Target bundle** is not stored in `bundles.json`. It is computed at runtime from skills already installed in the destination project:
+
+- GUI: set **Target project**, then toggle **Target bundle** (enabled only when the path is valid and matching installed skills exist).
+- CLI: pass `--bundles target-bundle` with a `TARGET` path.
+
+Membership is the intersection of:
+
+1. Skills found under `<target>/.shared/skills/*/SKILL.md`
+2. Skills available in this AIConfig repository catalog
+
+```bash
+python tools/install-skills.py /path/to/project --bundles target-bundle
+```
+
 ## Core dev workflow bundle
 
 The core bundle is the minimum workflow set a team should rely on for ordinary feature, bug, and product-spec development. Not every skill fires on every task, but every skill covers a responsibility that appears regularly in healthy delivery work.
