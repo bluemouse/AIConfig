@@ -1,6 +1,6 @@
 ---
 name: research-guide
-description: "Use when interactively researching, brainstorming, or hardening a feature idea, product concept, app design, technical spec, requirement set, architecture direction, or roadmap item before implementation planning — through iterative agreement gates until a finalized research report is ready. Triggers on prompts to research an idea, brainstorm requirements, explore alternatives, author a spec, clarify trade-offs, validate assumptions, define scope, or produce a research report — even when the user doesn't say 'research'. Does not trigger on implementation plan authoring, plan-reviewer audit, or code diff review."
+description: "Use when interactively researching, brainstorming, or hardening a feature idea, product concept, app design, technical spec, requirement set, architecture direction, or roadmap item before implementation planning — through iterative agreement gates until a finalized research report is ready. Triggers on prompts to research an idea, brainstorm requirements, explore alternatives, author a spec, clarify trade-offs, validate assumptions, define scope, repair a research report from reviewer feedback, or produce a research report — even when the user doesn't say 'research'. Does not trigger on implementation plan authoring, plan-reviewer audit, research-report audit, or code diff review."
 ---
 
 # Research Guide
@@ -34,6 +34,7 @@ Your job is to **research and agree a research report**, not to write implementa
 ## Companion Skills
 
 - Optional audit before planning: [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
+- When revising from `research-reviewer` findings, use [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md)
 - After finalize: hand off the research report to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) for implementation planning
 
 ## Operating posture
@@ -50,6 +51,16 @@ Always:
 - Separate facts, assumptions, inferences, opinions, and open questions.
 - Use available sources, uploaded files, internal context, codebase context, or web research when the answer depends on current, niche, external, or project-specific facts.
 - Cite external or internal sources when using them.
+
+## Research depth
+
+Choose the lightest depth that can make the final report safe for implementation planning:
+
+- **Focused**: narrow, low-risk scope with few stakeholders and limited unknowns. Keep the research compact, but still preserve requirements, assumptions, risks, open questions, and an implementation-planning handoff.
+- **Standard**: default for most product, architecture, or requirements discovery. Use the full workflow with proportional detail.
+- **Rigorous**: high-risk, cross-system, security/privacy/compliance-sensitive, migration-heavy, performance-sensitive, production-data, regulated, expensive, or reviewer-blocked work. Strengthen evidence, domain lenses, risks, rollout, ownership, and planning-readiness checks. Recommend `research-reviewer` before planning unless the user explicitly declines.
+
+Record the selected depth in the final research report. Depth changes how much evidence and detail to gather; it does not remove the need for clear scope, requirements, acceptance signals, assumptions, risks, and open questions.
 
 ## Workflow
 
@@ -75,6 +86,7 @@ Create a compact working frame:
 - Decision needed before implementation planning
 - Research tracks to explore
 - Recommended posture: moderate or aggressive
+- Research depth: focused, standard, or rigorous
 
 Ask the next highest-leverage question if the frame has a blocking unknown. If enough context exists, proceed to options and trade-offs.
 
@@ -91,6 +103,8 @@ Use the relevant research tracks. Do not force every track when it does not appl
 **Alternatives and trade-offs**: propose 2-3 plausible approaches, including a conservative option and a more ambitious option when useful. Recommend one direction and explain why.
 
 **Technical feasibility**: identify architecture implications, dependencies, integrations, data contracts, performance constraints, security/privacy risks, migration needs, and testing strategy.
+
+When the research concerns an existing codebase and repository context is available, inspect relevant files, tests, configuration, interfaces, dependency manifests, and docs before making project-specific feasibility claims. If the codebase cannot be inspected, mark those claims as assumptions or open questions.
 
 **Risk and edge-case analysis**: surface abuse cases, failure states, unclear ownership, support burden, backward compatibility, observability needs, and rollout risks.
 
@@ -121,6 +135,18 @@ Agreement gate: choose one:
 
 Do not continue past the gate until the user answers. If the user gives new information, treat it as the next iteration and repeat the loop. If the user chooses finalize, write the final research-report.
 
+### Fast-pass synthesis
+
+Use fast-pass only when the user requests speed, a single-pass synthesis, or a lightweight report. In fast-pass mode:
+- Run one compact discovery pass instead of multiple iterations.
+- State that research depth is focused unless risk requires standard or rigorous.
+- Produce one synthesis and one agreement gate.
+- Before finalizing, still run the readiness checklist and keep unresolved uncertainty visible.
+
+### Reviewer feedback loop
+
+When the user provides a `research-reviewer` report, review findings, or a research handoff packet, follow [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md) before revising the report. Preserve `rr-*` finding ids, resolve or carry findings explicitly, and require re-review before implementation planning when the reviewer marked it required.
+
 ## Questioning and challenge style
 
 Use the questioning patterns in [references/questioning-playbook.md](references/questioning-playbook.md) when an iteration needs deeper probing.
@@ -148,6 +174,22 @@ The report must be consumable by an implementation planner. It must include:
 - Risks, edge cases, and mitigations
 - Dependencies and open questions
 - Implementation-planning handoff
+
+Finalization rules:
+- Use `agreed` only when planning can proceed without inventing core product, user, requirement, or risk decisions.
+- Use `partially agreed` when unresolved non-blocking decisions remain and their planning impact is explicit.
+- Use `blocked` when a core decision, target user, scope boundary, acceptance signal, evidence need, or risk decision prevents meaningful implementation planning. In that case, provide a Research Blocker Summary instead of implying readiness:
+
+```markdown
+Research Blocker Summary:
+- Agreement status: blocked
+- Missing input or decision:
+- Why implementation planning cannot proceed safely:
+- Recommended next step: ask user | gather evidence | inspect codebase | narrow scope | specialist review
+- Useful partial agreement, if any:
+```
+
+Recommend `research-reviewer` before handoff to `plan-guide` when research depth is rigorous, evidence for central claims is weak, the domain is security/privacy/compliance-sensitive, the scope is cross-system, or the user requested a hard challenge.
 
 ## Readiness self-review
 

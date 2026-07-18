@@ -8,6 +8,7 @@ Run this checklist before delivering the final research-report.
 - Goals and non-goals are both present.
 - Must-have requirements are distinguishable from nice-to-have ideas.
 - Acceptance signals exist for core requirements.
+- Research depth is recorded and matches the risk profile.
 
 ## Consistency
 - The recommended direction matches the stated goals and constraints.
@@ -27,8 +28,10 @@ Run this checklist before delivering the final research-report.
 - Open questions are labeled as blocking or non-blocking.
 - The recommended implementation slice is narrow enough for a plan.
 - The report does not contain code or detailed task breakdowns that belong in the implementation plan.
+- Project-specific technical claims are sourced from inspected context or marked as assumptions.
 
 ## Final gate quality
 - If the report is partially agreed or blocked, the reason is explicit.
 - If the scope was decomposed, the chosen slice is explicit.
 - If a major assumption remains weak, its planning impact is explicit.
+- If the report was revised after review, reviewer finding ids are preserved and dispositions are visible.

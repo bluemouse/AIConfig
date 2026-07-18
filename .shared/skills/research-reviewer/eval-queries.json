@@ -48,6 +48,12 @@
     "rationale": "direct: proceed-to-plan verdict"
   },
   {
+    "query": "re-review the updated research report and disposition the prior rr findings",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: re-review updated report"
+  },
+  {
     "query": "brainstorm a new feature idea for the dashboard",
     "should_trigger": false,
     "split": "train",
@@ -76,6 +82,12 @@
     "should_trigger": false,
     "split": "train",
     "rationale": "near-miss: interactive research -> research-guide"
+  },
+  {
+    "query": "revise the research report from this reviewer handoff packet",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: report repair -> research-guide"
   },
   {
     "query": "audit this spec for planning blockers and weak evidence",

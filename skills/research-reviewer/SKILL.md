@@ -1,6 +1,6 @@
 ---
 name: research-reviewer
-description: "Use when reviewing, auditing, or validating a research report produced by research-guide or similar discovery workflows before implementation planning — assessing completeness, consistency, evidence quality, risk awareness, and planning readiness across product, user, technical, security, data, compliance, operations, or domain-specific concerns. Triggers on prompts to review a research report, validate requirements, audit assumptions, challenge conclusions, find gaps, assign severity, produce required revisions, or decide whether a report is ready for an implementation plan — even when the user doesn't say 'research review'. Does not trigger on brainstorming new ideas, implementation plan authoring, plan-reviewer audit, or code diff review."
+description: "Use when reviewing, auditing, re-reviewing, or validating a research report produced by research-guide or similar discovery workflows before implementation planning — assessing completeness, consistency, evidence quality, risk awareness, and planning readiness across product, user, technical, security, data, compliance, operations, or domain-specific concerns. Triggers on prompts to review a research report, validate requirements, audit assumptions, challenge conclusions, find gaps, assign severity, disposition prior findings, produce required revisions, or decide whether a report is ready for an implementation plan — even when the user doesn't say 'research review'. Does not trigger on brainstorming new ideas, implementation plan authoring, plan-reviewer audit, or code diff review."
 ---
 
 # Research Reviewer
@@ -57,6 +57,10 @@ If the user has not provided a research report, ask for the report or the releva
 
 Treat reports from [../research-guide/SKILL.md](../research-guide/SKILL.md) as first-class input. Expect sections such as agreement state, problem statement, goals, requirements, recommended direction, alternatives, evidence and assumptions, user workflow, technical implications, risks, open questions, and implementation-planning handoff.
 
+If the user provides a prior `research-reviewer` report or asks for re-review, follow [references/re-review-protocol.md](references/re-review-protocol.md). Preserve prior finding ids and include finding dispositions in the new report.
+
+When repository access is available and the report makes project-specific claims about files, APIs, architecture, dependencies, commands, or constraints, spot-check a representative high-risk sample before assigning `ready`. Record inspected paths or state the limitation. If source precision matters and cannot be verified, lower confidence and mark the uncertainty as a finding.
+
 ## Workflow
 
 ### 1. Parse the report
@@ -73,7 +77,17 @@ Extract:
 
 If any major section is absent, keep reviewing and mark the absence as a finding instead of stopping.
 
-### 2. Select reviewer roles
+### 2. Choose review depth
+
+Choose the lightest review depth that can safely judge implementation-planning readiness:
+
+- **Focused**: short, low-risk, narrow research report. Still audit problem, user, scope, requirements, acceptance signals, evidence separation, risks, open questions, and implementation handoff.
+- **Standard**: default for most reports. Apply the full rubric with proportional detail.
+- **Rigorous**: high-risk, cross-system, security/privacy/compliance-sensitive, migration-heavy, performance-sensitive, production-data, regulated, expensive, aggressive-posture, or previously blocked work. Apply all relevant domain lenses, source/evidence checks, risk/rollout scrutiny, and re-review discipline.
+
+Record the review depth in the report. Focused review does not relax false-readiness rejection.
+
+### 3. Select reviewer roles
 
 Use roles as analytical lenses, not theatrical personas. State the active reviewer roles near the start of the review.
 
@@ -87,7 +101,7 @@ Default roles:
 
 Use [references/reviewer-roles.md](references/reviewer-roles.md) when role selection or domain specialization needs more detail.
 
-### 3. Audit from multiple angles
+### 4. Audit from multiple angles
 
 Run the review across the relevant lenses. Do not force irrelevant checks.
 
@@ -104,18 +118,30 @@ Core lenses:
 
 Use [references/validation-rubric.md](references/validation-rubric.md) for severity and verdict rules. Use [references/domain-lenses.md](references/domain-lenses.md) when specialized domain review is requested or implied.
 
-### 4. Produce the review-report
+### 5. Assign findings and verdict
+
+Every material finding must include:
+- Stable id such as `rr-001`.
+- Severity.
+- Location or affected section.
+- Issue.
+- Why it matters.
+- Required fix or recommendation.
+- Recommended research-guide action: revise report, ask user, inspect codebase, gather evidence, validate assumption, resolve open question, reconcile contradiction, narrow scope, expand alternatives, accept as planning risk, or re-review.
+
+Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `ready`, `conditionally ready`, `needs revision`, or `blocked`. Never rubber-stamp a ready verdict when core scope, target users, recommendation, acceptance criteria, evidence/assumption separation, implementation handoff, or blocking open questions are missing.
+
+### 6. Self-review before handoff
+
+Before presenting the report, run [references/review-quality-checklist.md](references/review-quality-checklist.md). Fix the report inline when the checklist catches a mismatch between severity, verdict, gate, or handoff content.
+
+### 7. Produce the review-report
 
 Use [references/review-report-template.md](references/review-report-template.md) as the default structure. Keep the report concise but specific enough for the author to revise the research report.
 
-Every material finding must include:
-- Severity
-- Location or affected section
-- Issue
-- Why it matters
-- Required fix or recommendation
+For `needs revision` and `blocked` verdicts — and for `conditionally ready` when the conditions are not already accepted — include a handoff packet using [references/research-guide-handoff-contract.md](references/research-guide-handoff-contract.md). The packet gives [../research-guide/SKILL.md](../research-guide/SKILL.md) a concrete, prioritized revision path back to planning readiness without re-reading the full review. State whether re-review is required before planning.
 
-### 5. End with a review gate
+### 8. End with a review gate
 
 End with exactly one gate unless the user requested only a final audit:
 
@@ -124,18 +150,10 @@ Review gate: choose one:
 1. revise: update the source research report using the required fixes
 2. re-review: run another pass after edits or with a stricter posture
 3. specialize: review again with a specific domain specialist lens
-4. accept: treat the report as ready at the stated verdict level
+4. accept: treat the report as ready at the stated verdict level, only when verdict is ready or conditionally ready with accepted planning risks
 ```
 
-Do not continue past the gate until the user answers.
-
-### 6. Hand back to research-guide on non-ready verdicts
-
-For `needs revision` and `blocked` verdicts — and for `conditionally ready` when the conditions are not already accepted — produce a handoff packet using [references/research-guide-handoff-contract.md](references/research-guide-handoff-contract.md). The packet gives [../research-guide/SKILL.md](../research-guide/SKILL.md) a concrete, prioritized revision path back to planning readiness without re-reading the full review. State whether re-review is required before planning.
-
-## Verdict rules
-
-Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `ready`, `conditionally ready`, `needs revision`, or `blocked`. Never rubber-stamp a ready verdict when core scope, target users, recommendation, acceptance criteria, or blocking open questions are missing.
+If the verdict is `blocked` or `needs revision`, do not offer `accept` as planning-ready. For `conditionally ready`, offer accept only as accepting the listed conditions as planning risks. Do not continue past the gate until the user answers.
 
 ## Quality bar
 

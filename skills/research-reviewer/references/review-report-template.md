@@ -9,9 +9,10 @@ Use this structure for the final review-report. Adapt only when sections are irr
 - Verdict: ready | conditionally ready | needs revision | blocked
 - Confidence: high | medium | low
 - Audit posture: balanced | aggressive
+- Review depth: focused | standard | rigorous
 - Active reviewer roles/lenses: [list]
 - Domain assumptions: [domain and confidence, or none]
-- Planning recommendation: [proceed / proceed with conditions / revise first / do not plan yet]
+- Planning recommendation: [proceed / proceed with accepted risks / revise first / do not plan yet]
 
 ## 2. Source report summary
 - Report decision or recommendation:
@@ -20,9 +21,9 @@ Use this structure for the final review-report. Adapt only when sections are irr
 - Sections or inputs missing from the review:
 
 ## 3. Top findings
-| id | severity | affected section | issue | required fix |
-|----|----------|------------------|-------|--------------|
-| rr-001 | blocker/major/minor/question/nit |  |  |  |
+| id | severity | affected section | issue | required fix | research-guide action |
+|----|----------|------------------|-------|--------------|-----------------------|
+| rr-001 | blocker/major/minor/question/nit |  |  |  | revise report / ask user / inspect codebase / gather evidence / validate assumption / resolve open question / reconcile contradiction / narrow scope / expand alternatives / accept as planning risk / re-review |
 
 ## 4. Cross-lens audit
 ### Completeness
@@ -74,14 +75,23 @@ Use this structure for the final review-report. Adapt only when sections are irr
 ### Optional cleanup
 1. [Minor improvement]
 
-## 7. Final readiness assessment
+## 7. Prior review disposition
+[Include only for re-review.]
+| prior finding | disposition | evidence in updated report | remaining concern |
+|---------------|-------------|----------------------------|-------------------|
+| rr-001 | resolved / partially resolved / accepted risk / rejected with rationale / still blocking / reopened |  |  |
+
+## 8. Research handoff packet
+[Required for needs revision, blocked, and unaccepted conditionally ready verdicts. Use `research-guide-handoff-contract.md`. Omit only when verdict is ready, or when conditionally ready risks are already explicitly accepted.]
+
+## 9. Final readiness assessment
 [One concise paragraph explaining whether the report can be consumed for implementation planning and under what conditions.]
 
 Review gate: choose one:
 1. revise: update the source research report using the required fixes
 2. re-review: run another pass after edits or with a stricter posture
 3. specialize: review again with a specific domain specialist lens
-4. accept: treat the report as ready at the stated verdict level
+4. accept: treat the report as ready at the stated verdict level, only when verdict is ready or conditionally ready with accepted planning risks
 ```
 
 Rules:
@@ -90,3 +100,4 @@ Rules:
 - Focus on planning impact rather than style preference.
 - Do not include a long rewrite of the original report unless requested.
 - If the report is strong, still list residual assumptions and minor risks.
+- Do not offer accept as planning-ready when the verdict is `blocked` or `needs revision`.

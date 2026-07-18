@@ -13,6 +13,7 @@ Use this structure for the final report after the user chooses finalize. Keep it
 - Finalized on: [date if known]
 - Decision owner: [user/team if known]
 - Research posture used: moderate | aggressive
+- Research depth: focused | standard | rigorous
 - Remaining decision needed before implementation planning: [none or list]
 
 ## 3. Problem statement
@@ -86,6 +87,16 @@ Use this structure for the final report after the user chooses finalize. Keep it
 - Testing focus:
 - Rollout or migration notes:
 - Definition of ready for implementation planning:
+
+## 14. Reviewer feedback status
+[Include only when revising after research-reviewer feedback.]
+- Latest reviewer verdict and confidence:
+- Findings resolved:
+- Findings partially resolved or reopened:
+- Findings accepted as planning risks:
+- Findings rejected with rationale:
+- Remaining blockers or major issues:
+- Re-review recommendation before implementation planning:
 ```
 
 Rules:
@@ -93,3 +104,4 @@ Rules:
 - Convert vague desires into testable requirements where possible.
 - Mark optional ideas as future work rather than bloating the first implementation slice.
 - Do not include implementation tasks unless they are needed to clarify planning inputs.
+- Do not mark a report `agreed` when unresolved blocker or unaccepted major review findings remain.

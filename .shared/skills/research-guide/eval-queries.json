@@ -48,6 +48,12 @@
     "rationale": "direct: aggressive posture research"
   },
   {
+    "query": "revise the research report using these research-reviewer findings",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: repair research report from reviewer feedback"
+  },
+  {
     "query": "review my staged diff for bugs and security issues",
     "should_trigger": false,
     "split": "train",
@@ -58,6 +64,12 @@
     "should_trigger": false,
     "split": "train",
     "rationale": "near-miss: audit finished report -> research-reviewer"
+  },
+  {
+    "query": "re-review the updated research report and disposition the old findings",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: research report re-review -> research-reviewer"
   },
   {
     "query": "create an implementation plan with subplans for the auth refactor",

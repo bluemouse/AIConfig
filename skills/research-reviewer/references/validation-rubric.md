@@ -112,4 +112,5 @@ Every material finding should include:
 - issue
 - why it matters
 - required fix
+- recommended research-guide action: revise report, ask user, inspect codebase, gather evidence, validate assumption, resolve open question, reconcile contradiction, narrow scope, expand alternatives, accept as planning risk, or re-review
 - owner suggestion when useful
