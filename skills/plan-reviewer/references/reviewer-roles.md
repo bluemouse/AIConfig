@@ -13,7 +13,7 @@ Use roles as review lenses. Do not stage a dialogue. Select a compact set of rol
 | Test Design Reviewer | Always for [../../plan-guide/SKILL.md](../../plan-guide/SKILL.md) plans. | TDD-first test design section, red-phase specs, requirement-to-failing-test-or-check traceability, test discipline, Tests Designer collaboration evidence. | Which requirement lacks a planned failing test or verification check? |
 | Verification Reviewer | Always. | Validation commands, manual checks, observability, expected outcomes, verification matrix coverage beyond automated tests. | How would the implementer prove the task works end-to-end? |
 | Risk and Release Reviewer | Production, users, data, migration, rollout, or operations matter. | Rollback, flags, observability, security/privacy, support, runbooks, release gates. | What failure mode is unhandled? |
-| Execution Readiness Reviewer | Always before execution. | Completeness for a fresh engineer or AI agent, stop conditions, handoff clarity. | What would the executor have to invent? |
+| Execution Readiness Reviewer | Always before execution. | Completeness for a fresh engineer or AI agent, stop conditions, handoff clarity, execution class, file ownership, and execution waves for plan-executor. | What would the executor have to invent? |
 
 ## Optional specialist roles
 

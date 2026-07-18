@@ -10,8 +10,11 @@ Use this structure for the review output. Keep it concise, but include enough de
 - Confidence: high | medium | low
 - Execution recommendation: proceed | proceed with accepted risks | revise first | do not execute
 - Review posture: balanced | aggressive
+- Review depth: focused | standard | rigorous
 - Active reviewer roles/lenses: [list]
 - Source context reviewed: [research-report/spec/requirements/bug/codebase/prior review]
+- Plan metadata reviewed: input mode, planning depth, artifact status, plan-reviewer status, execution recommendation
+- Codebase spot-checks: [paths, commands, interfaces checked | not available | not needed]
 
 ## 2. Executive summary
 [Short summary of whether the plan is executable and the main reason.]
@@ -37,13 +40,21 @@ Use this structure for the review output. Keep it concise, but include enough de
 - Scope drift or non-goal conflicts:
 - Source contradictions:
 
-## 5. Task and sequencing check
+## 5. Readiness and metadata check
+- Input mode and planning depth:
+- Artifact status vs plan content:
+- Blocked/discovery-gated documentation:
+- Validated/conditionally validated justification:
+- Research-guide handoff coverage, when applicable:
+
+## 6. Task and sequencing check
 - Task decomposition quality:
 - Dependency issues:
 - Interface or file precision issues:
-- Parallelization or critical-path notes:
+- Execution class and file ownership issues:
+- Execution waves, parallelization, integration, or critical-path notes:
 
-## 6. Test design and verification check
+## 7. Test design and verification check
 - Test design section (TDD-first matrix, collaboration notes):
 - Requirement → planned failing test or verification check coverage:
 - Red-phase test gaps (code tasks missing failing tests before production steps):
@@ -53,19 +64,27 @@ Use this structure for the review output. Keep it concise, but include enough de
 - Rollout, rollback, observability, security, privacy, or migration gaps:
 - Domain-specific concerns:
 
-## 7. Prior review disposition
+## 8. Prior review disposition
 [Use when reviewing an updated plan.]
 - Resolved findings:
+- Partially resolved findings:
 - Reopened findings:
 - New findings:
+- Accepted risks:
+- Re-review recommendation:
 
-## 8. Guide handoff packet
+## 9. Guide handoff packet
 - Target skill: plan-guide
 - Review verdict:
 - Confidence:
 - Execution recommendation:
 - Iteration required:
+- Input mode observed:
+- Planning depth observed:
+- Review depth used:
 - Highest-priority repair track:
+- Recommended plan-guide repair mode: full rewrite | targeted section repair | blocker-only repair | split plan | none
+- Sections or task ids to preserve unchanged:
 - Findings requiring plan-guide action:
   - [finding id]: [severity] [summary]
     - required action:
@@ -78,16 +97,17 @@ Use this structure for the review output. Keep it concise, but include enough de
 - Findings rejected or out of scope:
 - Re-review required before execution:
 
-## 9. Review gate
+## 10. Review gate
 Review gate: choose one:
 1. return-to-guide: give the Guide handoff packet to plan-guide for targeted repair
 2. re-review: review an updated plan or run a stricter pass
 3. specialize: review again with a named domain specialist lens
 4. accept: treat the plan as executable at the stated verdict level
+5. execute: hand off to plan-executor (validated only, or conditionally validated with explicitly accepted risks)
 ```
 
 Rules:
-- Do not include the accept option as executable-ready for blocked or needs revision verdicts.
+- Do not include accept or execute as executable-ready options for blocked or needs revision verdicts.
 - Do not bury blocker findings in prose.
 - Do not block on nits or style preferences.
 - Make each material finding actionable by `plan-guide`.

@@ -54,6 +54,16 @@ Always:
 - Reject false readiness. A polished plan can still be unsafe to execute.
 - End with a Guide handoff packet for plan-guide.
 
+## Review depth
+
+Choose the lightest review depth that can safely validate the plan:
+
+- **Focused**: plan declares `planning depth: focused`, has roughly five or fewer tasks, and is low-risk. Still audit source alignment, TDD/red-phase coverage for code tasks, task actionability, verification, and blocker handling. You may abbreviate risk/rollout, domain-specialist, and exhaustive execution-wave analysis when genuinely not applicable.
+- **Standard**: default for most plans. Apply the full rubric with proportional detail.
+- **Rigorous**: plan declares `planning depth: rigorous`, aggressive posture applies, prior review returned blocked or needs revision for high-risk areas, or the plan affects high-risk domains. Apply all relevant rubric categories, domain lenses, codebase spot-checks, risk/rollout/rollback review, and execution handoff checks.
+
+Never relax mandatory TDD review, source traceability, blocker handling, or false-readiness rejection at any depth. Record the chosen review depth in the report.
+
 ## Input handling
 
 If the user provides only a plan and no source context, review what can be reviewed, but lower confidence and mark any source-alignment uncertainty. If source alignment is essential and absent, make that a major or blocker finding.
@@ -62,23 +72,29 @@ If the plan includes previous plan-reviewer findings, preserve finding ids for u
 
 If the plan claims to be validated, check whether the reviewer feedback status justifies that claim.
 
+When repository access is available and the plan names exact paths, commands, or interfaces, spot-check a representative high-risk sample before assigning `validated`: task files, test paths, build or verification commands, public interfaces, migration files, or integration points. Record inspected paths or commands in the report. If repository access is unavailable, state the limitation and lower confidence when source precision matters.
+
 ## Workflow
 
 ### 1. Parse the plan and source context
 
 Extract:
-- Plan status and execution recommendation.
+- Plan status, input mode, planning depth, and execution recommendation.
 - Source artifact(s) and upstream readiness.
+- Planning Blocker Summary, or template §4 **Blocking questions** and **Discovery items to inspect**, when status is `blocked` or `discovery-gated`.
 - Goal, scope, non-goals, and first executable slice.
 - Requirements, acceptance criteria, and source traceability matrix.
 - Implementation strategy, architecture boundaries, interfaces, and dependencies.
 - Test design section (TDD-first matrix, collaboration notes, red-phase specs; required for plan-guide plans — record a finding if missing).
-- Task list, task ids, files, steps, red-phase tests, test discipline, verification, and stop conditions.
+- Task list, task ids, execution class, file ownership, files, steps, red-phase tests, test discipline, verification, and stop conditions.
 - Verification matrix.
 - Risk, rollout, rollback, migration, observability, and support notes.
+- Execution handoff: execution waves, parallelizable work, sequential work, integration tasks, and file ownership constraints.
 - Reviewer feedback status from prior loops.
 
 If any major section is missing, continue reviewing and record it as a finding instead of stopping.
+
+Choose review depth from the plan's planning depth, risk, source confidence, prior reviewer state, and domain. Do not use focused review when the plan has unresolved blockers, high-risk operations, cross-system dependencies, production data, security/privacy/compliance impact, migrations, or public API changes.
 
 ### 2. Select reviewer roles
 
@@ -96,6 +112,8 @@ Default roles:
 
 Add a Domain Specialist when the domain is explicit, implied, or requested. Use [references/reviewer-roles.md](references/reviewer-roles.md) for role selection and [references/domain-lenses.md](references/domain-lenses.md) for specialized checks.
 
+Use fewer optional or domain-specific lenses for focused review only when the omitted lenses cannot affect execution readiness. Use all relevant domain lenses for rigorous review.
+
 ### 3. Audit the plan from multiple angles
 
 Use the lenses that apply. Do not force irrelevant checks.
@@ -111,7 +129,19 @@ Core lenses:
 - **Verification quality**: validation commands and checks are concrete, expected outcomes are clear, and acceptance criteria are covered beyond automated tests alone.
 - **Risk and release readiness**: rollout, rollback, observability, support, security, privacy, compliance, and operational concerns are handled when relevant.
 - **Execution-agent readiness**: tasks contain enough local context for another AI agent to implement one task without reading the whole conversation.
+- **Readiness and metadata quality** (plans from [../plan-guide/SKILL.md](../plan-guide/SKILL.md)): input mode and planning depth are stated; artifact status matches plan content; `validated` or `conditionally validated` is justified by review history or explicit acceptance; `blocked` or `discovery-gated` plans include a Planning Blocker Summary, or template §4 **Blocking questions** and **Discovery items to inspect**, with concrete content; research-guide handoff details are reflected when the source artifact is a research report.
+- **Execution handoff quality**: each task has an execution class (`parallel`, `sequential`, or `integration`); parallel waves have disjoint file ownership; shared or ordering-dependent work is marked sequential or reserved for integration tasks; execution waves and file ownership constraints are explicit enough for [../plan-executor/SKILL.md](../plan-executor/SKILL.md).
 - **Review-loop hygiene**: prior reviewer findings have visible and credible dispositions.
+
+Apply input-mode-specific emphasis:
+
+| input mode | review emphasis |
+|---|---|
+| Research handoff | Strictly compare against the research report's implementation-planning handoff, readiness, open questions, recommended slice, milestones, testing focus, and rollout notes. |
+| Direct spec | Verify the plan does not invent product, architecture, or acceptance decisions absent from the spec; mark source-alignment confidence accordingly. |
+| Codebase-led | Spot-check named files, interfaces, tests, commands, and repository conventions when tools are available; flag invented paths or unsupported assumptions. |
+| Plan normalization | Confirm the thin/external plan was expanded into traceability, TDD-first tests, task-level verification, readiness status, and no placeholders. |
+| Review repair loop | Preserve finding ids, audit dispositions before adding new findings, and use [references/re-review-protocol.md](references/re-review-protocol.md). |
 
 Use [references/validation-rubric.md](references/validation-rubric.md) for severity and verdict rules.
 
@@ -129,13 +159,17 @@ Every material finding must include:
 
 Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `validated`, `conditionally validated`, `needs revision`, or `blocked`. Never validate when source requirements, core tasks, critical verification, or mandatory TDD test design for code-producing work is missing. When essential source context is absent or unverifiable, the verdict cannot be `validated` or `conditionally validated`; use `needs revision` or `blocked` and record the missing context as a blocker finding.
 
-### 5. Produce the review-report
+### 5. Self-review before handoff
+
+Before presenting the report, run [references/review-quality-checklist.md](references/review-quality-checklist.md). Fix the report inline when the checklist catches a mismatch between severity, verdict, gate, or Guide handoff content.
+
+### 6. Produce the review-report
 
 Use [references/review-report-template.md](references/review-report-template.md) as the default structure. Keep the report concise but specific enough for plan-guide to repair the plan.
 
 The review-report must include a **Guide handoff packet**. This packet is the contract with plan-guide; use [references/guide-handoff-contract.md](references/guide-handoff-contract.md) for semantics.
 
-### 6. End with a review gate
+### 7. End with a review gate
 
 End with one gate unless the user requested only a final audit:
 
@@ -145,11 +179,12 @@ Review gate: choose one:
 2. re-review: review an updated plan or run a stricter pass
 3. specialize: review again with a named domain specialist lens
 4. accept: treat the plan as executable at the stated verdict level
+5. execute: hand off to [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
 ```
 
-If the verdict is blocked or needs revision, do not offer execution as ready. If the verdict is conditionally validated, make the accepted execution risks explicit before any execution handoff.
+If the verdict is blocked or needs revision, do not offer accept or execute as executable-ready options. Offer `execute` only when the verdict is `validated`, or when the verdict is `conditionally validated` and the user explicitly accepts the conditions as execution risks.
 
-Re-review sequence: after a `blocked` verdict, the repaired plan must be re-reviewed before execution. After `needs revision`, re-review the updated plan unless every finding was trivial and self-evidently fixed. After `conditionally validated`, re-review only if the conditions changed the plan's structure or risk; otherwise proceed with the accepted risks recorded.
+For updated plans, follow [references/re-review-protocol.md](references/re-review-protocol.md): after a `blocked` verdict, the repaired plan must be re-reviewed before execution. After `needs revision`, re-review the updated plan unless every finding was trivial and self-evidently fixed. After `conditionally validated`, re-review only if the conditions changed the plan's structure or risk; otherwise proceed with the accepted risks recorded.
 
 ## Quality bar
 

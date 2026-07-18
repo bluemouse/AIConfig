@@ -9,15 +9,18 @@ Run this checklist before presenting an implementation plan or after applying re
 - Non-goals are not accidentally implemented.
 - The plan does not expand scope without calling out the expansion.
 - The plan preserves upstream research-guide readiness and unresolved questions.
+- Research-guide implementation-planning handoff details are mapped into the plan when available.
 
 ## Completeness
 
+- Input mode, planning depth, artifact status, and execution recommendation are stated.
 - Goal, scope, non-goals, and first executable slice are explicit.
 - Architecture or implementation strategy is stated before task steps.
 - Dependencies and sequencing are clear.
 - Interfaces, contracts, schemas, flags, or API names are named when known.
 - Data, migration, rollout, rollback, observability, security, privacy, and support concerns are addressed when relevant.
 - Open questions are classified as blocking or non-blocking.
+- Blocked or discovery-gated plans document blockers clearly: either a Planning Blocker Summary in the response, or template §4 **Blocking questions** and, when status is `discovery-gated`, **Discovery items to inspect** filled with concrete content.
 
 ## Task quality
 
@@ -26,6 +29,8 @@ Run this checklist before presenting an implementation plan or after applying re
 - Task dependencies do not conflict or reference outputs that are never produced.
 - Names, paths, types, commands, and interfaces are consistent across tasks.
 - Large independent subsystems are split into separate plans or phases.
+- Each task has an execution class: `parallel`, `sequential`, or `integration`.
+- Parallel execution waves have disjoint file ownership; shared files are reserved for sequential or integration tasks.
 
 ## Precision and no-placeholder scan
 
@@ -35,6 +40,7 @@ Reject or revise the plan if it contains:
 - Similar to previous task without repeating the required details.
 - File paths, commands, functions, types, or schemas that are invented without inspection or clearly labeled as assumptions in a draft plan.
 - A ready status while blocker questions remain.
+- A `validated` or `conditionally validated` status without plan-reviewer approval or explicit user acceptance.
 
 ## Test design and TDD quality
 
@@ -70,4 +76,5 @@ Use:
 - **Ready for review** when the plan is complete but has not yet been audited.
 - **Conditionally validated** when review found no blockers and remaining risks are explicit and accepted.
 - **Draft** when useful planning exists but codebase/source details still need inspection.
+- **Discovery-gated** when repository, system, or dependency context must be inspected before exact implementation steps can be written.
 - **Blocked** when execution would require inventing core decisions or missing context.

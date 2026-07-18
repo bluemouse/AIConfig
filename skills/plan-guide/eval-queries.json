@@ -54,6 +54,24 @@
     "rationale": "direct: Guide handoff repair"
   },
   {
+    "query": "explore the codebase and turn this rough feature ask into an implementation plan",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: codebase-led planning"
+  },
+  {
+    "query": "expand this thin plan into tasks with TDD specs and verification",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: plan normalization"
+  },
+  {
+    "query": "create a focused implementation plan for this single-file bug fix",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: focused planning depth"
+  },
+  {
     "query": "brainstorm requirements for the notification feature",
     "should_trigger": false,
     "split": "train",
@@ -100,5 +118,17 @@
     "should_trigger": false,
     "split": "validation",
     "rationale": "validation negative: interactive research -> research-guide"
+  },
+  {
+    "query": "use Cursor Plan mode to build the checkout feature",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: IDE Plan mode workflow, not plan-guide skill"
+  },
+  {
+    "query": "normalize this external markdown plan into an executable TDD-first breakdown",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: plan normalization"
   }
 ]

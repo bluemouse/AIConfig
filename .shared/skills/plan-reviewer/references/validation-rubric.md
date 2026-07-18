@@ -7,7 +7,7 @@ Use this rubric to assign severity, verdict, confidence, and execution readiness
 | severity | meaning | execution impact | examples |
 |---|---|---|---|
 | Blocker | Execution would be unsafe, impossible, or likely to build the wrong thing. | Do not execute. | Missing source requirements, unresolved core decision, critical tasks vague, no verification for critical behavior, code task with no red-phase test plan, destructive migration without rollback, plan contradicts spec. |
-| Major | Execution can start only with risky invention or significant clarification. | Revise before execution or accept explicitly as execution risk if narrow. | Missing file/interface details in known codebase, weak task sequencing, incomplete tests for core flow, missing Test design section for plan-guide plans, must-have requirement without planned failing test or verification check, unsupported architecture assumption, missing migration step. |
+| Major | Execution can start only with risky invention or significant clarification. | Revise before execution or accept explicitly as execution risk if narrow. | Missing file/interface details in known codebase, weak task sequencing, incomplete tests for core flow, missing Test design section for plan-guide plans, must-have requirement without planned failing test or verification check, unsupported architecture assumption, missing migration step, missing input mode or planning depth, missing execution class or file ownership on parallelizable tasks, overlapping parallel write paths. |
 | Minor | Plan is mostly executable but should improve clarity or coverage. | Can often be fixed before or during implementation. | Manual check could be more precise, low-risk edge case lacks owner, non-critical command lacks expected output. |
 | Question | Reviewer needs clarification before assigning severity. | May become major or blocker. | Ambiguous source requirement, uncertain repository pattern, unclear owner of rollout decision. |
 | Nit | Editorial or formatting issue with no execution impact. | Does not affect readiness. | Minor wording, duplicate section, inconsistent heading. |
@@ -23,14 +23,21 @@ Use this rubric to assign severity, verdict, confidence, and execution readiness
 
 Never assign Validated when any of these are absent or contradictory:
 - Goal and scope.
+- Input mode and planning depth for plan-guide plans.
 - Source traceability for must-have requirements.
 - Task breakdown with dependencies.
 - Concrete implementation steps.
 - Verification for critical behavior.
 - TDD test design for code-producing tasks from [../../plan-guide/SKILL.md](../../plan-guide/SKILL.md): Test design section, red-phase specs, and `mandatory` test discipline (or justified `n/a`).
+- Execution class and file ownership on tasks when the plan claims parallelizable work or execution waves.
+- Execution handoff with explicit waves and file ownership constraints when parallel execution is proposed.
 - Risk/rollback handling for high-risk changes.
-- Blocking questions resolved or clearly marked as blocking.
+- Planning Blocker Summary, or template §4 **Blocking questions** and **Discovery items to inspect**, resolved or clearly marked as blocking when status is `blocked` or `discovery-gated`.
 - Prior reviewer blockers resolved.
+
+For plans with `planning depth: focused`, risk, rollout, rollback, observability, and domain-specialist detail may be abbreviated when genuinely not applicable. Focused plans still require source traceability, task actionability, TDD/red-phase coverage for code tasks, verification per task, blocker handling, and enough execution context for a fresh implementer.
+
+For plans with `planning depth: rigorous`, do not assign `validated` unless all relevant domain, risk, rollout, rollback, observability, migration, security/privacy, performance, and execution-handoff concerns are explicitly handled or justified as not applicable.
 
 ## Confidence levels
 
@@ -55,8 +62,19 @@ Check:
 
 Check:
 - Goal, scope, assumptions, and first executable slice are clear.
+- Input mode, planning depth, artifact status, and execution recommendation are stated for plan-guide plans.
 - Architecture and implementation strategy exist before tasks.
 - Dependencies, interfaces, data, migration, rollout, rollback, observability, security, privacy, and support are covered when relevant.
+- Blocked or discovery-gated plans include a Planning Blocker Summary, or template §4 **Blocking questions** and **Discovery items to inspect** with concrete content.
+
+### Input-mode alignment
+
+Check:
+- Research handoff plans preserve upstream readiness, open questions, implementation-planning handoff, testing focus, dependencies, and rollout or migration notes.
+- Direct spec plans do not invent product, architecture, acceptance, or risk decisions absent from the spec.
+- Codebase-led plans are grounded in inspected repository facts when tools are available, and unverified claims are marked as assumptions or discovery gates.
+- Plan normalization outputs replace thin-plan placeholders with source traceability, TDD-first tests, task-level verification, and readiness status.
+- Review repair loops preserve unresolved finding ids, classify resolved/reopened/new findings, and do not ignore prior blockers or major findings.
 
 ### Task quality
 
@@ -64,6 +82,8 @@ Check:
 - Tasks are coherent and independently reviewable.
 - Task dependencies are valid.
 - Task outputs are consumed consistently later.
+- Each task has an execution class when the plan proposes parallel or wave-based execution.
+- Parallel tasks have disjoint file ownership; shared files are reserved for sequential or integration tasks.
 - File paths, interfaces, commands, and expected outcomes are exact when known.
 - Unknown repository facts are not invented.
 
@@ -96,7 +116,16 @@ Check:
 - Stop conditions are explicit.
 - Required evidence collection is clear.
 - Review checkpoints are sensible.
-- Parallelizable and critical-path work are identified when useful.
+- Execution waves, parallelizable work, sequential work, integration tasks, and file ownership constraints are explicit when useful.
+- Parallel waves are safe for [../../plan-executor/SKILL.md](../../plan-executor/SKILL.md): disjoint write paths and no hidden ordering dependencies.
+
+### Codebase spot-check quality
+
+Check when repository access is available and the plan names exact paths, commands, or interfaces:
+- High-risk file paths, test paths, public interfaces, migration files, or integration points were spot-checked.
+- Verification commands and expected outcomes are plausible for the repository.
+- Invented paths, commands, or APIs are findings unless clearly marked as assumptions in a draft or discovery-gated plan.
+- If spot-checking was not possible, confidence is lowered when source precision matters.
 
 ## Finding format
 

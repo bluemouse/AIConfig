@@ -6,8 +6,10 @@ Use this structure for a plan that should be executable by a developer, engineer
 # Implementation Plan: [Feature / Fix / Change Name]
 
 ## 1. Planning status
-- Status: draft | ready for review | validated | conditionally validated | blocked
-- Source artifact(s): [research-report / spec / requirements / bug report / codebase context]
+- Status: draft | discovery-gated | ready for review | validated | conditionally validated | blocked
+- Input mode: research handoff | direct spec | codebase-led | plan normalization | review repair loop
+- Planning depth: focused | standard | rigorous
+- Source artifact(s): [research-report / spec / requirements / bug report / codebase context / external plan]
 - Upstream readiness: ready | conditionally ready | not ready | unknown
 - Latest plan-reviewer status: not reviewed | validated | conditionally validated | needs revision | blocked
 - Active planning roles/lenses: [list]
@@ -41,7 +43,10 @@ Use this structure for a plan that should be executable by a developer, engineer
 |  | high/medium/low |  |  |
 
 ### Blocking questions
-- [Only include if status is blocked or draft.]
+- [Include when status is blocked, draft, or discovery-gated.]
+
+### Discovery items to inspect
+- [Include when status is discovery-gated. List repository, system, or dependency facts that must be inspected before exact implementation steps can be written.]
 
 ## 5. Implementation strategy
 - Recommended approach:
@@ -67,6 +72,10 @@ Collaboration notes: [How Tests Designer aligned with Requirements Mapper, Archi
 - Purpose:
 - Source requirements covered:
 - Depends on:
+- Execution class: parallel | sequential | integration
+- File ownership:
+  - Allowed write paths:
+  - Shared files or parent-led integration:
 - Files to create:
 - Files to modify:
 - Interfaces consumed:
@@ -102,7 +111,13 @@ Collaboration notes: [How Tests Designer aligned with Requirements Mapper, Archi
 
 ## 10. Execution handoff
 - Recommended execution order:
+- Execution waves:
+  - Wave 1: [parallel task ids and file ownership]
+  - Wave 2: [dependent or integration task ids]
 - Parallelizable work:
+- Sequential work and why:
+- Integration tasks:
+- File ownership constraints:
 - Critical path:
 - Required preflight checks:
 - Stop conditions:
@@ -125,3 +140,4 @@ Rules:
 - Do not include placeholders in a ready, validated, or conditionally validated plan.
 - Mark missing source context as draft, discovery-gated, or blocked.
 - Keep task ids stable across review iterations so reviewer findings remain traceable.
+- Use `validated` only after plan-reviewer approval or explicit user acceptance of a reviewer-approved plan.
