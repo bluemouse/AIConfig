@@ -62,6 +62,7 @@ The core bundle is the minimum workflow set a team should rely on for ordinary f
 | Skill | Primary role | Use when |
 | --- | --- | --- |
 | [research-guide](../skills/research-guide/SKILL.md) | Discovery and requirements shaping | The idea, requirement, or product direction is still unclear |
+| [code-professor](../skills/code-professor/SKILL.md) | Codebase learning and documentation | Onboarding, architecture maps, module deep dives, workflow traces, or failure investigation guides are needed |
 | [plan-guide](../skills/plan-guide/SKILL.md) | Implementation planning | Requirements, specs, or bug context must become executable tasks |
 | [plan-executor](../skills/plan-executor/SKILL.md) | Plan execution | An implementation plan is ready to run in the current working tree |
 | [test-driven-dev-guide](../skills/test-driven-dev-guide/SKILL.md) | Test-first implementation | The change should be developed through red-green-refactor |

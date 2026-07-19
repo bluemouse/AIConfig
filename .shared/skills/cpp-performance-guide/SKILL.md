@@ -11,7 +11,7 @@ Optimize by evidence, not intuition. Preserve correctness first, then improve th
 
 Target **C++20** unless the project explicitly uses another standard. Load bundled references on demand — do not read every reference file unless the task needs it.
 
-For general C++20 style, see [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md). For allocation and ownership design, see [`../cpp-memory-guide/SKILL.md`](../cpp-memory-guide/SKILL.md). For regression tests and Google Benchmark targets, see [`../cpp-testing/SKILL.md`](../cpp-testing/SKILL.md). For root-cause diagnosis before optimizing, see [`../debugging-guide/SKILL.md`](../debugging-guide/SKILL.md).
+For general C++20 style, see [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md). For allocation and ownership design, see [`../cpp-memory-guide/SKILL.md`](../cpp-memory-guide/SKILL.md). For regression tests and Google Benchmark targets, see [`../cpp-testing/SKILL.md`](../cpp-testing/SKILL.md). For root-cause diagnosis before optimizing, see [`../debugging-guide/SKILL.md`](../debugging-guide/SKILL.md). For learning how performance-related code paths work without optimizing, see [`../code-professor/SKILL.md`](../code-professor/SKILL.md).
 
 ## Grounding
 
@@ -42,6 +42,7 @@ C++ performance is usually limited by one of: doing too much work, touching too 
 - Non-C++ code — use a language-specific skill
 - Web-only performance (Core Web Vitals, frontend bundle size) — out of scope
 - Active defect triage without a performance target — use **debugging-guide** first
+- Understanding why code is slow without optimizing — use [../code-professor/SKILL.md](../code-professor/SKILL.md)
 - Memory leak or ownership design without a performance focus — use **cpp-memory-guide**
 - Adding or fixing tests without a performance investigation — use **cpp-testing**
 

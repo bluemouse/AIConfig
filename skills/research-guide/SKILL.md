@@ -1,6 +1,6 @@
 ---
 name: research-guide
-description: "Use when interactively researching, brainstorming, or hardening a feature idea, product concept, app design, technical spec, requirement set, architecture direction, or roadmap item before implementation planning — through iterative agreement gates until a finalized research report is ready. Triggers on prompts to research an idea, brainstorm requirements, explore alternatives, author a spec, clarify trade-offs, validate assumptions, define scope, repair a research report from reviewer feedback, or produce a research report — even when the user doesn't say 'research'. Does not trigger on implementation plan authoring, plan-reviewer audit, research-report audit, or code diff review."
+description: "Use when interactively researching, brainstorming, or hardening a feature idea, product concept, app design, technical spec, requirement set, architecture direction, or roadmap item before implementation planning — through iterative agreement gates until a finalized research report is ready. Triggers on prompts to research an idea, brainstorm requirements, explore alternatives, author a spec, clarify trade-offs, validate assumptions, define scope, repair a research report from reviewer feedback, or produce a research report — even when the user doesn't say 'research'. Does not trigger on implementation plan authoring, plan-reviewer audit, research-report audit, code diff review, or codebase learning guides (code-professor)."
 ---
 
 # Research Guide
@@ -27,6 +27,7 @@ Your job is to **research and agree a research report**, not to write implementa
 - **Auditing an implementation plan** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
 - **Auditing a finished research report** — use [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
 - **Code or diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
+- **Understanding existing codebase implementation** — use [../code-professor/SKILL.md](../code-professor/SKILL.md) when the terminal output is a learning guide, not a research report
 - **Git, PR, or commit work** — use [../git-guide/SKILL.md](../git-guide/SKILL.md), [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md), or [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md)
 
 **Boundary vs plan-guide:** this skill runs conversational discovery with agreement gates and outputs a research report. [../plan-guide/SKILL.md](../plan-guide/SKILL.md) authors implementation plans and runs the plan-reviewer repair loop after requirements are settled.
@@ -34,6 +35,7 @@ Your job is to **research and agree a research report**, not to write implementa
 ## Companion Skills
 
 - Optional audit before planning: [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
+- When the user needs codebase literacy before research or planning: [../code-professor/SKILL.md](../code-professor/SKILL.md) (orientation or module guide — not a substitute for the research report)
 - When revising from `research-reviewer` findings, use [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md)
 - After finalize: hand off the research report to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) for implementation planning
 

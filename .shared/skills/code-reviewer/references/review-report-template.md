@@ -79,7 +79,7 @@ One line per scope actually run:
 - Cap hit: <yes — lower-severity issues likely remain | no>
 - Large-diff mode: <yes — partial file coverage; see Review target | no>
 
-## 6. Overall verdict
+## 8. Overall verdict
 
 - Merge readiness: <ready | ready with fixes | not ready>
 - Risk summary: <one or two sentences on overall risk>
@@ -108,7 +108,7 @@ Rules:
   omit the verdict field at `basic` or `standard` effort.
 - When two scopes flag the same underlying issue, merge into one finding, tag all
   relevant scopes, and keep the more severe rating.
-- If no findings are discovered, say so explicitly in section 2 and mention any residual
+- If no findings are discovered, say so explicitly in section 4 and mention any residual
   risks or testing gaps in the overall verdict.
 - Do not rewrite or patch code in the report unless the user explicitly asks — propose
   fixes only.

@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Review git diffs and commits — staged changes, unstaged changes, branch changes (pre-push vs default branch), the full working tree, the last commit, a specific commit, or a commit range — and return a structured, findings-first report with proposed fixes. Use whenever the user asks to review code, review a diff, review staged/unstaged/working-tree/branch changes, review a commit or commit range, do a code review, or asks for a security/performance/design/test review of recent changes — even if they don't say "code review" explicitly (e.g. "check this diff", "look over my changes", "any issues before I push", "is this ready to merge", "review my branch against main"). Supports six selectable review scopes (design, correctness, maintainability, security, performance, tests), three effort levels (basic, standard, deep), and an interactive mode that asks up front what to review, in what scope, and how deep before starting — say "review interactively" or "guided review" to trigger it.
+description: Review git diffs and commits — staged, unstaged, branch, working tree, commit, or range — and return a structured, findings-first report with proposed fixes. Use when reviewing code, diffs, branch changes, or pre-push commits, or for security/performance/design/test review of recent changes — even without saying "code review" (e.g. "check this diff", "review my branch against main"). Supports six scopes, three effort levels, and interactive mode ("review interactively"). Does not trigger on codebase learning guides (code-professor).
 ---
 
 # Code Reviewer
@@ -23,6 +23,14 @@ content of your response — don't bury them under process narration.
 Follow `<SKILL_ROOT>/references/review-principles.md` for reviewer mindset, context
 gathering, finding quality, constructive feedback, and PR hygiene — it is mandatory for
 every review, not optional depth reading.
+
+## When NOT to Use
+
+- **Open-ended codebase learning, onboarding, or architecture guides** — use
+  [../code-professor/SKILL.md](../code-professor/SKILL.md) when there is no change set to review
+
+**Boundary vs code-professor:** code-reviewer requires a **git diff or commit** as input.
+Teaching how existing code works without reviewing changes → code-professor.
 
 ## How This Skill Is Configured
 

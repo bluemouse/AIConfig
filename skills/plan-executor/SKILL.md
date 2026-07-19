@@ -29,6 +29,8 @@ Your job is to **execute an implementation plan and produce an implementation re
 - **Post-implementation diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 - **Post-execution correctness audit** — use
   [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md)
+- **Codebase learning or architecture guides without a plan** — use
+  [../code-professor/SKILL.md](../code-professor/SKILL.md)
 - **Commit, push, branch, or worktree operations** — use [../git-guide/SKILL.md](../git-guide/SKILL.md)
 
 ## Overview

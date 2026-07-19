@@ -1,6 +1,6 @@
 ---
 name: research-reviewer
-description: "Use when reviewing, auditing, re-reviewing, or validating a research report produced by research-guide or similar discovery workflows before implementation planning — assessing completeness, consistency, evidence quality, risk awareness, and planning readiness across product, user, technical, security, data, compliance, operations, or domain-specific concerns. Triggers on prompts to review a research report, validate requirements, audit assumptions, challenge conclusions, find gaps, assign severity, disposition prior findings, produce required revisions, or decide whether a report is ready for an implementation plan — even when the user doesn't say 'research review'. Does not trigger on brainstorming new ideas, implementation plan authoring, plan-reviewer audit, or code diff review."
+description: "Use when reviewing, auditing, re-reviewing, or validating a research report produced by research-guide or similar discovery workflows before implementation planning — assessing completeness, consistency, evidence quality, risk awareness, and planning readiness across product, user, technical, security, data, compliance, operations, or domain-specific concerns. Triggers on prompts to review a research report, validate requirements, audit assumptions, challenge conclusions, find gaps, assign severity, disposition prior findings, produce required revisions, or decide whether a report is ready for an implementation plan — even when the user doesn't say 'research review'. Does not trigger on brainstorming new ideas, codebase learning guides (code-professor), implementation plan authoring, plan-reviewer audit, or code diff review."
 ---
 
 # Research Reviewer
@@ -27,6 +27,7 @@ Your job is to **audit a research report and produce a review-report**, not to w
 - **Code or diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 - **Writing implementation plans** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
 - **Auditing an implementation plan before execution** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
+- **Codebase learning or repository orientation** — use [../code-professor/SKILL.md](../code-professor/SKILL.md)
 
 ## Companion Skills
 

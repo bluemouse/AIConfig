@@ -1,6 +1,6 @@
 ---
 name: plan-reviewer
-description: "Use when reviewing, auditing, or validating an implementation plan before execution by a developer, engineer, or AI agent — checking correctness, completeness, consistency with source research/spec/requirements, TDD test design, task decomposition, file precision, testability, risk controls, and execution readiness. Triggers on prompts to review an implementation plan, validate a work plan, audit plan tasks, approve execution readiness, or produce a Guide handoff packet — even when the user doesn't say 'plan review'. Does not trigger on brainstorming, research-report review, writing plans, or code diff review."
+description: "Use when reviewing, auditing, or validating an implementation plan before execution by a developer, engineer, or AI agent — checking correctness, completeness, consistency with source research/spec/requirements, TDD test design, task decomposition, file precision, testability, risk controls, and execution readiness. Triggers on prompts to review an implementation plan, validate a work plan, audit plan tasks, approve execution readiness, or produce a Guide handoff packet — even when the user doesn't say 'plan review'. Does not trigger on brainstorming, research-report review, codebase learning guides (code-professor), writing plans, or code diff review."
 ---
 
 # Plan Reviewer
@@ -27,6 +27,8 @@ Your job is to **audit an implementation plan and produce a review-report with a
 - **Auditing a research report** — use [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
 - **Writing or repairing implementation plans** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
 - **Code or diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
+- **Codebase learning, onboarding, or architecture guides** — use
+  [../code-professor/SKILL.md](../code-professor/SKILL.md)
 
 ## Companion Skills
 

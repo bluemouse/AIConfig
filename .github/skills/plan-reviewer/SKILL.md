@@ -1,6 +1,6 @@
 ---
 name: plan-reviewer
-description: "Use when reviewing, auditing, or validating an implementation plan before execution by a developer, engineer, or AI agent \u2014 checking correctness, completeness, consistency with source research/spec/requirements, TDD test design, task decomposition, file precision, testability, risk controls, and execution readiness. Triggers on prompts to review an implementation plan, validate a work plan, audit plan tasks, approve execution readiness, or produce a Guide handoff packet \u2014 even when the user doesn't say 'plan review'. Does not trigger on brainstorming, research-report review, writing plans, or code diff review."
+description: "Use when reviewing, auditing, or validating an implementation plan before execution by a developer, engineer, or AI agent \u2014 checking correctness, completeness, consistency with source research/spec/requirements, TDD test design, task decomposition, file precision, testability, risk controls, and execution readiness. Triggers on prompts to review an implementation plan, validate a work plan, audit plan tasks, approve execution readiness, or produce a Guide handoff packet \u2014 even when the user doesn't say 'plan review'. Does not trigger on brainstorming, research-report review, codebase learning guides (code-professor), writing plans, or code diff review."
 ---
 
 # plan-reviewer wrapper for GitHub Copilot

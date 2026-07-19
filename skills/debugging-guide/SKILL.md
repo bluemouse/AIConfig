@@ -1,6 +1,6 @@
 ---
 name: debugging-guide
-description: "Use when diagnosing a software defect before fixing it — reproducing or shrinking failures, tracing root cause with evidence, ranking hypotheses, choosing prevention-by-design tripwires, writing regression tests, applying a minimal fix, and verifying with commands. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, failing tests, build failures, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging and zero-on-shutdown leak checks, dangling-pointer crashes, buffer-overwrite classes, and integration failures — even when the user does not say debugging. Does not trigger on strict TDD coaching (test-driven-dev-guide), post-implementation audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), performance profiling without a defect, greenfield ownership API design (cpp-memory-guide), or native-only GDB/LLDB recipe steps while already editing C++ (cpp-coding native-debugging)."
+description: "Use when diagnosing a software defect before fixing it — reproducing or shrinking failures, tracing root cause with evidence, ranking hypotheses, choosing prevention-by-design tripwires, writing regression tests, applying a minimal fix, and verifying with commands. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, failing tests, build failures, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging and zero-on-shutdown leak checks, dangling-pointer crashes, buffer-overwrite classes, and integration failures — even when the user does not say debugging. Does not trigger on strict TDD coaching (test-driven-dev-guide), correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning (code-professor), profiling without a defect, ownership API design (cpp-memory-guide), or native GDB/LLDB steps while editing C++ (cpp-coding)."
 ---
 
 # Debugging Guide
@@ -35,6 +35,9 @@ implementation plans.
   [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 - **Plan execution without a debugging focus** — use
   [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
+- **Open-ended codebase learning or architecture documentation** — use
+  [../code-professor/SKILL.md](../code-professor/SKILL.md) when the goal is a teaching
+  guide, not a verified fix
 - **Performance optimization or profiling without a defect** — use language or domain skills
 - **Ownership/lifetime API design (not chasing a specific bug)** — use
   [../cpp-memory-guide/SKILL.md](../cpp-memory-guide/SKILL.md) for C++ memory design

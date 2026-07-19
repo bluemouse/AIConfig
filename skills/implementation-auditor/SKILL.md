@@ -1,6 +1,6 @@
 ---
 name: implementation-auditor
-description: "Use when auditing an implementation for requirement coverage and fresh test/build evidence after code changes, bug fixes, or plan execution — producing a compact evidence-weighted audit report. Triggers on correctness audits, requirement mapping, test-gap analysis, and completion checks before claiming done. Does not trigger on diff review (code-reviewer), plan authoring (plan-guide), pre-execution plan audit (plan-reviewer), plan execution (plan-executor), or strict TDD coaching (test-driven-dev-guide)."
+description: "Use when auditing an implementation for requirement coverage and fresh test/build evidence after code changes, bug fixes, or plan execution — producing a compact evidence-weighted audit report. Triggers on correctness audits, requirement mapping, test-gap analysis, and completion checks before claiming done. Does not trigger on diff review (code-reviewer), plan authoring (plan-guide), pre-execution plan audit (plan-reviewer), plan execution (plan-executor), codebase learning guides (code-professor), or strict TDD coaching (test-driven-dev-guide)."
 ---
 
 # Implementation Auditor
@@ -36,6 +36,7 @@ for structured diff review.
 - **Plan authoring or repair** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
 - **Strict TDD coaching during active implementation** — use
   [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md)
+- **Codebase learning or architecture guides** — use [../code-professor/SKILL.md](../code-professor/SKILL.md)
 
 ## Mission
 

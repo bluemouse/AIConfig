@@ -1,0 +1,122 @@
+[
+  {
+    "query": "teach me this repository — I'm onboarding and need a reading path",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: onboarding and reading path"
+  },
+  {
+    "query": "explain the caching module and how to extend it",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: module deep dive with extension points"
+  },
+  {
+    "query": "trace a request from the API to the database write",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: end-to-end workflow trace"
+  },
+  {
+    "query": "help me understand how this renderer works",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: understand subsystem"
+  },
+  {
+    "query": "document the plugin loading system with source references",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: document codebase with evidence"
+  },
+  {
+    "query": "walk me through the authentication flow in this codebase",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: execution path explanation"
+  },
+  {
+    "query": "investigate why this operation returns stale data — you may add temporary diagnostics",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: failure investigation with runtime permission"
+  },
+  {
+    "query": "give me a guided study of this repo — I'm new here",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: interactive mode onboarding"
+  },
+  {
+    "query": "review my staged diff for bugs and security issues",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: diff review -> code-reviewer"
+  },
+  {
+    "query": "fix this crash and verify the repair with tests",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: verified fix -> debugging-guide"
+  },
+  {
+    "query": "research requirements for the notification feature",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: product research -> research-guide"
+  },
+  {
+    "query": "create an implementation plan from this spec",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan authoring -> plan-guide"
+  },
+  {
+    "query": "execute this implementation plan on the current branch",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan execution -> plan-executor"
+  },
+  {
+    "query": "explore the codebase and turn this feature ask into an implementation plan",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: codebase-led planning -> plan-guide"
+  },
+  {
+    "query": "profile and optimize this hot loop in C++",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: performance optimization -> cpp-performance-guide"
+  },
+  {
+    "query": "how does the data pipeline work from ingest to storage",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: workflow trace phrasing"
+  },
+  {
+    "query": "I need an architecture map of this project with entry points",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: orientation guide phrasing"
+  },
+  {
+    "query": "look over my branch changes before I push",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: pre-push review -> code-reviewer"
+  },
+  {
+    "query": "brainstorm alternatives for the mobile onboarding feature",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: requirements research -> research-guide"
+  },
+  {
+    "query": "debug this use-after-free and apply the minimal fix",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: defect repair -> debugging-guide"
+  }
+]

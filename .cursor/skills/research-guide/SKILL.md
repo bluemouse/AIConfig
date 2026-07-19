@@ -1,6 +1,6 @@
 ---
 name: research-guide
-description: "Use when interactively researching, brainstorming, or hardening a feature idea, product concept, app design, technical spec, requirement set, architecture direction, or roadmap item before implementation planning \u2014 through iterative agreement gates until a finalized research report is ready. Triggers on prompts to research an idea, brainstorm requirements, explore alternatives, author a spec, clarify trade-offs, validate assumptions, define scope, repair a research report from reviewer feedback, or produce a research report \u2014 even when the user doesn't say 'research'. Does not trigger on implementation plan authoring, plan-reviewer audit, research-report audit, or code diff review."
+description: "Use when interactively researching, brainstorming, or hardening a feature idea, product concept, app design, technical spec, requirement set, architecture direction, or roadmap item before implementation planning \u2014 through iterative agreement gates until a finalized research report is ready. Triggers on prompts to research an idea, brainstorm requirements, explore alternatives, author a spec, clarify trade-offs, validate assumptions, define scope, repair a research report from reviewer feedback, or produce a research report \u2014 even when the user doesn't say 'research'. Does not trigger on implementation plan authoring, plan-reviewer audit, research-report audit, code diff review, or codebase learning guides (code-professor)."
 ---
 
 # research-guide wrapper for Cursor

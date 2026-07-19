@@ -1,6 +1,6 @@
 ---
 name: test-driven-dev-guide
-description: "Use when guiding strict test-driven development through red-green-refactor cycles with real command evidence and minimal production changes. Triggers on TDD implementation, test-first bug fixes, red/green verification, and checking whether code was written test-first. Does not trigger on post-implementation correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), or framework-specific test wiring (cpp-testing, kotlin-testing, python-coding)."
+description: "Use when guiding strict test-driven development through red-green-refactor cycles with real command evidence and minimal production changes. Triggers on TDD implementation, test-first bug fixes, red/green verification, and checking whether code was written test-first. Does not trigger on post-implementation correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning guides (code-professor), or framework-specific test wiring (cpp-testing, kotlin-testing, python-coding)."
 ---
 
 # Test Driven Dev Guide
@@ -31,6 +31,7 @@ framework-specific test infrastructure.
 - **Post-implementation correctness audit** — use
   [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md)
 - **Structured diff or commit review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
+- **Codebase learning or architecture guides** — use [../code-professor/SKILL.md](../code-professor/SKILL.md)
 - **C++ GoogleTest/CMake test setup** — use [../cpp-testing/SKILL.md](../cpp-testing/SKILL.md)
 - **Kotlin/JVM test setup** — use [../kotlin-testing/SKILL.md](../kotlin-testing/SKILL.md)
 

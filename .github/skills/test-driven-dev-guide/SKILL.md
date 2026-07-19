@@ -1,6 +1,6 @@
 ---
 name: test-driven-dev-guide
-description: "Use when guiding strict test-driven development through red-green-refactor cycles with real command evidence and minimal production changes. Triggers on TDD implementation, test-first bug fixes, red/green verification, and checking whether code was written test-first. Does not trigger on post-implementation correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), or framework-specific test wiring (cpp-testing, kotlin-testing, python-coding)."
+description: "Use when guiding strict test-driven development through red-green-refactor cycles with real command evidence and minimal production changes. Triggers on TDD implementation, test-first bug fixes, red/green verification, and checking whether code was written test-first. Does not trigger on post-implementation correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning guides (code-professor), or framework-specific test wiring (cpp-testing, kotlin-testing, python-coding)."
 ---
 
 # test-driven-dev-guide wrapper for GitHub Copilot

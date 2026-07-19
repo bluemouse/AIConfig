@@ -1,6 +1,6 @@
 ---
 name: plan-guide
-description: "Use when turning a research report, spec, requirements, bug report, or technical context into an executable implementation plan — decomposing work into ordered tasks, mapping requirements to implementation, designing TDD-first tests, defining verification and acceptance checks, exploring the codebase to plan from a rough ask, normalizing a thin or external plan into TDD-first tasks, writing a focused bug-fix plan, or revising a plan from plan-reviewer findings before execution. Triggers on prompts to write an implementation plan, create a task breakdown, map requirements to tasks, plan tests or verification for a feature, explore the codebase and turn a feature ask into a plan, expand a thin plan with TDD specs, create a focused plan for a small fix, normalize an external markdown plan, or repair a plan from reviewer feedback — even when the user doesn't say plan. Does not trigger on interactive research, research-report audit, code implementation, or code diff review."
+description: "Use when turning a research report, spec, requirements, bug report, or technical context into an executable implementation plan — decomposing work into ordered tasks, mapping requirements to implementation, designing TDD-first tests, defining verification and acceptance checks, exploring the codebase to plan from a rough ask, normalizing a thin or external plan into TDD-first tasks, writing a focused bug-fix plan, or revising a plan from plan-reviewer findings before execution. Triggers on prompts to write an implementation plan, create a task breakdown, map requirements to tasks, plan tests or verification for a feature, explore the codebase and turn a feature ask into a plan, expand a thin plan with TDD specs, create a focused plan for a small fix, normalize an external markdown plan, or repair a plan from reviewer feedback — even when the user doesn't say plan. Does not trigger on interactive research, report audit, learning guides (code-professor), implementation, or diff review."
 ---
 
 # Plan Guide
@@ -28,12 +28,16 @@ Your job is to **author and repair implementation plans**, not to implement code
 - **Auditing an implementation plan before execution** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
 - **Code implementation** — use [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
 - **Code or diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
+- **Codebase learning or documentation without a plan** — use [../code-professor/SKILL.md](../code-professor/SKILL.md)
+
+**Boundary vs code-professor:** this skill outputs an **implementation plan** with tasks and TDD specs. [../code-professor/SKILL.md](../code-professor/SKILL.md) outputs **learning guides**. Narrow codebase inspection here supports task breakdown; full orientation or module teaching belongs in code-professor.
 
 **Boundary vs legacy template:** this bootstrap skill authors **implementation plans** and runs the plan-reviewer repair loop. It is not the legacy plan-document lifecycle template at repo root `references/skills/plan-guide/SKILL.md` (`plan-research`, `plan-create`, `plan-continue`).
 
 ## Companion Skills
 
 - Preferred input from [../research-guide/SKILL.md](../research-guide/SKILL.md); optional audit via [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
+- When discovery-gated and the user needs codebase literacy before planning: [../code-professor/SKILL.md](../code-professor/SKILL.md) (orientation or module guide — then return here for the plan)
 - Quality loop with [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
 - Downstream execution after validation or explicit user acceptance via [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
 - Mandatory TDD execution discipline via [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md)
