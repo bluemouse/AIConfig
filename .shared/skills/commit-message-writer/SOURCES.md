@@ -17,15 +17,15 @@
 - **Path:** `.cursor/commands/commit-message.md`
 - **Last reviewed:** 2026-07-06
 - **Used for:**
-  - Full workflow phases (parse, git evidence, analyze, output, optional commit)
+  - Full workflow phases (parse, git evidence, analyze, output, commit on confirmation)
   - `references/input-and-scope.md`, `references/git-evidence.md`, `references/output-format.md`, `references/failure-and-guardrails.md`
   - `SKILL.md` → primary directive, workflow, guardrails
 - **Aspects extracted:**
   - Scope modes (`--staged`, `--working`, `--commit`, `--range`) and context flags → `references/input-and-scope.md`
   - Git command tables per scope → `references/git-evidence.md`
-  - Compact / Verbose / Suggested command output structure → `references/output-format.md`
+  - Verbose / Suggested command output structure → `references/output-format.md`
   - Cross-assistant style contract → `references/message-style-contract.md`
-  - Draft-only safety (no commit unless asked) → `SKILL.md`, `references/failure-and-guardrails.md`
+  - Draft-first workflow with commit offer on confirmation (staged/working) → `SKILL.md`, `references/failure-and-guardrails.md`
 
 ## git-guide commit reference (synthesis metadata)
 
@@ -35,4 +35,4 @@
   - Cross-check type detection patterns; **not** copied auto-commit behavior
 - **Aspects extracted:**
   - Conventional type list alignment → `references/conventional-commits.md`
-  - Explicit boundary: this skill drafts only; git-guide handles auto-commit when installed
+  - Explicit boundary: commit-message-writer drafts and commits on confirmation; git-guide handles commit when the user already supplied a message or needs push/staging mechanics

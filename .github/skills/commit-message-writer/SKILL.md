@@ -1,6 +1,6 @@
 ---
 name: commit-message-writer
-description: "Draft git commit messages in Conventional Commits format from staged changes, the working tree, a single commit, or a commit range \u2014 compact one-liner plus verbose subject and body. Use when the user asks for a commit message, conventional commit, draft commit msg, write commit message for staged/unstaged changes, message for last commit or commit range, or /commit-message-style requests \u2014 even if they do not say \"conventional commits\". Does not run git commit unless the user explicitly asks afterward."
+description: "Draft git commit messages in Conventional Commits format from staged changes, the working tree, a single commit, or a commit range \u2014 subject line plus body. Use when the user asks for a commit message, conventional commit, draft commit msg, write commit message for staged/unstaged changes, message for last commit or commit range, or /commit-message-style requests \u2014 even if they do not say \"conventional commits\". Ends by asking whether to proceed with git commit using the generated message; does not commit without explicit confirmation."
 ---
 
 # commit-message-writer wrapper for GitHub Copilot

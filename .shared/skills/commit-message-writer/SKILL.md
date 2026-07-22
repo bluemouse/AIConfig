@@ -1,6 +1,6 @@
 ---
 name: commit-message-writer
-description: Draft git commit messages in Conventional Commits format from staged changes, the working tree, a single commit, or a commit range — compact one-liner plus verbose subject and body. Use when the user asks for a commit message, conventional commit, draft commit msg, write commit message for staged/unstaged changes, message for last commit or commit range, or /commit-message-style requests — even if they do not say "conventional commits". Does not run git commit unless the user explicitly asks afterward.
+description: Draft git commit messages in Conventional Commits format from staged changes, the working tree, a single commit, or a commit range — subject line plus body. Use when the user asks for a commit message, conventional commit, draft commit msg, write commit message for staged/unstaged changes, message for last commit or commit range, or /commit-message-style requests — even if they do not say "conventional commits". Ends by asking whether to proceed with git commit using the generated message; does not commit without explicit confirmation.
 ---
 
 # Commit Message Writer
@@ -9,8 +9,8 @@ Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. 
 paths to `references/` from that directory.
 
 Draft git commit messages from git evidence plus session and external context. Output
-**Compact** (one-line Conventional Commit) and **Verbose** (subject + body) formats.
-Focus on **why** the change exists, not a file-by-file inventory.
+**Verbose** format: Conventional Commit subject line plus body. Focus on **why** the change
+exists, not a file-by-file inventory.
 
 Commit messages must contain **only change-related content** — motivation, approach,
 impact, breaking changes, and test/evidence notes. Never append tool, agent, or AI-client
@@ -26,19 +26,23 @@ habits.
 
 Non-negotiable:
 
-- **Output envelope** — only `## Compact`, `## Verbose`, optional `## Suggested command`,
-  then `Context used:`; scope/split caveats go in `Context used:` as `note=`, not as preamble
-- **Subject parity** — Verbose subject matches Compact exactly
+- **Output envelope** — only `## Verbose`, optional `## Suggested command`,
+  `Context used:`, then the commit offer (staged/working scope only); scope/split caveats
+  go in `Context used:` as `note=`, not as preamble
+- **Copyable blocks** — Verbose in a `text` fenced block; Suggested command in a `bash`
+  fenced block so chat UIs expose copy controls
 - **Prose-first body** — 1–3 paragraphs by default; bullets only when the contract allows
 - **Style precedence** — recent `git log` on the branch, then the style contract, then
   Conventional Commits defaults
 
 ## Primary Directive
 
-Your job is to **draft commit messages**, not to commit, stage, push, or rewrite history.
+Your job is to **draft commit messages**, not to commit, stage, push, or rewrite history
+without confirmation.
 
-Do not run `git commit`, `git push`, `git add`, amend, or force-push unless the user
-explicitly requests a commit in the same or a follow-up message.
+Do not run `git commit`, `git push`, `git add`, amend, or force-push until the user
+confirms after reviewing the draft — except when they explicitly asked to commit in the
+same message that invoked this skill.
 
 ## When to Use
 
@@ -46,7 +50,7 @@ explicitly requests a commit in the same or a follow-up message.
 - Writing a Conventional Commit subject and body from a diff or commit SHA
 - Summarizing intent for a commit range (branch vs base, last N commits)
 - Weaving session context, plan docs, Jira tickets, or user notes into a message
-- Suggesting a HEREDOC `git commit` command after the user reviews the draft
+- Offering to run `git commit` with the generated message after the user reviews the draft
 
 ## When NOT to Use
 
@@ -86,7 +90,7 @@ Synthesize intent from git evidence and all context sources:
 1. Infer the most specific accurate Conventional Commit **type** (and optional **scope**).
 2. Write an imperative **subject** per the style contract — lowercase after the prefix,
    ≤ 72 characters, no trailing period.
-3. Write a **verbose body** per the style contract — prose paragraphs first; motivation,
+3. Write a **body** per the style contract — prose paragraphs first; motivation,
    approach, impact, breaking changes, and test/evidence when relevant.
 4. Align with session context when the diff alone looks mechanical.
 5. Match recent branch history from `git log -10` for type, scope, and body layout when
@@ -97,18 +101,28 @@ Details: [message-style-contract.md](references/message-style-contract.md),
 
 ### 4. Output
 
-Return exactly the Compact / Verbose structure (and optional Suggested command). Add a
-short **Context used** line. Do not wrap the envelope in assistant-specific preamble or
-postamble.
+In **one response**, return exactly:
+
+1. The Verbose structure (and optional Suggested command when helpful)
+2. A short **Context used** line
+3. The commit offer question when scope is **staged** or **working** — omit for
+   **commit** or **range** (historical review)
+
+Do not wrap the envelope in assistant-specific preamble or postamble.
 
 Details: [output-format.md](references/output-format.md),
 [message-style-contract.md](references/message-style-contract.md)
 
-### 5. Optional commit
+### 5. Commit on confirmation
 
-Only when the user explicitly asks to commit: use the verbose message (or compact if they
-choose), stage only if needed, HEREDOC for multi-line messages, never `--no-verify` unless
-asked.
+When the user confirms the commit offer (or explicitly asked to commit in the invoking
+message):
+
+- Stage only when needed and only files in scope
+- Use HEREDOC for multi-line messages
+- Never `--no-verify` unless explicitly requested
+
+Details: [failure-and-guardrails.md](references/failure-and-guardrails.md)
 
 ## Reference routing
 
@@ -118,7 +132,7 @@ asked.
 | Git commands per scope, large-diff sampling, style discovery | [git-evidence.md](references/git-evidence.md) |
 | Cross-assistant style contract, subject/body layout, forbidden patterns | [message-style-contract.md](references/message-style-contract.md) |
 | Conventional Commit types, subject/body rules, breaking changes, examples | [conventional-commits.md](references/conventional-commits.md) |
-| Compact / Verbose / Suggested command templates, Context used line | [output-format.md](references/output-format.md) |
+| Verbose / Suggested command templates, Context used line | [output-format.md](references/output-format.md) |
 | Errors, guardrails, split-commit guidance, do-not rules | [failure-and-guardrails.md](references/failure-and-guardrails.md) |
 
 ## Quick completion checklist
@@ -128,15 +142,19 @@ Before returning draft messages:
 1. **Scope** — exactly one mode resolved; empty index/tree reported if applicable
 2. **Evidence** — stat + diff (or show/log for commit/range) reviewed; large diffs sampled
 3. **Intent** — message explains *why*, not only *what*; session/ticket context woven in
-4. **Format** — Compact is a valid Conventional Commit one-liner; Verbose subject matches Compact; body follows style contract
+4. **Format** — subject is a valid Conventional Commit line; body follows style contract
 5. **Consistency** — output envelope identical across hosts; prose-first body unless repo history uses bullets
-6. **Safety** — no `git commit` unless explicitly requested; unrelated work flagged for split
+6. **Safety** — no `git commit` until user confirms; unrelated work flagged for split
 7. **Purity** — no AI/tool attribution footers; message content is change-related only
+8. **Commit offer** — included in the same response when scope is staged or working
+9. **Copyable blocks** — Verbose in a `text` fence; Suggested command in a `bash` fence
 
 ## Output standards
 
-- **Compact** stands alone in `git log --oneline`.
-- **Verbose** uses complete sentences; reference ticket ids in the body when provided.
+- **Verbose** and **Suggested command** each use a fenced code block (`text` / `bash`) for
+  one-click copy in chat UIs.
+- **Subject** stands alone in `git log --oneline`.
+- **Body** uses complete sentences; reference ticket ids when provided.
 - If the diff mixes unrelated work, record a split suggestion in `Context used:` (`note=`)
   instead of blending unrelated intent into one message.
 - Never dump a raw file list as the commit message.

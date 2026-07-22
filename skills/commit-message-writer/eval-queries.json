@@ -30,10 +30,10 @@
     "rationale": "direct: jira context plus staged scope"
   },
   {
-    "query": "give me compact and verbose commit messages following conventional commits",
+    "query": "give me a conventional commit with subject and body for my staged changes",
     "should_trigger": true,
     "split": "train",
-    "rationale": "direct: dual output format request"
+    "rationale": "direct: subject plus body format request"
   },
   {
     "query": "help me write a git commit message explaining why we added jwt refresh",

@@ -27,12 +27,11 @@ Conventional Commits structure (v1.0.0):
 [optional footer(s)]
 ```
 
-This skill produces two outputs from one analysis:
+This skill produces one output from each analysis:
 
 | Output | Contents |
 | --- | --- |
-| **Compact** | Single line: `<type>[scope]: <description>` — suitable for `git commit -m` |
-| **Verbose** | Same subject line, blank line, then body (and footers when needed) |
+| **Verbose** | Subject line (`<type>[scope]: <description>`), blank line, then body (and footers when needed) |
 
 ## Types
 
@@ -109,12 +108,6 @@ Infer type from diff **and** context — not filename patterns alone:
 When the diff mixes unrelated types, suggest splitting commits instead of blending types.
 
 ## Examples
-
-**Compact:**
-
-```text
-feat(auth): add jwt refresh token rotation
-```
 
 **Verbose:**
 
