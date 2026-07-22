@@ -1,6 +1,11 @@
 ---
 name: agent-creator
-description: "Create portable custom agents for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create an agent from scratch, scaffold `.shared/agents` with tool wrappers in `.cursor/agents`, `.claude/agents`, or `.github/agents`, edit or optimize an existing agent, tune an agent's description for better triggering, or explain portable agent structure \u2014 even if they do not say \"portable agent\" explicitly."
+description: Create portable custom agents for GitHub Copilot, Cursor, and Claude
+  Code using a shared-first layout, and iteratively improve them. Use when users want
+  to create an agent from scratch, bootstrap under the agents directory and install
+  to .shared/agents with tool wrappers, edit or optimize an existing agent, tune an
+  agent's description for better triggering, or explain portable agent structure —
+  even if they do not say "portable agent" explicitly.
 ---
 
 # agent-creator (GitHub Copilot)
@@ -32,7 +37,21 @@ If bootstrap source exists at `skills/agent-creator/`, use that path for `--sour
 
 ## Scaffolding and validation
 
-Run in the integrated terminal:
+Run in the integrated terminal.
+
+**Bootstrap path (preferred):** author under `agents/<agent-name>/`, then install:
+
+```bash
+python <AGENT_CREATOR_ROOT>/scripts/quick_validate.py --bootstrap-source agents/<agent-name>
+
+python <AGENT_CREATOR_ROOT>/scripts/install_portable_agent.py \
+  --root . \
+  --name <agent-name> \
+  --source agents/<agent-name> \
+  --overwrite
+```
+
+**Direct path:** when bootstrap is not used:
 
 ```bash
 python <AGENT_CREATOR_ROOT>/scripts/create_agent.py \
@@ -45,9 +64,9 @@ python <AGENT_CREATOR_ROOT>/scripts/create_agent.py \
 python <AGENT_CREATOR_ROOT>/scripts/quick_validate.py --root . --name <agent-name>
 ```
 
-**Always** run `quick_validate.py` after scaffold or substantive edits. Reload VS Code after creating new Copilot agents.
+**Always** run `quick_validate.py` after scaffold, install, or substantive edits. Reload VS Code after creating new Copilot agents.
 
-Use `--github-note` at scaffold time; expand `.github/agents/<agent-name>.agent.md` with Copilot-specific frontmatter (`tools`, `model`, etc.) when needed.
+Use `--github-note` at direct scaffold time; expand `agents/<agent-name>/wrappers/github/AGENT.md` (bootstrap) or `.github/agents/<agent-name>.agent.md` (direct) with Copilot-specific frontmatter when needed.
 
 ## Testing agents in Copilot
 
@@ -59,7 +78,7 @@ Use a **qualitative, sequential** loop in Copilot Chat or the Copilot agent pick
 2. Ensure the agent is installed (shared + `.github/agents/<name>.agent.md`).
 3. Invoke the custom agent from the Copilot agent picker or by phrasing the prompt to match the agent `description`.
 4. Present each prompt + output to the user; review against correctness, completeness, and efficiency.
-5. Edit `.shared/agents/<agent-name>.md` first; then the GitHub wrapper for Copilot-only details.
+5. Edit bootstrap files (`agents/<agent-name>/`) for cross-tool fixes, or `.shared/agents/<agent-name>.md` on the direct path; then the GitHub wrapper for Copilot-only details. Reinstall after bootstrap edits.
 6. Re-validate in terminal; reload VS Code; re-test in chat.
 
 Skip parallel baselines — Copilot has no subagent API for informal A/B in chat.
@@ -71,11 +90,11 @@ Manual path only:
 1. Shared Step 1 — draft trigger eval queries with the user
 2. Shared Step 2 — review should-trigger / should-not-trigger in chat
 3. Skip automated Step 3
-4. Shared Step 4 — revise `description` in `.shared/agents/<agent-name>.md`; sync all four agent files; reload VS Code
+4. Shared Step 4 — revise `description` in the authoritative edit location (`agents/<agent-name>/AGENT.md` or `.shared/agents/<agent-name>.md`); sync all installed wrappers; reinstall if bootstrap; reload VS Code
 
 Write descriptions that state both **what** the agent does and **when** Copilot should use it.
 
 ## Wrapper policy
 
-- Edit cross-tool behavior in `../../../.shared/skills/agent-creator/` and user `.shared/agents/`
+- Edit cross-tool behavior in `../../../.shared/skills/agent-creator/` and user bootstrap (`agents/<name>/`) or `.shared/agents/` on the direct path
 - Edit Copilot-specific mechanics here and in user `.github/agents/` wrappers

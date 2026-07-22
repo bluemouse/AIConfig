@@ -12,6 +12,16 @@ This repository provides a **portable, shared-first layout** for AI-assisted dev
 
 Install a bootstrap skill with `install_portable_skill.py` to generate the shared skill and tool skills. Re-run after edits to `skills/<name>/`.
 
+### Bootstrap agents and tool agents
+
+| Term | Location | Role |
+| --- | --- | --- |
+| **Bootstrap agent** | `agents/<name>/` | Authoritative source when present. Edit `AGENT.md` and optional custom tool wrapper templates in `wrappers/` here. |
+| **Shared agent** | `.shared/agents/<name>.md` | Tool-neutral install output. |
+| **Tool agent** | `.cursor/agents/<name>.md`, etc. | Thin wrapper per tool that points the agent at the shared file. |
+
+Install a bootstrap agent with `install_portable_agent.py`. Re-run after edits to `agents/<name>/`.
+
 ## Repository layout
 
 ```
@@ -55,13 +65,14 @@ repo/
 │   ├── qt-dev/                        # Qt 6 Widgets/CMake desktop UI for render tools
 │   ├── vulkan-dev/                    # Vulkan 1.3 development
 │   └── slang-dev/                     # Slang shader development (SPIR-V / MSL)
-├── skills-ref/                        # Staging skill templates (read-only input for skill-bootstrapper)
+├── agents/                            # Optional bootstrap agents (author here, then install)
+├── skills-ref/                        # Staging skill templates (read-only input for skill-creator)
 ├── .shared/
 │   ├── agents/                        # Shared custom agents (canonical)
 │   └── skills/
 │       └── <skill-name>/              # Shared skill (canonical content after install)
 ├── .cursor/
-│   ├── commands/                      # Slash commands (e.g. /create-skill-creator)
+│   ├── commands/                      # Optional Cursor slash commands (.md prompts)
 │   ├── rules/                         # Cursor rules (.mdc)
 │   ├── skills/<skill-name>/           # Cursor tool skill → points to .shared/skills/
 │   └── agents/                        # Cursor custom agents
@@ -79,8 +90,9 @@ repo/
 | `AGENTS.md` | Tool-neutral guidance for coding agents (architecture, scripts, editing conventions). |
 | `CLAUDE.md` | Claude Code-specific guidance; references `AGENTS.md` for shared repo rules. |
 | `skills/` | **Bootstrap skills** — edit here, then install to produce shared + tool skills. |
-| `skills-ref/` | **Staging templates** — read-only drafts for **skill-bootstrapper**; output lands in `skills/<name>/`. |
-| `.shared/agents/` | **Shared custom agents** — canonical agent definitions (edit directly). |
+| `agents/` | **Bootstrap agents** (optional) — edit `agents/<name>/`, then install to produce shared + tool agent wrappers. |
+| `skills-ref/` | **Staging templates** — read-only drafts for **skill-creator**; output lands in `skills/<name>/`. |
+| `.shared/agents/` | **Shared custom agents** — tool-neutral install output (or canonical when no bootstrap exists). |
 | `.shared/skills/` | **Shared skills** — tool-neutral packages with full content (`scripts/`, `references/`, `assets/`). |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | **Tool skills** — one wrapper per tool (`SKILL.md` only) that directs the agent to the shared skill. |
 | `coding-behavior-guidelines.md` | Project-wide behavioral guidelines for coding agents (think first, simplicity, surgical changes). |
@@ -179,16 +191,6 @@ After editing a bootstrap skill, re-install to propagate changes to the shared s
 
 ## Install skill-creator
 
-**Option A — Cursor slash command**
-
-In Cursor chat, run:
-
-```
-/create-skill-creator
-```
-
-**Option B — install script**
-
 From the repository root:
 
 ```bash
@@ -198,6 +200,8 @@ python skills/skill-creator/scripts/install_portable_skill.py \
   --source skills/skill-creator \
   --overwrite
 ```
+
+Or ask in chat: **use skill-creator** to install or refresh the meta-skill.
 
 The script copies the bootstrap skill to `.shared/skills/skill-creator/`, generates tool skills, validates all four paths, and prints a summary.
 
@@ -211,16 +215,6 @@ Reload each tool after install:
 
 Requires **skill-creator** (or at least its `install_portable_skill.py`) to install into the portable layout.
 
-**Option A — Cursor slash command**
-
-In Cursor chat, run:
-
-```
-/create-agent-creator
-```
-
-**Option B — install script**
-
 From the repository root:
 
 ```bash
@@ -230,6 +224,8 @@ python skills/skill-creator/scripts/install_portable_skill.py \
   --source skills/agent-creator \
   --overwrite
 ```
+
+Or ask in chat: **use agent-creator** after ensuring the skill is installed.
 
 The script copies the bootstrap skill to `.shared/skills/agent-creator/`, generates tool skills, validates all four paths, and prints a summary.
 
@@ -447,7 +443,7 @@ python tools/install-skills.py /path/to/other-project
 
 # Install selected skills or agents
 python tools/install-skills.py /path/to/other-project --skills cpp-coding vulkan-dev
-python tools/install-skills.py /path/to/other-project --agents skill-bootstrapper
+python tools/install-skills.py /path/to/other-project --agents my-agent
 
 # Install workflow bundles (see tools/bundles.md and tools/bundles.json)
 python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow
@@ -458,7 +454,7 @@ python tools/install-skills.py /path/to/other-project --skills cpp-coding --over
 
 # Remove from the target
 python tools/install-skills.py /path/to/other-project --skills cpp-coding --uninstall
-python tools/install-skills.py /path/to/other-project --agents skill-bootstrapper --uninstall
+python tools/install-skills.py /path/to/other-project --agents my-agent --uninstall
 ```
 
 | Flag | Behavior |
@@ -504,60 +500,49 @@ python skills/skill-creator/scripts/package_skill.py .shared/skills/my-skill
 python tools/install-skills.py /path/to/other-project
 ```
 
-## Commands (Cursor)
+## Meta-skills: skill-creator and agent-creator
 
-Commands are plain Markdown files in `.cursor/commands/`. The filename becomes the slash command name (e.g. `create-skill-creator.md` → `/create-skill-creator`). No YAML frontmatter — the entire file is the prompt.
+Bootstrap, validate, and install workflows are handled by the **skill-creator** and **agent-creator** installed skills — not separate custom agents.
 
-| Command | Purpose |
-| --- | --- |
-| `/create-skill-creator` | Install the skill-creator meta-skill (shared + tool skills) |
-| `/create-agent-creator` | Install the agent-creator meta-skill (shared + tool skills) |
-| `/create-bootstrap-skill` | Author a bootstrap skill under `skills/<name>/` from one or more templates (no install) |
-| `/create-tool-skill` | Install shared + tool skills from one or more bootstrap sources |
-| `/commit-message` | Draft compact and verbose commit messages for staged, working-tree, single-commit, or range scopes (same workflow as the `commit-message-writer` skill) |
-
-**Create a bootstrap skill from templates:**
+**Create a skill from templates** (example chat prompt):
 
 ```text
-/create-bootstrap-skill my-skill \
-  --base path/to/template/SKILL.md \
-  [--base path/to/other-skill/ ...] \
-  [--verify https://spec-or-docs-url ...] \
-  [--notes "extra requirements"]
+Use skill-creator to bootstrap mypaint-engine-dev from skills-ref/mypaint-engine-dev,
+validate the bootstrap under skills/mypaint-engine-dev/, and install with
+install_portable_skill.py.
 ```
 
-Use `--base` once for a single template, or repeat it to merge multiple skills into one cohesive bootstrap skill. Add `--verify` URLs or paths for external fact-checking.
+**Install or refresh a bootstrap skill manually:**
 
-**Install shared + tool skills from bootstrap sources:**
+```bash
+python skills/skill-creator/scripts/install_portable_skill.py \
+  --root . --name my-skill --source skills/my-skill --overwrite
+```
+
+**Batch-install related skills:**
+
+```bash
+for skill in gpu-rendering-guide vulkan-dev slang-dev; do
+  python skills/skill-creator/scripts/install_portable_skill.py \
+    --root . --name "$skill" --source "skills/$skill" --overwrite
+done
+```
+
+**Create a custom agent** (example chat prompt):
 
 ```text
-/create-tool-skill --source skills/slang-dev
-
-/create-tool-skill \
-  --source skills/gpu-rendering-guide \
-  --source skills/vulkan-dev \
-  --source skills/slang-dev
+Use agent-creator to bootstrap code-reviewer under agents/code-reviewer/ with all three
+tool wrappers, validate, and install with install_portable_agent.py.
 ```
 
-Repeat `--source` to install a cluster of cross-linked companion skills in one batch. After bootstrap edits, re-run `/create-tool-skill` to refresh the install.
+**Direct agent scaffold** (no bootstrap):
 
-**Draft commit messages:**
-
-```text
-/commit-message
-
-/commit-message --working
-
-/commit-message --range main..HEAD
-
-/commit-message \
-  --staged \
-  --context @docs/plan.md \
-  --jira PROJ-123 \
-  --notes "Follow-up to yesterday's API change"
+```bash
+python skills/agent-creator/scripts/create_agent.py \
+  --root . --name my-agent --description "…" --instructions-file body.md --overwrite
 ```
 
-Default scope is staged changes. The command returns a compact one-liner and a verbose message; it does not commit unless you ask afterward. The same workflow is available as the installed **`commit-message-writer`** skill in Cursor, Claude Code, and Copilot when you are not using the slash command.
+Commit messages: use the installed **commit-message-writer** skill (or ask in chat to draft a Conventional Commit from staged changes).
 
 ## Rules (Cursor)
 
@@ -567,33 +552,22 @@ Rules are `.mdc` files in `.cursor/rules/` with frontmatter controlling `globs` 
 
 Portable custom agents use a shared-first layout similar to skills:
 
-- `.shared/agents/<name>.md` — canonical, tool-neutral definition
+- `agents/<name>/` — bootstrap source when present (edit here, then install)
+- `.shared/agents/<name>.md` — tool-neutral definition (install output)
 - `.cursor/agents/<name>.md`, `.claude/agents/<name>.md`, `.github/agents/<name>.agent.md` — tool wrappers
 
-Use **agent-creator** to scaffold and validate new agents. Not every agent needs all three tool wrappers — some agents ship with only the layers you use (see `skill-bootstrapper` below).
+Use the **agent-creator** skill to scaffold new agents or **install_portable_agent.py** to install bootstrapped agents under `agents/<name>/`. Not every agent needs all three tool wrappers — bootstrap only the tools you use under `wrappers/`, then validate each installed path.
 
-### skill-bootstrapper (Cursor)
+**Bootstrap validate + install:**
 
-Automates the full portable skill pipeline in one agent run: bootstrap from templates → validate → self-review → install to shared + tool skills.
+```bash
+python skills/agent-creator/scripts/quick_validate.py --bootstrap-source agents/<name>
 
-| Location | Role |
-| --- | --- |
-| `.shared/agents/skill-bootstrapper.md` | Canonical agent instructions |
-| `.cursor/agents/skill-bootstrapper.md` | Cursor wrapper (reload window after install) |
-
-Select **skill-bootstrapper** from the Cursor agent picker (reload the window after adding the agent files). Example invocation:
-
-```text
-skill-bootstrapper mypaint-engine-dev \
-  --base skills-ref/mypaint-engine-dev \
-  --verify https://github.com/mypaint/mypaint \
-  --verify https://github.com/mypaint/libmypaint \
-  --overwrite
+python skills/agent-creator/scripts/install_portable_agent.py \
+  --root . --name <name> --source agents/<name> --overwrite
 ```
 
-Default pipeline: bootstrap → review → install. Flags: `--bootstrap-only`, `--skip-review`, `--no-overwrite`. The agent does not commit unless you ask; use `/commit-message` when ready.
-
-Manual alternative: chain `/create-bootstrap-skill` then `/create-tool-skill` in chat.
+Reload each tool after install so custom agents are rediscovered.
 
 ## Further reading
 

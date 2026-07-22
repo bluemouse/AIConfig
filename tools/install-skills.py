@@ -12,7 +12,7 @@ Examples:
     python tools/install-skills.py /path/to/other-project --bundles extended-dev-workflow --override
     python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow --skills cpp-coding
     python tools/install-skills.py /path/to/other-project --bundles target-bundle
-    python tools/install-skills.py /path/to/other-project --agents skill-bootstrapper --uninstall
+    python tools/install-skills.py /path/to/other-project --agents my-agent --uninstall
     python tools/install-skills.py   # GUI when no arguments
 """
 
@@ -731,7 +731,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
             "  python tools/install-skills.py /path/to/project --bundles extended-dev-workflow --override\n"
             "  python tools/install-skills.py /path/to/project --bundles core-dev-workflow --skills cpp-coding\n"
             "  python tools/install-skills.py /path/to/project --bundles target-bundle\n"
-            "  python tools/install-skills.py /path/to/project --uninstall --agents skill-bootstrapper\n"
+            "  python tools/install-skills.py /path/to/project --uninstall --agents my-agent\n"
             "\n"
             "Run without arguments to open the GUI."
         ),

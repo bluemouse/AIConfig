@@ -2,7 +2,28 @@
 
 Use this guide when creating or reviewing agents that should work across GitHub Copilot, Cursor, and Claude Code.
 
+## Two-phase workflow
+
+Portable agents use **two phases**:
+
+1. **Bootstrap** — Author tool-neutral content under `agents/<name>/` (plus optional custom wrappers). This is the source of truth when bootstrap exists.
+2. **Install** — Run `install_portable_agent.py` to copy `AGENT.md` to `.shared/agents/<name>.md` and install tool wrappers under `.cursor/`, `.claude/`, and `.github/`.
+
+Do not hand-edit `.shared/agents/` or tool agent folders for bootstrapped agents — edit bootstrap and reinstall.
+
+For one-off agents without bootstrap source, use `create_agent.py` to scaffold directly into the installed layout (direct path).
+
+## Skills vs agents (install differences)
+
+| | Skills | Agents |
+| --- | --- | --- |
+| Tool wrappers on install | Always creates all three paths; missing custom wrappers get default templates | Installs only wrappers present under `wrappers/` |
+| Partial custom wrappers | Custom per tool; defaults fill gaps | Omitted tools are not installed |
+| Shrinking wrapper set | Re-install overwrites all three tool skills | Re-install with `--overwrite` removes stale tool wrappers |
+
 ## Directory structure
+
+**Installed layout:**
 
 ```text
 repo/
@@ -20,7 +41,23 @@ repo/
       code-reviewer.agent.md
 ```
 
-`.shared/agents/<name>.md` is the canonical source of truth. The three tool-specific files are wrappers that point back to the shared file and add local integration notes.
+**Bootstrap layout** (when the agent ships bootstrap source):
+
+```text
+repo/
+  agents/
+    code-reviewer/
+      AGENT.md
+      wrappers/
+        cursor/
+          AGENT.md
+        claude/
+          AGENT.md
+        github/
+          AGENT.md
+```
+
+`.shared/agents/<name>.md` is the tool-neutral install output. The three tool-specific files are wrappers that point back to the shared file and add local integration notes. When bootstrap source exists at `agents/<name>/`, edit there and reinstall — do not hand-edit `.shared/agents/` or tool agent folders.
 
 ## Shared agent template
 
@@ -104,9 +141,46 @@ Relative path from any wrapper to the shared agent:
 
 `../../.shared/agents/<name>.md`
 
-## Worked example
+## Worked example: bootstrap and install
 
-Scaffold a portable agent in a repository:
+Create bootstrap source:
+
+```text
+agents/code-reviewer/
+  AGENT.md
+  wrappers/cursor/AGENT.md   # optional; omit tools you do not need
+```
+
+Validate and install:
+
+```bash
+python skills/agent-creator/scripts/quick_validate.py --bootstrap-source agents/code-reviewer
+
+python skills/agent-creator/scripts/install_portable_agent.py \
+  --root /path/to/repo \
+  --name code-reviewer \
+  --source agents/code-reviewer \
+  --overwrite
+```
+
+Do not skip bootstrap validation before install. Install syncs `description` from shared `AGENT.md` into custom wrappers; validation catches inconsistent bootstrap wrapper files first.
+
+**Overwrite:** `--overwrite` (default) removes installed tool wrappers no longer present under `wrappers/` — use when dropping a tool or migrating from direct scaffold. `--no-overwrite` refuses existing targets and does not delete stale wrappers.
+
+This copies `AGENT.md` to `.shared/agents/code-reviewer.md` and installs only wrappers present under `wrappers/`. Partial wrapper sets (e.g. Cursor only) are supported.
+
+Validate installed paths:
+
+```bash
+python skills/agent-creator/scripts/quick_validate.py .shared/agents/code-reviewer.md
+python skills/agent-creator/scripts/quick_validate.py .cursor/agents/code-reviewer.md
+```
+
+Then edit bootstrap files for cross-tool behavior and expand each wrapper with tool-native spawn mechanics, reload steps, and optional frontmatter (`model`, `tools`, `readonly`, etc.). Re-run validation after substantive edits.
+
+## Worked example: direct scaffold
+
+When bootstrap is not used:
 
 ```bash
 python skills/agent-creator/scripts/create_agent.py \
@@ -117,35 +191,19 @@ python skills/agent-creator/scripts/create_agent.py \
   --overwrite
 ```
 
-This creates:
+This creates `.shared/agents/code-reviewer.md` and all three default tool wrappers. Edit the shared file for cross-tool behavior; edit tool agent files for tool-only notes.
 
-- `.shared/agents/code-reviewer.md`
-- `.cursor/agents/code-reviewer.md`
-- `.claude/agents/code-reviewer.md`
-- `.github/agents/code-reviewer.agent.md`
-
-Validate immediately:
+Validate:
 
 ```bash
 python skills/agent-creator/scripts/quick_validate.py --root /path/to/repo --name code-reviewer
 ```
 
-Or validate each file:
-
-```bash
-python skills/agent-creator/scripts/quick_validate.py .shared/agents/code-reviewer.md
-python skills/agent-creator/scripts/quick_validate.py .cursor/agents/code-reviewer.md
-python skills/agent-creator/scripts/quick_validate.py .claude/agents/code-reviewer.md
-python skills/agent-creator/scripts/quick_validate.py .github/agents/code-reviewer.agent.md
-```
-
-Then edit the shared file for cross-tool behavior and expand each wrapper with tool-native spawn mechanics, reload steps, and optional frontmatter (`model`, `tools`, `readonly`, etc.). Re-run validation after substantive edits.
-
 ## Notes on portability
 
 - Reference-based wrappers reduce duplication but depend on the tool following the wrapper instruction to read the shared file.
 - If the user needs maximum standalone behavior, generate copy-based wrappers with the full shared body inlined in each tool file instead of reference wrappers.
-- Repo-root `agents-ref/` can hold reference templates. User-created portable agents belong in `.shared/agents/`.
+- Bootstrapped portable agents belong in `agents/<name>/`; agents without bootstrap source belong in `.shared/agents/`.
 - Add tool-specific frontmatter such as `model`, `tools`, or `readonly` only in wrappers when the user explicitly wants per-tool variants.
 
 ## Quality checklist

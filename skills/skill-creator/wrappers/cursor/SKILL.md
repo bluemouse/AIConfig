@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: "Create portable skills for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create a skill from scratch, scaffold `.shared/skills` with tool wrappers in `.cursor/skills`, `.claude/skills`, or `.github/skills`, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say \"portable skill\" explicitly."
+description: "Create portable skills for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create a skill from scratch, bootstrap under the skills directory and install to .shared/skills with tool wrappers, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say \"portable skill\" explicitly."
 ---
 
 # skill-creator (Cursor)
@@ -30,7 +30,30 @@ python <SKILL_CREATOR_ROOT>/scripts/install_portable_skill.py \
 
 If bootstrap source exists at `skills/skill-creator/`, use that path for `--source` only.
 
-Or run slash command: `/create-skill-creator`
+## Scaffolding and validation (user skills)
+
+**Bootstrap path (preferred):** author under `skills/<skill-name>/`, then install:
+
+```bash
+python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py skills/<skill-name>
+
+python <SKILL_CREATOR_ROOT>/scripts/install_portable_skill.py \
+  --root . \
+  --name <skill-name> \
+  --source skills/<skill-name> \
+  --overwrite
+```
+
+**Direct path:** when bootstrap is not used:
+
+```bash
+python <SKILL_CREATOR_ROOT>/scripts/create_skill.py \
+  --root . \
+  --name <skill-name> \
+  --overwrite
+```
+
+Validate all installed paths after scaffold or install. Expand `skills/<skill-name>/wrappers/cursor/SKILL.md` (bootstrap) or `.cursor/skills/<skill-name>/SKILL.md` (direct) with Cursor eval mechanics and reload notes.
 
 ## Running evals in Cursor
 

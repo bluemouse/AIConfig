@@ -18,21 +18,24 @@ Understanding paths under `skills/`, `.shared/`, `.cursor/`, `.claude/`, and `.g
 
 **Never hand-edit `.shared/skills/` or tool skill folders.** They are generated output. Edit the bootstrap skill under `skills/<name>/` and re-run the install script — otherwise edits are lost on the next install.
 
-### Custom agents: shared → tool
+### Custom agents: bootstrap → shared → tool
 
-Custom agents use **two** layers — no bootstrap directory:
+Agents that ship bootstrap source use the same three-layer pattern as skills. Other agents may still be scaffolded directly into `.shared/agents/` with `create_agent.py`.
 
-- **Shared:** `.shared/agents/<name>.md` (canonical, tool-neutral) — edit this file directly
-- **Tool:** `.cursor/agents/<name>.md`, `.claude/agents/<name>.md`, `.github/agents/<name>.agent.md` — wrappers generated or synced via `create_agent.py` (see `skills/agent-creator/scripts/create_agent.py`)
+1. **Bootstrap** (`agents/<name>/`, source-of-truth when present) — author `AGENT.md` and optional custom tool wrapper templates in `wrappers/{cursor,claude,github}/AGENT.md`.
+2. **Shared** (`.shared/agents/<name>.md`, generated) — tool-neutral install output produced by `install_portable_agent.py`.
+3. **Tool** (`.cursor/agents/<name>.md`, `.claude/agents/<name>.md`, `.github/agents/<name>.agent.md`, generated) — thin per-tool wrapper pointing at the shared agent, or a custom wrapper from `agents/<name>/wrappers/` when one exists.
 
-Not every agent requires all three tool wrappers. For example, **`skill-bootstrapper`** ships with shared + Cursor wrapper only (`.shared/agents/skill-bootstrapper.md`, `.cursor/agents/skill-bootstrapper.md`) — validate those paths individually rather than with `quick_validate.py --root . --name skill-bootstrapper`, which expects all four files.
+**Never hand-edit `.shared/agents/` or tool agent folders for bootstrapped agents.** Edit `agents/<name>/` and re-run `install_portable_agent.py`. For agents without bootstrap source, edit `.shared/agents/<name>.md` directly or regenerate with `create_agent.py`.
 
-| | Skills | Custom agents |
-| --- | --- | --- |
-| Authoritative source | `skills/<name>/` (bootstrap) | `.shared/agents/<name>.md` |
-| Install / scaffold | `install_portable_skill.py` | `create_agent.py` |
-| Distribute to another project | `tools/install-skills.py` (copies installed shared + wrappers) | same |
-| Hand-edit shared layer? | No (regenerated from bootstrap) | Yes (canonical) |
+Not every agent requires all three tool wrappers. For a partial set (e.g. Cursor only), bootstrap under `agents/<name>/wrappers/` with only the tools you need, install, then validate each installed path individually.
+
+| | Skills | Custom agents (bootstrap) | Custom agents (direct) |
+| --- | --- | --- | --- |
+| Authoritative source | `skills/<name>/` | `agents/<name>/` | `.shared/agents/<name>.md` |
+| Install / scaffold | `install_portable_skill.py` | `install_portable_agent.py` | `create_agent.py` |
+| Distribute to another project | `tools/install-skills.py` (copies installed shared + wrappers) | same | same |
+| Hand-edit shared layer? | No (regenerated from bootstrap) | No (regenerated from bootstrap) | Yes (canonical) |
 
 Skills are discovered by frontmatter (`name`, `description`); an agent reads the `description` to decide when to load the full `SKILL.md` body. Description wording is load-bearing — `skill-creator`'s eval tooling (`run_eval.py`) tests whether a description reliably triggers on target phrases.
 
@@ -77,13 +80,26 @@ python skills/skill-creator/scripts/quick_validate.py <path-to-skill-dir>
 
 Run against `.shared/skills/<name>` and each tool skill path after inspection or before considering a skill done.
 
-**Scaffold a skill without bootstrap** (writes directly to `.shared/` + tool skills — prefer bootstrap under `skills/<name>/` and `/create-bootstrap-skill` for new skills in this repo):
+**Scaffold a skill without bootstrap** (writes directly to `.shared/` + tool skills — prefer bootstrap under `skills/<name>/` and the **skill-creator** skill for new skills in this repo):
 
 ```bash
 python skills/skill-creator/scripts/create_skill.py --root . --name my-skill
 ```
 
-**Create/validate a portable agent:**
+**Install/refresh a bootstrap agent → shared + tool wrappers:**
+
+```bash
+python skills/agent-creator/scripts/install_portable_agent.py \
+  --root . --name <agent-name> --source agents/<agent-name> --overwrite
+```
+
+Validate bootstrap before install:
+
+```bash
+python skills/agent-creator/scripts/quick_validate.py --bootstrap-source agents/<agent-name>
+```
+
+**Create/validate a portable agent (direct scaffold):**
 
 ```bash
 python skills/agent-creator/scripts/create_agent.py --root . --name my-agent \
@@ -98,7 +114,7 @@ python skills/agent-creator/scripts/quick_validate.py .shared/agents/<name>.md
 python skills/agent-creator/scripts/quick_validate.py .cursor/agents/<name>.md
 ```
 
-**Automate bootstrap + install (Cursor):** use the **skill-bootstrapper** custom agent (`.shared/agents/skill-bootstrapper.md`, `.cursor/agents/skill-bootstrapper.md`). It reads templates from `skills-ref/<name>/` or other `--base` paths, writes bootstrap output to `skills/<name>/`, validates, self-reviews, and calls `install_portable_skill.py` in one session. Manual alternative: `/create-bootstrap-skill` then `/create-tool-skill` (see [README.md](README.md)).
+**Bootstrap and install skills or agents:** use the **skill-creator** and **agent-creator** installed skills. For skills, author under `skills/<name>/` (often from `skills-ref/<name>/` templates), validate, then run `install_portable_skill.py`. For agents, author under `agents/<name>/` or use `create_agent.py` for a direct scaffold, validate, then run `install_portable_agent.py` when using bootstrap source. See [README.md](README.md) for examples.
 
 **Package a shared skill for distribution:**
 
@@ -113,7 +129,7 @@ python tools/install-skills.py /path/to/other-project
 python tools/install-skills.py /path/to/other-project --skills cpp-coding vulkan-dev --override
 python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow
 python tools/install-skills.py /path/to/other-project --bundles target-bundle
-python tools/install-skills.py /path/to/other-project --agents skill-bootstrapper --uninstall
+python tools/install-skills.py /path/to/other-project --agents my-agent --uninstall
 python tools/install-skills.py   # GUI when no arguments
 ```
 
@@ -129,7 +145,7 @@ cd skills/skill-creator && python -m scripts.run_eval \
 
 Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer`, `commit-message-writer`, `code-reviewer`, `github-guide`, `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor`, `implementation-auditor`, `test-driven-dev-guide`, `debugging-guide`, `cpp-coding`, `cpp-performance-guide`, and `agent-runner` ship `eval-queries.json` for description trigger testing. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
 
-See [README.md](README.md) for Cursor slash commands (`/create-bootstrap-skill`, `/create-tool-skill`, etc.) that wrap these workflows.
+See [README.md](README.md) for install examples and meta-skill usage.
 
 ## Editing conventions
 

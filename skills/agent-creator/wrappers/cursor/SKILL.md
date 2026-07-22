@@ -1,6 +1,6 @@
 ---
 name: agent-creator
-description: "Create portable custom agents for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create an agent from scratch, scaffold `.shared/agents` with tool wrappers in `.cursor/agents`, `.claude/agents`, or `.github/agents`, edit or optimize an existing agent, tune an agent's description for better triggering, or explain portable agent structure — even if they do not say \"portable agent\" explicitly."
+description: "Create portable custom agents for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create an agent from scratch, bootstrap under the agents directory and install to .shared/agents with tool wrappers, edit or optimize an existing agent, tune an agent's description for better triggering, or explain portable agent structure — even if they do not say \"portable agent\" explicitly."
 ---
 
 # agent-creator (Cursor)
@@ -30,11 +30,21 @@ python skills/skill-creator/scripts/install_portable_skill.py \
 
 If bootstrap source exists at `skills/agent-creator/`, use that path for `--source` only.
 
-Or run slash command: `/create-agent-creator`
-
 ## Scaffolding and validation
 
-After drafting shared agent instructions, run from repo root:
+**Bootstrap path (preferred):** author under `agents/<agent-name>/`, then install:
+
+```bash
+python <AGENT_CREATOR_ROOT>/scripts/quick_validate.py --bootstrap-source agents/<agent-name>
+
+python <AGENT_CREATOR_ROOT>/scripts/install_portable_agent.py \
+  --root . \
+  --name <agent-name> \
+  --source agents/<agent-name> \
+  --overwrite
+```
+
+**Direct path:** when bootstrap is not used:
 
 ```bash
 python <AGENT_CREATOR_ROOT>/scripts/create_agent.py \
@@ -47,9 +57,9 @@ python <AGENT_CREATOR_ROOT>/scripts/create_agent.py \
 python <AGENT_CREATOR_ROOT>/scripts/quick_validate.py --root . --name <agent-name>
 ```
 
-**Always** run `quick_validate.py` after scaffold or substantive edits. Fix errors before handing off to the user.
+**Always** run `quick_validate.py` after scaffold, install, or substantive edits. Fix errors before handing off to the user.
 
-Use `--cursor-note` at scaffold time for one-line Cursor hints; expand `.cursor/agents/<agent-name>.md` afterward with spawn mechanics and optional frontmatter (`model`, `readonly`, etc.).
+Use `--cursor-note` at direct scaffold time for one-line Cursor hints; expand `agents/<agent-name>/wrappers/cursor/AGENT.md` (bootstrap) or `.cursor/agents/<agent-name>.md` (direct) afterward with spawn mechanics and optional frontmatter (`model`, `readonly`, etc.).
 
 ## Testing agents in Cursor
 
@@ -65,7 +75,7 @@ Use the **Task tool** to spawn the custom agent under test. There is no formal e
    - The user's test prompt
    - Expected behavior and efficiency signals to watch for
 4. Review the transcript against **correctness**, **completeness**, and **efficiency** (shared skill).
-5. Edit `.shared/agents/<agent-name>.md` for cross-tool fixes; edit `.cursor/agents/<agent-name>.md` for Cursor-only gaps.
+5. Edit bootstrap files (`agents/<agent-name>/`) for cross-tool fixes, or `.shared/agents/<agent-name>.md` on the direct path; edit `.cursor/agents/<agent-name>.md` for Cursor-only gaps. Reinstall after bootstrap edits.
 6. Re-run `quick_validate.py` and re-test until the user is satisfied.
 
 ### Spawn example (Task prompt)
@@ -87,7 +97,7 @@ No automated description loop is bundled for agents. Use the shared manual path:
 
 1. Draft ~10–20 trigger eval queries (shared **Description optimization**)
 2. Review should-trigger / should-not-trigger cases with the user in chat
-3. Revise `description` in `.shared/agents/<agent-name>.md` and sync into all four agent files
+3. Revise `description` in the authoritative edit location (`agents/<agent-name>/AGENT.md` or `.shared/agents/<agent-name>.md`) and sync into all installed wrapper files; reinstall if bootstrap
 4. Ask the user to invoke the agent with realistic prompts in Cursor chat or via Task
 
 ## TodoList

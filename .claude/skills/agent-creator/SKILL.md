@@ -1,6 +1,11 @@
 ---
 name: agent-creator
-description: "Create portable custom agents for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create an agent from scratch, scaffold `.shared/agents` with tool wrappers in `.cursor/agents`, `.claude/agents`, or `.github/agents`, edit or optimize an existing agent, tune an agent's description for better triggering, or explain portable agent structure \u2014 even if they do not say \"portable agent\" explicitly."
+description: Create portable custom agents for GitHub Copilot, Cursor, and Claude
+  Code using a shared-first layout, and iteratively improve them. Use when users want
+  to create an agent from scratch, bootstrap under the agents directory and install
+  to .shared/agents with tool wrappers, edit or optimize an existing agent, tune an
+  agent's description for better triggering, or explain portable agent structure —
+  even if they do not say "portable agent" explicitly.
 ---
 
 # agent-creator (Claude Code)
@@ -30,6 +35,20 @@ If bootstrap source exists at `skills/agent-creator/`, use that path for `--sour
 
 ## Scaffolding and validation
 
+**Bootstrap path (preferred):** author under `agents/<agent-name>/`, then install:
+
+```bash
+python <AGENT_CREATOR_ROOT>/scripts/quick_validate.py --bootstrap-source agents/<agent-name>
+
+python <AGENT_CREATOR_ROOT>/scripts/install_portable_agent.py \
+  --root . \
+  --name <agent-name> \
+  --source agents/<agent-name> \
+  --overwrite
+```
+
+**Direct path:** when bootstrap is not used:
+
 ```bash
 python <AGENT_CREATOR_ROOT>/scripts/create_agent.py \
   --root . \
@@ -41,9 +60,9 @@ python <AGENT_CREATOR_ROOT>/scripts/create_agent.py \
 python <AGENT_CREATOR_ROOT>/scripts/quick_validate.py --root . --name <agent-name>
 ```
 
-**Always** run `quick_validate.py` after scaffold or substantive edits.
+**Always** run `quick_validate.py` after scaffold, install, or substantive edits.
 
-Use `--claude-note` at scaffold time; expand `.claude/agents/<agent-name>.md` with Claude-specific frontmatter (`tools`, `model`, etc.) when the user wants per-tool variants.
+Use `--claude-note` at direct scaffold time; expand `agents/<agent-name>/wrappers/claude/AGENT.md` (bootstrap) or `.claude/agents/<agent-name>.md` (direct) with Claude-specific frontmatter (`tools`, `model`, etc.) when the user wants per-tool variants.
 
 ## Testing agents in Claude Code
 
@@ -55,7 +74,7 @@ Claude Code supports **subagents** — use them to test custom agents qualitativ
 2. For each prompt, spawn a subagent in the same turn when comparing variants, or sequentially for simple review.
 3. Subagent prompt should reference `.claude/agents/<agent-name>.md` and instruct reading `.shared/agents/<agent-name>.md` first.
 4. Review against correctness, completeness, and efficiency (shared skill).
-5. Edit shared agent first; then `.claude/agents/` wrapper for Claude-only details.
+5. Edit bootstrap files (`agents/<agent-name>/`) for cross-tool fixes, or `.shared/agents/<agent-name>.md` on the direct path; then `.claude/agents/` wrapper for Claude-only details. Reinstall after bootstrap edits.
 6. Re-validate and re-test.
 
 ### Spawn example
@@ -76,7 +95,7 @@ No automated loop is bundled for agents. Use shared Steps 1–2 and 4 manually:
 1. Draft trigger eval queries with the user
 2. Mark false positives / false negatives
 3. Skip automated Step 3 (no `run_loop.py` for agents)
-4. Apply revised `description` to `.shared/agents/<agent-name>.md` and sync all wrappers
+4. Apply revised `description` in the authoritative edit location (`agents/<agent-name>/AGENT.md` or `.shared/agents/<agent-name>.md`) and sync all wrappers; reinstall if bootstrap
 
 Triggering note: custom agents appear in available agent lists; Claude selects them when the description matches and specialized behavior would help.
 
@@ -90,5 +109,5 @@ Copy to `/tmp/agent-creator/`, edit, validate, then copy artifacts back if neede
 
 ## Wrapper policy
 
-- Edit cross-tool behavior in `../../../.shared/skills/agent-creator/` and user `.shared/agents/`
+- Edit cross-tool behavior in `../../../.shared/skills/agent-creator/` and user bootstrap (`agents/<name>/`) or `.shared/agents/` on the direct path
 - Edit Claude Code mechanics here and in user `.claude/agents/` wrappers

@@ -40,6 +40,13 @@ def parse_frontmatter(content: str) -> tuple[dict | None, str | None]:
     return frontmatter, None
 
 
+def body_after_frontmatter(content: str) -> str:
+    match = re.match(r"^---\n.*?\n---\n?", content, re.DOTALL)
+    if not match:
+        return content
+    return content[match.end() :].strip()
+
+
 def validate_name(name: str) -> str | None:
     if not isinstance(name, str):
         return f"Name must be a string, got {type(name).__name__}"

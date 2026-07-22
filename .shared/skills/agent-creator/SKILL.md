@@ -1,6 +1,6 @@
 ---
 name: agent-creator
-description: Create portable custom agents for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create an agent from scratch, scaffold `.shared/agents` with tool wrappers in `.cursor/agents`, `.claude/agents`, or `.github/agents`, edit or optimize an existing agent, tune an agent's description for better triggering, or explain portable agent structure — even if they do not say "portable agent" explicitly.
+description: Create portable custom agents for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create an agent from scratch, bootstrap under the agents directory and install to .shared/agents with tool wrappers, edit or optimize an existing agent, tune an agent's description for better triggering, or explain portable agent structure — even if they do not say "portable agent" explicitly.
 ---
 
 # Agent Creator
@@ -10,11 +10,12 @@ A skill for creating portable custom agent definitions and iteratively improving
 At a high level, creating an agent goes like this:
 
 - Decide what the agent should do, when it should trigger, and how success is measured
-- **Scaffold** the shared agent in `.shared/agents/<name>.md` and generate tool wrappers with `create_agent.py`
-- Write a draft of the shared agent body (tool-neutral) and tool-specific notes in each wrapper
+- **Choose an authoring path** — bootstrap under `agents/<name>/` (preferred) or direct scaffold with `create_agent.py` (see below)
+- Write a tool-neutral shared agent body and tool-specific wrapper notes
+- **Install** when using bootstrap (`install_portable_agent.py`); direct scaffold writes installed paths immediately
 - Create a few realistic test prompts and run the agent on the target tool
 - Help the user evaluate results for **correctness**, **completeness**, and **efficiency** on that tool
-- Rewrite the shared agent and wrappers based on feedback
+- Rewrite shared content and wrappers based on feedback (in bootstrap or installed paths, per path)
 - Repeat until satisfied, then expand the test set
 
 **Tool-specific execution** (how to spawn agent runs, reload steps, frontmatter fields such as `model` or `readonly`, and subagent mechanics) lives in your **tool wrapper** — read it after this shared skill. Do not assume subagents, a particular CLI, or a browser unless your wrapper documents them.
@@ -51,9 +52,42 @@ Ask:
 
 Ask about edge cases, success criteria, output format, boundaries (what the agent must not do), readonly/background behavior, and whether the agent needs tool-specific frontmatter such as `model`, `tools`, `readonly`, `is_background`, or MCP settings.
 
-Check the target repository for existing agent conventions before generating files. If `.shared/agents/` or tool-specific agent folders already exist, match their style.
+Check the target repository for existing agent conventions before generating files. If `agents/`, `.shared/agents/`, or tool-specific agent folders already exist, match their style.
 
-Use available research tools (MCP, docs search, similar agents in `agents-ref/` or the repo) when helpful — in parallel when your environment allows.
+Use available research tools (MCP, docs search, similar agents in the repo) when helpful — in parallel when your environment allows.
+
+### Choose authoring path
+
+Pick **one** path before writing files. Do not hand-edit installed layers (`.shared/agents/`, tool agent folders) when bootstrap source exists — edit bootstrap and reinstall.
+
+| Path | When to use | Author here | Install / scaffold |
+| --- | --- | --- | --- |
+| **Bootstrap** | Repo-maintained agent shipped like a product; repo already uses or wants `agents/<name>/`; agent will be revised and reinstalled over time | `agents/<name>/AGENT.md` + optional `wrappers/<tool>/AGENT.md` | `install_portable_agent.py` |
+| **Direct** | One-off or new agent in a project without `agents/` bootstrap; quick scaffold into installed layout | `.shared/agents/<name>.md` (via script) | `create_agent.py` |
+
+**Prefer bootstrap when:**
+
+- The agent is part of this repo's portable config (maintained alongside skills)
+- You need partial tool wrappers only (e.g. Cursor without Claude/GitHub) — bootstrap install skips missing wrappers; `create_agent.py` always creates all three
+- The user asks to bootstrap, migrate, or reinstall an agent from `agents/<name>/`
+
+**Prefer direct scaffold when:**
+
+- The target project has no `agents/` directory and no plan to add bootstrap source
+- You need all three tool wrappers generated immediately with default templates
+- The user wants a fast first draft before deciding whether to adopt bootstrap later
+
+**Partial wrappers:** Not every agent needs Claude, Cursor, and GitHub layers. Bootstrap supports any subset under `wrappers/`; validate only the paths that exist after install.
+
+### Where to edit (by path)
+
+| Concern | Bootstrap path | Direct path |
+| --- | --- | --- |
+| Cross-tool behavior | `agents/<name>/AGENT.md` → reinstall | `.shared/agents/<name>.md` |
+| Tool-only notes / frontmatter | `agents/<name>/wrappers/<tool>/AGENT.md` → reinstall | `.cursor/agents/<name>.md`, etc. |
+| Runtime read target | `.shared/agents/<name>.md` (install output; do not hand-edit) | Same |
+
+After bootstrap edits, run `install_portable_agent.py` before testing in the IDE.
 
 ### Bundled scripts
 
@@ -61,7 +95,8 @@ Resolve `<AGENT_CREATOR_ROOT>` as the directory containing **this** skill's `SKI
 
 | Script | Path |
 | --- | --- |
-| Create portable agent | `<AGENT_CREATOR_ROOT>/scripts/create_agent.py` |
+| Install bootstrap agent | `<AGENT_CREATOR_ROOT>/scripts/install_portable_agent.py` |
+| Create portable agent (direct) | `<AGENT_CREATOR_ROOT>/scripts/create_agent.py` |
 | Validate | `<AGENT_CREATOR_ROOT>/scripts/quick_validate.py` |
 
 Bootstrap source for this meta-skill may live at `skills/agent-creator/`; installed copies live under `.shared/skills/agent-creator/`.
@@ -70,21 +105,83 @@ Bootstrap source for this meta-skill may live at `skills/agent-creator/`; instal
 
 ### Anatomy of a portable agent
 
+**Installed layout:**
+
 ```
 repo/
-├── .shared/agents/<agent-name>.md       # Canonical, tool-neutral agent definition
+├── .shared/agents/<agent-name>.md       # Tool-neutral agent definition (install output)
 ├── .cursor/agents/<agent-name>.md       # Cursor wrapper
 ├── .claude/agents/<agent-name>.md       # Claude Code wrapper
 └── .github/agents/<agent-name>.agent.md # GitHub Copilot wrapper
 ```
 
+**Bootstrap layout** (when the agent ships bootstrap source):
+
+```
+repo/
+├── agents/<agent-name>/
+│   ├── AGENT.md                         # Shared agent body (author here)
+│   └── wrappers/                        # Optional custom tool templates
+│       ├── cursor/AGENT.md
+│       ├── claude/AGENT.md
+│       └── github/AGENT.md
+```
+
 **Progressive disclosure:** metadata (frontmatter) → shared agent body → tool-specific wrapper notes on demand.
 
-Keep behavior that applies everywhere in `.shared/agents/<agent-name>.md`. Put tool-native integration in wrappers only. Repo-root `agents-ref/` holds reference templates, not user portable agents.
+Keep behavior that applies everywhere in the shared agent file (`agents/<name>/AGENT.md` at bootstrap, `.shared/agents/<name>.md` after install). Put tool-native integration in wrappers only. Bootstrapped portable agents belong in `agents/<name>/`; agents without bootstrap source belong in `.shared/agents/`.
 
-### Scaffold a new agent (project, shared-first)
+### Bootstrap a new agent
 
-**Always** use `create_agent.py` for repository projects. Do **not** hand-create agent directories or placeholder files.
+When bootstrap is the chosen path, create or edit `agents/<agent-name>/`:
+
+1. Add `AGENT.md` with tool-neutral frontmatter (`name`, `description`) and instructions body.
+2. Add optional custom wrappers under `wrappers/{cursor,claude,github}/AGENT.md` that point to `../../.shared/agents/<name>.md`, include reload notes, and document tool-specific mechanics (spawn commands, model/tools frontmatter, readonly/background flags). If omitted, those tool layers are not installed until you add wrappers and reinstall.
+3. **Validate bootstrap source before install** — do not skip this step:
+
+```bash
+python <AGENT_CREATOR_ROOT>/scripts/quick_validate.py --bootstrap-source agents/<agent-name>
+```
+
+Copy from an existing agent under `agents/` or adapt a similar agent in the repo when starting from a known pattern.
+
+### Install a bootstrap agent
+
+When bootstrap source exists at `agents/<agent-name>/`:
+
+**Always validate bootstrap source immediately before install** — install syncs `description` (and rebuilds frontmatter) on custom wrappers from shared `AGENT.md`, but bootstrap validation catches name/description drift between bootstrap wrapper files and `AGENT.md` before anything is written.
+
+```bash
+python <AGENT_CREATOR_ROOT>/scripts/quick_validate.py --bootstrap-source agents/<agent-name>
+
+python <AGENT_CREATOR_ROOT>/scripts/install_portable_agent.py \
+  --root <repo_root> \
+  --name <agent-name> \
+  --source agents/<agent-name> \
+  --overwrite
+```
+
+Install copies `AGENT.md` to `.shared/agents/<name>.md` and installs only the tool wrappers present under `wrappers/`. It does **not** auto-generate missing wrappers. Custom wrappers get `name` and `description` synced from shared `AGENT.md` during install (including folded-block YAML descriptions).
+
+**Overwrite behavior:**
+
+- `--overwrite` (default): installs wrappers listed in bootstrap and **removes** installed tool wrappers that are no longer present under `wrappers/`. Use this when shrinking the wrapper set (dropping a tool) or migrating from a direct scaffold.
+- `--no-overwrite`: refuses if any install target already exists. When install succeeds for new paths only, it **does not** delete stale wrappers left from a prior partial install.
+
+Validate each installed path individually when the agent ships a partial wrapper set:
+
+```bash
+python <AGENT_CREATOR_ROOT>/scripts/quick_validate.py .shared/agents/<agent-name>.md
+python <AGENT_CREATOR_ROOT>/scripts/quick_validate.py .cursor/agents/<agent-name>.md
+```
+
+Do not hand-edit `.shared/agents/` or tool agent folders for bootstrapped agents — reinstall from bootstrap instead.
+
+### Scaffold a new agent (direct path)
+
+Use `create_agent.py` for **direct** scaffold when bootstrap under `agents/<name>/` is not the chosen path. Do **not** hand-create `.shared/agents/` or tool wrapper files — let the script generate them.
+
+For **bootstrap** authoring, create or edit `agents/<name>/` (see **Choose authoring path** and **Install a bootstrap agent**) instead of running `create_agent.py`.
 
 1. Draft the shared, tool-neutral instruction body in a temporary markdown file (body only — no frontmatter).
 2. Run:
@@ -158,6 +255,7 @@ After `create_agent.py` scaffolds a **new** agent, help the user draft **native 
 
 After creating or installing files, summarize for the user:
 
+- Authoritative edit path (`agents/<agent-name>/` or `.shared/agents/<agent-name>.md`)
 - Shared agent path (`.shared/agents/<agent-name>.md`)
 - Wrapper paths (`.cursor/`, `.claude/`, `.github/agents/<agent-name>.agent.md`)
 - Assumptions made about instructions or triggers
@@ -166,9 +264,11 @@ After creating or installing files, summarize for the user:
 ### Updating an existing agent
 
 - Preserve the original `name` unless the user wants a rename
-- Edit the shared agent first for cross-tool behavior; wrappers for tool-only notes or frontmatter
-- Re-run `quick_validate.py` after substantive edits; sync `description` across all four files when it changes
-- Re-run `create_agent.py --overwrite` only when regenerating from a new instructions file is safer than hand-editing and the user confirms
+- If `agents/<name>/` exists, edit bootstrap files first (see **Where to edit**), then reinstall with `install_portable_agent.py` — do not patch `.shared/agents/` or tool folders by hand
+- If no bootstrap source, edit `.shared/agents/<name>.md` first for cross-tool behavior; wrappers for tool-only notes or frontmatter
+- Re-run `quick_validate.py` after substantive edits (`--bootstrap-source` before install, or per installed path after)
+- Sync `description` across shared content and every installed wrapper when it changes
+- Re-run `create_agent.py --overwrite` only on the **direct** path when regenerating from a new instructions file is safer than hand-editing and the user confirms
 
 ### Write the agent definition
 
@@ -253,8 +353,8 @@ Improvement rules:
 
 1. **Generalize** — fixes must help beyond the few test examples
 2. **Keep the shared file lean** — read transcripts, not just final outputs
-3. **Edit shared first** — cross-tool behavior belongs in `.shared/agents/<name>.md`
-4. **Edit wrappers for tool-only gaps** — spawn mechanics, frontmatter, reload steps
+3. **Edit shared first** — cross-tool behavior in `agents/<name>/AGENT.md` when bootstrap exists, else `.shared/agents/<name>.md`; reinstall after bootstrap edits
+4. **Edit wrappers for tool-only gaps** — bootstrap: `agents/<name>/wrappers/<tool>/AGENT.md`; direct: tool agent folders under `.cursor/`, `.claude/`, `.github/`
 5. **Explain why** — prefer reasoning over ALL-CAPS MUSTs
 
 Re-run test prompts after edits until the user is satisfied or progress stalls.
@@ -273,7 +373,7 @@ The `description` field drives agent discovery. After creating or improving an a
 
 **Step 3 (automated — tool-specific):** Some tools support automated description loops. Follow your wrapper if documented; otherwise skip to Step 4.
 
-**Step 4 — Apply:** Update shared agent frontmatter and sync `description` into every wrapper. Show before/after when possible.
+**Step 4 — Apply:** Update shared agent frontmatter in the authoritative edit location (`agents/<name>/AGENT.md` or `.shared/agents/<name>.md`), sync `description` into every wrapper, reinstall if bootstrap. Show before/after when possible.
 
 ### How agent triggering works (general)
 
@@ -295,10 +395,10 @@ Agents match tasks against **name + description** in available-agent lists. Simp
 
 ## Core loop (summary)
 
-1. Capture intent and scaffold with `create_agent.py`
-2. Write tool-neutral shared agent body; put native execution in wrappers
-3. Validate all four paths with `quick_validate.py`
+1. Capture intent and **choose authoring path** (bootstrap vs direct)
+2. Author shared body and wrappers — bootstrap: `agents/<name>/` then `install_portable_agent.py`; direct: `create_agent.py` then expand wrappers
+3. Validate (`--bootstrap-source` or per installed path / full `--root` + `--name` set)
 4. Run realistic test prompts on the target tool (per tool wrapper)
 5. Review for correctness, completeness, and efficiency
-6. Improve shared agent and wrappers; sync `description` across files; re-validate
+6. Improve at the authoritative edit location (see **Where to edit**); sync `description`; reinstall if bootstrap; re-validate
 7. Repeat until satisfied; offer description optimization

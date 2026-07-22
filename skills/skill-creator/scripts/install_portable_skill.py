@@ -17,14 +17,14 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
-import json
-import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-from quick_validate import parse_frontmatter, validate_skill
+import yaml
+
+from quick_validate import body_after_frontmatter, parse_frontmatter, validate_skill
 from scaffold_skill import (
     TOOL_SKILL_PATHS,
     SkillScaffoldError,
@@ -82,7 +82,7 @@ def copy_skill_source(source: Path, dest: Path, overwrite: bool) -> None:
     shutil.copytree(source, dest, ignore=make_copy_ignore(source))
 
 
-def read_skill_description(skill_md: Path) -> str:
+def read_skill_description(skill_md: Path) -> tuple[str, str]:
     if not skill_md.is_file():
         raise SkillScaffoldError(f"SKILL.md not found in source: {skill_md}")
 
@@ -99,14 +99,31 @@ def read_skill_description(skill_md: Path) -> str:
 
 
 def sync_description(content: str, description: str) -> str:
-    replacement = f"description: {json.dumps(description)}"
-    return re.sub(
-        r"^description:.*$",
-        lambda _match: replacement,
-        content,
-        count=1,
-        flags=re.MULTILINE,
-    )
+    fm, error = parse_frontmatter(content)
+    if error or not fm:
+        raise SkillScaffoldError(
+            f"Cannot sync description: {error or 'missing frontmatter'}"
+        )
+
+    name = fm.get("name", "").strip()
+    if not name:
+        raise SkillScaffoldError("Wrapper is missing name in frontmatter")
+
+    updated = dict(fm)
+    updated["description"] = description
+    body = body_after_frontmatter(content)
+    yaml_block = yaml.dump(
+        updated,
+        default_flow_style=False,
+        allow_unicode=True,
+        sort_keys=False,
+    ).strip()
+    rebuilt = f"---\n{yaml_block}\n---\n"
+    if body:
+        rebuilt += "\n" + body + "\n"
+    else:
+        rebuilt += "\n"
+    return rebuilt
 
 
 def wrapper_with_description(

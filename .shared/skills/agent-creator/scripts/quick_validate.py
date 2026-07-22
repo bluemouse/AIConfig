@@ -97,6 +97,12 @@ def normalize_description(description: str) -> str:
 
 def detect_mode(agent_path: Path) -> str:
     parts = agent_path.resolve().parts
+    if agent_path.name == "AGENT.md":
+        parent = agent_path.parent
+        if parent.parent.name == "wrappers" or parent.name == "wrappers":
+            return "bootstrap_wrapper"
+        if parent.parent.name == "agents":
+            return "bootstrap_shared"
     if ".shared" in parts and "agents" in parts:
         return "shared"
     tool_markers = {".cursor", ".claude", ".github"}
@@ -106,6 +112,10 @@ def detect_mode(agent_path: Path) -> str:
 
 
 def expected_filename(name: str, mode: str, agent_path: Path) -> str | None:
+    if mode in {"bootstrap_shared", "bootstrap_wrapper"}:
+        if agent_path.name == "AGENT.md":
+            return None
+        return "AGENT.md"
     if mode == "shared":
         expected = f"{name}.md"
         if agent_path.name != expected:
@@ -120,7 +130,7 @@ def expected_filename(name: str, mode: str, agent_path: Path) -> str | None:
     return f"{name}.md"
 
 
-def validate_shared_agent(agent_path: Path) -> tuple[bool, str]:
+def validate_shared_agent(agent_path: Path, *, mode: str = "shared") -> tuple[bool, str]:
     if not agent_path.is_file():
         return False, f"Shared agent path is not a file: {agent_path}"
 
@@ -152,7 +162,7 @@ def validate_shared_agent(agent_path: Path) -> tuple[bool, str]:
     if description_error:
         return False, description_error
 
-    filename_error = expected_filename(name, "shared", agent_path)
+    filename_error = expected_filename(name, mode, agent_path)
     if filename_error:
         return False, f"Filename '{agent_path.name}' must be '{filename_error}'"
 
@@ -168,10 +178,11 @@ def validate_shared_agent(agent_path: Path) -> tuple[bool, str]:
                 "Move tool-native details into wrappers.",
             )
 
-    return True, "Shared agent is valid!"
+    label = "Bootstrap shared agent" if mode == "bootstrap_shared" else "Shared agent"
+    return True, f"{label} is valid!"
 
 
-def validate_wrapper_agent(agent_path: Path) -> tuple[bool, str]:
+def validate_wrapper_agent(agent_path: Path, *, mode: str = "wrapper") -> tuple[bool, str]:
     if not agent_path.is_file():
         return False, f"Wrapper agent path is not a file: {agent_path}"
 
@@ -194,7 +205,7 @@ def validate_wrapper_agent(agent_path: Path) -> tuple[bool, str]:
     if description_error:
         return False, description_error
 
-    filename_error = expected_filename(name, "wrapper", agent_path)
+    filename_error = expected_filename(name, mode, agent_path)
     if filename_error:
         return False, f"Filename '{agent_path.name}' should be '{filename_error}'"
 
@@ -215,15 +226,85 @@ def validate_wrapper_agent(agent_path: Path) -> tuple[bool, str]:
     if not body:
         return False, "Wrapper agent body cannot be empty"
 
-    return True, "Wrapper agent is valid!"
+    label = "Bootstrap wrapper agent" if mode == "bootstrap_wrapper" else "Wrapper agent"
+    return True, f"{label} is valid!"
 
 
 def validate_agent(agent_path: Path, mode: str | None = None) -> tuple[bool, str]:
     agent_path = Path(agent_path)
     resolved_mode = mode or detect_mode(agent_path)
-    if resolved_mode == "wrapper":
-        return validate_wrapper_agent(agent_path)
-    return validate_shared_agent(agent_path)
+    if resolved_mode in {"wrapper", "bootstrap_wrapper"}:
+        return validate_wrapper_agent(agent_path, mode=resolved_mode)
+    return validate_shared_agent(agent_path, mode=resolved_mode)
+
+
+def check_wrapper_sync(
+    wrapper_path: Path,
+    agent_name: str,
+    shared_description: str,
+) -> list[str]:
+    messages: list[str] = []
+    wrapper_frontmatter, _ = parse_frontmatter(wrapper_path.read_text(encoding="utf-8"))
+    if not wrapper_frontmatter:
+        return messages
+
+    wrapper_name = wrapper_frontmatter.get("name", "")
+    if isinstance(wrapper_name, str) and wrapper_name.strip() != agent_name:
+        messages.append(
+            f"{wrapper_path}: name '{wrapper_name.strip()}' "
+            f"does not match shared agent name '{agent_name}'"
+        )
+
+    wrapper_description = wrapper_frontmatter.get("description", "")
+    if isinstance(wrapper_description, str) and shared_description:
+        if normalize_description(wrapper_description) != shared_description:
+            messages.append(f"{wrapper_path}: description does not match shared agent description")
+
+    return messages
+
+
+def validate_bootstrap_agent(source: Path) -> tuple[bool, list[str]]:
+    source = source.resolve()
+    messages: list[str] = []
+    all_valid = True
+
+    agent_md = source / "AGENT.md"
+    valid, message = validate_shared_agent(agent_md, mode="bootstrap_shared")
+    messages.append(f"{agent_md}: {message}")
+    all_valid = all_valid and valid
+
+    agent_name = ""
+    shared_description = ""
+    if agent_md.is_file():
+        frontmatter, _ = parse_frontmatter(agent_md.read_text(encoding="utf-8"))
+        if frontmatter and isinstance(frontmatter.get("name"), str):
+            agent_name = frontmatter["name"].strip()
+        if frontmatter and isinstance(frontmatter.get("description"), str):
+            shared_description = normalize_description(frontmatter["description"])
+
+    wrappers_dir = source / "wrappers"
+    if wrappers_dir.is_dir():
+        for wrapper_path in sorted(wrappers_dir.glob("*/AGENT.md")):
+            valid, message = validate_wrapper_agent(wrapper_path, mode="bootstrap_wrapper")
+            messages.append(f"{wrapper_path}: {message}")
+            all_valid = all_valid and valid
+
+            if valid and agent_name:
+                for sync_error in check_wrapper_sync(wrapper_path, agent_name, shared_description):
+                    messages.append(sync_error)
+                    all_valid = False
+
+    if all_valid and agent_name:
+        messages.append(f"Bootstrap agent '{agent_name}' is valid.")
+    return all_valid, messages
+
+
+def expected_wrapper_tools(root: Path, agent_name: str) -> set[str] | None:
+    """Return bootstrap wrapper tools when bootstrap exists; None means require all tools."""
+    bootstrap_wrappers = root / "agents" / agent_name / "wrappers"
+    if not bootstrap_wrappers.is_dir():
+        return None
+    return {path.parent.name for path in bootstrap_wrappers.glob("*/AGENT.md")}
 
 
 def validate_portable_agent(root: Path, name: str) -> tuple[bool, list[str]]:
@@ -244,7 +325,14 @@ def validate_portable_agent(root: Path, name: str) -> tuple[bool, list[str]]:
         if shared_frontmatter and isinstance(shared_frontmatter.get("description"), str):
             shared_description = normalize_description(shared_frontmatter["description"])
 
+    bootstrap_tools = expected_wrapper_tools(root, agent_name)
+    required_tools = bootstrap_tools if bootstrap_tools is not None else set(WRAPPER_PATHS.keys())
+    validated_wrappers = 0
+
     for tool, pattern in WRAPPER_PATHS.items():
+        if tool not in required_tools:
+            continue
+
         wrapper_path = root / pattern.format(name=agent_name)
         if not wrapper_path.exists():
             all_valid = False
@@ -254,28 +342,18 @@ def validate_portable_agent(root: Path, name: str) -> tuple[bool, list[str]]:
         valid, message = validate_wrapper_agent(wrapper_path)
         messages.append(f"{wrapper_path}: {message}")
         all_valid = all_valid and valid
+        validated_wrappers += 1
 
         if valid and shared_frontmatter:
-            wrapper_frontmatter, _ = parse_frontmatter(wrapper_path.read_text(encoding="utf-8"))
-            if wrapper_frontmatter:
-                wrapper_name = wrapper_frontmatter.get("name", "")
-                if isinstance(wrapper_name, str) and wrapper_name.strip() != agent_name:
-                    all_valid = False
-                    messages.append(
-                        f"{wrapper_path}: name '{wrapper_name.strip()}' "
-                        f"does not match shared agent name '{agent_name}'"
-                    )
-
-                wrapper_description = wrapper_frontmatter.get("description", "")
-                if isinstance(wrapper_description, str) and shared_description:
-                    if normalize_description(wrapper_description) != shared_description:
-                        all_valid = False
-                        messages.append(
-                            f"{wrapper_path}: description does not match shared agent description"
-                        )
+            for sync_error in check_wrapper_sync(wrapper_path, agent_name, shared_description):
+                messages.append(sync_error)
+                all_valid = False
 
     if all_valid:
-        messages.append(f"Portable agent '{agent_name}' is valid across all four files.")
+        file_count = 1 + validated_wrappers
+        messages.append(
+            f"Portable agent '{agent_name}' is valid across {file_count} installed file(s)."
+        )
     return all_valid, messages
 
 
@@ -298,10 +376,20 @@ def main() -> int:
     )
     parser.add_argument(
         "--mode",
-        choices=("shared", "wrapper"),
+        choices=("shared", "wrapper", "bootstrap_shared", "bootstrap_wrapper"),
         help="Validation mode (auto-detected when omitted)",
     )
+    parser.add_argument(
+        "--bootstrap-source",
+        help="Path to a bootstrap agent directory (agents/<name>/) to validate AGENT.md and wrappers/",
+    )
     args = parser.parse_args()
+
+    if args.bootstrap_source:
+        valid, messages = validate_bootstrap_agent(Path(args.bootstrap_source))
+        for message in messages:
+            print(message)
+        return 0 if valid else 1
 
     if args.root and args.name:
         valid, messages = validate_portable_agent(Path(args.root), args.name)

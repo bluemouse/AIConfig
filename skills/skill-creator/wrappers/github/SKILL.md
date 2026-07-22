@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: "Create portable skills for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create a skill from scratch, scaffold `.shared/skills` with tool wrappers in `.cursor/skills`, `.claude/skills`, or `.github/skills`, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say \"portable skill\" explicitly."
+description: "Create portable skills for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create a skill from scratch, bootstrap under the skills directory and install to .shared/skills with tool wrappers, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say \"portable skill\" explicitly."
 ---
 
 # skill-creator (GitHub Copilot)

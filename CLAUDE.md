@@ -14,7 +14,7 @@ When a tool skill wrapper says to read the shared skill first, resolve paths fro
 
 **Skills:** edit bootstrap under `skills/<name>/`, then install with `install_portable_skill.py`. Do not hand-edit `.shared/skills/` or `.claude/skills/` — reinstall from bootstrap instead.
 
-**Custom agents:** edit `.shared/agents/<name>.md` directly (canonical source), then sync the Claude wrapper at `.claude/agents/<name>.md` or regenerate with `create_agent.py`.
+**Custom agents:** edit bootstrap under `agents/<name>/` when bootstrap source exists, then install with `install_portable_agent.py`. Do not hand-edit `.shared/agents/` or `.claude/agents/` for bootstrapped agents — reinstall from bootstrap instead. For agents without bootstrap source, edit `.shared/agents/<name>.md` directly or regenerate with `create_agent.py`.
 
 **Claude-only wrapper mechanics** (subagents, reload, Cowork): edit `skills/<name>/wrappers/claude/SKILL.md`, then re-install from bootstrap. Edits under `.claude/skills/<name>/` alone are overwritten on the next install — copy durable changes back to the bootstrap wrapper first.
 
