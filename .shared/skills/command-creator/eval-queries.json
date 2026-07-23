@@ -1,0 +1,122 @@
+[
+  {
+    "query": "create a slash command for reviewing staged changes",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: create portable slash command"
+  },
+  {
+    "query": "bootstrap a cursor command under commands/ and install it to all tools",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: bootstrap and install workflow"
+  },
+  {
+    "query": "write a reusable /commit-message command for cursor and claude",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: multi-tool command authoring"
+  },
+  {
+    "query": "install my command bootstrap to .github/prompts as a copilot prompt file",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: copilot prompt install path"
+  },
+  {
+    "query": "help me author COMMAND.md for a portable command with wrappers",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: bootstrap file naming and layout"
+  },
+  {
+    "query": "create a github copilot prompt file with agent mode and tools frontmatter",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: copilot prompt frontmatter"
+  },
+  {
+    "query": "scaffold commands/code-review and run install_portable_command.py",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: install script invocation"
+  },
+  {
+    "query": "what is the difference between a cursor slash command and a skill",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: command vs skill guidance"
+  },
+  {
+    "query": "validate my bootstrap command before installing to .cursor and .claude",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: quick_validate bootstrap flow"
+  },
+  {
+    "query": "add argument-hint and allowed-tools to a claude command wrapper",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: claude wrapper frontmatter"
+  },
+  {
+    "query": "turn this workflow into a /plan-review slash command for the team",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "direct: workflow capture as command"
+  },
+  {
+    "query": "create command-creator meta skill install paths for cursor claude copilot",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "direct: meta-skill scope"
+  },
+  {
+    "query": "reinstall command after editing commands/my-cmd/COMMAND.md",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "direct: bootstrap edit and reinstall"
+  },
+  {
+    "query": "write best practices for cursor commands with no frontmatter",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "direct: cursor format rules in references"
+  },
+  {
+    "query": "create a skill from scratch with evals and description optimization",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: skill creation, use skill-creator"
+  },
+  {
+    "query": "bootstrap a custom agent under agents/ with cursor wrapper only",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: agent creation, use agent-creator"
+  },
+  {
+    "query": "draft a conventional commit message for my staged changes",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: commit message drafting, use commit-message-writer"
+  },
+  {
+    "query": "resolve merge conflict and commit the result",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: git mechanics, use git-guide"
+  },
+  {
+    "query": "write a pull request description for this branch",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: PR authoring, use pull-request-guide"
+  },
+  {
+    "query": "what does the conventional commits spec say about breaking change footers",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: spec lookup, not command authoring"
+  }
+]

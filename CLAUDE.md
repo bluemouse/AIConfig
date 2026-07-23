@@ -6,7 +6,8 @@ Claude Code-specific guidance for this repository. Read [AGENTS.md](AGENTS.md) f
 
 - **Project skills:** `.claude/skills/<name>/SKILL.md` (wrapper) + `.shared/skills/<name>/` (shared content)
 - **Custom agents:** `.claude/agents/<name>.md` (wrapper) + `.shared/agents/<name>.md` (shared content)
-- **Restart or reload** the Claude Code session after installing or editing skills or agents
+- **Slash commands:** `.claude/commands/<name>.md` (installed from `commands/<name>/` bootstrap via command-creator)
+- **Restart or reload** the Claude Code session after installing or editing skills, agents, or commands
 
 When a tool skill wrapper says to read the shared skill first, resolve paths from `.shared/skills/<name>/` — not from `.claude/skills/<name>/`.
 
@@ -15,6 +16,8 @@ When a tool skill wrapper says to read the shared skill first, resolve paths fro
 **Skills:** edit bootstrap under `skills/<name>/`, then install with `install_portable_skill.py`. Do not hand-edit `.shared/skills/` or `.claude/skills/` — reinstall from bootstrap instead.
 
 **Custom agents:** edit bootstrap under `agents/<name>/` when bootstrap source exists, then install with `install_portable_agent.py`. Do not hand-edit `.shared/agents/` or `.claude/agents/` for bootstrapped agents — reinstall from bootstrap instead. For agents without bootstrap source, edit `.shared/agents/<name>.md` directly or regenerate with `create_agent.py`.
+
+**Commands:** edit bootstrap under `commands/<name>/`, then install with `install_portable_command.py`. Do not hand-edit `.shared/commands/` or `.claude/commands/` for bootstrapped commands — reinstall from bootstrap instead.
 
 **Claude-only wrapper mechanics** (subagents, reload, Cowork): edit `skills/<name>/wrappers/claude/SKILL.md`, then re-install from bootstrap. Edits under `.claude/skills/<name>/` alone are overwritten on the next install — copy durable changes back to the bootstrap wrapper first.
 

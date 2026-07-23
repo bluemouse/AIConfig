@@ -22,6 +22,16 @@ Install a bootstrap skill with `install_portable_skill.py` to generate the share
 
 Install a bootstrap agent with `install_portable_agent.py`. Re-run after edits to `agents/<name>/`.
 
+### Bootstrap commands and tool commands
+
+| Term | Location | Role |
+| --- | --- | --- |
+| **Bootstrap command** | `commands/<name>/` | Authoritative source. Edit `COMMAND.md` and optional custom tool wrapper templates in `wrappers/` here. |
+| **Shared command** | `.shared/commands/<name>.md` | Tool-neutral install output. |
+| **Tool command** | `.cursor/commands/<name>.md`, `.claude/commands/<name>.md`, `.github/prompts/<name>.prompt.md` | Format-transformed slash command or Copilot prompt per tool. |
+
+Install a bootstrap command with `install_portable_command.py`. Re-run after edits to `commands/<name>/`. Invoke as `/command-name` in each IDE.
+
 ## Repository layout
 
 ```
@@ -38,6 +48,7 @@ repo/
 ├── skills/                            # Bootstrap skills (author here, then install)
 │   ├── skill-creator/                 # Meta: creates and improves skills
 │   ├── agent-creator/                 # Meta: creates and improves agents
+│   ├── command-creator/               # Meta: creates and improves slash commands and prompts
 │   ├── agent-runner/                  # Dispatch independent workstreams to subagents concurrently
 │   ├── code-reviewer/                 # Structured multi-scope code review
 │   ├── code-professor/                # Evidence-based codebase learning and documentation guides
@@ -66,20 +77,24 @@ repo/
 │   ├── vulkan-dev/                    # Vulkan 1.3 development
 │   └── slang-dev/                     # Slang shader development (SPIR-V / MSL)
 ├── agents/                            # Optional bootstrap agents (author here, then install)
+├── commands/                          # Optional bootstrap commands (author here, then install)
 ├── skills-ref/                        # Staging skill templates (read-only input for skill-creator)
 ├── .shared/
 │   ├── agents/                        # Shared custom agents (canonical)
+│   ├── commands/                      # Shared slash commands (canonical)
 │   └── skills/
 │       └── <skill-name>/              # Shared skill (canonical content after install)
 ├── .cursor/
-│   ├── commands/                      # Optional Cursor slash commands (.md prompts)
+│   ├── commands/                      # Cursor slash commands (.md, no frontmatter)
 │   ├── rules/                         # Cursor rules (.mdc)
 │   ├── skills/<skill-name>/           # Cursor tool skill → points to .shared/skills/
 │   └── agents/                        # Cursor custom agents
 ├── .claude/
+│   ├── commands/                      # Claude Code slash commands
 │   └── skills/<skill-name>/           # Claude Code tool skill
 └── .github/
     ├── agents/                        # GitHub Copilot custom agents
+    ├── prompts/                       # GitHub Copilot prompt files (*.prompt.md)
     └── skills/<skill-name>/           # Copilot tool skill
 ```
 
@@ -91,8 +106,10 @@ repo/
 | `CLAUDE.md` | Claude Code-specific guidance; references `AGENTS.md` for shared repo rules. |
 | `skills/` | **Bootstrap skills** — edit here, then install to produce shared + tool skills. |
 | `agents/` | **Bootstrap agents** (optional) — edit `agents/<name>/`, then install to produce shared + tool agent wrappers. |
+| `commands/` | **Bootstrap commands** (optional) — edit `commands/<name>/`, then install to produce shared + tool slash commands/prompts. |
 | `skills-ref/` | **Staging templates** — read-only drafts for **skill-creator**; output lands in `skills/<name>/`. |
 | `.shared/agents/` | **Shared custom agents** — tool-neutral install output (or canonical when no bootstrap exists). |
+| `.shared/commands/` | **Shared commands** — tool-neutral slash prompt install output. |
 | `.shared/skills/` | **Shared skills** — tool-neutral packages with full content (`scripts/`, `references/`, `assets/`). |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | **Tool skills** — one wrapper per tool (`SKILL.md` only) that directs the agent to the shared skill. |
 | `coding-behavior-guidelines.md` | Project-wide behavioral guidelines for coding agents (think first, simplicity, surgical changes). |
@@ -106,6 +123,7 @@ Bootstrap skills live under `skills/`. Installing one copies content to `.shared
 | --- | --- | --- |
 | `skill-creator` | `skills/skill-creator/` | Create, validate, package, and improve portable skills |
 | `agent-creator` | `skills/agent-creator/` | Create, validate, and improve portable custom agents |
+| `command-creator` | `skills/command-creator/` | Create, validate, and improve portable slash commands and Copilot prompts |
 | `agent-runner` | `skills/agent-runner/` | Dispatch independent workstreams to isolated subagents concurrently |
 | `code-reviewer` | `skills/code-reviewer/` | Structured multi-scope code review |
 | `code-professor` | `skills/code-professor/` | Evidence-based guides for learning, tracing, and documenting existing codebases |
@@ -186,6 +204,18 @@ Creates, validates, and iteratively improves portable custom **agents** (`.share
 | `.cursor/skills/agent-creator/` | Cursor tool skill |
 | `.claude/skills/agent-creator/` | Claude Code tool skill |
 | `.github/skills/agent-creator/` | GitHub Copilot tool skill |
+
+### command-creator
+
+Creates, validates, and iteratively improves portable **slash commands and Copilot prompts** (`commands/<name>/` → `.shared/commands/` + tool outputs).
+
+| Location | Role |
+| --- | --- |
+| `skills/command-creator/` | Bootstrap skill (edit scripts and `SKILL.md` here) |
+| `.shared/skills/command-creator/` | Shared skill |
+| `.cursor/skills/command-creator/` | Cursor tool skill |
+| `.claude/skills/command-creator/` | Claude Code tool skill |
+| `.github/skills/command-creator/` | GitHub Copilot tool skill |
 
 After editing a bootstrap skill, re-install to propagate changes to the shared skill and tool skills (see below).
 
@@ -406,6 +436,7 @@ When adding assets to this repo or another project, use these locations:
 ### Shared (all tools)
 
 - `.shared/agents/<agent-name>.md` — shared custom agent (canonical)
+- `.shared/commands/<command-name>.md` — shared slash command (canonical)
 - `.shared/skills/<skill-name>/` — shared skill (full content)
 
 ### Cursor
@@ -420,7 +451,10 @@ Run commands as `/command-name` (filename without extension). Reload Cursor afte
 ### Claude Code
 
 - `.claude/skills/<skill-name>/` — Claude Code tool skill (wrapper or full standalone skill)
+- `.claude/commands/` — slash commands (YAML frontmatter + body)
 - `.claude/agents/` — custom agent definitions (if used)
+
+Restart or reload Claude Code after adding or changing skills, commands, or agents.
 
 ### VS Code + GitHub Copilot
 

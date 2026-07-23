@@ -4,7 +4,7 @@ Guidance for coding agents working in this repository. Tool-specific notes live 
 
 ## What this repo is
 
-A **portable, shared-first layout** for AI-assisted development configuration shared across Cursor, GitHub Copilot, and Claude Code. It contains no application code — only **skills**, **agents**, and the tooling that installs them into each tool's config format. Everything here is Markdown (SKILL.md / agent .md files with YAML frontmatter) plus small Python scripts that copy/validate that content.
+A **portable, shared-first layout** for AI-assisted development configuration shared across Cursor, GitHub Copilot, and Claude Code. It contains no application code — only **skills**, **agents**, **commands** (slash prompts), and the tooling that installs them into each tool's config format. Everything here is Markdown (SKILL.md / agent .md / command files with YAML frontmatter where supported) plus small Python scripts that copy/validate that content.
 
 ## Core architecture
 
@@ -30,12 +30,23 @@ Agents that ship bootstrap source use the same three-layer pattern as skills. Ot
 
 Not every agent requires all three tool wrappers. For a partial set (e.g. Cursor only), bootstrap under `agents/<name>/wrappers/` with only the tools you need, install, then validate each installed path individually.
 
-| | Skills | Custom agents (bootstrap) | Custom agents (direct) |
-| --- | --- | --- | --- |
-| Authoritative source | `skills/<name>/` | `agents/<name>/` | `.shared/agents/<name>.md` |
-| Install / scaffold | `install_portable_skill.py` | `install_portable_agent.py` | `create_agent.py` |
-| Distribute to another project | `tools/install-skills.py` (copies installed shared + wrappers) | same | same |
-| Hand-edit shared layer? | No (regenerated from bootstrap) | No (regenerated from bootstrap) | Yes (canonical) |
+### Commands: bootstrap → shared → tool
+
+1. **Bootstrap** (`commands/<name>/`, source-of-truth) — author `COMMAND.md` and optional custom tool wrapper templates in `wrappers/{cursor,claude,github}/COMMAND.md`.
+2. **Shared** (`.shared/commands/<name>.md`, generated) — tool-neutral install output produced by `install_portable_command.py`.
+3. **Tool** — format-transformed install outputs: `.cursor/commands/<name>.md` (plain Markdown), `.claude/commands/<name>.md` (frontmatter + body), `.github/prompts/<name>.prompt.md` (Copilot prompt).
+
+**Never hand-edit `.shared/commands/` or tool command paths for bootstrapped commands.** Edit `commands/<name>/` and re-run `install_portable_command.py`.
+
+Install always writes all three tool paths plus the shared file (skill-like). Commands are **explicitly invoked** with `/command-name`, unlike skills and agents which load from description.
+
+| | Skills | Custom agents (bootstrap) | Custom agents (direct) | Commands |
+| --- | --- | --- | --- | --- |
+| Authoritative source | `skills/<name>/` | `agents/<name>/` | `.shared/agents/<name>.md` | `commands/<name>/` |
+| Install / scaffold | `install_portable_skill.py` | `install_portable_agent.py` | `create_agent.py` | `install_portable_command.py` |
+| Direct scaffold | `create_skill.py` | — | `create_agent.py` | `create_command.py` |
+| Distribute to another project | `tools/install-skills.py` (copies installed shared + wrappers) | same | same | not yet (follow-up) |
+| Hand-edit shared layer? | No (regenerated from bootstrap) | No (regenerated from bootstrap) | Yes (canonical) | No (regenerated from bootstrap) |
 
 Skills are discovered by frontmatter (`name`, `description`); an agent reads the `description` to decide when to load the full `SKILL.md` body. Description wording is load-bearing — `skill-creator`'s eval tooling (`run_eval.py`) tests whether a description reliably triggers on target phrases.
 
@@ -50,7 +61,8 @@ Some skills cross-link as companions — install and edit them together when tas
 - **Python:** `python-coding` (CLI scripts and utilities; standalone — no required companions in this repo)
 - **Kotlin/JVM:** `kotlin-coding`, `kotlin-testing`, `gradle-dev` (with `gradle-android-dev` for Android Gradle Plugin builds)
 - **Android:** `android-dev`, `android-ndk-dev`, `android-vulkan-dev` (with `kotlin-coding`, `kotlin-testing`, `gradle-android-dev` for language/tests/build; `vulkan-dev` and `gpu-rendering-guide` for generic Vulkan API and renderer architecture)
-- **Git workflow:** `commit-message-writer`, `git-guide`, `pull-request-guide`, `code-reviewer`, `github-guide` (craft: commit messages → git mechanics → PR authoring → diff review; delivery on GitHub: `gh pr create`, post review, resolve threads)
+- **Git workflow:** `commit-message-writer`, `git-guide`, `pull-request-guide`, `code-reviewer`, `github-guide` (craft: commit messages → git mechanics → PR authoring → diff review; delivery on GitHub: `gh pr create`, post review, resolve threads; explicit `/` shortcuts: use **command-creator** for portable slash commands)
+- **Meta authoring:** `skill-creator`, `agent-creator`, `command-creator` (bootstrap → install for skills, agents, and slash commands/prompts respectively)
 - **Codebase learning:** `code-professor`, `plan-guide`, `debugging-guide`, `code-reviewer` (evidence-backed onboarding and architecture guides → plan changes → verified fixes → diff review; defers product research to `research-guide`)
 - **Meeting notes:** `minutes-writer` (with `pull-request-guide` and `commit-message-writer` for adjacent authoring tasks; does not create tickets or publish docs unless asked)
 - **Research workflow:** `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor` (interactive discovery and research report → readiness audit → TDD-first implementation plan with Tests Designer → plan audit → execution; defers correctness audit to `implementation-auditor` and diff review to `code-reviewer`)
@@ -114,7 +126,28 @@ python skills/agent-creator/scripts/quick_validate.py .shared/agents/<name>.md
 python skills/agent-creator/scripts/quick_validate.py .cursor/agents/<name>.md
 ```
 
-**Bootstrap and install skills or agents:** use the **skill-creator** and **agent-creator** installed skills. For skills, author under `skills/<name>/` (often from `skills-ref/<name>/` templates), validate, then run `install_portable_skill.py`. For agents, author under `agents/<name>/` or use `create_agent.py` for a direct scaffold, validate, then run `install_portable_agent.py` when using bootstrap source. See [README.md](README.md) for examples.
+**Install/refresh a bootstrap command → shared + tool outputs:**
+
+```bash
+python skills/command-creator/scripts/install_portable_command.py \
+  --root . --name <command-name> --source commands/<command-name> --overwrite
+```
+
+Validate bootstrap before install:
+
+```bash
+python skills/command-creator/scripts/quick_validate.py --bootstrap-source commands/<command-name>
+```
+
+**Create a portable command (direct scaffold):**
+
+```bash
+python skills/command-creator/scripts/create_command.py --root . --name my-command \
+  --description "..." --body-file <path> --overwrite
+python skills/command-creator/scripts/quick_validate.py --root . --name my-command
+```
+
+**Bootstrap and install skills, agents, or commands:** use the **skill-creator**, **agent-creator**, and **command-creator** installed skills. For skills, author under `skills/<name>/` (often from `skills-ref/<name>/` templates), validate, then run `install_portable_skill.py`. For agents, author under `agents/<name>/` or use `create_agent.py` for a direct scaffold, validate, then run `install_portable_agent.py` when using bootstrap source. For commands, author under `commands/<name>/`, validate, then run `install_portable_command.py`. See [README.md](README.md) for examples.
 
 **Package a shared skill for distribution:**
 
@@ -143,14 +176,14 @@ cd skills/skill-creator && python -m scripts.run_eval \
   --eval-set ../../skills/<name>/eval-queries.json
 ```
 
-Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer`, `commit-message-writer`, `code-reviewer`, `github-guide`, `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor`, `implementation-auditor`, `test-driven-dev-guide`, `debugging-guide`, `cpp-coding`, `cpp-performance-guide`, and `agent-runner` ship `eval-queries.json` for description trigger testing. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
+Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer`, `commit-message-writer`, `code-reviewer`, `github-guide`, `command-creator`, `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor`, `implementation-auditor`, `test-driven-dev-guide`, `debugging-guide`, `cpp-coding`, `cpp-performance-guide`, and `agent-runner` ship `eval-queries.json` for description trigger testing. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
 
 See [README.md](README.md) for install examples and meta-skill usage.
 
 ## Editing conventions
 
 - Bootstrap `SKILL.md` bodies must stay **tool-neutral** — no Cursor/Claude/Copilot-specific mechanics in the shared body. Tool-specific mechanics belong in that tool's wrapper under `skills/<name>/wrappers/` or the generated tool skill folder.
-- Resolve `<SKILL_ROOT>` / `<SKILL_CREATOR_ROOT>` / `<AGENT_CREATOR_ROOT>` as "the directory containing this skill's SKILL.md" — used throughout skill/agent bodies to reference bundled `references/`, `scripts/`, `assets/` without hardcoding paths.
+- Resolve `<SKILL_ROOT>` / `<SKILL_CREATOR_ROOT>` / `<AGENT_CREATOR_ROOT>` / `<COMMAND_CREATOR_ROOT>` as "the directory containing this skill's SKILL.md" — used throughout skill/agent/command-creator bodies to reference bundled `references/`, `scripts/`, `assets/` without hardcoding paths.
 - Cross-link sibling skills with relative paths from the shared layer (e.g. `../cpp-testing/SKILL.md`), since links only need to resolve after install.
 - `.cursor/rules/` (`.mdc` files, frontmatter controls `globs`/`alwaysApply`) is for small always-on or path-scoped rules — keep them composable, not full skills.
 - Follow [coding-behavior-guidelines.md](coding-behavior-guidelines.md) when generating or editing any code in this repo or in skill/agent output.
