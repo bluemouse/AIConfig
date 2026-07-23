@@ -260,7 +260,10 @@ def validate_github_prompt(command_path: Path, *, mode: str = "github") -> tuple
     if not command_path.is_file():
         return False, f"GitHub prompt path is not a file: {command_path}"
 
-    if not command_path.name.endswith(".prompt.md"):
+    if mode == "bootstrap_wrapper" and command_path.name != "COMMAND.md":
+        return False, "Bootstrap GitHub wrapper must be named COMMAND.md"
+
+    if mode != "bootstrap_wrapper" and not command_path.name.endswith(".prompt.md"):
         return False, "GitHub prompt filename must end with '.prompt.md'"
 
     content = command_path.read_text(encoding="utf-8")
@@ -288,9 +291,6 @@ def validate_github_prompt(command_path: Path, *, mode: str = "github") -> tuple
     description_error = validate_description(frontmatter.get("description", ""), strict=False)
     if description_error:
         return False, description_error
-
-    if mode == "bootstrap_wrapper" and command_path.name != "COMMAND.md":
-        return False, "Bootstrap GitHub wrapper must be named COMMAND.md"
 
     if mode == "github" and "name" in frontmatter:
         expected = f"{frontmatter['name'].strip()}.prompt.md"

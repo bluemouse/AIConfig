@@ -268,6 +268,22 @@ class BootstrapValidationTests(unittest.TestCase):
             exit_code = quick_validate_main([str(source)])
             self.assertEqual(exit_code, 0)
 
+    def test_validate_bootstrap_with_github_wrapper(self) -> None:
+        github_wrapper = """---
+name: test-command
+description: Test GitHub wrapper for bootstrap validation.
+argument-hint: [optional context]
+agent: agent
+---
+
+Copilot-only appendix.
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "commands" / COMMAND_NAME
+            write_bootstrap(source, github_wrapper=github_wrapper)
+            valid, messages = validate_bootstrap_command(source)
+            self.assertTrue(valid, messages)
+
 
 class CreateCommandTests(unittest.TestCase):
     def test_create_command_installs_all_paths(self) -> None:
