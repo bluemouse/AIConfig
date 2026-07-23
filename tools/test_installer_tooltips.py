@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for description loading used by install-skills GUI tooltips."""
+"""Tests for description loading used by installer GUI tooltips."""
 
 from __future__ import annotations
 
@@ -10,21 +10,21 @@ import unittest
 from pathlib import Path
 
 TOOLS_DIR = Path(__file__).resolve().parent
-INSTALL_SKILLS_PATH = TOOLS_DIR / "install-skills.py"
+INSTALLER_PATH = TOOLS_DIR / "installer.py"
 REPO_ROOT = TOOLS_DIR.parent
 
 
-def load_install_skills_module():
-    spec = importlib.util.spec_from_file_location("install_skills_tooltips", INSTALL_SKILLS_PATH)
+def load_installer_module():
+    spec = importlib.util.spec_from_file_location("installer_tooltips", INSTALLER_PATH)
     if spec is None or spec.loader is None:
-        raise RuntimeError(f"Could not load module from {INSTALL_SKILLS_PATH}")
+        raise RuntimeError(f"Could not load module from {INSTALLER_PATH}")
     module = importlib.util.module_from_spec(spec)
-    sys.modules["install_skills_tooltips"] = module
+    sys.modules["installer_tooltips"] = module
     spec.loader.exec_module(module)
     return module
 
 
-mod = load_install_skills_module()
+mod = load_installer_module()
 
 
 def write_markdown(path: Path, *, description: str | None, body: str = "# Title\n") -> None:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for bundle loading and CLI skill resolution in install-skills.py."""
+"""Tests for bundle loading and CLI skill resolution in installer.py."""
 
 from __future__ import annotations
 
@@ -11,21 +11,21 @@ import unittest
 from pathlib import Path
 
 TOOLS_DIR = Path(__file__).resolve().parent
-INSTALL_SKILLS_PATH = TOOLS_DIR / "install-skills.py"
+INSTALLER_PATH = TOOLS_DIR / "installer.py"
 BUNDLES_JSON_PATH = TOOLS_DIR / "bundles.json"
 
 
-def load_install_skills_module():
-    spec = importlib.util.spec_from_file_location("install_skills", INSTALL_SKILLS_PATH)
+def load_installer_module():
+    spec = importlib.util.spec_from_file_location("installer", INSTALLER_PATH)
     if spec is None or spec.loader is None:
-        raise RuntimeError(f"Could not load module from {INSTALL_SKILLS_PATH}")
+        raise RuntimeError(f"Could not load module from {INSTALLER_PATH}")
     module = importlib.util.module_from_spec(spec)
-    sys.modules["install_skills"] = module
+    sys.modules["installer"] = module
     spec.loader.exec_module(module)
     return module
 
 
-mod = load_install_skills_module()
+mod = load_installer_module()
 
 
 def write_bundle_config(data: dict) -> Path:
@@ -92,7 +92,7 @@ class BundleLoadingTests(unittest.TestCase):
         }
         path = write_bundle_config(config)
         try:
-            with self.assertRaises(mod.InstallSkillsError) as ctx:
+            with self.assertRaises(mod.InstallerError) as ctx:
                 mod.load_skill_bundles(path)
             self.assertIn("unknown base", str(ctx.exception))
         finally:
@@ -115,7 +115,7 @@ class BundleLoadingTests(unittest.TestCase):
         }
         path = write_bundle_config(config)
         try:
-            with self.assertRaises(mod.InstallSkillsError) as ctx:
+            with self.assertRaises(mod.InstallerError) as ctx:
                 mod.load_skill_bundles(path)
             self.assertIn("duplicate base id", str(ctx.exception))
         finally:
@@ -169,7 +169,7 @@ class CliSkillResolutionTests(unittest.TestCase):
         self.assertEqual(len(resolved), 12)
 
     def test_unknown_bundle_id(self) -> None:
-        with self.assertRaises(mod.InstallSkillsError) as ctx:
+        with self.assertRaises(mod.InstallerError) as ctx:
             mod.resolve_cli_skills(bundle_ids=["nope"], skill_names=None)
         message = str(ctx.exception)
         self.assertIn("Unknown bundle", message)
@@ -232,7 +232,7 @@ class TargetBundleTests(unittest.TestCase):
             self.assertEqual(resolved, ["research-guide"])
 
     def test_resolve_bundle_skills_target_bundle_requires_target(self) -> None:
-        with self.assertRaises(mod.InstallSkillsError) as ctx:
+        with self.assertRaises(mod.InstallerError) as ctx:
             mod.resolve_bundle_skills([mod.TARGET_BUNDLE_ID], target_root=None)
         self.assertIn("requires a target project path", str(ctx.exception))
 
@@ -243,7 +243,7 @@ class TargetBundleTests(unittest.TestCase):
 
     def test_resolve_cli_skills_target_bundle_empty_target(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaises(mod.InstallSkillsError) as ctx:
+            with self.assertRaises(mod.InstallerError) as ctx:
                 mod.resolve_cli_skills(
                     bundle_ids=["target-bundle"],
                     skill_names=None,

@@ -45,7 +45,7 @@ Install always writes all three tool paths plus the shared file (skill-like). Co
 | Authoritative source | `skills/<name>/` | `agents/<name>/` | `.shared/agents/<name>.md` | `commands/<name>/` |
 | Install / scaffold | `install_portable_skill.py` | `install_portable_agent.py` | `create_agent.py` | `install_portable_command.py` |
 | Direct scaffold | `create_skill.py` | — | `create_agent.py` | `create_command.py` |
-| Distribute to another project | `tools/install-skills.py` (copies installed shared + wrappers) | same | same | not yet (follow-up) |
+| Distribute to another project | `tools/installer.py` (copies installed shared + wrappers) | same | same | same |
 | Hand-edit shared layer? | No (regenerated from bootstrap) | No (regenerated from bootstrap) | Yes (canonical) | No (regenerated from bootstrap) |
 
 Skills are discovered by frontmatter (`name`, `description`); an agent reads the `description` to decide when to load the full `SKILL.md` body. Description wording is load-bearing — `skill-creator`'s eval tooling (`run_eval.py`) tests whether a description reliably triggers on target phrases.
@@ -155,18 +155,20 @@ python skills/command-creator/scripts/quick_validate.py --root . --name my-comma
 python skills/skill-creator/scripts/package_skill.py .shared/skills/my-skill
 ```
 
-**Copy installed skills and agents to another project** (from this repo root; copies `.shared/` plus tool wrappers — not bootstrap sources):
+**Copy installed skills, agents, and commands to another project** (from this repo root; copies `.shared/` plus tool wrappers — not bootstrap sources):
 
 ```bash
-python tools/install-skills.py /path/to/other-project
-python tools/install-skills.py /path/to/other-project --skills cpp-coding vulkan-dev --override
-python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow
-python tools/install-skills.py /path/to/other-project --bundles target-bundle
-python tools/install-skills.py /path/to/other-project --agents my-agent --uninstall
-python tools/install-skills.py   # GUI when no arguments
+python tools/installer.py /path/to/other-project
+python tools/installer.py /path/to/other-project --skills cpp-coding vulkan-dev --override
+python tools/installer.py /path/to/other-project --commands git-commit --override
+python tools/installer.py /path/to/other-project --bundles core-dev-workflow
+python tools/installer.py /path/to/other-project --bundles target-bundle
+python tools/installer.py /path/to/other-project --agents my-agent --uninstall
+python tools/installer.py /path/to/other-project --commands git-commit --uninstall
+python tools/installer.py   # GUI when no arguments
 ```
 
-Omit `--skills` and `--agents` to install or uninstall all names discovered under `.cursor/`, `.claude/`, and `.github/`. Use `--bundles` to install workflow skill sets from [tools/bundles.json](tools/bundles.json) or the dynamic `target-bundle` (skills already installed in the target project; documented in [tools/bundles.md](tools/bundles.md)). Without `--override`, existing target paths are skipped. See [README.md](README.md#install-skills-and-agents-to-another-project) for full flag reference.
+Omit `--skills`, `--agents`, and `--commands` to install or uninstall all names discovered under `.cursor/`, `.claude/`, and `.github/`. Use `--bundles` to install workflow skill sets from [tools/bundles.json](tools/bundles.json) or the dynamic `target-bundle` (skills already installed in the target project; documented in [tools/bundles.md](tools/bundles.md)). Without `--override`, existing target paths are skipped. See [README.md](README.md#distribute-to-another-project) for full flag reference.
 
 **Trigger-eval a skill description:**
 

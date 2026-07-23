@@ -27,12 +27,12 @@ The extended dev workflow bundle references the `core-dev-workflow` base and lis
 
 ### CLI usage
 
-`tools/install-skills.py` resolves bundle ids the same way as the GUI:
+`tools/installer.py` resolves bundle ids the same way as the GUI:
 
 ```bash
-python tools/install-skills.py /path/to/project --bundles core-dev-workflow
-python tools/install-skills.py /path/to/project --bundles extended-dev-workflow --override
-python tools/install-skills.py /path/to/project --bundles core-dev-workflow --skills cpp-coding
+python tools/installer.py /path/to/project --bundles core-dev-workflow
+python tools/installer.py /path/to/project --bundles extended-dev-workflow --override
+python tools/installer.py /path/to/project --bundles core-dev-workflow --skills cpp-coding
 ```
 
 - `--bundles <id>` selects skills from the resolved bundle membership for install or uninstall.
@@ -52,7 +52,7 @@ Membership is the intersection of:
 2. Skills available in this AIConfig repository catalog
 
 ```bash
-python tools/install-skills.py /path/to/project --bundles target-bundle
+python tools/installer.py /path/to/project --bundles target-bundle
 ```
 
 ## Core dev workflow bundle

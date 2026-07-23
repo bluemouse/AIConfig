@@ -40,11 +40,12 @@ repo/
 ├── CLAUDE.md                          # Claude Code-specific guidance
 ├── coding-behavior-guidelines.md      # LLM coding behavioral guidelines
 ├── tools/
-│   ├── install-skills.py              # Copy installed skills/agents to another project
+│   ├── installer.py                   # Copy installed skills/agents/commands to another project
 │   ├── bundles.json                   # Machine-readable workflow bundle definitions
 │   ├── bundles.md                     # Human-readable bundle documentation
-│   ├── test_install_skills_bundles.py
-│   └── test_install_skills_tooltips.py
+│   ├── test_installer_bundles.py
+│   ├── test_installer_commands.py
+│   └── test_installer_tooltips.py
 ├── skills/                            # Bootstrap skills (author here, then install)
 │   ├── skill-creator/                 # Meta: creates and improves skills
 │   ├── agent-creator/                 # Meta: creates and improves agents
@@ -113,7 +114,7 @@ repo/
 | `.shared/skills/` | **Shared skills** — tool-neutral packages with full content (`scripts/`, `references/`, `assets/`). |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | **Tool skills** — one wrapper per tool (`SKILL.md` only) that directs the agent to the shared skill. |
 | `coding-behavior-guidelines.md` | Project-wide behavioral guidelines for coding agents (think first, simplicity, surgical changes). |
-| `tools/install-skills.py` | Copy installed portable skills and agents from this repo into another project (CLI or GUI). |
+| `tools/installer.py` | Copy installed portable skills, agents, and commands from this repo into another project (CLI or GUI). |
 
 ## Bootstrap skills
 
@@ -465,30 +466,32 @@ Restart or reload Claude Code after adding or changing skills, commands, or agen
 
 Reload VS Code after changes so Copilot picks up new files.
 
-## Install skills and agents to another project
+## Distribute to another project
 
-Use **`tools/install-skills.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.shared/skills/<name>/`, `.shared/agents/<name>.md`, and any tool wrappers that exist under `.cursor/`, `.claude/`, and `.github/`. It does **not** install bootstrap sources from `skills/<name>/` — run `install_portable_skill.py` here first, then distribute.
+Use **`tools/installer.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.shared/skills/<name>/`, `.shared/agents/<name>.md`, `.shared/commands/<name>.md`, and any tool wrappers that exist under `.cursor/`, `.claude/`, and `.github/`. It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
 
 **CLI** (from this repository root):
 
 ```bash
-# Install all discovered skills and agents
-python tools/install-skills.py /path/to/other-project
+# Install all discovered skills, agents, and commands
+python tools/installer.py /path/to/other-project
 
-# Install selected skills or agents
-python tools/install-skills.py /path/to/other-project --skills cpp-coding vulkan-dev
-python tools/install-skills.py /path/to/other-project --agents my-agent
+# Install selected skills, agents, or commands
+python tools/installer.py /path/to/other-project --skills cpp-coding vulkan-dev
+python tools/installer.py /path/to/other-project --agents my-agent
+python tools/installer.py /path/to/other-project --commands git-commit
 
 # Install workflow bundles (see tools/bundles.md and tools/bundles.json)
-python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow
-python tools/install-skills.py /path/to/other-project --bundles extended-dev-workflow --override
+python tools/installer.py /path/to/other-project --bundles core-dev-workflow
+python tools/installer.py /path/to/other-project --bundles extended-dev-workflow --override
 
 # Replace existing installs in the target
-python tools/install-skills.py /path/to/other-project --skills cpp-coding --override
+python tools/installer.py /path/to/other-project --skills cpp-coding --override
 
 # Remove from the target
-python tools/install-skills.py /path/to/other-project --skills cpp-coding --uninstall
-python tools/install-skills.py /path/to/other-project --agents my-agent --uninstall
+python tools/installer.py /path/to/other-project --skills cpp-coding --uninstall
+python tools/installer.py /path/to/other-project --agents my-agent --uninstall
+python tools/installer.py /path/to/other-project --commands git-commit --uninstall
 ```
 
 | Flag | Behavior |
@@ -497,16 +500,17 @@ python tools/install-skills.py /path/to/other-project --agents my-agent --uninst
 | `--bundles ID ...` | Bundle ids from [tools/bundles.json](tools/bundles.json) or `target-bundle`; resolves to skills only (see [tools/bundles.md](tools/bundles.md)) |
 | `--skills NAME ...` | Skill slugs to install or uninstall (default: all discovered unless `--bundles` is set) |
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
+| `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered) |
 | `--override` | Replace existing paths in the target; without it, skip and report |
-| `--uninstall` | Remove the selected skills and agents from the target |
-| *(no arguments)* | Open a tkinter GUI with skill/agent checkboxes and a **Bundles** panel for workflow batch selection |
+| `--uninstall` | Remove the selected skills, agents, and commands from the target |
+| *(no arguments)* | Open a tkinter GUI with skill/agent/command checkboxes and a **Bundles** panel for workflow batch selection |
 
 Without `--override`, existing paths in the target are skipped. The script refuses to install into this AIConfig repo itself. Reload each tool in the target project after install. Bundle definitions live in [tools/bundles.md](tools/bundles.md) (human-readable) and [tools/bundles.json](tools/bundles.json) (machine-readable).
 
 **GUI:**
 
 ```bash
-python tools/install-skills.py
+python tools/installer.py
 ```
 
 - Checkboxes start **unchecked**
@@ -528,10 +532,10 @@ Skills are folders with a `SKILL.md` (YAML frontmatter: `name`, `description`) p
 python skills/skill-creator/scripts/package_skill.py .shared/skills/my-skill
 ```
 
-**Copy installed skills and agents to another project** (shared + tool wrappers; see [Install skills and agents to another project](#install-skills-and-agents-to-another-project)):
+**Copy installed skills, agents, and commands to another project** (shared + tool wrappers; see [Distribute to another project](#distribute-to-another-project)):
 
 ```bash
-python tools/install-skills.py /path/to/other-project
+python tools/installer.py /path/to/other-project
 ```
 
 ## Meta-skills: skill-creator and agent-creator

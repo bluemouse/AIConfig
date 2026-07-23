@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """
-Install or uninstall portable skills and agents from this repo into another project.
+Install or uninstall portable skills, agents, and commands from this repo into another project.
 
 Copies the shared-first layout (.shared/ plus tool wrappers under .cursor/, .claude/,
 .github/) from AIConfig into a target project root.
 
 Examples:
-    python tools/install-skills.py /path/to/other-project
-    python tools/install-skills.py /path/to/other-project --skills cpp-coding vulkan-dev
-    python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow
-    python tools/install-skills.py /path/to/other-project --bundles extended-dev-workflow --override
-    python tools/install-skills.py /path/to/other-project --bundles core-dev-workflow --skills cpp-coding
-    python tools/install-skills.py /path/to/other-project --bundles target-bundle
-    python tools/install-skills.py /path/to/other-project --agents my-agent --uninstall
-    python tools/install-skills.py   # GUI when no arguments
+    python tools/installer.py /path/to/other-project
+    python tools/installer.py /path/to/other-project --skills cpp-coding vulkan-dev
+    python tools/installer.py /path/to/other-project --commands git-commit
+    python tools/installer.py /path/to/other-project --bundles core-dev-workflow
+    python tools/installer.py /path/to/other-project --bundles extended-dev-workflow --override
+    python tools/installer.py /path/to/other-project --bundles core-dev-workflow --skills cpp-coding
+    python tools/installer.py /path/to/other-project --bundles target-bundle
+    python tools/installer.py /path/to/other-project --agents my-agent --uninstall
+    python tools/installer.py /path/to/other-project --commands git-commit --uninstall
+    python tools/installer.py   # GUI when no arguments
 """
 
 from __future__ import annotations
@@ -36,6 +38,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 SHARED_SKILL_DIR = ".shared/skills/{name}"
 SHARED_AGENT_FILE = ".shared/agents/{name}.md"
+SHARED_COMMAND_FILE = ".shared/commands/{name}.md"
 
 TOOL_SKILL_DIRS = {
     "cursor": ".cursor/skills/{name}",
@@ -47,6 +50,12 @@ TOOL_AGENT_FILES = {
     "cursor": ".cursor/agents/{name}.md",
     "claude": ".claude/agents/{name}.md",
     "github": ".github/agents/{name}.agent.md",
+}
+
+TOOL_COMMAND_FILES = {
+    "cursor": ".cursor/commands/{name}.md",
+    "claude": ".claude/commands/{name}.md",
+    "github": ".github/prompts/{name}.prompt.md",
 }
 
 TOOL_SKILL_SCAN_REL_DIRS = (
@@ -61,11 +70,17 @@ TOOL_AGENT_SCAN_REL_DIRS = (
     (".github/agents", ".agent.md"),
 )
 
+TOOL_COMMAND_SCAN_REL_DIRS = (
+    (".cursor/commands", ".md"),
+    (".claude/commands", ".md"),
+    (".github/prompts", ".prompt.md"),
+)
+
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 RELOAD_REMINDER = (
     "Reload Cursor, VS Code (Copilot), and Claude Code so each tool "
-    "rediscovers the installed skills and agents."
+    "rediscovers the installed skills, agents, and commands."
 )
 
 BUNDLES_JSON = Path(__file__).resolve().parent / "bundles.json"
@@ -80,7 +95,7 @@ TARGET_BUNDLE_DESCRIPTION = (
 BundleSelectionState = Literal["all", "none", "partial"]
 
 
-class InstallSkillsError(Exception):
+class InstallerError(Exception):
     """Raised for user-correctable errors."""
 
 
@@ -160,55 +175,55 @@ class OperationResult:
 
 
 def slugify_name(value: str) -> str:
-    """Normalize and validate a skill or agent slug."""
+    """Normalize and validate a skill, agent, or command slug."""
     normalized = value.strip().lower()
     normalized = re.sub(r"[^a-z0-9]+", "-", normalized)
     normalized = re.sub(r"-+", "-", normalized).strip("-")
     if not normalized:
-        raise InstallSkillsError("Name cannot be empty after normalization.")
+        raise InstallerError("Name cannot be empty after normalization.")
     if len(normalized) > 64:
-        raise InstallSkillsError("Name must be 64 characters or fewer.")
+        raise InstallerError("Name must be 64 characters or fewer.")
     if not SLUG_PATTERN.fullmatch(normalized):
-        raise InstallSkillsError(f"Invalid name: {value!r}")
+        raise InstallerError(f"Invalid name: {value!r}")
     return normalized
 
 
 def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[SkillBundle]:
     """Load workflow skill bundles from bundles.json."""
     if not path.is_file():
-        raise InstallSkillsError(f"Bundle config not found: {path}")
+        raise InstallerError(f"Bundle config not found: {path}")
 
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise InstallSkillsError(f"Invalid bundle config {path}: {exc}") from exc
+        raise InstallerError(f"Invalid bundle config {path}: {exc}") from exc
 
     if not isinstance(payload, dict):
-        raise InstallSkillsError(f"Invalid bundle config {path}: root must be an object.")
+        raise InstallerError(f"Invalid bundle config {path}: root must be an object.")
 
     base_skills = _load_bundle_base_registry(path, payload.get("bases"))
 
     raw_bundles = payload.get("bundles")
     if not isinstance(raw_bundles, list) or not raw_bundles:
-        raise InstallSkillsError(f"Invalid bundle config {path}: 'bundles' must be a non-empty list.")
+        raise InstallerError(f"Invalid bundle config {path}: 'bundles' must be a non-empty list.")
 
     bundles: list[SkillBundle] = []
     seen_ids: set[str] = set()
     for index, entry in enumerate(raw_bundles):
         if not isinstance(entry, dict):
-            raise InstallSkillsError(
+            raise InstallerError(
                 f"Invalid bundle config {path}: bundles[{index}] must be an object."
             )
 
         missing = [key for key in ("id", "name", "description") if key not in entry]
         if missing:
-            raise InstallSkillsError(
+            raise InstallerError(
                 f"Invalid bundle config {path}: bundles[{index}] missing keys: {', '.join(missing)}"
             )
 
         bundle_id = slugify_name(str(entry["id"]))
         if bundle_id in seen_ids:
-            raise InstallSkillsError(f"Invalid bundle config {path}: duplicate bundle id {bundle_id!r}.")
+            raise InstallerError(f"Invalid bundle config {path}: duplicate bundle id {bundle_id!r}.")
         seen_ids.add(bundle_id)
 
         resolved_skills = set()
@@ -216,13 +231,13 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[SkillBundle]:
         if raw_bundle_bases is None:
             raw_bundle_bases = []
         if not isinstance(raw_bundle_bases, list):
-            raise InstallSkillsError(
+            raise InstallerError(
                 f"Invalid bundle config {path}: bundles[{index}] bases must be a list."
             )
         for base_id in raw_bundle_bases:
             base_key = slugify_name(str(base_id))
             if base_key not in base_skills:
-                raise InstallSkillsError(
+                raise InstallerError(
                     f"Invalid bundle config {path}: bundles[{index}] references unknown base {base_key!r}."
                 )
             resolved_skills.update(base_skills[base_key])
@@ -230,17 +245,17 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[SkillBundle]:
         if "skills" in entry:
             raw_skills = entry["skills"]
             if not isinstance(raw_skills, list):
-                raise InstallSkillsError(
+                raise InstallerError(
                     f"Invalid bundle config {path}: bundles[{index}] skills must be a list."
                 )
             resolved_skills.update(slugify_name(str(skill)) for skill in raw_skills)
 
         if not raw_bundle_bases and "skills" not in entry:
-            raise InstallSkillsError(
+            raise InstallerError(
                 f"Invalid bundle config {path}: bundles[{index}] must define bases and/or skills."
             )
         if not resolved_skills:
-            raise InstallSkillsError(
+            raise InstallerError(
                 f"Invalid bundle config {path}: bundles[{index}] resolved to an empty skill set."
             )
 
@@ -261,28 +276,28 @@ def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, froze
     if raw_bases is None:
         return {}
     if not isinstance(raw_bases, list):
-        raise InstallSkillsError(f"Invalid bundle config {path}: 'bases' must be a list.")
+        raise InstallerError(f"Invalid bundle config {path}: 'bases' must be a list.")
 
     base_skills: dict[str, frozenset[str]] = {}
     for index, entry in enumerate(raw_bases):
         if not isinstance(entry, dict):
-            raise InstallSkillsError(
+            raise InstallerError(
                 f"Invalid bundle config {path}: bases[{index}] must be an object."
             )
 
         missing = [key for key in ("id", "skills") if key not in entry]
         if missing:
-            raise InstallSkillsError(
+            raise InstallerError(
                 f"Invalid bundle config {path}: bases[{index}] missing keys: {', '.join(missing)}"
             )
 
         base_id = slugify_name(str(entry["id"]))
         if base_id in base_skills:
-            raise InstallSkillsError(f"Invalid bundle config {path}: duplicate base id {base_id!r}.")
+            raise InstallerError(f"Invalid bundle config {path}: duplicate base id {base_id!r}.")
 
         raw_skills = entry["skills"]
         if not isinstance(raw_skills, list) or not raw_skills:
-            raise InstallSkillsError(
+            raise InstallerError(
                 f"Invalid bundle config {path}: bases[{index}] skills must be a non-empty list."
             )
 
@@ -322,17 +337,17 @@ def resolve_bundle_skills(
         bundle_id = slugify_name(str(raw_id))
         if bundle_id == TARGET_BUNDLE_ID:
             if target_root is None:
-                raise InstallSkillsError("Target bundle requires a target project path.")
+                raise InstallerError("Target bundle requires a target project path.")
             target_skills = build_target_bundle(target_root).skills
             if not target_skills and normalized_bundle_ids == [TARGET_BUNDLE_ID]:
-                raise InstallSkillsError(
+                raise InstallerError(
                     "Target bundle: no matching installed skills found in target project."
                 )
             resolved.update(target_skills)
             continue
         if bundle_id not in by_id:
             known = ", ".join(known_bundle_ids(path))
-            raise InstallSkillsError(
+            raise InstallerError(
                 f"Unknown bundle {bundle_id!r}. Known bundles: {known}"
             )
         resolved.update(by_id[bundle_id].skills)
@@ -420,6 +435,22 @@ def discover_agents() -> list[str]:
     return sorted(names)
 
 
+def discover_commands() -> list[str]:
+    names: set[str] = set()
+    for rel_dir, suffix in TOOL_COMMAND_SCAN_REL_DIRS:
+        scan_root = REPO_ROOT / rel_dir
+        if not scan_root.is_dir():
+            continue
+        for child in scan_root.iterdir():
+            if not child.is_file() or child.name.startswith("."):
+                continue
+            if suffix == ".prompt.md" and child.name.endswith(".prompt.md"):
+                names.add(child.name[: -len(".prompt.md")])
+            elif suffix == ".md" and child.suffix == ".md" and not child.name.endswith(".prompt.md"):
+                names.add(child.stem)
+    return sorted(names)
+
+
 def parse_frontmatter(content: str) -> dict | None:
     """Parse YAML frontmatter from a skill or agent markdown file."""
     if not content.startswith("---"):
@@ -484,13 +515,24 @@ def load_agent_descriptions(names: Sequence[str]) -> dict[str, str]:
     return descriptions
 
 
+def load_command_descriptions(names: Sequence[str]) -> dict[str, str]:
+    """Map command slugs to descriptions from shared command markdown frontmatter."""
+    descriptions: dict[str, str] = {}
+    for name in names:
+        path = REPO_ROOT / ".shared/commands" / f"{name}.md"
+        description = read_description_from_markdown(path)
+        if description is not None:
+            descriptions[name] = description
+    return descriptions
+
+
 def validate_target(source: Path, target: Path, *, create: bool) -> Path:
     target = target.resolve()
     source = source.resolve()
     if target == source:
-        raise InstallSkillsError("Target cannot be the AIConfig repository root.")
+        raise InstallerError("Target cannot be the AIConfig repository root.")
     if source in target.parents:
-        raise InstallSkillsError(
+        raise InstallerError(
             "Target cannot be inside the AIConfig repository "
             f"({target} is under {source})."
         )
@@ -499,7 +541,7 @@ def validate_target(source: Path, target: Path, *, create: bool) -> Path:
             target.mkdir(parents=True, exist_ok=True)
         return target
     if not target.is_dir():
-        raise InstallSkillsError(f"Target is not a directory: {target}")
+        raise InstallerError(f"Target is not a directory: {target}")
     return target
 
 
@@ -548,6 +590,25 @@ def agent_remove_paths(target_root: Path, name: str) -> list[Path]:
     return paths
 
 
+def command_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
+    pairs: list[tuple[Path, Path]] = []
+    shared_src = source_root / SHARED_COMMAND_FILE.format(name=name)
+    shared_dest = target_root / SHARED_COMMAND_FILE.format(name=name)
+    pairs.append((shared_src, shared_dest))
+    for rel_template in TOOL_COMMAND_FILES.values():
+        src = source_root / rel_template.format(name=name)
+        if src.exists():
+            pairs.append((src, target_root / rel_template.format(name=name)))
+    return pairs
+
+
+def command_remove_paths(target_root: Path, name: str) -> list[Path]:
+    paths = [target_root / SHARED_COMMAND_FILE.format(name=name)]
+    for rel_template in TOOL_COMMAND_FILES.values():
+        paths.append(target_root / rel_template.format(name=name))
+    return paths
+
+
 def remove_path(path: Path) -> None:
     if path.is_dir():
         shutil.rmtree(path)
@@ -562,7 +623,7 @@ def copy_path(src: Path, dest: Path) -> None:
     elif src.is_file():
         shutil.copy2(src, dest)
     else:
-        raise InstallSkillsError(f"Source path does not exist: {src}")
+        raise InstallerError(f"Source path does not exist: {src}")
 
 
 def install_items(
@@ -571,6 +632,7 @@ def install_items(
     target_root: Path,
     skills: Sequence[str],
     agents: Sequence[str],
+    commands: Sequence[str],
     override: bool,
 ) -> OperationResult:
     result = OperationResult()
@@ -622,6 +684,29 @@ def install_items(
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
 
+    for name in commands:
+        slug = slugify_name(name)
+        pairs = command_copy_pairs(source_root, target_root, slug)
+        shared_src = pairs[0][0]
+        if not shared_src.is_file():
+            result.errors.append(
+                f"command {slug}: missing shared source {format_rel(shared_src, source_root)}"
+            )
+            continue
+
+        for src, dest in pairs:
+            rel_dest = format_rel(dest, target_root)
+            if dest.exists():
+                if not override:
+                    result.skipped.append(rel_dest)
+                    continue
+                remove_path(dest)
+            try:
+                copy_path(src, dest)
+                result.installed.append(rel_dest)
+            except OSError as exc:
+                result.errors.append(f"{rel_dest}: {exc}")
+
     return result
 
 
@@ -630,6 +715,7 @@ def uninstall_items(
     target_root: Path,
     skills: Sequence[str],
     agents: Sequence[str],
+    commands: Sequence[str],
 ) -> OperationResult:
     result = OperationResult()
     target_root = validate_target(REPO_ROOT, target_root, create=False)
@@ -649,6 +735,16 @@ def uninstall_items(
     for name in agents:
         slug = slugify_name(name)
         for path in agent_remove_paths(target_root, slug):
+            if path.exists():
+                try:
+                    remove_path(path)
+                    result.removed.append(format_rel(path, target_root))
+                except OSError as exc:
+                    result.errors.append(f"{format_rel(path, target_root)}: {exc}")
+
+    for name in commands:
+        slug = slugify_name(name)
+        for path in command_remove_paths(target_root, slug):
             if path.exists():
                 try:
                     remove_path(path)
@@ -693,20 +789,27 @@ def run_operation(
     target: Path,
     skills: Sequence[str],
     agents: Sequence[str],
+    commands: Sequence[str],
     uninstall: bool,
     override: bool,
 ) -> tuple[int, str]:
-    if not skills and not agents:
-        raise InstallSkillsError("Select at least one skill or agent.")
+    if not skills and not agents and not commands:
+        raise InstallerError("Select at least one skill, agent, or command.")
 
     if uninstall:
-        result = uninstall_items(target_root=target, skills=skills, agents=agents)
+        result = uninstall_items(
+            target_root=target,
+            skills=skills,
+            agents=agents,
+            commands=commands,
+        )
     else:
         result = install_items(
             source_root=REPO_ROOT,
             target_root=target,
             skills=skills,
             agents=agents,
+            commands=commands,
             override=override,
         )
 
@@ -719,19 +822,21 @@ def run_operation(
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Install or uninstall portable skills and agents from this AIConfig "
+            "Install or uninstall portable skills, agents, and commands from this AIConfig "
             "repository into another project."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
-            "  python tools/install-skills.py /path/to/project\n"
-            "  python tools/install-skills.py /path/to/project --skills cpp-coding\n"
-            "  python tools/install-skills.py /path/to/project --bundles core-dev-workflow\n"
-            "  python tools/install-skills.py /path/to/project --bundles extended-dev-workflow --override\n"
-            "  python tools/install-skills.py /path/to/project --bundles core-dev-workflow --skills cpp-coding\n"
-            "  python tools/install-skills.py /path/to/project --bundles target-bundle\n"
-            "  python tools/install-skills.py /path/to/project --uninstall --agents my-agent\n"
+            "  python tools/installer.py /path/to/project\n"
+            "  python tools/installer.py /path/to/project --skills cpp-coding\n"
+            "  python tools/installer.py /path/to/project --commands git-commit\n"
+            "  python tools/installer.py /path/to/project --bundles core-dev-workflow\n"
+            "  python tools/installer.py /path/to/project --bundles extended-dev-workflow --override\n"
+            "  python tools/installer.py /path/to/project --bundles core-dev-workflow --skills cpp-coding\n"
+            "  python tools/installer.py /path/to/project --bundles target-bundle\n"
+            "  python tools/installer.py /path/to/project --uninstall --agents my-agent\n"
+            "  python tools/installer.py /path/to/project --uninstall --commands git-commit\n"
             "\n"
             "Run without arguments to open the GUI."
         ),
@@ -747,7 +852,8 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         metavar="ID",
         help=(
             "Bundle ids from bundles.json or target-bundle to install or uninstall "
-            "(skills only; agents still default to all unless --agents is set)."
+            "(skills only; agents and commands still default to all unless "
+            "--agents or --commands is set)."
         ),
     )
     parser.add_argument(
@@ -763,14 +869,20 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help="Agent names to install or uninstall (default: all discovered agents).",
     )
     parser.add_argument(
+        "--commands",
+        nargs="+",
+        metavar="NAME",
+        help="Command names to install or uninstall (default: all discovered commands).",
+    )
+    parser.add_argument(
         "--uninstall",
         action="store_true",
-        help="Remove the selected skills and agents from the target project.",
+        help="Remove the selected skills, agents, and commands from the target project.",
     )
     parser.add_argument(
         "--override",
         action="store_true",
-        help="Replace existing skills and agents in the target project.",
+        help="Replace existing skills, agents, and commands in the target project.",
     )
     return parser.parse_args(argv)
 
@@ -790,14 +902,16 @@ def run_cli(argv: Sequence[str]) -> int:
             target_root=target,
         )
         agents = normalize_names(args.agents) if args.agents else discover_agents()
+        commands = normalize_names(args.commands) if args.commands else discover_commands()
         code, message = run_operation(
             target=target,
             skills=skills,
             agents=agents,
+            commands=commands,
             uninstall=args.uninstall,
             override=args.override,
         )
-    except InstallSkillsError as exc:
+    except InstallerError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
@@ -869,18 +983,21 @@ class HoverTooltip:
         self.text = text.strip()
 
 
-class InstallSkillsApp:
+class InstallerApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
-        self.root.title("Install AIConfig Skills and Agents")
-        self.root.minsize(640, 520)
+        self.root.title("AIConfig Installer")
+        self.root.minsize(720, 520)
 
         self.skills = discover_skills()
         self.agents = discover_agents()
+        self.commands = discover_commands()
         self.skill_descriptions = load_skill_descriptions(self.skills)
         self.agent_descriptions = load_agent_descriptions(self.agents)
+        self.command_descriptions = load_command_descriptions(self.commands)
         self.skill_vars: dict[str, tk.BooleanVar] = {}
         self.agent_vars: dict[str, tk.BooleanVar] = {}
+        self.command_vars: dict[str, tk.BooleanVar] = {}
 
         self.target_var = tk.StringVar()
         self.mode_var = tk.StringVar(value="install")
@@ -929,6 +1046,15 @@ class InstallSkillsApp:
             column=1,
             descriptions=self.agent_descriptions,
             help_command=self._show_agents_help,
+        )
+        self._add_checkbox_list(
+            lists,
+            title="Commands",
+            items=self.commands,
+            var_map=self.command_vars,
+            column=2,
+            descriptions=self.command_descriptions,
+            help_command=self._show_commands_help,
         )
 
         self._add_bundles_panel(outer)
@@ -1011,7 +1137,13 @@ class InstallSkillsApp:
         help_command: Callable[[], None] | None = None,
     ) -> None:
         frame = ttk.LabelFrame(parent, text=title, padding=8)
-        frame.grid(row=0, column=column, sticky="nsew", padx=(0, 8 if column == 0 else 0))
+        if column == 0:
+            padx = (0, 4)
+        elif column == 1:
+            padx = (4, 4)
+        else:
+            padx = (4, 0)
+        frame.grid(row=0, column=column, sticky="nsew", padx=padx)
         parent.columnconfigure(column, weight=1)
         parent.rowconfigure(0, weight=1)
 
@@ -1160,7 +1292,7 @@ class InstallSkillsApp:
 
         try:
             validate_target(REPO_ROOT, target, create=False)
-        except InstallSkillsError as exc:
+        except InstallerError as exc:
             button.state(["disabled"])
             self._update_target_bundle_tooltip(str(exc))
             self._sync_bundle_toggles()
@@ -1283,6 +1415,12 @@ class InstallSkillsApp:
         content = format_selection_help(entries, empty_message="No agents selected.")
         self._show_help_window("Agents — Help", content)
 
+    def _show_commands_help(self) -> None:
+        names = self._selected(self.command_vars)
+        entries = self._help_entries_for_selection(names, self.command_descriptions)
+        content = format_selection_help(entries, empty_message="No commands selected.")
+        self._show_help_window("Commands — Help", content)
+
     def _show_bundles_help(self) -> None:
         entries = bundle_help_entries(
             self._effective_bundles(),
@@ -1300,8 +1438,12 @@ class InstallSkillsApp:
 
         skills = self._selected(self.skill_vars)
         agents = self._selected(self.agent_vars)
-        if not skills and not agents:
-            messagebox.showerror("Nothing selected", "Select at least one skill or agent.")
+        commands = self._selected(self.command_vars)
+        if not skills and not agents and not commands:
+            messagebox.showerror(
+                "Nothing selected",
+                "Select at least one skill, agent, or command.",
+            )
             return
 
         try:
@@ -1310,10 +1452,11 @@ class InstallSkillsApp:
                 target=target,
                 skills=skills,
                 agents=agents,
+                commands=commands,
                 uninstall=self.mode_var.get() == "uninstall",
                 override=self.override_var.get(),
             )
-        except InstallSkillsError as exc:
+        except InstallerError as exc:
             messagebox.showerror("Error", str(exc))
             return
 
@@ -1327,7 +1470,7 @@ def run_gui() -> int:
         print(
             "error: No display available for the GUI.\n"
             "Use the CLI instead, for example:\n"
-            "  python tools/install-skills.py /path/to/project",
+            "  python tools/installer.py /path/to/project",
             file=sys.stderr,
         )
         return 2
@@ -1338,14 +1481,14 @@ def run_gui() -> int:
         print(f"error: Could not start GUI: {exc}", file=sys.stderr)
         print(
             "Use the CLI instead, for example:\n"
-            "  python tools/install-skills.py /path/to/project",
+            "  python tools/installer.py /path/to/project",
             file=sys.stderr,
         )
         return 2
 
     try:
-        InstallSkillsApp(root)
-    except InstallSkillsError as exc:
+        InstallerApp(root)
+    except InstallerError as exc:
         root.destroy()
         messagebox.showerror("Bundle config error", str(exc))
         return 2
