@@ -1,0 +1,128 @@
+[
+  {
+    "query": "make the renderer faster",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: undefined metric, workload, and acceptable tradeoffs"
+  },
+  {
+    "query": "I'm handing you the payment retry work — ask me whatever you need to know before you start, then implement it",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: explicit request for clarifying questions ahead of substantial implementation work"
+  },
+  {
+    "query": "add a secure login flow to the app",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: overloaded term plus unstated branch between design, implement, and review"
+  },
+  {
+    "query": "clean this up and make it better, you know what I mean",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: subjective terms with no operational definition or scope"
+  },
+  {
+    "query": "I want no new dependencies but it has to parse every PDF including encrypted ones",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: conflicting requirements needing a priority decision"
+  },
+  {
+    "query": "we need rate limiting on the public API — before you touch anything, confirm what you think I'm asking for and which assumptions you'd be making",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: interpretation and assumptions must be settled before a design with real tradeoffs"
+  },
+  {
+    "query": "write a migration plan for our database",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: source/target, downtime, and rollback are unresolved blockers"
+  },
+  {
+    "query": "the spec says the export should be fast and complete, build it",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: acceptance criteria are unmeasurable as stated"
+  },
+  {
+    "query": "the ticket just says 'improve the export pipeline' and I need it estimated — work out what you need from me first",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: asks for the question set itself before an estimate that depends on scope"
+  },
+  {
+    "query": "here are two docs that contradict each other, implement whichever is right",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: authoritative-source decision must be resolved before work"
+  },
+  {
+    "query": "brainstorm this feature idea with me and write up a research report",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: open-ended discovery with agreement gates -> research-guide"
+  },
+  {
+    "query": "turn this research report into an ordered implementation plan with tests",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan authoring from settled requirements -> plan-guide"
+  },
+  {
+    "query": "this test passes locally but fails in CI about one run in five, find out why",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: reproducible-defect root cause -> debugging-guide"
+  },
+  {
+    "query": "review my staged diff for security and design problems",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: structured diff review -> code-reviewer"
+  },
+  {
+    "query": "rename getCwd to getCurrentWorkingDirectory across src/ and update the tests",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: fully specified, nothing material left to clarify"
+  },
+  {
+    "query": "audit this implementation plan before I hand it to an agent",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan readiness audit -> plan-reviewer"
+  },
+  {
+    "query": "create a skill that makes the agent ask better questions",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: authoring a portable skill -> skill-creator"
+  },
+  {
+    "query": "what does this function do",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: one-step explanation the base model answers directly"
+  },
+  {
+    "query": "I need this deployed but I'm not sure what 'done' looks like yet",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: acceptance criteria and authority both unresolved"
+  },
+  {
+    "query": "pick whatever approach seems right for caching the search results, I don't know enough about the tradeoffs to decide",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: delegated judgment on a real decision still needs stated assumptions and a recommended default"
+  },
+  {
+    "query": "draft a conventional commit message for my staged changes",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: commit message authoring -> commit-message-writer"
+  }
+]

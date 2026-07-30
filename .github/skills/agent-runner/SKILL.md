@@ -1,6 +1,10 @@
 ---
 name: agent-runner
-description: "dispatch independent coding, debugging, research, or repository tasks to isolated subagents and run them concurrently, then verify and integrate their results. use when a request contains two or more separable workstreams, multiple unrelated failures, independent files or subsystems, parallel read-only audits, or explicit requests to delegate work across agents."
+description: dispatch independent coding, debugging, research, or repository tasks
+  to isolated subagents and run them concurrently, then verify and integrate their
+  results. use when a request contains two or more separable workstreams, multiple
+  unrelated failures, independent files or subsystems, parallel read-only audits,
+  or explicit requests to delegate work across agents.
 ---
 
 # agent-runner (GitHub Copilot)

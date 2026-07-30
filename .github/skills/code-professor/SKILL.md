@@ -1,6 +1,17 @@
 ---
 name: code-professor
-description: "Investigate unfamiliar repositories and produce evidence-based guides for learning, tracing, and documenting code. Use when asked to understand, explain, learn, or document a repo, module, library, feature, algorithm, execution path, data flow, failure, or dev workflow; create an orientation guide, reading path, architecture map, module deep dive, workflow trace, or failure investigation guide; or find grounded improvements and candidate fixes \u2014 even without saying 'code professor' (e.g. 'teach me this codebase', 'how does this work', 'trace this request end to end', 'help me onboard'). Supports four deliverables, study depths (overview, standard, deep), and interactive mode ('guided study'). Does not trigger on diff review (code-reviewer), product/requirements research (research-guide), implementation plan authoring or execution (plan-guide, plan-executor), verified defect repair (debugging-guide), or C++ performance optimization (cpp-performance-guide)."
+description: Investigate unfamiliar repositories and produce evidence-based guides
+  for learning, tracing, and documenting code. Use when asked to understand, explain,
+  learn, or document a repo, module, library, feature, algorithm, execution path,
+  data flow, failure, or dev workflow; create an orientation guide, reading path,
+  architecture map, module deep dive, workflow trace, or failure investigation guide;
+  or find grounded improvements and candidate fixes — even without saying 'code professor'
+  (e.g. 'teach me this codebase', 'how does this work', 'trace this request end to
+  end', 'help me onboard'). Supports four deliverables, study depths (overview, standard,
+  deep), and interactive mode ('guided study'). Does not trigger on diff review (code-reviewer),
+  product/requirements research (research-guide), implementation plan authoring or
+  execution (plan-guide, plan-executor), verified defect repair (debugging-guide),
+  or C++ performance optimization (cpp-performance-guide).
 ---
 
 # code-professor wrapper for GitHub Copilot

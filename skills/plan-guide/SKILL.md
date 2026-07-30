@@ -37,6 +37,7 @@ Your job is to **author and repair implementation plans**, not to implement code
 ## Companion Skills
 
 - Preferred input from [../research-guide/SKILL.md](../research-guide/SKILL.md); optional audit via [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
+- When the source spec or request is **ambiguous** rather than merely incomplete — conflicting requirements, undefined terms, or several plausible readings — settle it with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before planning. Planning blockers on otherwise-settled requirements stay here, at this skill's one-question-at-a-time pacing.
 - When discovery-gated and the user needs codebase literacy before planning: [../code-professor/SKILL.md](../code-professor/SKILL.md) (orientation or module guide — then return here for the plan)
 - Quality loop with [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
 - Downstream execution after validation or explicit user acceptance via [../plan-executor/SKILL.md](../plan-executor/SKILL.md)

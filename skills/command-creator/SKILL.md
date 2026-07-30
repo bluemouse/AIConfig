@@ -52,6 +52,8 @@ Ask:
 
 Ask about edge cases, success criteria, examples, and boundaries before writing files.
 
+The questions above are a fixed intake. When the request is ambiguous beyond them — question 7 does not settle command versus skill, the requested guardrails conflict with the workflow, or one request hides several commands — run the clarification loop in [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before authoring files, and carry its requirement ledger into the command body and `description`.
+
 Check the target repository for existing command conventions. If `commands/`, `.cursor/commands/`, or `.github/prompts/` already exist, match their style.
 
 Read bundled references for tool format rules:
@@ -208,6 +210,7 @@ When reviewing an existing command:
 | Passive discovery, bundled scripts, eval loops | [../skill-creator/SKILL.md](../skill-creator/SKILL.md) |
 | Custom agents with shared-first layout | [../agent-creator/SKILL.md](../agent-creator/SKILL.md) |
 | Commit message drafting (often a command candidate) | [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) |
+| Settling an ambiguous request before authoring | [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) |
 
 ### Reference files
 

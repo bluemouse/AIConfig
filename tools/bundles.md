@@ -3,7 +3,7 @@
 This document defines the workflow skill bundles for a classic software development lifecycle:
 
 ```text
-research -> plan -> implement -> test/debug -> QA -> PR
+clarify -> research -> plan -> implement -> test/debug -> QA -> PR
 ```
 
 Bundles are intentionally stack-neutral. Add language, platform, framework, or domain-specific skills only after a workflow skill has established what kind of technical help is needed.
@@ -61,6 +61,7 @@ The core bundle is the minimum workflow set a team should rely on for ordinary f
 
 | Skill | Primary role | Use when |
 | --- | --- | --- |
+| [prompt-clarifier](../skills/prompt-clarifier/SKILL.md) | Requirement clarification | The request has multiple plausible readings, vague terms, conflicting requirements, or missing decisions that would change the result |
 | [research-guide](../skills/research-guide/SKILL.md) | Discovery and requirements shaping | The idea, requirement, or product direction is still unclear |
 | [code-professor](../skills/code-professor/SKILL.md) | Codebase learning and documentation | Onboarding, architecture maps, module deep dives, workflow traces, or failure investigation guides are needed |
 | [plan-guide](../skills/plan-guide/SKILL.md) | Implementation planning | Requirements, specs, or bug context must become executable tasks |

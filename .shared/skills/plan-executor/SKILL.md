@@ -53,7 +53,7 @@ At the start, state that you are using the `plan-executor` skill. If concurrent 
 
 1. Read the full plan and identify the intended outcome, required files, dependencies, and verification steps.
 2. Review critically before editing. Look for missing prerequisites, contradictory steps, unsafe actions, broad refactors hidden inside small tasks, or dependencies that prevent parallelization. This is a lightweight execution sanity check — not a substitute for [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md).
-3. Stop for clarification only when the blocker would make implementation unsafe or likely wrong. Otherwise, make a conservative assumption and record it in the report.
+3. Stop for clarification only when the blocker would make implementation unsafe or likely wrong. Otherwise, make a conservative assumption and record it in the report. When the gap is a requirement-level ambiguity rather than an execution detail, resolve it in this session with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) or return to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) — never pass the ambiguity down to a subagent, which cannot ask the user.
 4. Create a visible todo list or equivalent execution tracker from the plan.
 
 ### 2. Establish baseline

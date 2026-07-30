@@ -1,6 +1,14 @@
 ---
 name: cpp-performance-guide
-description: "Comprehensive C++ performance optimization and investigation guidance. Use when profiling, benchmarking, reviewing, or improving C/C++ runtime performance, latency, throughput, memory use, allocations, cache locality, branch behavior, compiler optimization, vectorization, concurrency, lock contention, NUMA scaling, binary size, startup time, compile time, or regressions \u2014 even if the user says 'make it faster' without naming a profiler. Use for native desktop apps, services, libraries, game engines, rendering systems, finance/scientific workloads, Qt apps, mobile native stacks, and performance sign-off requiring reproducible measurements, tests, and a compact report."
+description: Comprehensive C++ performance optimization and investigation guidance.
+  Use when profiling, benchmarking, reviewing, or improving C/C++ runtime performance,
+  latency, throughput, memory use, allocations, cache locality, branch behavior, compiler
+  optimization, vectorization, concurrency, lock contention, NUMA scaling, binary
+  size, startup time, compile time, or regressions — even if the user says 'make it
+  faster' without naming a profiler. Use for native desktop apps, services, libraries,
+  game engines, rendering systems, finance/scientific workloads, Qt apps, mobile native
+  stacks, and performance sign-off requiring reproducible measurements, tests, and
+  a compact report.
 ---
 
 # cpp-performance-guide wrapper for GitHub Copilot

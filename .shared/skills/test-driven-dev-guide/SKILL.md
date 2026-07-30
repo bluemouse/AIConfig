@@ -32,6 +32,9 @@ framework-specific test infrastructure.
   [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md)
 - **Structured diff or commit review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 - **Codebase learning or architecture guides** — use [../code-professor/SKILL.md](../code-professor/SKILL.md)
+- **Behavior or acceptance criteria still undefined** — use
+  [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) to settle what "done" means, then
+  return here to write the first failing test
 - **C++ GoogleTest/CMake test setup** — use [../cpp-testing/SKILL.md](../cpp-testing/SKILL.md)
 - **Kotlin/JVM test setup** — use [../kotlin-testing/SKILL.md](../kotlin-testing/SKILL.md)
 

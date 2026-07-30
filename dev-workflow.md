@@ -3,7 +3,7 @@
 This guide describes how to run a classic software development workflow using the skill bundles defined in [tools/bundles.md](tools/bundles.md):
 
 ```text
-research -> plan -> implement -> test/debug -> QA -> PR
+clarify -> research -> plan -> implement -> test/debug -> QA -> PR
 ```
 
 It is intentionally stack-neutral. Add language, platform, framework, or domain-specific skills only after the workflow skill has established what kind of technical help is needed.
@@ -21,8 +21,9 @@ Start by deciding what kind of input you have.
 
 | Input | Default first skill | Reason |
 | --- | --- | --- |
-| Vague idea, opportunity, product direction, roadmap item | [research-guide](skills/research-guide/SKILL.md) | Turns ambiguity into agreed scope, requirements, tradeoffs, and risks |
-| Product requirement, product spec, design doc, issue, or feature request | [plan-guide](skills/plan-guide/SKILL.md) if clear; otherwise [research-guide](skills/research-guide/SKILL.md) | Clear inputs can be planned; unclear inputs need discovery first |
+| Ambiguous request — conflicting requirements, undefined deliverable, vague or overloaded terms, or several plausible readings | [prompt-clarifier](skills/prompt-clarifier/SKILL.md) | Settle blocking decisions in the request itself before research, planning, or implementation |
+| Vague idea, opportunity, product direction, roadmap item | [research-guide](skills/research-guide/SKILL.md) | Turns an unformed idea into agreed scope, requirements, tradeoffs, and risks (use [prompt-clarifier](skills/prompt-clarifier/SKILL.md) first if what is being asked for is still unclear) |
+| Product requirement, product spec, design doc, issue, or feature request | [plan-guide](skills/plan-guide/SKILL.md) if clear; otherwise [research-guide](skills/research-guide/SKILL.md) | Clear inputs can be planned; unclear product direction needs discovery first (use [prompt-clarifier](skills/prompt-clarifier/SKILL.md) first if the request wording is ambiguous) |
 | Bug report, failing test, crash, regression, or flaky behavior | [debugging-guide](skills/debugging-guide/SKILL.md) | Root cause must be proven before implementation changes |
 | Approved implementation plan | [plan-executor](skills/plan-executor/SKILL.md) | Execution needs task tracking, working-tree safety, edits, and verification |
 | Finished code changes | [implementation-auditor](skills/implementation-auditor/SKILL.md), then [code-reviewer](skills/code-reviewer/SKILL.md) | Correctness evidence comes before reviewer-side diff risk analysis |
@@ -30,7 +31,9 @@ Start by deciding what kind of input you have.
 
 ### 2. Research: make the requirement plannable
 
-Use [research-guide](skills/research-guide/SKILL.md) when the work is not ready to plan. This includes early feature ideas, product concepts, architecture direction, broad requirements, and specs with unresolved assumptions.
+Use [research-guide](skills/research-guide/SKILL.md) when the work is not ready to plan but the request itself is clear enough to open discovery. This includes early feature ideas, product concepts, architecture direction, broad requirements, and specs with unresolved product assumptions.
+
+When the incoming request is ambiguous about deliverable, scope, or which decision it should support, settle that with [prompt-clarifier](skills/prompt-clarifier/SKILL.md) first, then open research here. Once discovery begins, research-guide's one-question-at-a-time pacing governs.
 
 The research output should answer:
 
@@ -292,15 +295,16 @@ Decisions made in meetings should not be lost between phases. After [minutes-wri
 
 Use this path when the work begins as a product requirement, customer problem, roadmap item, or product spec.
 
-1. Use [research-guide](skills/research-guide/SKILL.md) if scope, users, success metrics, acceptance criteria, or tradeoffs are unclear.
-2. Use [research-reviewer](skills/research-reviewer/SKILL.md) for important specs before planning.
-3. Use [plan-guide](skills/plan-guide/SKILL.md) to create the implementation plan.
-4. Use [plan-reviewer](skills/plan-reviewer/SKILL.md) if the plan is complex, risky, or delegated.
-5. Use [plan-executor](skills/plan-executor/SKILL.md) to implement.
-6. Use [implementation-auditor](skills/implementation-auditor/SKILL.md) to map results back to requirements.
-7. Use [code-reviewer](skills/code-reviewer/SKILL.md) to review the diff.
-8. Use [commit-message-writer](skills/commit-message-writer/SKILL.md), [git-guide](skills/git-guide/SKILL.md), and [pull-request-guide](skills/pull-request-guide/SKILL.md) for delivery.
-9. Use [github-guide](skills/github-guide/SKILL.md) if delivery happens on GitHub through `gh`.
+1. Use [prompt-clarifier](skills/prompt-clarifier/SKILL.md) if the request itself is ambiguous — conflicting requirements, undefined deliverable, or several plausible readings.
+2. Use [research-guide](skills/research-guide/SKILL.md) if scope, users, success metrics, acceptance criteria, or tradeoffs are unclear.
+3. Use [research-reviewer](skills/research-reviewer/SKILL.md) for important specs before planning.
+4. Use [plan-guide](skills/plan-guide/SKILL.md) to create the implementation plan.
+5. Use [plan-reviewer](skills/plan-reviewer/SKILL.md) if the plan is complex, risky, or delegated.
+6. Use [plan-executor](skills/plan-executor/SKILL.md) to implement.
+7. Use [implementation-auditor](skills/implementation-auditor/SKILL.md) to map results back to requirements.
+8. Use [code-reviewer](skills/code-reviewer/SKILL.md) to review the diff.
+9. Use [commit-message-writer](skills/commit-message-writer/SKILL.md), [git-guide](skills/git-guide/SKILL.md), and [pull-request-guide](skills/pull-request-guide/SKILL.md) for delivery.
+10. Use [github-guide](skills/github-guide/SKILL.md) if delivery happens on GitHub through `gh`.
 
 ### Path B: Software feature request
 
@@ -313,7 +317,7 @@ Use this path when the requested behavior is already understandable.
 5. Use [code-reviewer](skills/code-reviewer/SKILL.md) to inspect the diff.
 6. Use delivery skills to commit, push, and open the PR.
 
-If the feature request turns out to have unresolved product, UX, architectural, data, or rollout questions, pause implementation and return to [research-guide](skills/research-guide/SKILL.md).
+If the feature request turns out to have unresolved product, UX, architectural, data, or rollout questions, pause implementation and return to [research-guide](skills/research-guide/SKILL.md). If the blocker is ambiguity in what was asked for rather than missing product discovery, use [prompt-clarifier](skills/prompt-clarifier/SKILL.md) or [plan-guide](skills/plan-guide/SKILL.md) first.
 
 ### Path C: Bug report or regression
 
@@ -343,6 +347,7 @@ Do not use [plan-executor](skills/plan-executor/SKILL.md) without an implementat
 
 ## Skill Switching Rules
 
+- If the question is "what am I being asked to do?" or the request has conflicting or undefined terms, use [prompt-clarifier](skills/prompt-clarifier/SKILL.md).
 - If the question is "what should we build?", use [research-guide](skills/research-guide/SKILL.md).
 - If the question is "is this research ready for planning?", use [research-reviewer](skills/research-reviewer/SKILL.md).
 - If the question is "how should we build it?", use [plan-guide](skills/plan-guide/SKILL.md).
@@ -426,7 +431,8 @@ Minimum habit:
 The safest default sequence for meaningful product work is:
 
 ```text
-research-guide
+prompt-clarifier when the request itself is ambiguous
+-> research-guide
 -> research-reviewer when needed
 -> plan-guide
 -> plan-reviewer when needed

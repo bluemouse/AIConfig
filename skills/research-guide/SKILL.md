@@ -34,6 +34,7 @@ Your job is to **research and agree a research report**, not to write implementa
 
 ## Companion Skills
 
+- When the incoming request is ambiguous about what is being asked for at all — deliverable, scope, or which decision it should support — settle that with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) first, then open discovery here. Once discovery begins, this skill's one-question-at-a-time pacing governs.
 - Optional audit before planning: [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
 - When the user needs codebase literacy before research or planning: [../code-professor/SKILL.md](../code-professor/SKILL.md) (orientation or module guide — not a substitute for the research report)
 - When revising from `research-reviewer` findings, use [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md)

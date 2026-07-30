@@ -75,6 +75,8 @@ Each packet must include:
 
 Prefer small packets that fit one problem domain. Include source excerpts or paths rather than the full parent history.
 
+Subagents cannot ask the user anything, so every ambiguity left in a packet becomes a silent assumption or a `blocked` return. Settle unclear objectives, scope, or acceptance criteria in the parent session with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before dispatching.
+
 ### 4. Dispatch concurrently
 
 Prepare every packet before dispatch. Invoke all subagents in a single concurrent batch using the host-native mechanism.

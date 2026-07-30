@@ -52,6 +52,8 @@ Ask:
 
 Ask about edge cases, success criteria, output format, boundaries (what the agent must not do), readonly/background behavior, and whether the agent needs tool-specific frontmatter such as `model`, `tools`, `readonly`, `is_background`, or MCP settings.
 
+The questions above are a fixed intake. When the request is ambiguous beyond them — the user is unsure whether they need an agent, a skill, or a command; the agent's boundaries conflict with its stated role; or nobody can yet say what a good result looks like — run the clarification loop in [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before authoring files, and carry its requirement ledger into the agent's instructions and `description`.
+
 Check the target repository for existing agent conventions before generating files. If `agents/`, `.shared/agents/`, or tool-specific agent folders already exist, match their style.
 
 Use available research tools (MCP, docs search, similar agents in the repo) when helpful — in parallel when your environment allows.
@@ -378,6 +380,16 @@ The `description` field drives agent discovery. After creating or improving an a
 ### How agent triggering works (general)
 
 Agents match tasks against **name + description** in available-agent lists. Simple one-step tasks may not invoke a custom agent even when the description fits, because the base model handles them directly. Write descriptions substantial enough that delegating to a specialized agent would genuinely help.
+
+---
+
+### Related skills
+
+| Task | Skill |
+| --- | --- |
+| Passive discovery, bundled scripts, eval loops | [../skill-creator/SKILL.md](../skill-creator/SKILL.md) |
+| Slash commands and Copilot prompts | [../command-creator/SKILL.md](../command-creator/SKILL.md) |
+| Settling an ambiguous request before authoring | [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) |
 
 ---
 

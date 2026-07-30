@@ -88,7 +88,7 @@ Every invocation resolves three inputs before investigation work starts:
 - **Study depth** — *how deep* to go. Optional; defaults to `standard`. Load [references/study-depth.md](references/study-depth.md) for tier details.
 - **Interactive mode** — when the user says "guided study", "teach me interactively", or similar, follow [references/interactive-mode.md](references/interactive-mode.md).
 
-All axes have safe defaults. Do not prompt unless **Interactive mode** is triggered or the request is genuinely ambiguous.
+All axes have safe defaults. Do not prompt unless **Interactive mode** is triggered or the request is genuinely ambiguous. When it is genuinely ambiguous, [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) covers how to ask well; the defaults-first rule here still decides whether to ask at all.
 
 ## Select the deliverable
 

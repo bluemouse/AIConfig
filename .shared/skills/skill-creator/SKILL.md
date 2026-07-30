@@ -55,6 +55,8 @@ Ask:
 
 Ask about edge cases, formats, examples, success criteria, and dependencies before writing test prompts.
 
+The questions above are a fixed intake. When the request is ambiguous beyond them — the user is unsure whether they need a skill, an agent, or a command; requirements conflict; or nobody can yet say what a good result looks like — run the clarification loop in [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before authoring files, and carry its requirement ledger into the skill's scope and `description`.
+
 Check the target repository for existing skill conventions before generating files. If `skills/`, `.shared/skills/`, or tool-specific skill folders already exist, match their style.
 
 Use available research tools (MCP, docs search, similar skills in the repo) when helpful — in parallel when your environment allows.
@@ -499,6 +501,16 @@ python <SKILL_CREATOR_ROOT>/scripts/package_skill.py .shared/skills/<skill-name>
 ```
 
 Direct the user to the resulting `.skill` file for installation elsewhere.
+
+---
+
+### Related skills
+
+| Task | Skill |
+| --- | --- |
+| Custom agents with shared-first layout | [../agent-creator/SKILL.md](../agent-creator/SKILL.md) |
+| Slash commands and Copilot prompts | [../command-creator/SKILL.md](../command-creator/SKILL.md) |
+| Settling an ambiguous request before authoring | [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) |
 
 ---
 

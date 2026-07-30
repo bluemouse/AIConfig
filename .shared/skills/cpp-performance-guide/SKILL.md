@@ -66,7 +66,8 @@ If benchmarks or profilers cannot run in the environment, state that plainly and
 1. **Set the target**
    - Identify the primary metric: wall time, p50/p95/p99 latency, throughput, frame time, CPU time, peak RSS, allocations/op, cache misses, binary size, compile time, or scaling efficiency.
    - Identify workload, input size, platform, compiler, build type, hardware, thread count, and acceptance threshold.
-   - If the user did not provide a workload, infer a reasonable local workload and state the assumption.
+   - If the metric, workload, or acceptance threshold is undefined and the choice would change which bottleneck matters — average frame time versus worst-frame spikes, or a city scene versus startup path, for example — settle it with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before measuring, since an inferred target cannot satisfy the completion rule above.
+   - When metric, workload, and threshold are all specified, proceed; state any remaining assumptions for platform, compiler, or hardware explicitly.
 
 2. **Build the right binary**
    - Prefer `RelWithDebInfo` or `Release` with debug symbols.
