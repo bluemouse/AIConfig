@@ -23,7 +23,7 @@ Resolved membership for tooling is:
 resolved_skills = union(base.skills for each referenced base id) ∪ bundle.skills
 ```
 
-The extended dev workflow bundle references the `core-dev-workflow` base and lists only its five additional skills in `skills`.
+The extended dev workflow bundle references the `core-dev-workflow` base and lists only its seven additional skills in `skills`.
 
 ### CLI usage
 
@@ -84,6 +84,8 @@ The extended bundle includes the full core bundle plus these additional skills:
 | --- | --- | --- |
 | [research-reviewer](../skills/research-reviewer/SKILL.md) | Research readiness audit | A research report must be validated before planning starts |
 | [plan-reviewer](../skills/plan-reviewer/SKILL.md) | Plan readiness audit | A plan must be checked before execution by a developer or AI agent |
+| [advisory-council](../skills/advisory-council/SKILL.md) | Multi-perspective decision deliberation | Competing options, policy disputes, or explicit council/panel requests need ranked recommendations with dissent |
+| [devil-advocate](../skills/devil-advocate/SKILL.md) | Adversarial proposal review | A single proposal needs red-teaming, show-stopper analysis, and a proceed/rework/reject verdict |
 | [agent-runner](../skills/agent-runner/SKILL.md) | Parallel workstream coordination | Independent research, implementation, debug, or audit tasks can run concurrently |
 | [minutes-writer](../skills/minutes-writer/SKILL.md) | Meeting and decision record | Engineering discussions need grounded minutes, decisions, and action items |
 | [github-guide](../skills/github-guide/SKILL.md) | GitHub delivery | A GitHub PR or review must be created, updated, commented on, or resolved through `gh` / `gh api` |
@@ -109,6 +111,8 @@ When extending beyond core, add individual extended-bundle skills as the work wa
 
 - [research-reviewer](../skills/research-reviewer/SKILL.md) when research will drive expensive or irreversible work.
 - [plan-reviewer](../skills/plan-reviewer/SKILL.md) when execution risk is higher than normal.
+- [advisory-council](../skills/advisory-council/SKILL.md) when a consequential decision has competing perspectives or needs structured dissent.
+- [devil-advocate](../skills/devil-advocate/SKILL.md) when one proposal must be pressure-tested before commitment.
 - [agent-runner](../skills/agent-runner/SKILL.md) only when workstreams are genuinely independent.
 - [minutes-writer](../skills/minutes-writer/SKILL.md) when decisions are made in meetings or chat and need a durable record.
 - [github-guide](../skills/github-guide/SKILL.md) only when the delivery host is GitHub and `gh` or `gh api` mechanics are part of the task.

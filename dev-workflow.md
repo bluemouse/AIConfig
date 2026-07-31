@@ -22,6 +22,8 @@ Start by deciding what kind of input you have.
 | Input | Default first skill | Reason |
 | --- | --- | --- |
 | Ambiguous request — conflicting requirements, undefined deliverable, vague or overloaded terms, or several plausible readings | [prompt-clarifier](skills/prompt-clarifier/SKILL.md) | Settle blocking decisions in the request itself before research, planning, or implementation |
+| Complex decision, policy dispute, competing options, or explicit council/panel/think-tank request | [advisory-council](skills/advisory-council/SKILL.md) | Multi-perspective deliberation with ranked recommendations, dissent, and decision gates (use [prompt-clarifier](skills/prompt-clarifier/SKILL.md) first if the decision question itself is still ambiguous) |
+| Single proposal to challenge, red-team, pressure-test, or reject with a proceed/rework/reject verdict | [devil-advocate](skills/devil-advocate/SKILL.md) | Adversarial review of one proposal with findings, resolutions, and a verdict |
 | Vague idea, opportunity, product direction, roadmap item | [research-guide](skills/research-guide/SKILL.md) | Turns an unformed idea into agreed scope, requirements, tradeoffs, and risks (use [prompt-clarifier](skills/prompt-clarifier/SKILL.md) first if what is being asked for is still unclear) |
 | Product requirement, product spec, design doc, issue, or feature request | [plan-guide](skills/plan-guide/SKILL.md) if clear; otherwise [research-guide](skills/research-guide/SKILL.md) | Clear inputs can be planned; unclear product direction needs discovery first (use [prompt-clarifier](skills/prompt-clarifier/SKILL.md) first if the request wording is ambiguous) |
 | Bug report, failing test, crash, regression, or flaky behavior | [debugging-guide](skills/debugging-guide/SKILL.md) | Root cause must be proven before implementation changes |
@@ -348,6 +350,8 @@ Do not use [plan-executor](skills/plan-executor/SKILL.md) without an implementat
 ## Skill Switching Rules
 
 - If the question is "what am I being asked to do?" or the request has conflicting or undefined terms, use [prompt-clarifier](skills/prompt-clarifier/SKILL.md).
+- If the question is "which option should we choose across competing perspectives?" or the user asks for a council, panel, or think tank, use [advisory-council](skills/advisory-council/SKILL.md).
+- If the question is "what could kill this proposal and should we proceed?" or the user asks for devil's advocate, red-team, or show-stopper analysis on one proposal, use [devil-advocate](skills/devil-advocate/SKILL.md).
 - If the question is "what should we build?", use [research-guide](skills/research-guide/SKILL.md).
 - If the question is "is this research ready for planning?", use [research-reviewer](skills/research-reviewer/SKILL.md).
 - If the question is "how should we build it?", use [plan-guide](skills/plan-guide/SKILL.md).

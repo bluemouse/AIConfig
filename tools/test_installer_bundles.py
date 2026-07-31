@@ -40,7 +40,7 @@ class BundleLoadingTests(unittest.TestCase):
         bundles = mod.load_skill_bundles(BUNDLES_JSON_PATH)
         by_id = {bundle.id: bundle for bundle in bundles}
         self.assertEqual(len(by_id["core-dev-workflow"].skills), 12)
-        self.assertEqual(len(by_id["extended-dev-workflow"].skills), 17)
+        self.assertEqual(len(by_id["extended-dev-workflow"].skills), 19)
 
     def test_bases_composition(self) -> None:
         config = {

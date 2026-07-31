@@ -57,6 +57,8 @@ repo/
 │   ├── github-guide/                  # GitHub PR/review delivery via gh CLI and gh api
 │   ├── minutes-writer/                # Source-grounded meeting minutes for engineering meetings
 │   ├── prompt-clarifier/              # Iterative clarification of ambiguous requests before acting
+│   ├── advisory-council/              # Multi-perspective council deliberation on complex decisions
+│   ├── devil-advocate/                # Adversarial stress-test of proposals with verdicts
 │   ├── research-guide/                # Interactive research and brainstorming before planning
 │   ├── research-reviewer/             # Audit research reports for implementation readiness
 │   ├── plan-guide/                    # Author and repair implementation plans from research or specs
@@ -135,6 +137,8 @@ Bootstrap skills live under `skills/`. Installing one copies content to `.shared
 | `github-guide` | `skills/github-guide/` | GitHub delivery: `gh pr create`, post structured reviews, resolve threads |
 | `pull-request-guide` | `skills/pull-request-guide/` | PR/MR authoring: description, sizing, testing evidence, self-review |
 | `prompt-clarifier` | `skills/prompt-clarifier/` | Iteratively clarify ambiguous requests with adaptive questions before or during a task |
+| `advisory-council` | `skills/advisory-council/` | Coordinate distinct expert and stakeholder perspectives into ranked recommendations with dissent |
+| `devil-advocate` | `skills/devil-advocate/` | Stress-test a proposal with steelmanning, findings, resolutions, and a proceed/rework/reject verdict |
 | `research-guide` | `skills/research-guide/` | Interactive research and brainstorming with agreement gates; outputs a research report |
 | `research-reviewer` | `skills/research-reviewer/` | Audit research reports for planning readiness, gaps, and required revisions |
 | `plan-guide` | `skills/plan-guide/` | Author and repair executable implementation plans from research, specs, or reviewer findings |
@@ -179,6 +183,7 @@ Several installed skills cross-link as companions — install related skills tog
 | Codebase learning | `code-professor`, `plan-guide`, `debugging-guide`, `code-reviewer` | Onboarding and evidence-backed guides → implementation planning → verified defect repair → diff review |
 | Meeting notes | `minutes-writer`, `pull-request-guide`, `commit-message-writer` | Source-grounded minutes from transcripts → PR authoring → commit messages (does not create tickets or publish unless asked) |
 | Requirement clarification | `prompt-clarifier`, `research-guide`, `plan-guide`, `debugging-guide` | Resolve blocking ambiguity in the request → open-ended discovery when the idea itself is unformed → implementation plan → root-cause work on defects |
+| Decision deliberation | `advisory-council`, `devil-advocate`, `prompt-clarifier`, `research-guide`, `plan-reviewer` | Clarify ambiguous decisions → council debate for multi-perspective synthesis → adversarial stress-test with proceed/rework/reject verdict → research and plan-audit companions |
 | Research workflow | `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor` | Interactive discovery and research report → readiness audit → implementation plan → plan audit → execution |
 | Implementation quality | `test-driven-dev-guide`, `debugging-guide`, `implementation-auditor`, `code-reviewer` | TDD during implementation → systematic root-cause debugging → evidence-based correctness audit → structured diff review |
 | Parallel execution | `agent-runner` | Dispatch independent workstreams to isolated subagents; defers diff review to `code-reviewer`, git mechanics to `git-guide`, skill evals to `skill-creator`, harness orchestration to `research-plan-harness` |
