@@ -102,6 +102,18 @@
     "rationale": "near-miss: authoring a portable skill -> skill-creator"
   },
   {
+    "query": "Convene an advisory council to decide whether we should rewrite the billing service this quarter",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: multi-perspective council deliberation -> advisory-council"
+  },
+  {
+    "query": "Play devil's advocate on this launch plan and tell me what could break",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: adversarial stress test with failure modes -> devil-advocate"
+  },
+  {
     "query": "what does this function do",
     "should_trigger": false,
     "split": "validation",

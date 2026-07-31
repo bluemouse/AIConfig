@@ -20,6 +20,8 @@ Use this skill to settle blocking decisions, then hand the settled requirement l
 - **Open-ended discovery and feature research with agreement gates** — use [../research-guide/SKILL.md](../research-guide/SKILL.md)
 - **Turning a settled interpretation into an ordered implementation plan** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
 - **Root-cause investigation of a reproducible defect** — use [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md)
+- **Multi-perspective council deliberation with ranked synthesis and dissent** — use [../advisory-council/SKILL.md](../advisory-council/SKILL.md) after clarifying the decision framing when needed
+- **Adversarial stress-test of a settled proposal with a proceed/rework/reject verdict** — use [../devil-advocate/SKILL.md](../devil-advocate/SKILL.md)
 
 ## Core contract
 
