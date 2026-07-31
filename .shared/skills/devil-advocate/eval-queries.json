@@ -1,0 +1,122 @@
+[
+  {
+    "query": "Play devil's advocate on this launch plan and tell me what could break",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: explicit devil's advocate request for proposal failure modes"
+  },
+  {
+    "query": "Pressure-test this architecture proposal and identify show-stoppers before we commit",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: pressure-test plus show-stopper analysis"
+  },
+  {
+    "query": "Red-team our pricing strategy and recommend proceed, rework, replace, or reject",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: red-team strategy with verdict"
+  },
+  {
+    "query": "Poke holes in this migration plan and give concrete mitigations for the biggest risks",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: challenge plan and resolve findings"
+  },
+  {
+    "query": "What are the load-bearing assumptions in this proposal, and how could we test them?",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: assumption analysis and validation"
+  },
+  {
+    "query": "Find the blind spots and failure modes in this go-to-market idea",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: blind spots and failure modes for an idea"
+  },
+  {
+    "query": "Challenge this vendor selection and tell me whether we should reject it",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: challenge and reject/proceed verdict"
+  },
+  {
+    "query": "Run a pre-mortem on our data platform redesign and give kill criteria",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: pre-mortem plus kill criteria"
+  },
+  {
+    "query": "Stress-test this plan from adversarial stakeholder, execution, and second-order-effect angles",
+    "should_trigger": true,
+    "split": "test",
+    "rationale": "direct: named challenge lenses"
+  },
+  {
+    "query": "Before I pitch this, critique it hard and produce a stronger revised version",
+    "should_trigger": true,
+    "split": "test",
+    "rationale": "direct: adversarial critique plus synthesis"
+  },
+  {
+    "query": "Convene an advisory council with customer, operator, finance, and security perspectives",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: broad multi-perspective deliberation belongs to advisory-council"
+  },
+  {
+    "query": "Give me a think tank debate and preserve dissenting opinions",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: structured council debate belongs to advisory-council"
+  },
+  {
+    "query": "Review this pull request for correctness, security, and tests",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: code diff review belongs to code-reviewer"
+  },
+  {
+    "query": "Turn this research report into an implementation plan",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: implementation planning belongs to plan-guide"
+  },
+  {
+    "query": "Audit this implementation plan for missing test design before execution",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan audit belongs to plan-reviewer"
+  },
+  {
+    "query": "Research alternatives for notification delivery and cite current vendor docs",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: source-gathering research belongs to research-guide"
+  },
+  {
+    "query": "This bug happens only after reconnect; find the root cause",
+    "should_trigger": false,
+    "split": "test",
+    "rationale": "near-miss: observed defect diagnosis belongs to debugging-guide"
+  },
+  {
+    "query": "Explain the module architecture so I understand where to add the feature",
+    "should_trigger": false,
+    "split": "test",
+    "rationale": "near-miss: codebase learning belongs to code-professor"
+  },
+  {
+    "query": "Make a balanced pros and cons list for using Kubernetes",
+    "should_trigger": false,
+    "split": "test",
+    "rationale": "near-miss: simple balanced comparison lacks adversarial review intent"
+  },
+  {
+    "query": "Write a PR description for these changes",
+    "should_trigger": false,
+    "split": "test",
+    "rationale": "near-miss: PR authoring belongs to pull-request-guide"
+  }
+]

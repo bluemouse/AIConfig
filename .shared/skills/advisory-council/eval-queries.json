@@ -1,0 +1,122 @@
+[
+  {
+    "query": "Convene an advisory council to decide whether we should rewrite the billing service this quarter",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: explicitly asks for an advisory council on a consequential architecture decision"
+  },
+  {
+    "query": "Give me a structured debate with multiple perspectives on whether to launch the enterprise plan now or wait",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: asks for structured debate and competing perspectives"
+  },
+  {
+    "query": "I need a think tank style recommendation for this product strategy, including dissenting opinions",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: think tank plus dissent maps to council synthesis"
+  },
+  {
+    "query": "Compare these three migration approaches and give me ranked recommendations with decision gates",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: ranked options and gates benefit from council criteria and dissent"
+  },
+  {
+    "query": "Act as a panel of stakeholders and experts to resolve this policy disagreement",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: panel and stakeholder disagreement resolution"
+  },
+  {
+    "query": "Run a council on this roadmap conflict and preserve the strongest minority objection",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: council plus minority objection"
+  },
+  {
+    "query": "We have two good designs and no consensus. Help us converge without hiding the tradeoffs",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: convergence across viable alternatives and tradeoffs"
+  },
+  {
+    "query": "Create a decision record after weighing the customer, operator, security, and finance perspectives",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: asks to synthesize distinct perspectives into a decision record"
+  },
+  {
+    "query": "Should we standardize on one UI framework? I want expert disagreement, scoring, and revisit triggers",
+    "should_trigger": true,
+    "split": "test",
+    "rationale": "direct: decision with expert disagreement, scoring, and revisit triggers"
+  },
+  {
+    "query": "Use several independent roles to review this acquisition integration plan and recommend a path",
+    "should_trigger": true,
+    "split": "test",
+    "rationale": "direct: role-diverse plan review with final recommendation"
+  },
+  {
+    "query": "Brainstorm requirements for a new collaboration feature and iterate until we have a research report",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: open-ended research with agreement gates belongs to research-guide"
+  },
+  {
+    "query": "Turn this research report into an implementation plan with test-first tasks",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: implementation planning belongs to plan-guide"
+  },
+  {
+    "query": "Review this code diff for correctness and missing tests",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: code diff review belongs to code-reviewer"
+  },
+  {
+    "query": "Find the root cause of this flaky CI failure",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: defect diagnosis belongs to debugging-guide"
+  },
+  {
+    "query": "Audit this implementation plan for readiness before another agent executes it",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: plan readiness audit belongs to plan-reviewer"
+  },
+  {
+    "query": "Explain how this repository is structured so I can onboard",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: codebase learning belongs to code-professor"
+  },
+  {
+    "query": "Write a commit message for my staged changes",
+    "should_trigger": false,
+    "split": "test",
+    "rationale": "near-miss: commit-message task belongs to commit-message-writer"
+  },
+  {
+    "query": "Pressure-test this proposal and tell me if any show-stoppers mean we should reject it",
+    "should_trigger": false,
+    "split": "test",
+    "rationale": "near-miss: adversarial stress test belongs to devil-advocate"
+  },
+  {
+    "query": "Make a pros and cons list for using Redis here",
+    "should_trigger": false,
+    "split": "test",
+    "rationale": "near-miss: simple comparison does not need a council unless structured debate is requested"
+  },
+  {
+    "query": "Research current pricing models for AI coding assistants and cite sources",
+    "should_trigger": false,
+    "split": "test",
+    "rationale": "near-miss: fact-gathering research belongs to research-guide or web research"
+  }
+]
