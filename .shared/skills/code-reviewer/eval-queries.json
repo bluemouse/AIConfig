@@ -48,6 +48,12 @@
     "rationale": "near-miss: git workflow -> git-guide"
   },
   {
+    "query": "review the integrated code after merging these branches for cross-branch bugs",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: active integration review -> git-merge-guide"
+  },
+  {
     "query": "draft a conventional commit for staged changes",
     "should_trigger": false,
     "split": "train",

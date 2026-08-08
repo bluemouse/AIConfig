@@ -1,6 +1,6 @@
 ---
 name: git-guide
-description: "Use when running git operations or resolving repo-state issues. Triggers on merge conflicts, rebases, worktrees, feature-worktree create / merge / abandon / cleanup, branch cleanup, push/rebase before a PR, staging and committing (when the user supplies or already has a message), or history rewrites — even when the user doesn't say 'git'. For drafting Conventional Commit messages from diffs, use commit-message-writer."
+description: "Use when running git operations or resolving repo-state issues. Triggers on worktrees, feature-worktree create/merge/abandon/cleanup, branch cleanup, push/rebase before a PR, staging and committing (when the user supplies or already has a message), final merge commits, history rewrites, stash, or simple single-file merge/rebase conflict triage including pick-ours/theirs mechanical resolution — even when the user doesn't say 'git'. Does not trigger on end-to-end local merge/rebase integration, semantic conflict resolution, integration review of merged code, impact-based verification, or merge reports — use git-merge-guide. For drafting Conventional Commit messages from diffs, use commit-message-writer."
 ---
 
 # Git Guidelines
@@ -15,13 +15,31 @@ requires them.
 ## When to Use
 
 - Staging, committing, pushing, or rebasing branches
-- Resolving merge or rebase conflicts
+- Simple single-file or mechanical merge/rebase conflict triage and staging
+- Creating the final merge commit after a staged integration result
 - Creating, merging, validating, abandoning, or cleaning up feature worktrees
 - Publishing a branch and rebasing onto its base before opening a PR / MR
-- Branch cleanup, history rewrites, stash, or repo-state triage
+- Branch cleanup, history rewrites, stash, cherry-pick, revert, or repo-state triage
+
+## Boundary vs git-merge-guide
+
+Use this skill for **Git mechanics and simple triage**. Hand off to
+[../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) when the request needs intent
+reconstruction, semantic resolution, combined-tree integration review, affected-test
+verification, or a merge report.
+
+| Signal | Owner |
+| --- | --- |
+| Lockfile/import/formatting conflict with obvious mechanical resolution | `git-guide` |
+| Semantic, API, behavioral, or multi-file architectural conflict | `git-merge-guide` |
+| Active merge/rebase plus verify integrated code or generate merge report | `git-merge-guide` |
+| Final merge commit after integration is already staged | `git-guide` |
 
 ## When NOT to Use
 
+- **End-to-end local merge/rebase integration** — semantic conflict resolution,
+  integration code review of cleanly merged code, impact-based verification, merge
+  reports — use [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md)
 - **Drafting Conventional Commit messages from diffs** — use
   [commit-message-writer](../commit-message-writer/SKILL.md) for message composition,
   type/scope selection, and compact/verbose output
@@ -48,8 +66,11 @@ requires them.
 
 ## Conflict Resolution
 
-- **Detect and classify** — find conflicts, suggest strategy (ours/theirs/merge), see [references/merge-resolve.md](references/merge-resolve.md)
-- **Validate** — run project checks after resolution before staging, see [references/merge-resolve.md](references/merge-resolve.md)
+- **Simple triage** — single-file or mechanical conflicts (lockfile, imports, formatting);
+  classify, resolve, stage, and validate — see [references/merge-resolve.md](references/merge-resolve.md)
+- **Deep integration** — semantic conflict resolution, integration review, impact-based
+  verification, and merge reports — hand off to
+  [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md)
 
 ## Worktree Operations
 
@@ -89,6 +110,7 @@ requires them.
 
 | Task | Path |
 |------|------|
+| End-to-end merge/rebase integration and verification | [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) |
 | Draft Conventional Commit messages from diffs | [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) |
 | PR description, sizing, self-review | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |
 | Structured diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |

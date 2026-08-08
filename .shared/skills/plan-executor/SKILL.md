@@ -1,6 +1,6 @@
 ---
 name: plan-executor
-description: "Use when executing a provided implementation plan in the current git working tree — decomposing it into independent units, dispatching concurrent subagents through agent-runner when possible, integrating on the current branch without creating or switching branches unless explicitly requested, running verifications, and producing an implementation report. Triggers on prompts to implement a written plan, execute plan tasks, or run an approved implementation plan on the current branch. Does not trigger on plan authoring, plan-reviewer audit, generic parallel dispatch without a plan, post-execution correctness audit (implementation-auditor), or post-implementation diff review."
+description: "Use when executing a provided implementation plan in the current git working tree — decomposing it into independent units, dispatching concurrent subagents through agent-runner when possible, integrating on the current branch without creating or switching branches unless explicitly requested, running verifications, and producing an implementation report. Triggers on prompts to implement a written plan, execute plan tasks, or run an approved implementation plan on the current branch. Does not trigger on plan authoring, plan-reviewer audit, generic parallel dispatch without a plan, active merge/rebase integration (git-merge-guide), post-execution correctness audit (implementation-auditor), or post-implementation diff review."
 ---
 
 # Plan Executor
@@ -31,7 +31,9 @@ Your job is to **execute an implementation plan and produce an implementation re
   [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md)
 - **Codebase learning or architecture guides without a plan** — use
   [../code-professor/SKILL.md](../code-professor/SKILL.md)
-- **Commit, push, branch, or worktree operations** — use [../git-guide/SKILL.md](../git-guide/SKILL.md)
+- **Commit, push, branch, worktree, or active merge/rebase operations** — use
+  [../git-guide/SKILL.md](../git-guide/SKILL.md) for mechanics and
+  [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) for complex local integration
 
 ## Overview
 
@@ -125,8 +127,9 @@ For subagent work:
 
 1. Read every subagent result fully.
 2. Inspect diffs for ownership violations, conflicts, hidden refactors, generated files, and formatting-only churn.
-3. Resolve conflicts in the parent session.
-4. Run a targeted verification after each integration wave if the repo supports it.
+3. If the repository has an active merge/rebase operation or the conflict is branch-integration work, hand off to [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) instead of resolving it inline. While that operation is active, allow only read-only subagent investigation.
+4. Resolve other conflicts in the parent session.
+5. Run a targeted verification after each integration wave if the repo supports it.
 
 ### 6. Run final verification
 

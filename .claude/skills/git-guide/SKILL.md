@@ -1,6 +1,14 @@
 ---
 name: git-guide
-description: "Use when running git operations or resolving repo-state issues. Triggers on merge conflicts, rebases, worktrees, feature-worktree create / merge / abandon / cleanup, branch cleanup, push/rebase before a PR, staging and committing (when the user supplies or already has a message), or history rewrites \u2014 even when the user doesn't say 'git'. For drafting Conventional Commit messages from diffs, use commit-message-writer."
+description: Use when running git operations or resolving repo-state issues. Triggers
+  on worktrees, feature-worktree create/merge/abandon/cleanup, branch cleanup, push/rebase
+  before a PR, staging and committing (when the user supplies or already has a message),
+  final merge commits, history rewrites, stash, or simple single-file merge/rebase
+  conflict triage including pick-ours/theirs mechanical resolution — even when the
+  user doesn't say 'git'. Does not trigger on end-to-end local merge/rebase integration,
+  semantic conflict resolution, integration review of merged code, impact-based verification,
+  or merge reports — use git-merge-guide. For drafting Conventional Commit messages
+  from diffs, use commit-message-writer.
 ---
 
 # git-guide wrapper for Claude Code

@@ -17,7 +17,8 @@ Merge a feature branch from a feature worktree back to its source worktree.
 2. **Detect Worktree Names** — extract base worktree and feature name from directory
 3. **Retrieve Source Branch** — `git config branch.<feature-branch>.mergeBackTo`
 4. **Navigate to Source** — find and `cd` to the source worktree
-5. **Merge Feature** — regular (`git merge`) or squash (`git merge --squash` + commit); preview-only if requested
+5. **Merge Feature** — regular (`git merge` or `git merge --no-commit` when integration
+   depth is expected) or squash (`git merge --squash` + commit); preview-only if requested
 6. **Clean Up** — optionally remove the feature worktree after merge (skipped if preview)
 
 ## Worktree Detection
@@ -44,10 +45,21 @@ Automatically detected:
 10. `cd <source-worktree>`
 11. `git checkout <source-branch>`
 12. Merge:
-    - Regular: `git merge <feature-branch>`
+    - Regular: `git merge <feature-branch>` when a clean fast-forward or simple merge is
+      expected; prefer `git merge --no-commit <feature-branch>` when semantic integration
+      review may be needed
     - Squash: `git merge --squash <feature-branch>` then `git commit -m "<message>"`
-13. If user requested removal: `git worktree remove <feature-worktree-path>`
-14. If user requested remote deletion: `git push origin --delete <feature-branch>`
+13. If merge conflicts occur:
+    - **Mechanical single-file triage** (lockfile, imports, formatting) — resolve and
+      stage per [merge-resolve.md](merge-resolve.md)
+    - **Semantic, multi-file, or integration-verification work** — hand off to
+      [../../git-merge-guide/SKILL.md](../../git-merge-guide/SKILL.md); do not create the
+      final merge commit during active integration
+    - After integration is resolved and staged, create the final merge commit via
+      [commit.md](commit.md) (optionally draft the message with
+      [../../commit-message-writer/SKILL.md](../../commit-message-writer/SKILL.md))
+14. If user requested removal: `git worktree remove <feature-worktree-path>`
+15. If user requested remote deletion: `git push origin --delete <feature-branch>`
 
 ## Squash Commit Message
 
@@ -83,7 +95,9 @@ Worktree cleanup: Kept (run worktree-cleanup to remove)
 - Source worktree directory missing → error
 - Source branch missing in source worktree → error
 - Uncommitted changes in feature worktree → error
-- Merge conflicts → error with conflicted files + guidance
+- Merge conflicts → list conflicted files; mechanical triage via
+  [merge-resolve.md](merge-resolve.md), semantic/integration work via
+  [../../git-merge-guide/SKILL.md](../../git-merge-guide/SKILL.md)
 - Trying to delete a remote branch that doesn't exist → error
 - **Never** proceed with worktree removal if the merge fails
 

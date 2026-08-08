@@ -1,6 +1,6 @@
 ---
 name: implementation-auditor
-description: "Use when auditing an implementation for requirement coverage and fresh test/build evidence after code changes, bug fixes, or plan execution — producing a compact evidence-weighted audit report. Triggers on correctness audits, requirement mapping, test-gap analysis, and completion checks before claiming done. Does not trigger on diff review (code-reviewer), plan authoring (plan-guide), pre-execution plan audit (plan-reviewer), plan execution (plan-executor), codebase learning guides (code-professor), or strict TDD coaching (test-driven-dev-guide)."
+description: "Use when auditing an implementation for requirement coverage and fresh test/build evidence after code changes, bug fixes, or plan execution — producing a compact evidence-weighted audit report. Triggers on correctness audits, requirement mapping, test-gap analysis, and completion checks before claiming done. Does not trigger on active local merge/rebase integration verification (git-merge-guide), diff review (code-reviewer), plan authoring (plan-guide), pre-execution plan audit (plan-reviewer), plan execution (plan-executor), codebase learning guides (code-professor), or strict TDD coaching (test-driven-dev-guide)."
 ---
 
 # Implementation Auditor
@@ -30,6 +30,10 @@ for structured diff review.
 
 ## When NOT to Use
 
+- **Active local merge/rebase integration verification** — use
+  [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) first to prove branch
+  composition and affected-test health; use this skill afterward when requirement or
+  acceptance-criteria coverage still needs separate proof
 - **Structured diff or commit review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 - **Plan execution** — use [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
 - **Pre-execution plan audit** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
@@ -79,6 +83,13 @@ Default to read-only auditing. Do not modify implementation files unless the use
 ## Boundary with code review
 
 This skill proves **whether requirements are met** with fresh evidence: requirement coverage, correctness, and test-to-behavior mapping. It does not judge diff quality, design, readability, or maintainability — that is [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md). When both are wanted, audit first (outcome proof), then review the diff.
+
+## Boundary with git-merge-guide
+
+[../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) proves **branch composition**:
+semantic conflict resolution, integration review of cleanly merged code, and affected-test
+verification. Use this skill only after that integration work when a plan, spec, or
+acceptance criteria still need separate requirement-coverage proof.
 
 ## Verdict routing
 

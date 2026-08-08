@@ -134,6 +134,7 @@ Bootstrap skills live under `skills/`. Installing one copies content to `.shared
 | `commit-message-writer` | `skills/commit-message-writer/` | Draft Conventional Commit messages from staged/working diffs, commits, or ranges |
 | `minutes-writer` | `skills/minutes-writer/` | Draft source-grounded meeting minutes and recaps from transcripts, notes, and supporting materials |
 | `git-guide` | `skills/git-guide/` | Git mechanics: commit, push, rebase, conflicts, worktrees |
+| `git-merge-guide` | `skills/git-merge-guide/` | Local merge/rebase integration: semantic conflicts, integration review, verification |
 | `github-guide` | `skills/github-guide/` | GitHub delivery: `gh pr create`, post structured reviews, resolve threads |
 | `pull-request-guide` | `skills/pull-request-guide/` | PR/MR authoring: description, sizing, testing evidence, self-review |
 | `prompt-clarifier` | `skills/prompt-clarifier/` | Iteratively clarify ambiguous requests with adaptive questions before or during a task |
@@ -179,7 +180,7 @@ Several installed skills cross-link as companions — install related skills tog
 | Qt desktop | `qt-dev`, `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` | Widgets/CMake UI shell → C++ idioms → viewport/Vulkan integration → renderer architecture |
 | Kotlin/JVM | `kotlin-coding`, `kotlin-testing`, `gradle-dev`, `gradle-android-dev` | Language/stdlib/API design → test frameworks and flakes → Gradle build engineering → AGP variants, lint, R8 |
 | Android | `android-dev`, `android-ndk-dev`, `android-vulkan-dev`, `kotlin-coding`, `kotlin-testing`, `gradle-android-dev`, `vulkan-dev`, `gpu-rendering-guide` | App Kotlin/Compose → NDK/JNI → Android Vulkan → language/tests/AGP → generic Vulkan API → renderer architecture |
-| Git workflow | `commit-message-writer`, `git-guide`, `pull-request-guide`, `code-reviewer`, `github-guide` | Draft commit messages → git mechanics (commit/push/rebase/worktrees) → PR authoring → structured diff review → GitHub delivery (`gh pr create`, post review, resolve threads) |
+| Git workflow | `commit-message-writer`, `git-guide`, `git-merge-guide`, `pull-request-guide`, `code-reviewer`, `github-guide` | Draft commit messages → git mechanics (commit/push/rebase/worktrees) → deep local merge/rebase integration → PR authoring → structured diff review → GitHub delivery (`gh pr create`, post review, resolve threads) |
 | Codebase learning | `code-professor`, `plan-guide`, `debugging-guide`, `code-reviewer` | Onboarding and evidence-backed guides → implementation planning → verified defect repair → diff review |
 | Meeting notes | `minutes-writer`, `pull-request-guide`, `commit-message-writer` | Source-grounded minutes from transcripts → PR authoring → commit messages (does not create tickets or publish unless asked) |
 | Requirement clarification | `prompt-clarifier`, `research-guide`, `plan-guide`, `debugging-guide` | Resolve blocking ambiguity in the request → open-ended discovery when the idea itself is unformed → implementation plan → root-cause work on defects |

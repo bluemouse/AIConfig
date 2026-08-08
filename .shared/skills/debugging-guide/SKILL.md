@@ -1,6 +1,6 @@
 ---
 name: debugging-guide
-description: "Use when diagnosing a software defect before fixing it — reproducing or shrinking failures, tracing root cause with evidence, ranking hypotheses, choosing prevention-by-design tripwires, writing regression tests, applying a minimal fix, and verifying with commands. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, failing tests, build failures, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging and zero-on-shutdown leak checks, dangling-pointer crashes, buffer-overwrite classes, and integration failures — even when the user does not say debugging. Does not trigger on strict TDD coaching (test-driven-dev-guide), correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning (code-professor), profiling without a defect, ownership API design (cpp-memory-guide), or native GDB/LLDB steps while editing C++ (cpp-coding)."
+description: "Use when diagnosing a software defect before fixing it — reproducing or shrinking failures, tracing root cause with evidence, ranking hypotheses, choosing prevention-by-design tripwires, writing regression tests, applying a minimal fix, and verifying with commands. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, failing tests, build failures, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging, dangling-pointer crashes, buffer-overwrite classes, and unclear integration failures — even when the user does not say debugging. Does not trigger on active merge/rebase integration (git-merge-guide), strict TDD coaching (test-driven-dev-guide), correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning (code-professor), profiling without a defect, ownership API design (cpp-memory-guide), or native GDB/LLDB steps while editing C++ (cpp-coding)."
 ---
 
 # Debugging Guide
@@ -27,6 +27,10 @@ implementation plans.
 
 ## When NOT to Use
 
+- **Active local merge/rebase integration** — when
+  [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) is already driving conflict
+  resolution, integration review, and verification, stay there unless local evidence
+  shows the failure is not caused by branch interaction and root cause must be proven
 - **Strict TDD coaching during active implementation** — use
   [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md)
 - **Post-implementation correctness audit** — use
@@ -222,6 +226,10 @@ Before finishing, ensure:
 - unrelated changes are absent or explicitly justified;
 - exact verification commands and outcomes are reported;
 - temporary diagnostics are removed or intentionally retained as useful observability.
+
+When debugging was invoked from an active merge/rebase integration, return control to
+[../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) afterward so integration
+coordination, verification, and reporting can continue.
 
 ## Progressive disclosure
 

@@ -1,6 +1,10 @@
 ---
 name: pull-request-guide
-description: "Use when authoring a pull or merge request - writing the description, sizing and splitting the change, documenting how it was tested, surfacing tradeoffs, and getting it review-ready before assigning reviewers. Triggers on opening a PR/MR, PR descriptions or templates, large or atomic PRs, what to put in a PR, draft vs ready, stacked PRs, or self-review, even when the user doesn't say 'pull request'."
+description: Use when authoring a pull or merge request - writing the description,
+  sizing and splitting the change, documenting how it was tested, surfacing tradeoffs,
+  and getting it review-ready before assigning reviewers. Triggers on opening a PR/MR,
+  PR descriptions or templates, large or atomic PRs, what to put in a PR, draft vs
+  ready, stacked PRs, or self-review, even when the user doesn't say 'pull request'.
 ---
 
 # pull-request-guide wrapper for GitHub Copilot

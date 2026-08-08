@@ -60,6 +60,12 @@
     "rationale": "near-miss: git worktree mechanics -> git-guide"
   },
   {
+    "query": "dispatch parallel agents while i'm mid-rebase resolving conflicts",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: active merge/rebase integration -> git-merge-guide"
+  },
+  {
     "query": "optimize this skill description with run_loop.py",
     "should_trigger": false,
     "split": "train",

@@ -4,7 +4,8 @@ description: dispatch independent coding, debugging, research, or repository tas
   to isolated subagents and run them concurrently, then verify and integrate their
   results. use when a request contains two or more separable workstreams, multiple
   unrelated failures, independent files or subsystems, parallel read-only audits,
-  or explicit requests to delegate work across agents.
+  or explicit requests to delegate work across agents. does not trigger on active
+  merge/rebase integration (git-merge-guide) or structured diff review (code-reviewer).
 ---
 
 # agent-runner (GitHub Copilot)

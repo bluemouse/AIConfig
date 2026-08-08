@@ -1,6 +1,14 @@
 ---
 name: github-guide
-description: "Use when delivering a pull request and its review on GitHub (github.com or GitHub Enterprise Server) from the command line with the `gh` CLI and `gh api` \u2014 opening a PR with `gh pr create`, posting a structured review with line-anchored inline comments, resolving review threads, detecting that the host is GitHub from the git remote, and scoping a classic or fine-grained token. Triggers on a github.com / GHES remote, `gh pr create`, `gh api .../pulls/.../reviews`, an inline review comment by path+line, resolving a review thread (resolveReviewThread), REQUEST_CHANGES / branch-protection merge gating, or GH_TOKEN / GH_ENTERPRISE_TOKEN scopes \u2014 even when the user doesn't say 'gh' but the repo is hosted on GitHub."
+description: Use when delivering a pull request and its review on GitHub (github.com
+  or GitHub Enterprise Server) from the command line with the `gh` CLI and `gh api`
+  — opening a PR with `gh pr create`, posting a structured review with line-anchored
+  inline comments, resolving review threads, detecting that the host is GitHub from
+  the git remote, and scoping a classic or fine-grained token. Triggers on a github.com
+  / GHES remote, `gh pr create`, `gh api .../pulls/.../reviews`, an inline review
+  comment by path+line, resolving a review thread (resolveReviewThread), REQUEST_CHANGES
+  / branch-protection merge gating, or GH_TOKEN / GH_ENTERPRISE_TOKEN scopes — even
+  when the user doesn't say 'gh' but the repo is hosted on GitHub.
 ---
 
 # github-guide wrapper for Cursor

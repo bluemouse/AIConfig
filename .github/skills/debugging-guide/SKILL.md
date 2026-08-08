@@ -1,6 +1,18 @@
 ---
 name: debugging-guide
-description: "Use when diagnosing a software defect before fixing it \u2014 reproducing or shrinking failures, tracing root cause with evidence, ranking hypotheses, choosing prevention-by-design tripwires, writing regression tests, applying a minimal fix, and verifying with commands. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, failing tests, build failures, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging and zero-on-shutdown leak checks, dangling-pointer crashes, buffer-overwrite classes, and integration failures \u2014 even when the user does not say debugging. Does not trigger on strict TDD coaching (test-driven-dev-guide), correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning (code-professor), profiling without a defect, ownership API design (cpp-memory-guide), or native GDB/LLDB steps while editing C++ (cpp-coding)."
+description: Use when diagnosing a software defect before fixing it — reproducing
+  or shrinking failures, tracing root cause with evidence, ranking hypotheses, choosing
+  prevention-by-design tripwires, writing regression tests, applying a minimal fix,
+  and verifying with commands. Triggers on crashes, segfaults, access violations,
+  use-after-free, 0xdddddddd fill patterns, failing tests, build failures, regressions,
+  flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers,
+  allocation tagging, dangling-pointer crashes, buffer-overwrite classes, and unclear
+  integration failures — even when the user does not say debugging. Does not trigger
+  on active merge/rebase integration (git-merge-guide), strict TDD coaching (test-driven-dev-guide),
+  correctness audits (implementation-auditor), diff review (code-reviewer), plan execution
+  (plan-executor), codebase learning (code-professor), profiling without a defect,
+  ownership API design (cpp-memory-guide), or native GDB/LLDB steps while editing
+  C++ (cpp-coding).
 ---
 
 # debugging-guide wrapper for GitHub Copilot

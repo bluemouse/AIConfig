@@ -1,0 +1,134 @@
+[
+  {
+    "query": "rebase my feature branch onto main and resolve all the merge conflicts",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "rebase + conflict resolution end-to-end"
+  },
+  {
+    "query": "rebase my feature branch onto main and resolve the conflicts",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "rebase + conflict resolution end-to-end (shared boundary with git-guide near-miss)"
+  },
+  {
+    "query": "merge develop into my branch locally and help me resolve the conflicts",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "local merge with conflict resolution"
+  },
+  {
+    "query": "i'm mid-rebase with conflicts in three files — finish the rebase for me",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "resume active rebase with conflicts"
+  },
+  {
+    "query": "review the integrated code after merging these branches for cross-branch bugs",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "integration code review after merge"
+  },
+  {
+    "query": "generate a detailed merge report for this rebase",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "merge report output"
+  },
+  {
+    "query": "i've got a merge conflict in package-lock.json — help me resolve it",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: simple single-file triage, use git-guide"
+  },
+  {
+    "query": "merge the worktree back into main",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: worktree lifecycle, use git-guide"
+  },
+  {
+    "query": "create the merge commit with a good conventional commit message",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: final merge commit and message drafting belong to git-guide and commit-message-writer"
+  },
+  {
+    "query": "push my branch and rebase onto main before opening the PR",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: remote push/rebase, use git-guide"
+  },
+  {
+    "query": "create a worktree for the new auth feature",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: worktree lifecycle, use git-guide"
+  },
+  {
+    "query": "draft a conventional commit message for my staged changes",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: message drafting, use commit-message-writer"
+  },
+  {
+    "query": "review this diff and tell me if the logic is correct",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: general code review, use code-reviewer"
+  },
+  {
+    "query": "audit whether my implementation meets the requirements and run the test suite",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: implementation audit, use implementation-auditor"
+  },
+  {
+    "query": "git fetch origin and pull the latest main",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: remote operations forbidden by this skill"
+  },
+  {
+    "query": "there are conflict markers in auth.ts from a merge — figure out the right semantic resolution and run affected tests",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "semantic conflict resolution + verification"
+  },
+  {
+    "query": "continue my in-progress merge and verify the combined code compiles and tests pass",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "active merge + integration verification"
+  },
+  {
+    "query": "what does git rebase --onto do",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: general git explanation, not integration work"
+  },
+  {
+    "query": "debug why this single test fails after my last commit",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: defect debugging outside active integration, use debugging-guide"
+  },
+  {
+    "query": "i'm in a feature worktree mid-rebase — resolve the conflicts and verify the integrated code",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "integration inside existing worktree is in scope; worktree lifecycle is not"
+  },
+  {
+    "query": "a required affected test is failing during merge verification but i can't tell if branch interaction caused it — prove the root cause",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: unclear failure root cause, use debugging-guide first"
+  },
+  {
+    "query": "just pick ours for the import conflict and stage it",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: simple mechanical triage, use git-guide"
+  }
+]

@@ -7,9 +7,15 @@
   },
   {
     "query": "rebase my feature branch onto main and resolve the conflicts",
-    "should_trigger": true,
+    "should_trigger": false,
     "split": "train",
-    "rationale": "rebase + conflict resolution"
+    "rationale": "near-miss: deep merge/rebase integration, use git-merge-guide"
+  },
+  {
+    "query": "merge develop into my branch locally and help me resolve the conflicts",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: local merge integration with conflict resolution, use git-merge-guide"
   },
   {
     "query": "create a worktree for the new auth feature",
@@ -78,10 +84,28 @@
     "rationale": "near-miss: message drafting is commit-message-writer; git mechanics alone would trigger"
   },
   {
+    "query": "review the integrated code after merging these branches for cross-branch bugs",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: integration review, use git-merge-guide"
+  },
+  {
     "query": "abandon this feature worktree and document why",
     "should_trigger": true,
     "split": "validation",
     "rationale": "worktree abandon"
+  },
+  {
+    "query": "create the merge commit for my staged merge result",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "final merge commit mechanics"
+  },
+  {
+    "query": "just pick ours for the import conflict and stage it",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "simple mechanical conflict triage"
   },
   {
     "query": "run gh pr create to open the PR on GitHub",

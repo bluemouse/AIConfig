@@ -1,6 +1,13 @@
 ---
 name: code-reviewer
-description: "Review git diffs and commits \u2014 staged, unstaged, branch, working tree, commit, or range \u2014 and return a structured, findings-first report with proposed fixes. Use when reviewing code, diffs, branch changes, or pre-push commits, or for security/performance/design/test review of recent changes \u2014 even without saying \"code review\" (e.g. \"check this diff\", \"review my branch against main\"). Supports six scopes, three effort levels, and interactive mode (\"review interactively\"). Does not trigger on codebase learning guides (code-professor)."
+description: Review git diffs and commits — staged, unstaged, branch, working tree,
+  commit, or range — and return a structured, findings-first report with proposed
+  fixes. Use when reviewing code, diffs, branch changes, or pre-push commits, or for
+  security/performance/design/test review of recent changes — even without saying
+  "code review" (e.g. "check this diff", "review my branch against main"). Supports
+  six scopes, three effort levels, and interactive mode ("review interactively").
+  Does not trigger on active local merge/rebase integration review (git-merge-guide)
+  or codebase learning guides (code-professor).
 ---
 
 # code-reviewer (Cursor)

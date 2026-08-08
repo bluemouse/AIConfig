@@ -13,6 +13,7 @@ How to realize a pull request and its review on GitHub from the shell. This is t
 - _What the review finds and how severe it is_ (findings, scopes, merge readiness) belongs to **[code-reviewer](../code-reviewer/SKILL.md)**.
 - _What a good PR description says_ (sizing, how-tested, tradeoffs, self-review) belongs to **[pull-request-guide](../pull-request-guide/SKILL.md)**.
 - _The local-git push and rebase_ that get a clean branch onto the remote belong to **[git-guide](../git-guide/SKILL.md)**'s push reference.
+- _Complex local merge/rebase integration_ (semantic conflicts, integration review, verification) belongs to **[git-merge-guide](../git-merge-guide/SKILL.md)**.
 
 This skill only takes those finished artifacts and posts them through `gh` / `gh api`.
 
@@ -30,8 +31,10 @@ This skill only takes those finished artifacts and posts them through `gh` / `gh
   [code-reviewer](../code-reviewer/SKILL.md)
 - **Writing PR descriptions, sizing, or self-review narrative** — use
   [pull-request-guide](../pull-request-guide/SKILL.md)
-- **Commit, push, rebase, conflicts, or worktrees** — use
+- **Commit, push, rebase, worktrees, simple conflict triage, final merge commit** — use
   [git-guide](../git-guide/SKILL.md)
+- **Complex local merge/rebase integration** — use
+  [git-merge-guide](../git-merge-guide/SKILL.md)
 - **Non-GitHub hosts** (GitLab, Azure DevOps, etc.) — use that host's tooling when installed
 
 ## Core model
@@ -168,4 +171,5 @@ Each reference is a trigger — read only the one matching the user's intent; do
 | --- | --- |
 | Review diff / produce findings | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
 | PR description, sizing, self-review | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |
-| Commit, push, rebase, worktrees | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
+| Commit, push, rebase, worktrees, simple conflict triage | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
+| Local merge/rebase integration and verification | [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) |

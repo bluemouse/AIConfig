@@ -22,8 +22,10 @@ the task requires them.
 
 ## When NOT to Use
 
-- **Git mechanics** (commit, push, rebase, worktrees, conflicts) — use
-  [git-guide](../git-guide/SKILL.md)
+- **Git mechanics** (commit, push, rebase, worktrees, simple conflict triage, final merge
+  commit) — use [git-guide](../git-guide/SKILL.md)
+- **Complex local merge/rebase integration** (semantic conflicts, integration review,
+  verification) — use [git-merge-guide](../git-merge-guide/SKILL.md)
 - **Drafting Conventional Commit messages** — use
   [commit-message-writer](../commit-message-writer/SKILL.md)
 - **Reviewer-side feedback or structured diff review** — use
@@ -97,6 +99,7 @@ Part of the flag-perf set: !123, !124.
 
 | Task | Path |
 |------|------|
-| Git commit, push, rebase, worktrees | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
+| Git commit, push, rebase, worktrees, simple conflict triage | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
+| Local merge/rebase integration and verification | [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) |
 | Draft Conventional Commit messages | [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) |
 | Reviewer-side structured diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |

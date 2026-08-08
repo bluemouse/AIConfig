@@ -72,6 +72,18 @@
     "rationale": "prevention reflection: never-free hides bugs; proper teardown exposes them"
   },
   {
+    "query": "a required affected test is failing during merge verification but i can't tell if branch interaction caused it — prove the root cause",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "unclear integration failure: prove root cause before returning to git-merge-guide"
+  },
+  {
+    "query": "i'm mid-rebase with conflicts — resolve them and verify the integrated code",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: active merge/rebase integration -> git-merge-guide"
+  },
+  {
     "query": "guide me through strict red-green-refactor for this bug fix — write the failing test first",
     "should_trigger": false,
     "split": "train",

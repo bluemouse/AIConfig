@@ -1,6 +1,6 @@
 ---
 name: agent-runner
-description: dispatch independent coding, debugging, research, or repository tasks to isolated subagents and run them concurrently, then verify and integrate their results. use when a request contains two or more separable workstreams, multiple unrelated failures, independent files or subsystems, parallel read-only audits, or explicit requests to delegate work across agents.
+description: dispatch independent coding, debugging, research, or repository tasks to isolated subagents and run them concurrently, then verify and integrate their results. use when a request contains two or more separable workstreams, multiple unrelated failures, independent files or subsystems, parallel read-only audits, or explicit requests to delegate work across agents. does not trigger on active merge/rebase integration (git-merge-guide) or structured diff review (code-reviewer).
 ---
 
 # Agent Runner
@@ -24,6 +24,9 @@ Delegate one independent problem domain per subagent. Give every subagent only t
 - **Skill or agent eval loops** — use [../skill-creator/SKILL.md](../skill-creator/SKILL.md) or [../agent-creator/SKILL.md](../agent-creator/SKILL.md)
 - **Research/plan harness orchestration** — use [../research-plan-harness/SKILL.md](../research-plan-harness/SKILL.md) for the fixed multi-role research → plan pipeline
 - **Git worktree mechanics alone** — use [../git-guide/SKILL.md](../git-guide/SKILL.md); this skill may reference worktrees for isolation but does not replace git-guide
+- **Active local merge/rebase integration** — use
+  [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md); while that operation is active,
+  allow only read-only investigation here
 - **Single sequential task** with no parallelizable domains
 
 ## Required behavior
@@ -60,7 +63,7 @@ Use the strongest isolation available:
 2. Disjoint file or directory ownership in one workspace.
 3. Read-only subagents that return findings or patches for the parent to apply.
 
-Never let multiple agents concurrently edit the same files. Never let subagents commit, merge, push, publish, deploy, delete shared resources, or change global configuration unless the user explicitly requested it and each agent has a unique target.
+Never let multiple agents concurrently edit the same files. Never let subagents commit, merge, push, publish, deploy, delete shared resources, or change global configuration unless the user explicitly requested it and each agent has a unique target. If a merge/rebase operation is active in the repository, do not dispatch writing agents against that operation state; hand Git integration to [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md).
 
 ### 3. Create task packets
 

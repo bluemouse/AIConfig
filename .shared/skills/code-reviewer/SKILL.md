@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Review git diffs and commits — staged, unstaged, branch, working tree, commit, or range — and return a structured, findings-first report with proposed fixes. Use when reviewing code, diffs, branch changes, or pre-push commits, or for security/performance/design/test review of recent changes — even without saying "code review" (e.g. "check this diff", "review my branch against main"). Supports six scopes, three effort levels, and interactive mode ("review interactively"). Does not trigger on codebase learning guides (code-professor).
+description: Review git diffs and commits — staged, unstaged, branch, working tree, commit, or range — and return a structured, findings-first report with proposed fixes. Use when reviewing code, diffs, branch changes, or pre-push commits, or for security/performance/design/test review of recent changes — even without saying "code review" (e.g. "check this diff", "review my branch against main"). Supports six scopes, three effort levels, and interactive mode ("review interactively"). Does not trigger on active local merge/rebase integration review (git-merge-guide) or codebase learning guides (code-professor).
 ---
 
 # Code Reviewer
@@ -26,6 +26,10 @@ every review, not optional depth reading.
 
 ## When NOT to Use
 
+- **Active local merge/rebase integration review** — when
+  [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) is driving semantic conflict
+  resolution, integration review of cleanly merged code, and affected-test verification,
+  stay there. Use this skill afterward for an optional read-only final diff review.
 - **Open-ended codebase learning, onboarding, or architecture guides** — use
   [../code-professor/SKILL.md](../code-professor/SKILL.md) when there is no change set to review
 
@@ -440,6 +444,7 @@ tooling when available.
 
 | Task | Path |
 | --- | --- |
+| Local merge/rebase integration and verification | [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) |
 | Pre-review correctness audit | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |
 | Post review to GitHub (`gh api`, inline comments, resolve threads) | [../github-guide/SKILL.md](../github-guide/SKILL.md) |
 | PR description, sizing, self-review | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |
