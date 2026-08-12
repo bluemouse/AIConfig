@@ -36,6 +36,12 @@
     "rationale": "direct: challenge conclusions"
   },
   {
+    "query": "grill this research report and help us resolve its planning decisions",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: interactive report grilling"
+  },
+  {
     "query": "hard review of the architecture research — compliance-sensitive domain",
     "should_trigger": true,
     "split": "train",

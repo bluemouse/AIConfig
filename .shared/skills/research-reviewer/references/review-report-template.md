@@ -75,16 +75,23 @@ Use this structure for the final review-report. Adapt only when sections are irr
 ### Optional cleanup
 1. [Minor improvement]
 
-## 7. Prior review disposition
+## 7. Grilling decision record
+[Include only when Grilling Mode was used.]
+- Grilling status: completed | stopped by user
+| question | chosen option | recommendation | rationale | accepted risk or follow-up |
+|----------|---------------|----------------|-----------|----------------------------|
+| Q1 |  |  |  |  |
+
+## 8. Prior review disposition
 [Include only for re-review.]
 | prior finding | disposition | evidence in updated report | remaining concern |
 |---------------|-------------|----------------------------|-------------------|
 | rr-001 | resolved / partially resolved / accepted risk / rejected with rationale / still blocking / reopened |  |  |
 
-## 8. Research handoff packet
+## 9. Research handoff packet
 [Required for needs revision, blocked, and unaccepted conditionally ready verdicts. Use `research-guide-handoff-contract.md`. Omit only when verdict is ready, or when conditionally ready risks are already explicitly accepted.]
 
-## 9. Final readiness assessment
+## 10. Final readiness assessment
 [One concise paragraph explaining whether the report can be consumed for implementation planning and under what conditions.]
 
 Review gate: choose one:

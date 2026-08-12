@@ -1,6 +1,6 @@
 ---
 name: research-reviewer
-description: "Use when reviewing, auditing, re-reviewing, or validating a research report produced by research-guide or similar discovery workflows before implementation planning — assessing completeness, consistency, evidence quality, risk awareness, and planning readiness across product, user, technical, security, data, compliance, operations, or domain-specific concerns. Triggers on prompts to review a research report, validate requirements, audit assumptions, challenge conclusions, find gaps, assign severity, disposition prior findings, produce required revisions, or decide whether a report is ready for an implementation plan — even when the user doesn't say 'research review'. Does not trigger on brainstorming new ideas, codebase learning guides (code-professor), implementation plan authoring, plan-reviewer audit, or code diff review."
+description: "Use when reviewing, auditing, re-reviewing, grilling, or validating a research report produced by research-guide or similar discovery workflows before implementation planning — assessing completeness, consistency, evidence quality, risk awareness, and planning readiness across product, user, technical, security, data, compliance, operations, or domain-specific concerns. Triggers on prompts to review or grill a research report, validate requirements, audit assumptions, challenge conclusions, find gaps, assign severity, disposition prior findings, produce required revisions, or decide whether a report is ready for an implementation plan — even when the user doesn't say 'research review'. Does not trigger on brainstorming new ideas, codebase learning guides (code-professor), implementation plan authoring, plan-reviewer audit, or code diff review."
 ---
 
 # Research Reviewer
@@ -14,12 +14,15 @@ Use this skill to review a research report before it is consumed by an implement
 
 Your job is to **audit a research report and produce a review-report**, not to write implementation plans, revise the source report silently, or review code diffs. Review it, score it, and explain what must change unless the user asks for a revised research report.
 
+Use Grilling Mode to resolve material decisions through sequenced questions before the final verdict for standard and rigorous reviews, unless the user explicitly requests no grilling. Do not use it for focused reviews unless the user explicitly requests it.
+
 ## When to Use
 
 - Reviewing or auditing an existing research report before implementation planning
 - Validating requirements, assumptions, evidence, and risks in a discovery artifact
 - Assigning severity to gaps and deciding whether planning can proceed
 - Domain-specialist review of a research report (graphics, security, compliance, etc.)
+- Interactive grilling of a report's material assumptions or unresolved decisions
 
 ## When NOT to Use
 
@@ -132,17 +135,33 @@ Every material finding must include:
 
 Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `ready`, `conditionally ready`, `needs revision`, or `blocked`. Never rubber-stamp a ready verdict when core scope, target users, recommendation, acceptance criteria, evidence/assumption separation, implementation handoff, or blocking open questions are missing.
 
-### 6. Self-review before handoff
+### 6. Run Grilling Mode
+
+Run Grilling Mode for standard and rigorous reviews by default. Skip it for focused reviews unless the user explicitly requests it. Skip it at any depth when the user explicitly requests no grilling. It supplements the audit; it does not replace evidence gathering, severity assignment, or the final verdict.
+
+Build a decision tree from blocker and major findings, material questions, contradictions, and high-impact assumptions. Work the tree in rounds. The frontier contains only decisions whose prerequisites are settled. Ask every independent frontier question in the current round, then wait for the user's answers before asking a subsequent round.
+
+For each question:
+- Ask for a user decision only when it cannot be established from available evidence. Investigate repository and external facts directly instead of asking the user to find them.
+- Provide one or two defensible substantive answer options plus a `stop grilling` option. Never exceed three options total or invent substantive options merely to fill the limit.
+- Mark exactly one substantive option as **Recommended** and state the evidence or trade-off supporting it.
+- Treat `stop grilling` as an instruction to end Grilling Mode immediately, preserve remaining decisions as findings or open questions, and continue the audit without further grilling.
+- Keep dependent questions for a later round; do not assume answers to questions that remain open.
+- Record the answer, its rationale, and any accepted risk in the review report.
+
+Use [references/grilling-protocol.md](references/grilling-protocol.md) for the question format, decision-tree rules, and completion criteria.
+
+### 7. Self-review before handoff
 
 Before presenting the report, run [references/review-quality-checklist.md](references/review-quality-checklist.md). Fix the report inline when the checklist catches a mismatch between severity, verdict, gate, or handoff content.
 
-### 7. Produce the review-report
+### 8. Produce the review-report
 
 Use [references/review-report-template.md](references/review-report-template.md) as the default structure. Keep the report concise but specific enough for the author to revise the research report.
 
 For `needs revision` and `blocked` verdicts — and for `conditionally ready` when the conditions are not already accepted — include a handoff packet using [references/research-guide-handoff-contract.md](references/research-guide-handoff-contract.md). The packet gives [../research-guide/SKILL.md](../research-guide/SKILL.md) a concrete, prioritized revision path back to planning readiness without re-reading the full review. State whether re-review is required before planning.
 
-### 8. End with a review gate
+### 9. End with a review gate
 
 End with exactly one gate unless the user requested only a final audit:
 
