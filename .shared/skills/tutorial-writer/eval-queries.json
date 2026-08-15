@@ -1,0 +1,122 @@
+[
+  {
+    "query": "Write a beginner tutorial that uses our Python SDK to upload a document and verify the returned job status.",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Direct request for an example-driven SDK tutorial with observable results."
+  },
+  {
+    "query": "Turn this README and sample project into a getting-started guide for deploying the service locally.",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Direct request to derive a practical guide from supplied technical material."
+  },
+  {
+    "query": "Review this Kubernetes onboarding tutorial: new users get lost after the install step and the commands have no expected output.",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Tutorial review focused on learning flow and verification evidence."
+  },
+  {
+    "query": "Create a walkthrough that evolves a simple OAuth login into a production-ready web integration with tests and token refresh.",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Requests a progressive running example from first success to professional use."
+  },
+  {
+    "query": "Draft a user guide for our CLI's common project, configuration, and deployment tasks, beginning with the fastest quickstart.",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Direct request for a task-oriented user guide with a quickstart."
+  },
+  {
+    "query": "Explain this event-driven architecture as a hands-on lesson, including a diagram after readers have built the first working flow.",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Example-based concept lesson with a purpose-driven visual."
+  },
+  {
+    "query": "Rewrite this API guide for newcomers. Keep its facts, but replace the long introduction with a runnable first request and response.",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "Direct tutorial rewrite request preserving source fidelity."
+  },
+  {
+    "query": "Make a practical tutorial that shows how to add rate-limit handling to our Java client, using the attached API documentation.",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "Source-backed technical tutorial with a realistic requirement."
+  },
+  {
+    "query": "Write a quickstart for our REST API with curl examples and expected JSON responses for each step.",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "Direct quickstart request with observable command/output evidence."
+  },
+  {
+    "query": "Improve this how-to so each step shows the command, the expected output, and only the explanation needed at that point.",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "Guide revision focused on example-first teaching flow."
+  },
+  {
+    "query": "What does the retryPolicy property do in this SDK?",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "A narrow API reference question does not require a learning path."
+  },
+  {
+    "query": "Fix the failing authentication test in our Node service.",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "Implementation and debugging work, not guide authoring."
+  },
+  {
+    "query": "Write release notes for version 4.2.0 with a customer-friendly summary of the changes.",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "Release-note and marketing-adjacent writing is outside tutorial scope."
+  },
+  {
+    "query": "Document every REST endpoint, parameter, and response code in our API.",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "Comprehensive reference documentation lacks a requested tutorial outcome."
+  },
+  {
+    "query": "Explore this unfamiliar repo and write an architecture guide for new engineers joining the team.",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: codebase onboarding guide -> code-professor"
+  },
+  {
+    "query": "Research whether we should adopt OAuth2 or SAML for our product and summarize the tradeoffs.",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: open-ended product research -> research-guide"
+  },
+  {
+    "query": "I'm not sure whether I need a tutorial, a reference page, or a blog post — help me figure out the right doc format first.",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: ambiguous authoring scope -> prompt-clarifier"
+  },
+  {
+    "query": "Summarize this design proposal in five bullets for the engineering team.",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "A general summary is not an example-driven tutorial or user guide."
+  },
+  {
+    "query": "Create a Mermaid sequence diagram of our existing payment flow without writing a guide.",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "An isolated diagram request is outside the skill's teaching workflow."
+  },
+  {
+    "query": "Review this pull request for security and regression risk before merge.",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: code review -> code-reviewer"
+  }
+]

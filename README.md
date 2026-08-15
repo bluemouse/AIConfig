@@ -67,6 +67,7 @@ repo/
 │   ├── implementation-auditor/        # Evidence-based correctness audit
 │   ├── test-driven-dev-guide/         # Strict TDD red-green-refactor coaching
 │   ├── debugging-guide/               # Systematic root-cause debugging and minimal verified repair
+│   ├── tutorial-writer/               # Example-driven tutorials, quickstarts, and user guides
 │   ├── cpp-coding/                    # C++20 coding guidelines
 │   ├── cpp-memory-guide/              # C++20 memory design and allocators
 │   ├── cpp-testing/                   # C++20 GoogleTest/CMake testing
@@ -149,6 +150,7 @@ Bootstrap skills live under `skills/`. Installing one copies content to `.shared
 | `implementation-auditor` | `skills/implementation-auditor/` | Evidence-based correctness audit with requirement mapping and fresh test/build evidence |
 | `test-driven-dev-guide` | `skills/test-driven-dev-guide/` | Strict TDD red-green-refactor coaching with real command evidence |
 | `debugging-guide` | `skills/debugging-guide/` | Systematic root-cause debugging with evidence, regression tests, and minimal verified repair |
+| `tutorial-writer` | `skills/tutorial-writer/` | Write, revise, and review example-driven tutorials, quickstarts, walkthroughs, and user guides |
 | `cpp-coding` | `skills/cpp-coding/` | C++20 coding against Core Guidelines |
 | `cpp-memory-guide` | `skills/cpp-memory-guide/` | C++20 memory design: RAII, allocators, PMR, sanitizers |
 | `cpp-testing` | `skills/cpp-testing/` | C++20 GoogleTest/CMake testing |
@@ -183,7 +185,7 @@ Several installed skills cross-link as companions — install related skills tog
 | Kotlin/JVM | `kotlin-coding`, `kotlin-testing`, `gradle-dev`, `gradle-android-dev` | Language/stdlib/API design → test frameworks and flakes → Gradle build engineering → AGP variants, lint, R8 |
 | Android | `android-dev`, `android-ndk-dev`, `android-vulkan-dev`, `kotlin-coding`, `kotlin-testing`, `gradle-android-dev`, `vulkan-dev`, `gpu-rendering-guide` | App Kotlin/Compose → NDK/JNI → Android Vulkan → language/tests/AGP → generic Vulkan API → renderer architecture |
 | Git workflow | `commit-message-writer`, `git-guide`, `git-merge-guide`, `pull-request-guide`, `code-reviewer`, `github-guide` | Draft commit messages → git mechanics (commit/push/rebase/worktrees) → deep local merge/rebase integration → PR authoring → structured diff review → GitHub delivery (`gh pr create`, post review, resolve threads) |
-| Codebase learning | `code-professor`, `plan-guide`, `debugging-guide`, `code-reviewer` | Onboarding and evidence-backed guides → implementation planning → verified defect repair → diff review |
+| Codebase learning | `code-professor`, `tutorial-writer`, `plan-guide`, `debugging-guide`, `code-reviewer` | Evidence-backed codebase onboarding → example-driven tutorials and user guides → implementation planning → verified defect repair → diff review |
 | Meeting notes | `minutes-writer`, `pull-request-guide`, `commit-message-writer` | Source-grounded minutes from transcripts → PR authoring → commit messages (does not create tickets or publish unless asked) |
 | Requirement clarification | `prompt-clarifier`, `research-guide`, `plan-guide`, `debugging-guide` | Resolve blocking ambiguity in the request → open-ended discovery when the idea itself is unformed → implementation plan → root-cause work on defects |
 | Decision deliberation | `advisory-council`, `devil-advocate`, `prompt-clarifier`, `research-guide`, `plan-reviewer` | Clarify ambiguous decisions → council debate for multi-perspective synthesis → adversarial stress-test with proceed/rework/reject verdict → research and plan-audit companions |
