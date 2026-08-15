@@ -51,14 +51,14 @@
 
 ## 5. Widgets UI/UX design
 
-- Use layouts and size policies; do not hardcode pixel geometry.
-- Respect platform conventions for menu placement, shortcuts, dialogs, and window modality.
-- Provide keyboard shortcuts for frequent render-tool actions.
-- Add accessible names/descriptions for custom controls and viewport-adjacent controls.
-- Use dock widgets for inspectors, logs, scene tree, asset browser, and render settings.
-- Keep destructive actions confirmable and undoable where practical.
-- Avoid styling every widget with style sheets; prefer native style, palette, and targeted custom widgets.
+For UI/UX critique, workflow redesign, accessibility audits, or `.ui` authoring, use
+[qt-ui-guide](../../qt-ui-guide/SKILL.md). In implementation reviews, verify the UI follows
+project conventions and these render-tool-specific constraints:
+
 - Do not place translucent floating widgets over a native render window container; use renderer overlays or adjacent Qt panels.
+- Add accessible names/descriptions for custom controls and viewport-adjacent controls.
+- Provide keyboard shortcuts for frequent render-tool actions via `QAction` and `QKeySequence::StandardKey`.
+- Keep destructive actions confirmable and undoable where practical.
 
 ## 6. Model/view and data binding
 

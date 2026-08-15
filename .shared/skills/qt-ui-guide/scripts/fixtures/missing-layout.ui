@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MissingLayoutDialog</class>
+ <widget class="QDialog" name="MissingLayoutDialog">
+  <widget class="QLineEdit" name="nameEdit"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,6 +1,12 @@
 ---
 name: qt-dev
-description: "Write, review, debug, and explain Qt 6 desktop C++ applications with Widgets/Designer UI and CMake builds for graphics tools that host Vulkan or Metal renderers. Use when working on QApplication, QMainWindow, QAction, layouts, docks, .ui files, qt_add_executable, qt_standard_project_setup, QVulkanWindow, QVulkanInstance, QWidget::createWindowContainer, QRhiWidget, Qt Test, QSignalSpy, qt-cmake, or embedding render viewports in a Linux/Windows/macOS desktop app \u2014 even if the user says \"Qt help\" without naming Widgets. Qt 6 only, CMake only, Widgets only (no QML/Qt Quick)."
+description: Write, review, debug, and explain Qt 6 desktop C++ applications with
+  Widgets/Designer UI and CMake builds for graphics tools that host Vulkan or Metal
+  renderers. Use when working on QApplication, QMainWindow, QAction, layouts, docks,
+  .ui files, qt_add_executable, qt_standard_project_setup, QVulkanWindow, QVulkanInstance,
+  QWidget::createWindowContainer, QRhiWidget, Qt Test, QSignalSpy, qt-cmake, or embedding
+  render viewports in a Linux/Windows/macOS desktop app — even if the user says "Qt
+  help" without naming Widgets. Qt 6 only, CMake only, Widgets only (no QML/Qt Quick).
 ---
 
 # qt-dev wrapper for Cursor

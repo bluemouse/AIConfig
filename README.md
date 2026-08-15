@@ -78,6 +78,7 @@ repo/
 │   ├── mypaint-engine-dev/            # MyPaint/libmypaint brush engine and tiled surfaces
 │   ├── python-coding/                 # Python 3.12+ CLI scripts and utilities
 │   ├── qt-dev/                        # Qt 6 Widgets/CMake desktop UI for render tools
+│   ├── qt-ui-guide/                   # Qt Widgets UI/UX design, review, and .ui authoring
 │   ├── vulkan-dev/                    # Vulkan 1.3 development
 │   └── slang-dev/                     # Slang shader development (SPIR-V / MSL)
 ├── agents/                            # Optional bootstrap agents (author here, then install)
@@ -159,6 +160,7 @@ Bootstrap skills live under `skills/`. Installing one copies content to `.shared
 | `mypaint-engine-dev` | `skills/mypaint-engine-dev/` | MyPaint/libmypaint brush engine, `.myb` presets, dab scheduling, tiled surfaces, parity testing |
 | `python-coding` | `skills/python-coding/` | Python 3.12+ CLI scripts: argparse, pyproject.toml, ruff, pyright, pytest |
 | `qt-dev` | `skills/qt-dev/` | Qt 6 Widgets/CMake desktop UI for Vulkan/Metal render tools |
+| `qt-ui-guide` | `skills/qt-ui-guide/` | Qt Widgets UI/UX design, review, accessibility, and `.ui` authoring |
 | `vulkan-dev` | `skills/vulkan-dev/` | Vulkan 1.3 development, validation, and performance triage |
 | `slang-dev` | `skills/slang-dev/` | Slang shader authoring and C++ host integration (SPIR-V / MSL) |
 | `shader-guide` | `skills/shader-guide/` | Creative GLSL effects: SDF, ray marching, procedural generation, lighting, simulation, post |
@@ -177,7 +179,7 @@ Several installed skills cross-link as companions — install related skills tog
 | C++ | `cpp-coding`, `cpp-memory-guide`, `cpp-testing`, `cpp-performance-guide`, `cmake-dev` | CMake build graph → style and concurrency → CPU memory/ownership → GoogleTest/CTest → measurement-driven optimization |
 | GPU rendering | `gpu-rendering-guide`, `vulkan-dev`, `slang-dev`, `shader-guide`, `glsl-coding`, `usd-hydra2-dev` | Renderer architecture → `Vk*` implementation → Slang shaders → creative GLSL effects / GLSL language → OpenUSD Hydra 2.0 scene-index consumption |
 | Painting engines | `mypaint-engine-dev`, `krita-engine-dev`, `gpu-rendering-guide` | App-specific stroke/dab paths (MyPaint or Krita) → tiled compositing and parity → GPU surface/display strategy |
-| Qt desktop | `qt-dev`, `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` | Widgets/CMake UI shell → C++ idioms → viewport/Vulkan integration → renderer architecture |
+| Qt desktop | `qt-dev`, `qt-ui-guide`, `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` | UI/UX design and `.ui` review → Widgets/CMake implementation → C++ idioms → viewport/Vulkan integration → renderer architecture |
 | Kotlin/JVM | `kotlin-coding`, `kotlin-testing`, `gradle-dev`, `gradle-android-dev` | Language/stdlib/API design → test frameworks and flakes → Gradle build engineering → AGP variants, lint, R8 |
 | Android | `android-dev`, `android-ndk-dev`, `android-vulkan-dev`, `kotlin-coding`, `kotlin-testing`, `gradle-android-dev`, `vulkan-dev`, `gpu-rendering-guide` | App Kotlin/Compose → NDK/JNI → Android Vulkan → language/tests/AGP → generic Vulkan API → renderer architecture |
 | Git workflow | `commit-message-writer`, `git-guide`, `git-merge-guide`, `pull-request-guide`, `code-reviewer`, `github-guide` | Draft commit messages → git mechanics (commit/push/rebase/worktrees) → deep local merge/rebase integration → PR authoring → structured diff review → GitHub delivery (`gh pr create`, post review, resolve threads) |

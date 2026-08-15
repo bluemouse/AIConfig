@@ -106,7 +106,7 @@ When reviewing code, inspect in this order:
 2. Ownership/lifetime: QObject parents, RAII, render thread shutdown, surface/swapchain lifetime.
 3. Threading: widgets only on GUI thread, queued connections across threads, no unsynchronized shared containers.
 4. API correctness: signals/slots, model/view contracts, event handlers call base where needed.
-5. UI/UX: layouts, keyboard navigation, actions/shortcuts, accessibility names, persistent geometry/settings.
+5. UI implementation checks: verify layouts/size policies, keyboard shortcuts via `QAction`, accessible names on viewport-adjacent controls, and persistent geometry/settings. For UI/UX critique or redesign, use [qt-ui-guide](../../qt-ui-guide/SKILL.md).
 6. Rendering integration: chosen path is appropriate, high-DPI handled, validation/capture enabled, no excessive readbacks.
 7. Performance: no heavy work in `paintEvent`, `resizeEvent`, `data()`, or hot signal handlers.
 8. Tests: CTest targets, model/controller coverage, smoke tests for viewport and shutdown.

@@ -31,6 +31,7 @@ load all reference files unless the task requires them.
 - **GoogleTest/GoogleMock-only test setups** — use [cpp-testing](../cpp-testing/SKILL.md)
 - **Vulkan device/memory/barriers/pipelines inside the engine** — use [vulkan-dev](../vulkan-dev/SKILL.md)
 - **Render graph, bindless, GPU-driven architecture** — use [gpu-rendering-guide](../gpu-rendering-guide/SKILL.md)
+- **UI/UX design, mockup critique, workflow redesign, accessibility review, or `.ui` authoring** — use [qt-ui-guide](../qt-ui-guide/SKILL.md)
 
 ## Operating model
 
@@ -194,6 +195,7 @@ For reviews:
 - [SOURCES.md](SOURCES.md) — Provenance (read for attribution only)
 
 Companion skills: [cpp-coding](../cpp-coding/SKILL.md), [cpp-testing](../cpp-testing/SKILL.md),
-[vulkan-dev](../vulkan-dev/SKILL.md), [gpu-rendering-guide](../gpu-rendering-guide/SKILL.md)
+[vulkan-dev](../vulkan-dev/SKILL.md), [gpu-rendering-guide](../gpu-rendering-guide/SKILL.md),
+[qt-ui-guide](../qt-ui-guide/SKILL.md)
 
 External reference: [Build with CMake](https://doc.qt.io/qt-6/cmake-manual.html)

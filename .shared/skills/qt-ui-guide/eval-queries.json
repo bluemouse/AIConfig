@@ -1,0 +1,98 @@
+[
+  {
+    "query": "critique this settings dialog mockup for keyboard focus order and accessibility before we implement it",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: UI/UX mockup critique with accessibility and keyboard focus"
+  },
+  {
+    "query": "redesign our export workflow dialog with QFormLayout and QDialogButtonBox in a new .ui file",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: workflow redesign and Qt Designer .ui authoring"
+  },
+  {
+    "query": "review this MainWindow.ui for layout-managed resizing, splitter behavior, and dock-friendly central-widget structure",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: existing main-window .ui review for layout and pane structure"
+  },
+  {
+    "query": "what widget should I use for a hierarchical project browser with keyboard navigation and multi-selection",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: Qt Widgets control selection and interaction design"
+  },
+  {
+    "query": "write a UI specification for a properties inspector panel with empty, loading, and error states",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: UI spec template and state design"
+  },
+  {
+    "query": "this icon-only toolbar button has no accessible name — how should I fix it in Qt Widgets",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: accessibility fix for Qt Widgets controls"
+  },
+  {
+    "query": "how should this dense desktop tool split navigation, editor, and output panes with QSplitter and QDockWidget",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: information architecture and Qt container patterns"
+  },
+  {
+    "query": "validate and fix tab order in my PreferencesDialog.ui",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: .ui editing with focus-order concerns"
+  },
+  {
+    "query": "review screenshot of our file-open panel — the primary action is hard to find and labels clip at 125% font scale",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: screenshot critique with hierarchy and font-scaling issues"
+  },
+  {
+    "query": "scaffold a Qt 6 Widgets desktop app with CMake qt_add_executable and AUTOUIC for my MainWindow.ui",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "negative: CMake project setup and AUTOUIC -> qt-dev"
+  },
+  {
+    "query": "embed my Vulkan engine viewport in a QWidget UI using createWindowContainer and QVulkanInstance",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "negative: render viewport integration -> qt-dev"
+  },
+  {
+    "query": "write a Qt Test with QSignalSpy for my SceneModel rowsInserted signal",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "negative: Qt Test patterns -> qt-dev"
+  },
+  {
+    "query": "explain C++20 concepts and std::span for a non-Qt header-only library",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "negative: pure C++ without Qt UI -> cpp-coding"
+  },
+  {
+    "query": "migrate my settings screen from Qt Widgets to Qt Quick with StackView navigation",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "negative: QML/Qt Quick out of scope"
+  },
+  {
+    "query": "fix QObject parent ownership leaks in my QMainWindow controller class",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: C++ Qt implementation review -> qt-dev"
+  },
+  {
+    "query": "design a QML dashboard with Qt Quick Controls for renderer settings",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: QML UI out of scope"
+  }
+]

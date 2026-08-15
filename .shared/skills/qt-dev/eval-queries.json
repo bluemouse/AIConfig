@@ -154,5 +154,17 @@
     "should_trigger": false,
     "split": "validation",
     "rationale": "validation negative: Vulkan barrier API -> vulkan-dev"
+  },
+  {
+    "query": "critique this settings dialog mockup for keyboard focus order and accessibility before we implement it",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: UI/UX design critique -> qt-ui-guide"
+  },
+  {
+    "query": "redesign our export workflow dialog with QFormLayout and QDialogButtonBox in a new .ui file",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: UI specification and .ui authoring -> qt-ui-guide"
   }
 ]
