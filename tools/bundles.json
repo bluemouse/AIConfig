@@ -38,6 +38,7 @@
         "devil-advocate",
         "agent-runner",
         "minutes-writer",
+        "techdoc-reviewer",
         "github-guide"
       ]
     }

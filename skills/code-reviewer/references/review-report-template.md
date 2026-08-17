@@ -17,6 +17,7 @@ comparison.
 - Intent summary: <1–3 sentences on what the change appears to be trying to do>
 - Diff size: <approx lines changed, file count — or `n/a` for natural-language fallback>
 - Coverage: <all changed files reviewed | partial — list reviewed vs deferred files, or `full`>
+- Documentation impact: <not applicable | docs verified | documentation finding(s) cr-### | techdoc-reviewer handoff recommended — state affected reader-visible contract>
 
 ## 2. Automated checks (when run)
 

@@ -14,7 +14,9 @@ lenses to apply), and **effort** (how hard to look).
 
 ## Primary Directive
 
-Your job is to review code changes, not to implement them.
+Your job is to review code changes, not to implement them. Include a bounded documentation-impact
+checkpoint for reader-visible semantic changes, but do not substitute it for a full documentation
+review.
 
 Use a reviewer mindset. Prioritize bugs, regressions, design risks, security issues,
 missing tests, and maintainability concerns over cosmetic nits. Findings are the primary
@@ -289,18 +291,25 @@ it does not replace direct inspection of the changes.
    Blocked Diff** rules if the patch is empty or git fails; apply **Large-Diff Handling**
    when thresholds are met; run focused automated checks when feasible and record
    results; read surrounding code, call sites, and existing tests as needed.
-4. **Run the review**, branching by effort:
+4. **Run the documentation-impact checkpoint** — for each reader-visible semantic change, decide
+   whether public documentation, examples, configuration reference, migration material, or
+   runbooks are affected. Validate documentation changed in the diff against the implementation
+   rather than treating its presence as sufficient. Report a bounded finding when documentation
+   is missing or contradicted; hand off a broad documentation audit or synchronization to
+   [techdoc-reviewer](../techdoc-reviewer/SKILL.md). This is an always-on handoff decision, not a
+   seventh code-review scope.
+5. **Run the review**, branching by effort:
    - `basic`: one combined pass across selected scopes, no verify.
    - `standard`: Scope & Intent Alignment, then one pass per selected scope, then a
      lightweight verify.
    - `deep`: Scope & Intent Alignment (inline, by you — see next section for why), then
      parallel per-scope passes (or sequential if your tool has no parallel agents), then
      dedup, then adversarial verify, then a gap-sweep pass.
-5. **Validate findings** (standard/deep) — apply the **Finding quality bar** from
+6. **Validate findings** (standard/deep) — apply the **Finding quality bar** from
    `review-principles.md`: verify each against the diff and surrounding code, prefer
    concrete evidence over speculation, distinguish confirmed issues from open questions,
    and dedupe across scopes.
-6. **Assemble and return the report** using
+7. **Assemble and return the report** using
    `<SKILL_ROOT>/references/review-report-template.md` (see **Output Contract**).
 
 ## Deep Effort: Parallel Scope Passes
@@ -388,6 +397,7 @@ route in the report so the fix does not stall:
 - Regression, crash, or unexplained failure → [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) to prove root cause before changing code.
 - Design or architecture mismatch → [../plan-guide/SKILL.md](../plan-guide/SKILL.md) to plan the repair.
 - Missing or weak tests → [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md), or [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) for requirement-level proof.
+- Missing, stale, unsafe, or contradictory technical documentation → [../techdoc-reviewer/SKILL.md](../techdoc-reviewer/SKILL.md) for evidence-based documentation review or synchronization.
 
 After the author applies fixes, re-run this skill on the amended diff before delivery. This
 skill does not apply the fixes itself.
@@ -428,6 +438,9 @@ tooling when available.
 - Prefer concrete, actionable fixes over vague advice.
 - Reference exact files and lines when practical.
 - Call out missing tests explicitly when change risk warrants it.
+- Treat documentation as an implementation-adjacent contract: flag unaddressed documentation
+  impact for reader-visible semantic changes, but route broad documentation verification and
+  edits to `techdoc-reviewer`.
 - Do not report style or formatting nits unless they violate documented project norms or
   hide a real defect.
 - If no findings are discovered, say that explicitly and mention any residual risks or
@@ -445,6 +458,7 @@ tooling when available.
 | Task | Path |
 | --- | --- |
 | Local merge/rebase integration and verification | [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) |
+| Documentation review, documentation impact, and synchronization | [../techdoc-reviewer/SKILL.md](../techdoc-reviewer/SKILL.md) |
 | Pre-review correctness audit | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |
 | Post review to GitHub (`gh api`, inline comments, resolve threads) | [../github-guide/SKILL.md](../github-guide/SKILL.md) |
 | PR description, sizing, self-review | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |

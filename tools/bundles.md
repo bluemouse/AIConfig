@@ -88,6 +88,7 @@ The extended bundle includes the full core bundle plus these additional skills:
 | [devil-advocate](../skills/devil-advocate/SKILL.md) | Adversarial proposal review | A single proposal needs red-teaming, show-stopper analysis, and a proceed/rework/reject verdict |
 | [agent-runner](../skills/agent-runner/SKILL.md) | Parallel workstream coordination | Independent research, implementation, debug, or audit tasks can run concurrently |
 | [minutes-writer](../skills/minutes-writer/SKILL.md) | Meeting and decision record | Engineering discussions need grounded minutes, decisions, and action items |
+| [techdoc-reviewer](../skills/techdoc-reviewer/SKILL.md) | Documentation review and synchronization | Reader-facing docs must be verified against code, tests, and configuration, or updated after a behavior change |
 | [github-guide](../skills/github-guide/SKILL.md) | GitHub delivery | A GitHub PR or review must be created, updated, commented on, or resolved through `gh` / `gh api` |
 
 ## Choosing Core vs Extended

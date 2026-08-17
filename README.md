@@ -52,6 +52,7 @@ repo/
 │   ├── command-creator/               # Meta: creates and improves slash commands and prompts
 │   ├── agent-runner/                  # Dispatch independent workstreams to subagents concurrently
 │   ├── code-reviewer/                 # Structured multi-scope code review
+│   ├── techdoc-reviewer/              # Technical documentation review and synchronization
 │   ├── code-professor/                # Evidence-based codebase learning and documentation guides
 │   ├── commit-message-writer/         # Conventional Commit message drafting from git diffs
 │   ├── github-guide/                  # GitHub PR/review delivery via gh CLI and gh api
@@ -132,6 +133,7 @@ Bootstrap skills live under `skills/`. Installing one copies content to `.shared
 | `command-creator` | `skills/command-creator/` | Create, validate, and improve portable slash commands and Copilot prompts |
 | `agent-runner` | `skills/agent-runner/` | Dispatch independent workstreams to isolated subagents concurrently |
 | `code-reviewer` | `skills/code-reviewer/` | Structured multi-scope code review |
+| `techdoc-reviewer` | `skills/techdoc-reviewer/` | Review and synchronize technical documentation against code, tests, and configuration |
 | `code-professor` | `skills/code-professor/` | Evidence-based guides for learning, tracing, and documenting existing codebases |
 | `commit-message-writer` | `skills/commit-message-writer/` | Draft Conventional Commit messages from staged/working diffs, commits, or ranges |
 | `minutes-writer` | `skills/minutes-writer/` | Draft source-grounded meeting minutes and recaps from transcripts, notes, and supporting materials |
@@ -184,13 +186,13 @@ Several installed skills cross-link as companions — install related skills tog
 | Qt desktop | `qt-dev`, `qt-ui-guide`, `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` | UI/UX design and `.ui` review → Widgets/CMake implementation → C++ idioms → viewport/Vulkan integration → renderer architecture |
 | Kotlin/JVM | `kotlin-coding`, `kotlin-testing`, `gradle-dev`, `gradle-android-dev` | Language/stdlib/API design → test frameworks and flakes → Gradle build engineering → AGP variants, lint, R8 |
 | Android | `android-dev`, `android-ndk-dev`, `android-vulkan-dev`, `kotlin-coding`, `kotlin-testing`, `gradle-android-dev`, `vulkan-dev`, `gpu-rendering-guide` | App Kotlin/Compose → NDK/JNI → Android Vulkan → language/tests/AGP → generic Vulkan API → renderer architecture |
-| Git workflow | `commit-message-writer`, `git-guide`, `git-merge-guide`, `pull-request-guide`, `code-reviewer`, `github-guide` | Draft commit messages → git mechanics (commit/push/rebase/worktrees) → deep local merge/rebase integration → PR authoring → structured diff review → GitHub delivery (`gh pr create`, post review, resolve threads) |
+| Git workflow | `commit-message-writer`, `git-guide`, `git-merge-guide`, `pull-request-guide`, `code-reviewer`, `techdoc-reviewer`, `github-guide` | Draft commit messages → git mechanics (commit/push/rebase/worktrees) → deep local merge/rebase integration → PR authoring → structured diff review → documentation truth/sync when reader-visible contracts change → GitHub delivery (`gh pr create`, post review, resolve threads) |
 | Codebase learning | `code-professor`, `tutorial-writer`, `plan-guide`, `debugging-guide`, `code-reviewer` | Evidence-backed codebase onboarding → example-driven tutorials and user guides → implementation planning → verified defect repair → diff review |
 | Meeting notes | `minutes-writer`, `pull-request-guide`, `commit-message-writer` | Source-grounded minutes from transcripts → PR authoring → commit messages (does not create tickets or publish unless asked) |
 | Requirement clarification | `prompt-clarifier`, `research-guide`, `plan-guide`, `debugging-guide` | Resolve blocking ambiguity in the request → open-ended discovery when the idea itself is unformed → implementation plan → root-cause work on defects |
 | Decision deliberation | `advisory-council`, `devil-advocate`, `prompt-clarifier`, `research-guide`, `plan-reviewer` | Clarify ambiguous decisions → council debate for multi-perspective synthesis → adversarial stress-test with proceed/rework/reject verdict → research and plan-audit companions |
 | Research workflow | `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor` | Interactive discovery and research report → readiness audit → implementation plan → plan audit → execution |
-| Implementation quality | `test-driven-dev-guide`, `debugging-guide`, `implementation-auditor`, `code-reviewer` | TDD during implementation → systematic root-cause debugging → evidence-based correctness audit → structured diff review |
+| Implementation quality | `test-driven-dev-guide`, `debugging-guide`, `implementation-auditor`, `code-reviewer`, `techdoc-reviewer` | TDD during implementation → systematic root-cause debugging → evidence-based correctness audit → structured diff review → documentation verification and synchronization when behavior or contracts change |
 | Parallel execution | `agent-runner` | Dispatch independent workstreams to isolated subagents; defers diff review to `code-reviewer`, git mechanics to `git-guide`, skill evals to `skill-creator`, harness orchestration to `research-plan-harness` |
 
 Per-skill deferrals, companion links, and boundary rules live in each installed skill's body and in the cluster tables above. For step-by-step workflow sequencing and intake routing, see [dev-workflow.md](dev-workflow.md).

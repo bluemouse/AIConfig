@@ -28,7 +28,7 @@ Start by deciding what kind of input you have.
 | Product requirement, product spec, design doc, issue, or feature request | [plan-guide](skills/plan-guide/SKILL.md) if clear; otherwise [research-guide](skills/research-guide/SKILL.md) | Clear inputs can be planned; unclear product direction needs discovery first (use [prompt-clarifier](skills/prompt-clarifier/SKILL.md) first if the request wording is ambiguous) |
 | Bug report, failing test, crash, regression, or flaky behavior | [debugging-guide](skills/debugging-guide/SKILL.md) | Root cause must be proven before implementation changes |
 | Approved implementation plan | [plan-executor](skills/plan-executor/SKILL.md) | Execution needs task tracking, working-tree safety, edits, and verification |
-| Finished code changes | [implementation-auditor](skills/implementation-auditor/SKILL.md), then [code-reviewer](skills/code-reviewer/SKILL.md) | Correctness evidence comes before reviewer-side diff risk analysis |
+| Finished code changes | [implementation-auditor](skills/implementation-auditor/SKILL.md), then [code-reviewer](skills/code-reviewer/SKILL.md), then [techdoc-reviewer](skills/techdoc-reviewer/SKILL.md) when reader-visible contracts or documentation are in scope | Correctness evidence comes before reviewer-side diff risk analysis; documentation truth follows when APIs, setup, migration, or operational docs may be affected |
 | Ready-to-submit branch | [commit-message-writer](skills/commit-message-writer/SKILL.md), [git-guide](skills/git-guide/SKILL.md), [pull-request-guide](skills/pull-request-guide/SKILL.md) | Delivery needs commits, git mechanics, and a reviewable PR narrative |
 
 ### 2. Research: make the requirement plannable
@@ -150,7 +150,9 @@ QA is done when:
 
 ### 7. Review: inspect the diff like a reviewer
 
-Use [code-reviewer](skills/code-reviewer/SKILL.md) before merge readiness. It reviews staged changes, unstaged changes, the full working tree, the last commit, a specific commit, or a commit range.
+Use [code-reviewer](skills/code-reviewer/SKILL.md) before merge readiness. It reviews staged changes, unstaged changes, the full working tree, the last commit, a specific commit, or a commit range. It includes a bounded documentation-impact checkpoint for reader-visible semantic changes.
+
+When the change affects public APIs, configuration, setup/build/deploy paths, migrations, runbooks, examples, or other reader-facing contracts, follow with [techdoc-reviewer](skills/techdoc-reviewer/SKILL.md) to verify documentation truth, completeness, executability, and cross-document consistency — or to synchronize docs when the user asks. Do not treat a passing code review as proof that documentation is correct.
 
 Default review scopes are:
 
@@ -173,8 +175,9 @@ Findings must be fixed or explicitly accepted before delivery. When the review f
 - Regression, crash, or unexplained failure -> [debugging-guide](skills/debugging-guide/SKILL.md) to prove root cause first.
 - Design or architecture mismatch -> [plan-guide](skills/plan-guide/SKILL.md) to plan the repair.
 - Missing tests -> [test-driven-dev-guide](skills/test-driven-dev-guide/SKILL.md) or [implementation-auditor](skills/implementation-auditor/SKILL.md).
+- Missing, stale, unsafe, or contradictory technical documentation -> [techdoc-reviewer](skills/techdoc-reviewer/SKILL.md).
 
-After fixes, re-run [code-reviewer](skills/code-reviewer/SKILL.md) on the amended diff before delivery.
+After fixes, re-run [code-reviewer](skills/code-reviewer/SKILL.md) on the amended diff before delivery. Re-run [techdoc-reviewer](skills/techdoc-reviewer/SKILL.md) when documentation was edited or when reader-visible contracts changed.
 
 Review is done when:
 
@@ -266,7 +269,7 @@ The core bundle is always available. The extended-bundle gates are optional by d
 | Feature, single subsystem | [code-reviewer](skills/code-reviewer/SKILL.md) `standard`; [plan-reviewer](skills/plan-reviewer/SKILL.md) if delegated | Bounded scope |
 | Security / auth / privacy change | [plan-reviewer](skills/plan-reviewer/SKILL.md), [implementation-auditor](skills/implementation-auditor/SKILL.md), `deep` [code-reviewer](skills/code-reviewer/SKILL.md) | High blast radius |
 | Data or schema migration | [research-reviewer](skills/research-reviewer/SKILL.md) (when a research report exists), [plan-reviewer](skills/plan-reviewer/SKILL.md), [implementation-auditor](skills/implementation-auditor/SKILL.md) | Hard to roll back |
-| Public API or contract change | [plan-reviewer](skills/plan-reviewer/SKILL.md), `deep` [code-reviewer](skills/code-reviewer/SKILL.md) | Cross-team impact |
+| Public API or contract change | [plan-reviewer](skills/plan-reviewer/SKILL.md), `deep` [code-reviewer](skills/code-reviewer/SKILL.md), [techdoc-reviewer](skills/techdoc-reviewer/SKILL.md) | Cross-team impact and reader-visible contracts |
 | Refactor across 3+ modules | [plan-reviewer](skills/plan-reviewer/SKILL.md), `standard`+ [code-reviewer](skills/code-reviewer/SKILL.md) | Cascade risk |
 | Production incident follow-up | [debugging-guide](skills/debugging-guide/SKILL.md), [implementation-auditor](skills/implementation-auditor/SKILL.md), [minutes-writer](skills/minutes-writer/SKILL.md) | Defect prevention and record |
 
@@ -279,7 +282,7 @@ When a defect is found in merged or deployed code, re-enter the lifecycle:
 1. [debugging-guide](skills/debugging-guide/SKILL.md) to reproduce and prove root cause.
 2. [test-driven-dev-guide](skills/test-driven-dev-guide/SKILL.md) to write a regression test before the fix (required for production bugs).
 3. [plan-guide](skills/plan-guide/SKILL.md) if the fix needs coordinated changes; otherwise a direct scoped fix.
-4. [implementation-auditor](skills/implementation-auditor/SKILL.md) then [code-reviewer](skills/code-reviewer/SKILL.md), then the delivery chain.
+4. [implementation-auditor](skills/implementation-auditor/SKILL.md) then [code-reviewer](skills/code-reviewer/SKILL.md), then [techdoc-reviewer](skills/techdoc-reviewer/SKILL.md) when reader-visible contracts or docs are in scope, then the delivery chain.
 5. [minutes-writer](skills/minutes-writer/SKILL.md) for the post-incident record when the impact warrants it.
 
 ## Decision Traceability
@@ -443,6 +446,7 @@ prompt-clarifier when the request itself is ambiguous
 -> plan-executor with test-driven-dev-guide or debugging-guide as appropriate
 -> implementation-auditor
 -> code-reviewer
+-> techdoc-reviewer when reader-visible contracts or documentation changed
 -> commit-message-writer
 -> git-guide
 -> pull-request-guide

@@ -1,0 +1,74 @@
+[
+  {
+    "query": "Review docs/getting-started.md against the current build and run commands.",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Direct technical documentation verification."
+  },
+  {
+    "query": "Check whether my branch changed public behavior without updating the relevant documentation.",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Documentation-impact review of a code change."
+  },
+  {
+    "query": "Our deployment runbook may be stale; verify the recovery and rollback commands before the release.",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Operational documentation and safety review."
+  },
+  {
+    "query": "Sync the configuration guide with the new command-line flags in this diff.",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Explicit documentation synchronization request."
+  },
+  {
+    "query": "Does this API tutorial accurately describe the async completion and resource lifetime rules?",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "Semantic contract verification in technical documentation."
+  },
+  {
+    "query": "Proofread this README for grammar and tone.",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "Copy editing alone is outside the skill's primary purpose."
+  },
+  {
+    "query": "Review my staged diff for correctness, security, and missing tests.",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "Code defects and test coverage belong to code-reviewer."
+  },
+  {
+    "query": "Write an architecture overview for this repository.",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "Authoring or codebase-learning request, not review."
+  },
+  {
+    "query": "Review the README and API reference, trace important claims into tests and implementation, and report stale or missing information.",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "Multi-document evidence-based review."
+  },
+  {
+    "query": "Verify whether docs still promise Python 3.9 support after this dependency upgrade.",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "Compatibility claim verification after a change."
+  },
+  {
+    "query": "Implement a new --dry-run flag and update the parser tests.",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "Implementation task; docs can be synchronized afterward if requested."
+  },
+  {
+    "query": "Explain what the service architecture does and how messages flow through it.",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "Codebase learning belongs to code-professor."
+  }
+]

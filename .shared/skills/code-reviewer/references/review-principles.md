@@ -44,6 +44,28 @@ norms:
 If metadata is missing (empty commit message, no PR description), note it as a **PR
 hygiene** signal when it materially slows review — not as a standalone nit.
 
+## Documentation-impact checkpoint
+
+Run this short checkpoint for every code review after understanding semantic change, before
+reporting findings. It is not a replacement for a dedicated technical-documentation review.
+
+1. Identify reader-visible changes: public APIs or errors; configuration and defaults; CLI,
+   build/install, migration, deployment, operational, compatibility, security, or architecture
+   contracts.
+2. Determine whether the diff changes relevant documentation, examples, configuration reference,
+   or runbooks. When it does, trace material claims into the changed implementation, tests, and
+   definitions — a documentation edit is not evidence of correctness by itself.
+3. When a reader-visible semantic change lacks required documentation, report one concrete,
+   impact-based finding. Do not demand documentation for internal refactors or promote
+   implementation details to public guarantees.
+4. Hand off broad document discovery, cross-document consistency, executable-procedure
+   verification, and documentation edits to
+   [techdoc-reviewer](../../techdoc-reviewer/SKILL.md). If code and docs conflict on an intended
+   contract, surface the conflict rather than assuming code is authoritative.
+
+Record the result as `not applicable`, `docs verified`, `documentation finding`, or
+`techdoc-reviewer handoff recommended` in the final report.
+
 ## What to prioritize
 
 Work in this order within each chunk of the diff:
@@ -100,7 +122,8 @@ Flag (usually as `suggestion` or open questions) when the change makes review ha
 - Diff too large or mixed concerns (refactor + behavior + formatting) — suggest
   [pull-request-guide](../../pull-request-guide/SKILL.md) for split/self-review.
 - Missing or misleading commit message / PR description vs actual diff.
-- Public API or behavior change without doc/README update.
+- Public API or behavior change without documentation impact being assessed; route a full
+  documentation truth or synchronization review to `techdoc-reviewer`.
 - High-risk surface (auth, migration, dependency bump) without tests or rollback notes.
 - Leftover debug logging, commented-out code, or unrelated file churn.
 
