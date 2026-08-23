@@ -51,15 +51,15 @@ python tools/installer.py /path/to/project --bundles dev-workflow-harness
 
 ### Target bundle (dynamic)
 
-The **Target bundle** is not stored in `bundles.json`. It is computed at runtime from skills already installed in the destination project:
+The **Target bundle** is not stored in `bundles.json`. It is computed at runtime from members already installed in the destination project:
 
-- GUI: set **Target project**, then toggle **Target bundle** (enabled only when the path is valid and matching installed skills exist).
+- GUI: set **Target project**, then toggle **Target bundle** (enabled only when the path is valid and matching installed members exist).
 - CLI: pass `--bundles target-bundle` with a `TARGET` path.
 
 Membership is the intersection of:
 
-1. Skills found under `<target>/.ai/skills/*/SKILL.md`
-2. Skills available in this AIConfig repository catalog
+1. Skills, agents, commands, and scripts found under `<target>/.ai/` (`skills/*/SKILL.md`, `agents/*.md`, `commands/*.md`, `tools/*/`)
+2. The same kinds available in this AIConfig repository catalog
 
 ```bash
 python tools/installer.py /path/to/project --bundles target-bundle

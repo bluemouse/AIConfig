@@ -536,7 +536,7 @@ python tools/installer.py
 ```
 
 - Checkboxes start **unchecked**
-- **Bundles** panel: batch toggles plus Select all/none; **Target bundle** appears after a valid target project path is set and selects skills already installed in that project
+- **Bundles** panel: batch toggles plus Select all/none; **Target bundle** appears after a valid target project path is set and selects skills, agents, commands, and scripts already installed in that project
 - **Help** (right side of each panel): descriptions for current selections; partial bundles labeled `(partial)`
 - **Hover tooltips** on individual checkboxes
 

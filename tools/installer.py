@@ -97,8 +97,8 @@ BUNDLES_JSON = Path(__file__).resolve().parent / "bundles.json"
 TARGET_BUNDLE_ID = "target-bundle"
 TARGET_BUNDLE_NAME = "Target bundle"
 TARGET_BUNDLE_DESCRIPTION = (
-    "Skills currently installed in the selected target project "
-    "(matching this AIConfig catalog)."
+    "Skills, agents, commands, and scripts currently installed in the selected "
+    "target project (matching this AIConfig catalog)."
 )
 
 # Dev-workflow harness: the orchestrator plus all phase doer/checker skills,
@@ -451,9 +451,14 @@ def resolve_bundle(
             target_bundle = build_target_bundle(target_root)
             if target_bundle.is_empty and normalized_bundle_ids == [TARGET_BUNDLE_ID]:
                 raise InstallerError(
-                    "Target bundle: no matching installed skills found in target project."
+                    "Target bundle: no matching installed members found in target project."
                 )
-            selection.extend(BundleSelection(skills=sorted(target_bundle.skills)))
+            selection.extend(BundleSelection(
+                skills=sorted(target_bundle.skills),
+                agents=sorted(target_bundle.agents),
+                commands=sorted(target_bundle.commands),
+                scripts=sorted(target_bundle.scripts),
+            ))
             continue
         if bundle_id not in by_id:
             known = ", ".join(known_bundle_ids(path))
@@ -551,22 +556,79 @@ def discover_skills_in_project(project_root: Path) -> list[str]:
     return sorted(names)
 
 
+def discover_agents_in_project(project_root: Path) -> list[str]:
+    """Return agent slugs installed under project_root/.ai/agents/."""
+    names: set[str] = set()
+    shared_root = project_root / ".ai" / "agents"
+    if not shared_root.is_dir():
+        return []
+    for child in shared_root.iterdir():
+        if child.is_file() and child.suffix == ".md" and not child.name.startswith("."):
+            names.add(child.stem)
+    return sorted(names)
+
+
+def discover_commands_in_project(project_root: Path) -> list[str]:
+    """Return command slugs installed under project_root/.ai/commands/."""
+    names: set[str] = set()
+    shared_root = project_root / ".ai" / "commands"
+    if not shared_root.is_dir():
+        return []
+    for child in shared_root.iterdir():
+        if child.is_file() and child.suffix == ".md" and not child.name.startswith("."):
+            names.add(child.stem)
+    return sorted(names)
+
+
+def discover_scripts_in_project(project_root: Path) -> list[str]:
+    """Return scripts directory names installed under project_root/.ai/tools/."""
+    names: set[str] = set()
+    shared_root = project_root / ".ai" / "tools"
+    if not shared_root.is_dir():
+        return []
+    for child in shared_root.iterdir():
+        if child.is_dir() and not child.name.startswith(".") and not child.name.startswith("__"):
+            names.add(child.name)
+    return sorted(names)
+
+
 def build_target_bundle(
     target_root: Path,
     *,
     available_skills: Sequence[str] | None = None,
+    available_agents: Sequence[str] | None = None,
+    available_commands: Sequence[str] | None = None,
+    available_scripts: Sequence[str] | None = None,
 ) -> Bundle:
-    """Build the dynamic target bundle from installed skills in the target project."""
+    """Build the dynamic target bundle from installed members in the target project.
+
+    Membership for each kind is the intersection of what is installed in the
+    target project's shared ``.ai/`` layer and what is available in this
+    AIConfig repository catalog.
+    """
     if available_skills is None:
         available_skills = discover_skills()
-    available_set = set(available_skills)
-    installed = discover_skills_in_project(target_root)
-    members = frozenset(name for name in installed if name in available_set)
+    if available_agents is None:
+        available_agents = discover_agents()
+    if available_commands is None:
+        available_commands = discover_commands()
+    if available_scripts is None:
+        available_scripts = discover_scripts()
+
+    def _intersect(
+        installed: Sequence[str], available: Sequence[str]
+    ) -> frozenset[str]:
+        available_set = set(available)
+        return frozenset(name for name in installed if name in available_set)
+
     return Bundle(
         id=TARGET_BUNDLE_ID,
         name=TARGET_BUNDLE_NAME,
         description=TARGET_BUNDLE_DESCRIPTION,
-        skills=members,
+        skills=_intersect(discover_skills_in_project(target_root), available_skills),
+        agents=_intersect(discover_agents_in_project(target_root), available_agents),
+        commands=_intersect(discover_commands_in_project(target_root), available_commands),
+        scripts=_intersect(discover_scripts_in_project(target_root), available_scripts),
     )
 
 
@@ -1584,7 +1646,7 @@ class InstallerApp:
         target_text = self.target_var.get().strip()
         if not target_text:
             button.state(["disabled"])
-            self._update_target_bundle_tooltip("Set a target project to scan installed skills.")
+            self._update_target_bundle_tooltip("Set a target project to scan installed members.")
             self._sync_bundle_toggles()
             return
 
@@ -1610,21 +1672,32 @@ class InstallerApp:
             self._sync_bundle_toggles()
             return
 
-        bundle = build_target_bundle(target, available_skills=self.skills)
-        if not bundle.skills:
+        bundle = build_target_bundle(
+            target,
+            available_skills=self.skills,
+            available_agents=self.agents,
+            available_commands=self.commands,
+            available_scripts=self.scripts,
+        )
+        if bundle.is_empty:
             button.state(["disabled"])
             self._update_target_bundle_tooltip(
-                f"{TARGET_BUNDLE_DESCRIPTION} No matching installed skills found in target."
+                f"{TARGET_BUNDLE_DESCRIPTION} No matching installed members found in target."
             )
             self._sync_bundle_toggles()
             return
 
         self._target_bundle = bundle
         button.state(["!disabled"])
-        count = len(bundle.skills)
-        skill_word = "skill" if count == 1 else "skills"
+        counts = [
+            (len(bundle.skills), "skill"),
+            (len(bundle.agents), "agent"),
+            (len(bundle.commands), "command"),
+            (len(bundle.scripts), "script"),
+        ]
+        parts = [f"{count} {word}{'s' if count != 1 else ''}" for count, word in counts if count]
         self._update_target_bundle_tooltip(
-            f"{TARGET_BUNDLE_DESCRIPTION} {count} {skill_word} installed in target."
+            f"{TARGET_BUNDLE_DESCRIPTION} {', '.join(parts)} installed in target."
         )
         self._sync_bundle_toggles()
 

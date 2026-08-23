@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 TOOLS_DIR = Path(__file__).resolve().parent
 INSTALLER_PATH = TOOLS_DIR / "installer.py"
@@ -210,6 +211,27 @@ class TargetBundleTests(unittest.TestCase):
             encoding="utf-8",
         )
 
+    def _write_target_agent(self, root: Path, name: str) -> None:
+        agents_dir = root / ".ai" / "agents"
+        agents_dir.mkdir(parents=True, exist_ok=True)
+        (agents_dir / f"{name}.md").write_text(
+            f"---\nname: {name}\ndescription: {name} agent\n---\n",
+            encoding="utf-8",
+        )
+
+    def _write_target_command(self, root: Path, name: str) -> None:
+        commands_dir = root / ".ai" / "commands"
+        commands_dir.mkdir(parents=True, exist_ok=True)
+        (commands_dir / f"{name}.md").write_text(
+            f"---\nname: {name}\ndescription: {name} command\n---\n",
+            encoding="utf-8",
+        )
+
+    def _write_target_scripts(self, root: Path, name: str) -> None:
+        scripts_dir = root / ".ai" / "tools" / name
+        scripts_dir.mkdir(parents=True, exist_ok=True)
+        (scripts_dir / "README.md").write_text(f"# {name}\n", encoding="utf-8")
+
     def test_discover_skills_in_project(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -273,7 +295,97 @@ class TargetBundleTests(unittest.TestCase):
                     skill_names=None,
                     target_root=Path(tmp),
                 )
-            self.assertIn("no matching installed skills", str(ctx.exception))
+            self.assertIn("no matching installed members", str(ctx.exception))
+
+    def test_discover_agents_in_project(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_target_agent(root, "alpha")
+            self._write_target_agent(root, "beta")
+            (root / ".ai" / "agents" / ".hidden.md").write_text("x", encoding="utf-8")
+            self.assertEqual(mod.discover_agents_in_project(root), ["alpha", "beta"])
+
+    def test_discover_agents_in_project_missing_shared(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(mod.discover_agents_in_project(Path(tmp)), [])
+
+    def test_discover_commands_in_project(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_target_command(root, "alpha")
+            self._write_target_command(root, "beta")
+            self.assertEqual(mod.discover_commands_in_project(root), ["alpha", "beta"])
+
+    def test_discover_commands_in_project_missing_shared(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(mod.discover_commands_in_project(Path(tmp)), [])
+
+    def test_discover_scripts_in_project(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_target_scripts(root, "alpha")
+            self._write_target_scripts(root, "beta")
+            (root / ".ai" / "tools" / "__pycache__").mkdir(parents=True)
+            self.assertEqual(mod.discover_scripts_in_project(root), ["alpha", "beta"])
+
+    def test_discover_scripts_in_project_missing_shared(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(mod.discover_scripts_in_project(Path(tmp)), [])
+
+    def test_build_target_bundle_includes_all_kinds(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_target_skill(root, "alpha")
+            self._write_target_skill(root, "only-in-target")
+            self._write_target_agent(root, "alpha")
+            self._write_target_command(root, "alpha")
+            self._write_target_scripts(root, "alpha")
+            bundle = mod.build_target_bundle(
+                root,
+                available_skills=["alpha", "beta"],
+                available_agents=["alpha", "beta"],
+                available_commands=["alpha", "beta"],
+                available_scripts=["alpha", "beta"],
+            )
+            self.assertEqual(bundle.skills, frozenset({"alpha"}))
+            self.assertEqual(bundle.agents, frozenset({"alpha"}))
+            self.assertEqual(bundle.commands, frozenset({"alpha"}))
+            self.assertEqual(bundle.scripts, frozenset({"alpha"}))
+            self.assertFalse(bundle.is_empty)
+
+    def test_build_target_bundle_empty_when_no_matches(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_target_skill(root, "only-in-target")
+            self._write_target_agent(root, "only-in-target")
+            bundle = mod.build_target_bundle(
+                root,
+                available_skills=["alpha"],
+                available_agents=["alpha"],
+                available_commands=["alpha"],
+                available_scripts=["alpha"],
+            )
+            self.assertTrue(bundle.is_empty)
+
+    def test_resolve_bundle_target_bundle_includes_all_kinds(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_target_skill(root, "research-guide")
+            self._write_target_agent(root, "alpha")
+            self._write_target_command(root, "git-commit")
+            self._write_target_scripts(root, "dev-workflow")
+            with mock.patch.object(mod, "discover_skills", return_value=["research-guide"]), \
+                 mock.patch.object(mod, "discover_agents", return_value=["alpha"]), \
+                 mock.patch.object(mod, "discover_commands", return_value=["git-commit"]), \
+                 mock.patch.object(mod, "discover_scripts", return_value=["dev-workflow"]):
+                selection = mod.resolve_bundle(
+                    [mod.TARGET_BUNDLE_ID],
+                    target_root=root,
+                )
+            self.assertIn("research-guide", selection.skills)
+            self.assertIn("alpha", selection.agents)
+            self.assertIn("git-commit", selection.commands)
+            self.assertIn("dev-workflow", selection.scripts)
 
     def test_resolve_cli_skills_target_bundle_with_other_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

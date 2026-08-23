@@ -170,7 +170,7 @@ python tools/installer.py /path/to/other-project --commands git-commit --uninsta
 python tools/installer.py   # GUI when no arguments
 ```
 
-Omit `--skills`, `--agents`, and `--commands` to install or uninstall all names discovered under `.cursor/`, `.claude/`, and `.github/`. Use `--bundles` to install workflow skill sets from [tools/bundles.json](tools/bundles.json) or the dynamic `target-bundle` (skills already installed in the target project; documented in [tools/bundles.md](tools/bundles.md)). Without `--override`, existing target paths are skipped. See [README.md](README.md#distribute-to-another-project) for full flag reference.
+Omit `--skills`, `--agents`, and `--commands` to install or uninstall all names discovered under `.cursor/`, `.claude/`, and `.github/`. Use `--bundles` to install workflow skill sets from [tools/bundles.json](tools/bundles.json) or the dynamic `target-bundle` (skills, agents, commands, and scripts already installed in the target project; documented in [tools/bundles.md](tools/bundles.md)). Without `--override`, existing target paths are skipped. See [README.md](README.md#distribute-to-another-project) for full flag reference.
 
 **Trigger-eval a skill description:**
 
