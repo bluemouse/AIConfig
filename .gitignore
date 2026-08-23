@@ -50,3 +50,6 @@ timing.json
 
 # Claude Code runtime
 .claude/scheduled_tasks.lock
+
+# dev-workflow temp files
+.ai/**

@@ -32,10 +32,12 @@ Use this exact structure unless the user requested a different format.
 ### Defects
 
 - <actionable defect with file/function and why it violates the requirement, or `none found`>
+  - `root-cause-phase`: `local` (fix within the implement loop — re-execute via plan-executor) | `research` (the research report is the root cause) | `plan` (the implementation plan is the root cause) | `implement` (this phase) | `code-review`. Use `local` when the defect is an implementation mistake fixable by plan-executor. Use `plan` when the defect traces to a wrong or incomplete plan. Use `research` when the defect traces to a wrong or incomplete requirement. When the dev-workflow-orchestrator is active, it reads this field to route backward handoff packets; outside the orchestrator, the field is informational.
 
 ### Test gaps
 
 - <critical/major/minor gap and why it matters, or `none identified`>
+  - `root-cause-phase`: `local` | `research` | `plan` | `implement` | `code-review` (same semantics as Defects above)
 
 ### Risks and assumptions
 

@@ -158,6 +158,7 @@ Every material finding must include:
 - Required fix.
 - Recommended plan-guide action: revise plan, ask user, inspect codebase, research upstream, narrow scope, split plan, accept as execution risk, or re-review.
 - Owner suggestion when useful.
+- `root-cause-phase`: `local` (fix within the plan loop) | `research` (the research report is the root cause) | `plan` (this phase) | `implement` | `code-review`. Use `local` when the finding is a plan defect fixable by plan-guide. Use `research` when the finding traces to an incomplete or wrong research report. When the dev-workflow-orchestrator is active, it reads this field to route backward handoff packets; outside the orchestrator, the field is informational.
 
 Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `validated`, `conditionally validated`, `needs revision`, or `blocked`. Never validate when source requirements, core tasks, critical verification, or mandatory TDD test design for code-producing work is missing. When essential source context is absent or unverifiable, the verdict cannot be `validated` or `conditionally validated`; use `needs revision` or `blocked` and record the missing context as a blocker finding.
 

@@ -128,7 +128,7 @@ class CommandInstallTests(unittest.TestCase):
                     uninstall=False,
                     override=False,
                 )
-            self.assertIn("skill, agent, or command", str(ctx.exception))
+            self.assertIn("skill, agent, command, or --dev-workflow", str(ctx.exception))
 
 
 if __name__ == "__main__":

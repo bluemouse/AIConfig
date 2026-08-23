@@ -500,6 +500,10 @@ python tools/installer.py /path/to/other-project --commands git-commit
 python tools/installer.py /path/to/other-project --bundles core-dev-workflow
 python tools/installer.py /path/to/other-project --bundles extended-dev-workflow --override
 
+# Install the dev-workflow harness (2 skills, 1 command, validation scripts)
+python tools/installer.py /path/to/other-project --dev-workflow
+python tools/installer.py /path/to/other-project --dev-workflow --uninstall
+
 # Replace existing installs in the target
 python tools/installer.py /path/to/other-project --skills cpp-coding --override
 
@@ -516,6 +520,7 @@ python tools/installer.py /path/to/other-project --commands git-commit --uninsta
 | `--skills NAME ...` | Skill slugs to install or uninstall (default: all discovered unless `--bundles` is set) |
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
 | `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered) |
+| `--dev-workflow` | Install or uninstall the complete dev-workflow harness (2 skills, 1 command, and the `tools/dev-workflow/` validation scripts) as a unit; composes with the other selectors |
 | `--override` | Replace existing paths in the target; without it, skip and report |
 | `--uninstall` | Remove the selected skills, agents, and commands from the target |
 | *(no arguments)* | Open a tkinter GUI with skill/agent/command checkboxes and a **Bundles** panel for workflow batch selection |

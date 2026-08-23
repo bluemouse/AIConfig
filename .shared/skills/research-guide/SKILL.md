@@ -103,7 +103,7 @@ Use the relevant research tracks. Do not force every track when it does not appl
 
 **Requirements hardening**: define functional requirements, non-functional requirements, acceptance criteria, constraints, non-goals, and measurable outcomes.
 
-**Alternatives and trade-offs**: propose 2-3 plausible approaches, including a conservative option and a more ambitious option when useful. Recommend one direction and explain why.
+**Alternatives and trade-offs**: propose 2-3 plausible approaches, including a conservative option and a more ambitious option when useful. Recommend one direction and explain why. When the decision is consequential — multiple viable options with meaningful trade-offs affecting architecture, cost, security, or user experience — invoke [../advisory-council/SKILL.md](../advisory-council/SKILL.md) to deliberate on the alternatives. The council produces a ranked recommendation; present it at the next agreement gate for the user to accept, modify, or reject. Do not invoke the council for straightforward decisions with one clearly preferred option.
 
 **Technical feasibility**: identify architecture implications, dependencies, integrations, data contracts, performance constraints, security/privacy risks, migration needs, and testing strategy.
 

@@ -13,6 +13,8 @@ Examples:
     python tools/installer.py /path/to/other-project --bundles extended-dev-workflow --override
     python tools/installer.py /path/to/other-project --bundles core-dev-workflow --skills cpp-coding
     python tools/installer.py /path/to/other-project --bundles target-bundle
+    python tools/installer.py /path/to/other-project --dev-workflow
+    python tools/installer.py /path/to/other-project --dev-workflow --uninstall
     python tools/installer.py /path/to/other-project --agents my-agent --uninstall
     python tools/installer.py /path/to/other-project --commands git-commit --uninstall
     python tools/installer.py   # GUI when no arguments
@@ -91,6 +93,12 @@ TARGET_BUNDLE_DESCRIPTION = (
     "Skills currently installed in the selected target project "
     "(matching this AIConfig catalog)."
 )
+
+# Dev-workflow harness: a fixed set of skills, a command, and the validation
+# scripts tree, installed/uninstalled together via --dev-workflow.
+DEV_WORKFLOW_SKILLS = ("dev-workflow-orchestrator", "finding-resolver")
+DEV_WORKFLOW_COMMANDS = ("dev-workflow",)
+DEV_WORKFLOW_SCRIPTS_REL = "tools/dev-workflow"
 
 BundleSelectionState = Literal["all", "none", "partial"]
 
@@ -634,11 +642,18 @@ def install_items(
     agents: Sequence[str],
     commands: Sequence[str],
     override: bool,
+    dev_workflow: bool = False,
 ) -> OperationResult:
     result = OperationResult()
     target_root = validate_target(source_root, target_root, create=True)
 
-    for name in skills:
+    effective_skills = list(skills)
+    effective_commands = list(commands)
+    if dev_workflow:
+        effective_skills.extend(DEV_WORKFLOW_SKILLS)
+        effective_commands.extend(DEV_WORKFLOW_COMMANDS)
+
+    for name in effective_skills:
         slug = slugify_name(name)
         pairs = skill_copy_pairs(source_root, target_root, slug)
         shared_src = pairs[0][0]
@@ -684,7 +699,7 @@ def install_items(
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
 
-    for name in commands:
+    for name in effective_commands:
         slug = slugify_name(name)
         pairs = command_copy_pairs(source_root, target_root, slug)
         shared_src = pairs[0][0]
@@ -707,6 +722,31 @@ def install_items(
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
 
+    if dev_workflow:
+        scripts_src = source_root / DEV_WORKFLOW_SCRIPTS_REL
+        scripts_dest = target_root / DEV_WORKFLOW_SCRIPTS_REL
+        rel_dest = format_rel(scripts_dest, target_root)
+        if not scripts_src.is_dir():
+            result.errors.append(
+                f"dev-workflow scripts: missing source {format_rel(scripts_src, source_root)}"
+            )
+        elif scripts_dest.exists():
+            if not override:
+                result.skipped.append(rel_dest)
+            else:
+                remove_path(scripts_dest)
+                try:
+                    copy_path(scripts_src, scripts_dest)
+                    result.installed.append(rel_dest)
+                except OSError as exc:
+                    result.errors.append(f"{rel_dest}: {exc}")
+        else:
+            try:
+                copy_path(scripts_src, scripts_dest)
+                result.installed.append(rel_dest)
+            except OSError as exc:
+                result.errors.append(f"{rel_dest}: {exc}")
+
     return result
 
 
@@ -716,13 +756,20 @@ def uninstall_items(
     skills: Sequence[str],
     agents: Sequence[str],
     commands: Sequence[str],
+    dev_workflow: bool = False,
 ) -> OperationResult:
     result = OperationResult()
     target_root = validate_target(REPO_ROOT, target_root, create=False)
     if not target_root.exists():
         return result
 
-    for name in skills:
+    effective_skills = list(skills)
+    effective_commands = list(commands)
+    if dev_workflow:
+        effective_skills.extend(DEV_WORKFLOW_SKILLS)
+        effective_commands.extend(DEV_WORKFLOW_COMMANDS)
+
+    for name in effective_skills:
         slug = slugify_name(name)
         for path in skill_remove_paths(target_root, slug):
             if path.exists():
@@ -742,7 +789,7 @@ def uninstall_items(
                 except OSError as exc:
                     result.errors.append(f"{format_rel(path, target_root)}: {exc}")
 
-    for name in commands:
+    for name in effective_commands:
         slug = slugify_name(name)
         for path in command_remove_paths(target_root, slug):
             if path.exists():
@@ -751,6 +798,15 @@ def uninstall_items(
                     result.removed.append(format_rel(path, target_root))
                 except OSError as exc:
                     result.errors.append(f"{format_rel(path, target_root)}: {exc}")
+
+    if dev_workflow:
+        scripts_path = target_root / DEV_WORKFLOW_SCRIPTS_REL
+        if scripts_path.exists():
+            try:
+                remove_path(scripts_path)
+                result.removed.append(format_rel(scripts_path, target_root))
+            except OSError as exc:
+                result.errors.append(f"{format_rel(scripts_path, target_root)}: {exc}")
 
     return result
 
@@ -792,9 +848,10 @@ def run_operation(
     commands: Sequence[str],
     uninstall: bool,
     override: bool,
+    dev_workflow: bool = False,
 ) -> tuple[int, str]:
-    if not skills and not agents and not commands:
-        raise InstallerError("Select at least one skill, agent, or command.")
+    if not skills and not agents and not commands and not dev_workflow:
+        raise InstallerError("Select at least one skill, agent, command, or --dev-workflow.")
 
     if uninstall:
         result = uninstall_items(
@@ -802,6 +859,7 @@ def run_operation(
             skills=skills,
             agents=agents,
             commands=commands,
+            dev_workflow=dev_workflow,
         )
     else:
         result = install_items(
@@ -811,6 +869,7 @@ def run_operation(
             agents=agents,
             commands=commands,
             override=override,
+            dev_workflow=dev_workflow,
         )
 
     message = format_result(result, uninstall=uninstall)
@@ -835,6 +894,8 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
             "  python tools/installer.py /path/to/project --bundles extended-dev-workflow --override\n"
             "  python tools/installer.py /path/to/project --bundles core-dev-workflow --skills cpp-coding\n"
             "  python tools/installer.py /path/to/project --bundles target-bundle\n"
+            "  python tools/installer.py /path/to/project --dev-workflow\n"
+            "  python tools/installer.py /path/to/project --dev-workflow --uninstall\n"
             "  python tools/installer.py /path/to/project --uninstall --agents my-agent\n"
             "  python tools/installer.py /path/to/project --uninstall --commands git-commit\n"
             "\n"
@@ -875,6 +936,14 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help="Command names to install or uninstall (default: all discovered commands).",
     )
     parser.add_argument(
+        "--dev-workflow",
+        action="store_true",
+        help=(
+            "Install or uninstall the complete dev-workflow harness "
+            "(2 skills, 1 command, and the tools/dev-workflow/ validation scripts)."
+        ),
+    )
+    parser.add_argument(
         "--uninstall",
         action="store_true",
         help="Remove the selected skills, agents, and commands from the target project.",
@@ -896,13 +965,21 @@ def run_cli(argv: Sequence[str]) -> int:
 
     try:
         target = Path(args.target).expanduser().resolve()
-        skills = resolve_cli_skills(
-            bundle_ids=args.bundles,
-            skill_names=args.skills,
-            target_root=target,
+        only_dev_workflow = args.dev_workflow and not (
+            args.bundles or args.skills or args.agents or args.commands
         )
-        agents = normalize_names(args.agents) if args.agents else discover_agents()
-        commands = normalize_names(args.commands) if args.commands else discover_commands()
+        if only_dev_workflow:
+            skills: list[str] = []
+            agents: list[str] = []
+            commands: list[str] = []
+        else:
+            skills = resolve_cli_skills(
+                bundle_ids=args.bundles,
+                skill_names=args.skills,
+                target_root=target,
+            )
+            agents = normalize_names(args.agents) if args.agents else discover_agents()
+            commands = normalize_names(args.commands) if args.commands else discover_commands()
         code, message = run_operation(
             target=target,
             skills=skills,
@@ -910,6 +987,7 @@ def run_cli(argv: Sequence[str]) -> int:
             commands=commands,
             uninstall=args.uninstall,
             override=args.override,
+            dev_workflow=args.dev_workflow,
         )
     except InstallerError as exc:
         print(f"error: {exc}", file=sys.stderr)

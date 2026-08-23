@@ -36,9 +36,9 @@ Optional — 0–3 substantive bullets only; omit the section if nothing notable
 List confirmed findings first, ordered by severity (`critical` → `important` → `suggestion`).
 If none were found, write `No findings.` and skip the table and detail subsections.
 
-| id | severity | scope | location | issue | recommended route |
-|----|----------|-------|----------|-------|-------------------|
-| cr-001 | critical/important/suggestion | design/correctness/maintainability/security/performance/tests/scope-intent-alignment | `path:line` or unanchored | <short title> | direct edit / plan-executor / debugging-guide / plan-guide / test-driven-dev-guide / implementation-auditor |
+| id | severity | scope | location | issue | root-cause-phase | recommended route |
+|----|----------|-------|----------|-------|------------------|-------------------|
+| cr-001 | critical/important/suggestion | design/correctness/maintainability/security/performance/tests/scope-intent-alignment | `path:line` or unanchored | <short title> | local/research/plan/implement/code-review | direct edit / plan-executor / debugging-guide / plan-guide / test-driven-dev-guide / implementation-auditor |
 
 ### Finding details
 
@@ -51,6 +51,7 @@ If none were found, write `No findings.` and skip the table and detail subsectio
 - Why it matters: <regression, security, maintainability, or merge-risk impact>
 - Proposed fix: <actionable fix or improvement — not a vague suggestion>
 - Verdict (deep effort only): <CONFIRMED | PLAUSIBLE — omit at basic/standard effort>
+- root-cause-phase: <local | research | plan | implement | code-review> — use `local` when the finding is a code defect fixable by finding-resolver; use `research`, `plan`, or `implement` when the root cause traces to an earlier phase. When the dev-workflow-orchestrator is active, it reads this field to route backward handoff packets; outside the orchestrator, the field is informational.
 - Recommended route: <direct scoped edit | plan-executor | debugging-guide | plan-guide | test-driven-dev-guide | implementation-auditor>
 
 ## 5. Open questions or assumptions
@@ -82,6 +83,7 @@ One line per scope actually run:
 
 ## 8. Overall verdict
 
+- Loop verdict: <ready to commit | ready with notes | needs revision> — `ready to commit` when no critical or important findings remain; `ready with notes` when only suggestion-level findings remain; `needs revision` when any critical or important finding remains. When the dev-workflow-orchestrator is active, it reads this field to route the code review loop; outside the orchestrator, use merge readiness below.
 - Merge readiness: <ready | ready with fixes | not ready>
 - Risk summary: <one or two sentences on overall risk>
 - Top next actions:

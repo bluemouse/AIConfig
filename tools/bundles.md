@@ -55,6 +55,24 @@ Membership is the intersection of:
 python tools/installer.py /path/to/project --bundles target-bundle
 ```
 
+## Dev-workflow harness (`--dev-workflow`)
+
+The **dev-workflow harness** is not a bundle in `bundles.json`. Bundles resolve to skills only, but the harness is a cohesive unit that also includes a command and the validation scripts the orchestrator invokes at runtime. It is installed and uninstalled as a single group via the `--dev-workflow` flag:
+
+```bash
+python tools/installer.py /path/to/project --dev-workflow
+python tools/installer.py /path/to/project --dev-workflow --uninstall
+python tools/installer.py /path/to/project --dev-workflow --skills cpp-coding
+```
+
+The harness consists of:
+
+- **Skills (2):** `dev-workflow-orchestrator`, `finding-resolver` — installed via the standard skill mechanism (shared + tool wrappers).
+- **Command (1):** `dev-workflow` — installed via the standard command mechanism (shared + tool wrappers).
+- **Validation scripts:** the `tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/tools/dev-workflow/`.
+
+`--dev-workflow` composes with `--skills`, `--agents`, `--commands`, and `--bundles` in a single invocation. When it is the only selector, no other skills/agents/commands are installed. Use `--override` to replace existing harness paths in the target.
+
 ## Core dev workflow bundle
 
 The core bundle is the minimum workflow set a team should rely on for ordinary feature, bug, and product-spec development. Not every skill fires on every task, but every skill covers a responsibility that appears regularly in healthy delivery work.
