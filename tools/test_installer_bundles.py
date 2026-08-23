@@ -40,7 +40,31 @@ class BundleLoadingTests(unittest.TestCase):
         bundles = mod.load_skill_bundles(BUNDLES_JSON_PATH)
         by_id = {bundle.id: bundle for bundle in bundles}
         self.assertEqual(len(by_id["core-dev-workflow"].skills), 12)
-        self.assertEqual(len(by_id["extended-dev-workflow"].skills), 19)
+        self.assertEqual(len(by_id["extended-dev-workflow"].skills), 20)
+
+    def test_load_dev_workflow_harness_bundle(self) -> None:
+        bundles = mod.load_skill_bundles(BUNDLES_JSON_PATH)
+        by_id = {bundle.id: bundle for bundle in bundles}
+        harness = by_id["dev-workflow-harness"]
+        self.assertEqual(
+            harness.skills,
+            frozenset({
+                "dev-workflow-orchestrator",
+                "prompt-clarifier",
+                "research-guide",
+                "research-reviewer",
+                "plan-guide",
+                "plan-reviewer",
+                "plan-executor",
+                "implementation-auditor",
+                "finding-resolver",
+                "code-reviewer",
+                "commit-message-writer",
+            }),
+        )
+        self.assertEqual(harness.commands, frozenset({"dev-workflow"}))
+        self.assertEqual(harness.scripts, frozenset({"dev-workflow"}))
+        self.assertEqual(harness.agents, frozenset())
 
     def test_bases_composition(self) -> None:
         config = {

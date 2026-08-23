@@ -1,6 +1,6 @@
-# Skill Bundles
+# Bundles
 
-This document defines the workflow skill bundles for a classic software development lifecycle:
+This document defines the workflow bundles for a classic software development lifecycle:
 
 ```text
 clarify -> research -> plan -> implement -> test/debug -> QA -> PR
@@ -8,22 +8,31 @@ clarify -> research -> plan -> implement -> test/debug -> QA -> PR
 
 Bundles are intentionally stack-neutral. Add language, platform, framework, or domain-specific skills only after a workflow skill has established what kind of technical help is needed.
 
-Canonical skill membership for tooling lives in [bundles.json](bundles.json). Edit that file first when adding or removing bundle skills, then keep the descriptions and tables in this document in sync.
+Canonical bundle membership for tooling lives in [bundles.json](bundles.json). Edit that file first when adding or removing bundle members, then keep the descriptions and tables in this document in sync.
 
 ## Bundle composition
 
 [bundles.json](bundles.json) modularizes bundles with two layers:
 
-- **`bases`** — reusable skill sets keyed by id. Shared membership (for example the core workflow skills) is defined once in the top-level `bases` array.
-- **`bundles`** — installable bundles shown in the installer GUI. Each bundle references zero or more base ids through its `bases` field and may add bundle-specific skills in its own `skills` list.
+- **`bases`** — reusable member sets keyed by id. Shared membership (for example the core workflow skills) is defined once in the top-level `bases` array.
+- **`bundles`** — installable bundles shown in the installer GUI. Each bundle references zero or more base ids through its `bases` field and may add bundle-specific members in its own `skills`, `agents`, `commands`, and `scripts` lists.
+
+A bundle (or base) may include any combination of four member kinds:
+
+| Field | Description |
+| --- | --- |
+| `skills` | Skill slugs (installed via the skill mechanism: shared + tool wrappers) |
+| `agents` | Agent slugs (installed via the agent mechanism: shared + tool wrappers) |
+| `commands` | Command slugs (installed via the command mechanism: shared + tool wrappers) |
+| `scripts` | Scripts directory names under `tools/` (copied verbatim as directory trees) |
 
 Resolved membership for tooling is:
 
 ```text
-resolved_skills = union(base.skills for each referenced base id) ∪ bundle.skills
+resolved = union(base.<kind> for each referenced base id, for each kind) ∪ bundle.<kind>
 ```
 
-The extended dev workflow bundle references the `core-dev-workflow` base and lists only its seven additional skills in `skills`.
+The extended dev workflow bundle references the `core-dev-workflow` base and lists only its additional skills in `skills`.
 
 ### CLI usage
 
@@ -33,11 +42,12 @@ The extended dev workflow bundle references the `core-dev-workflow` base and lis
 python tools/installer.py /path/to/project --bundles core-dev-workflow
 python tools/installer.py /path/to/project --bundles extended-dev-workflow --override
 python tools/installer.py /path/to/project --bundles core-dev-workflow --skills cpp-coding
+python tools/installer.py /path/to/project --bundles dev-workflow-harness
 ```
 
-- `--bundles <id>` selects skills from the resolved bundle membership for install or uninstall.
-- Combine with `--skills` to add individual skills beyond the bundle.
-- Agents are independent: `--bundles` does not limit agents. Pass `--agents` to select specific agents; otherwise all discovered agents are included.
+- `--bundles <id>` selects all members (skills, agents, commands, scripts) from the resolved bundle for install or uninstall.
+- Combine with `--skills`, `--agents`, `--commands`, or `--scripts` to add individual items beyond the bundle.
+- When no selector is passed, all discovered skills, agents, commands, and scripts are selected.
 
 ### Target bundle (dynamic)
 
@@ -55,23 +65,23 @@ Membership is the intersection of:
 python tools/installer.py /path/to/project --bundles target-bundle
 ```
 
-## Dev-workflow harness (`--dev-workflow`)
+## Dev-workflow harness bundle
 
-The **dev-workflow harness** is not a bundle in `bundles.json`. Bundles resolve to skills only, but the harness is a cohesive unit that also includes a command and the validation scripts the orchestrator invokes at runtime. It is installed and uninstalled as a single group via the `--dev-workflow` flag:
+The **dev-workflow harness** is a bundle (`dev-workflow-harness`) that groups the complete dev-workflow harness as a single unit. It includes the orchestrator plus all phase doer/checker skills, the command, and the validation scripts the orchestrator invokes at runtime:
 
 ```bash
+python tools/installer.py /path/to/project --bundles dev-workflow-harness
+python tools/installer.py /path/to/project --bundles dev-workflow-harness --uninstall
 python tools/installer.py /path/to/project --dev-workflow
-python tools/installer.py /path/to/project --dev-workflow --uninstall
-python tools/installer.py /path/to/project --dev-workflow --skills cpp-coding
 ```
 
-The harness consists of:
+`--dev-workflow` is a CLI alias for `--bundles dev-workflow-harness`. The harness consists of:
 
-- **Skills (2):** `dev-workflow-orchestrator`, `finding-resolver` — installed via the standard skill mechanism (shared + tool wrappers).
+- **Skills (11):** `dev-workflow-orchestrator` (the orchestrator) plus the phase doers and checkers — `prompt-clarifier`, `research-guide` / `research-reviewer`, `plan-guide` / `plan-reviewer`, `plan-executor` / `implementation-auditor`, `finding-resolver` / `code-reviewer`, and `commit-message-writer`.
 - **Command (1):** `dev-workflow` — installed via the standard command mechanism (shared + tool wrappers).
 - **Validation scripts:** the `tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/tools/dev-workflow/`.
 
-`--dev-workflow` composes with `--skills`, `--agents`, `--commands`, and `--bundles` in a single invocation. When it is the only selector, no other skills/agents/commands are installed. Use `--override` to replace existing harness paths in the target.
+The bundle composes with `--skills`, `--agents`, `--commands`, and other `--bundles` in a single invocation. Use `--override` to replace existing harness paths in the target.
 
 ## Core dev workflow bundle
 

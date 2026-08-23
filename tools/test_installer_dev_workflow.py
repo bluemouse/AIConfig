@@ -62,9 +62,9 @@ def write_source_command(root: Path, name: str) -> None:
         path.write_text(f"# {name}\n", encoding="utf-8")
 
 
-def write_source_scripts(root: Path) -> None:
-    """Write a minimal tools/dev-workflow/ scripts tree with a checks/ subpackage."""
-    scripts = root / "tools" / "dev-workflow"
+def write_source_scripts(root: Path, name: str = "dev-workflow") -> None:
+    """Write a minimal tools/<name>/ scripts tree with a checks/ subpackage."""
+    scripts = root / "tools" / name
     scripts.mkdir(parents=True, exist_ok=True)
     (scripts / "validate_phase.py").write_text("# validate_phase\n", encoding="utf-8")
     (scripts / "check_pre_phase.py").write_text("# check_pre_phase\n", encoding="utf-8")
@@ -85,17 +85,32 @@ def write_full_harness_source(root: Path) -> None:
 
 class DevWorkflowConstantsTests(unittest.TestCase):
     def test_harness_constants(self) -> None:
-        self.assertEqual(mod.DEV_WORKFLOW_SKILLS, ("dev-workflow-orchestrator", "finding-resolver"))
+        self.assertEqual(
+            mod.DEV_WORKFLOW_SKILLS,
+            (
+                "dev-workflow-orchestrator",
+                "prompt-clarifier",
+                "research-guide",
+                "research-reviewer",
+                "plan-guide",
+                "plan-reviewer",
+                "plan-executor",
+                "implementation-auditor",
+                "finding-resolver",
+                "code-reviewer",
+                "commit-message-writer",
+            ),
+        )
         self.assertEqual(mod.DEV_WORKFLOW_COMMANDS, ("dev-workflow",))
-        self.assertEqual(mod.DEV_WORKFLOW_SCRIPTS_REL, "tools/dev-workflow")
+        self.assertEqual(mod.DEV_WORKFLOW_SCRIPTS, ("dev-workflow",))
 
 
-class DevWorkflowInstallTests(unittest.TestCase):
-    def test_install_dev_workflow_copies_all_paths(self) -> None:
+class ScriptsInstallTests(unittest.TestCase):
+    def test_install_scripts_copies_directory_tree(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
-            write_full_harness_source(source)
+            write_source_scripts(source)
 
             result = mod.install_items(
                 source_root=source,
@@ -103,35 +118,22 @@ class DevWorkflowInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
+                scripts=["dev-workflow"],
                 override=False,
-                dev_workflow=True,
             )
 
             self.assertTrue(result.ok, result.errors)
-            # Skills: shared + three tool wrappers each.
-            for skill in mod.DEV_WORKFLOW_SKILLS:
-                self.assertTrue((target / ".shared" / "skills" / skill / "SKILL.md").is_file())
-                self.assertTrue((target / ".cursor" / "skills" / skill / "SKILL.md").is_file())
-                self.assertTrue((target / ".claude" / "skills" / skill / "SKILL.md").is_file())
-                self.assertTrue((target / ".github" / "skills" / skill / "SKILL.md").is_file())
-            # Command: shared + three tool wrappers.
-            self.assertTrue((target / ".shared" / "commands" / "dev-workflow.md").is_file())
-            self.assertTrue((target / ".cursor" / "commands" / "dev-workflow.md").is_file())
-            self.assertTrue((target / ".claude" / "commands" / "dev-workflow.md").is_file())
-            self.assertTrue((target / ".github" / "prompts" / "dev-workflow.prompt.md").is_file())
-            # Scripts: directory tree with checks/ subpackage.
             scripts = target / "tools" / "dev-workflow"
             self.assertTrue(scripts.is_dir())
             self.assertTrue((scripts / "validate_phase.py").is_file())
             self.assertTrue((scripts / "checks" / "__init__.py").is_file())
-            self.assertTrue((scripts / "checks" / "mode_checks.py").is_file())
             self.assertIn("tools/dev-workflow", result.installed)
 
-    def test_install_dev_workflow_skips_existing_scripts_without_override(self) -> None:
+    def test_install_scripts_skips_existing_without_override(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
-            write_full_harness_source(source)
+            write_source_scripts(source)
             stale = target / "tools" / "dev-workflow" / "stale.txt"
             stale.parent.mkdir(parents=True, exist_ok=True)
             stale.write_text("stale", encoding="utf-8")
@@ -142,20 +144,19 @@ class DevWorkflowInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
+                scripts=["dev-workflow"],
                 override=False,
-                dev_workflow=True,
             )
 
             self.assertTrue(result.ok, result.errors)
             self.assertIn("tools/dev-workflow", result.skipped)
-            # Stale content preserved because override was False.
             self.assertEqual(stale.read_text(encoding="utf-8"), "stale")
 
-    def test_install_dev_workflow_override_replaces_scripts(self) -> None:
+    def test_install_scripts_override_replaces(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
-            write_full_harness_source(source)
+            write_source_scripts(source)
             stale = target / "tools" / "dev-workflow" / "stale.txt"
             stale.parent.mkdir(parents=True, exist_ok=True)
             stale.write_text("stale", encoding="utf-8")
@@ -166,25 +167,19 @@ class DevWorkflowInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
+                scripts=["dev-workflow"],
                 override=True,
-                dev_workflow=True,
             )
 
             self.assertTrue(result.ok, result.errors)
             self.assertIn("tools/dev-workflow", result.installed)
-            # Stale file removed because override replaced the directory.
             self.assertFalse(stale.exists())
-            self.assertTrue((target / "tools" / "dev-workflow" / "validate_phase.py").is_file())
 
-    def test_install_dev_workflow_missing_scripts_source_records_error(self) -> None:
+    def test_install_scripts_missing_source_records_error(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
-            # Write skills and command but NOT the scripts tree.
-            for skill in mod.DEV_WORKFLOW_SKILLS:
-                write_source_skill(source, skill)
-            for command in mod.DEV_WORKFLOW_COMMANDS:
-                write_source_command(source, command)
+            source.mkdir(parents=True, exist_ok=True)
 
             result = mod.install_items(
                 source_root=source,
@@ -192,47 +187,23 @@ class DevWorkflowInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
+                scripts=["dev-workflow"],
                 override=False,
-                dev_workflow=True,
             )
 
             self.assertFalse(result.ok)
             self.assertTrue(
-                any("dev-workflow scripts" in msg for msg in result.errors),
+                any("scripts dev-workflow" in msg for msg in result.errors),
                 result.errors,
             )
 
-    def test_install_dev_workflow_composes_with_other_skills(self) -> None:
+
+class ScriptsUninstallTests(unittest.TestCase):
+    def test_uninstall_scripts_removes_directory(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
-            write_full_harness_source(source)
-            write_source_skill(source, "extra-skill")
-
-            result = mod.install_items(
-                source_root=source,
-                target_root=target,
-                skills=["extra-skill"],
-                agents=[],
-                commands=[],
-                override=False,
-                dev_workflow=True,
-            )
-
-            self.assertTrue(result.ok, result.errors)
-            # Both the harness skill and the extra skill are installed.
-            self.assertTrue(
-                (target / ".shared" / "skills" / "dev-workflow-orchestrator" / "SKILL.md").is_file()
-            )
-            self.assertTrue((target / ".shared" / "skills" / "extra-skill" / "SKILL.md").is_file())
-
-
-class DevWorkflowUninstallTests(unittest.TestCase):
-    def test_uninstall_dev_workflow_removes_all_paths(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            write_full_harness_source(source)
+            write_source_scripts(source)
 
             mod.install_items(
                 source_root=source,
@@ -240,8 +211,8 @@ class DevWorkflowUninstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
+                scripts=["dev-workflow"],
                 override=False,
-                dev_workflow=True,
             )
 
             result = mod.uninstall_items(
@@ -249,23 +220,14 @@ class DevWorkflowUninstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
-                dev_workflow=True,
+                scripts=["dev-workflow"],
             )
 
             self.assertTrue(result.ok, result.errors)
-            for skill in mod.DEV_WORKFLOW_SKILLS:
-                self.assertFalse((target / ".shared" / "skills" / skill).exists())
-                self.assertFalse((target / ".cursor" / "skills" / skill).exists())
-                self.assertFalse((target / ".claude" / "skills" / skill).exists())
-                self.assertFalse((target / ".github" / "skills" / skill).exists())
-            self.assertFalse((target / ".shared" / "commands" / "dev-workflow.md").exists())
-            self.assertFalse((target / ".cursor" / "commands" / "dev-workflow.md").exists())
-            self.assertFalse((target / ".claude" / "commands" / "dev-workflow.md").exists())
-            self.assertFalse((target / ".github" / "prompts" / "dev-workflow.prompt.md").exists())
             self.assertFalse((target / "tools" / "dev-workflow").exists())
             self.assertIn("tools/dev-workflow", result.removed)
 
-    def test_uninstall_dev_workflow_when_not_installed(self) -> None:
+    def test_uninstall_scripts_when_not_installed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / "target"
             target.mkdir(parents=True, exist_ok=True)
@@ -275,34 +237,70 @@ class DevWorkflowUninstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
-                dev_workflow=True,
+                scripts=["dev-workflow"],
             )
 
             self.assertTrue(result.ok, result.errors)
-            # Nothing matched; no errors.
             self.assertEqual(result.removed, [])
 
 
-class DevWorkflowRunOperationTests(unittest.TestCase):
-    def test_run_operation_dev_workflow_only_does_not_raise(self) -> None:
+class DevWorkflowBundleTests(unittest.TestCase):
+    def test_resolve_dev_workflow_harness_bundle(self) -> None:
+        selection = mod.resolve_bundle(["dev-workflow-harness"])
+        self.assertEqual(
+            selection.skills,
+            [
+                "code-reviewer",
+                "commit-message-writer",
+                "dev-workflow-orchestrator",
+                "finding-resolver",
+                "implementation-auditor",
+                "plan-executor",
+                "plan-guide",
+                "plan-reviewer",
+                "prompt-clarifier",
+                "research-guide",
+                "research-reviewer",
+            ],
+        )
+        self.assertEqual(selection.commands, ["dev-workflow"])
+        self.assertEqual(selection.scripts, ["dev-workflow"])
+        self.assertEqual(selection.agents, [])
+
+    def test_install_harness_via_explicit_params(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
             write_full_harness_source(source)
 
+            result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=list(mod.DEV_WORKFLOW_SKILLS),
+                agents=[],
+                commands=list(mod.DEV_WORKFLOW_COMMANDS),
+                scripts=list(mod.DEV_WORKFLOW_SCRIPTS),
+                override=False,
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            for skill in mod.DEV_WORKFLOW_SKILLS:
+                self.assertTrue((target / ".shared" / "skills" / skill / "SKILL.md").is_file())
+            self.assertTrue((target / ".shared" / "commands" / "dev-workflow.md").is_file())
+            self.assertTrue((target / "tools" / "dev-workflow" / "validate_phase.py").is_file())
+
+    def test_run_operation_scripts_only_does_not_raise(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "target"
             code, message = mod.run_operation(
                 target=target,
                 skills=[],
                 agents=[],
                 commands=[],
+                scripts=["dev-workflow"],
                 uninstall=False,
                 override=False,
-                dev_workflow=True,
             )
-            # run_operation uses REPO_ROOT as the source, so the real harness
-            # scripts exist; the shared skills/commands may or may not. We only
-            # assert the call did not raise and produced a message.
-            self.assertEqual(code, 0 if not message or "Errors" not in message else 1)
             self.assertIsInstance(message, str)
 
     def test_run_operation_no_selection_raises(self) -> None:
@@ -314,11 +312,11 @@ class DevWorkflowRunOperationTests(unittest.TestCase):
                     skills=[],
                     agents=[],
                     commands=[],
+                    scripts=[],
                     uninstall=False,
                     override=False,
-                    dev_workflow=False,
                 )
-            self.assertIn("--dev-workflow", str(ctx.exception))
+            self.assertIn("scripts", str(ctx.exception))
 
 
 if __name__ == "__main__":

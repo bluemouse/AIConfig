@@ -500,9 +500,10 @@ python tools/installer.py /path/to/other-project --commands git-commit
 python tools/installer.py /path/to/other-project --bundles core-dev-workflow
 python tools/installer.py /path/to/other-project --bundles extended-dev-workflow --override
 
-# Install the dev-workflow harness (2 skills, 1 command, validation scripts)
+# Install the dev-workflow harness (11 skills, 1 command, validation scripts)
 python tools/installer.py /path/to/other-project --dev-workflow
-python tools/installer.py /path/to/other-project --dev-workflow --uninstall
+python tools/installer.py /path/to/other-project --bundles dev-workflow-harness
+python tools/installer.py /path/to/other-project --scripts dev-workflow --uninstall
 
 # Replace existing installs in the target
 python tools/installer.py /path/to/other-project --skills cpp-coding --override
@@ -516,14 +517,15 @@ python tools/installer.py /path/to/other-project --commands git-commit --uninsta
 | Flag | Behavior |
 | --- | --- |
 | `TARGET` | Destination project root (required in CLI mode) |
-| `--bundles ID ...` | Bundle ids from [tools/bundles.json](tools/bundles.json) or `target-bundle`; resolves to skills only (see [tools/bundles.md](tools/bundles.md)) |
+| `--bundles ID ...` | Bundle ids from [tools/bundles.json](tools/bundles.json) or `target-bundle`; a bundle may include skills, agents, commands, and scripts (see [tools/bundles.md](tools/bundles.md)) |
 | `--skills NAME ...` | Skill slugs to install or uninstall (default: all discovered unless `--bundles` is set) |
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
 | `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered) |
-| `--dev-workflow` | Install or uninstall the complete dev-workflow harness (2 skills, 1 command, and the `tools/dev-workflow/` validation scripts) as a unit; composes with the other selectors |
+| `--scripts NAME ...` | Scripts directory names (under `tools/`) to install or uninstall (default: all discovered) |
+| `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (11 skills, 1 command, and the `tools/dev-workflow/` validation scripts) as a unit |
 | `--override` | Replace existing paths in the target; without it, skip and report |
-| `--uninstall` | Remove the selected skills, agents, and commands from the target |
-| *(no arguments)* | Open a tkinter GUI with skill/agent/command checkboxes and a **Bundles** panel for workflow batch selection |
+| `--uninstall` | Remove the selected skills, agents, commands, and scripts from the target project |
+| *(no arguments)* | Open a tkinter GUI with skill/agent/command/scripts checkboxes and a **Bundles** panel for workflow batch selection |
 
 Without `--override`, existing paths in the target are skipped. The script refuses to install into this AIConfig repo itself. Reload each tool in the target project after install. Bundle definitions live in [tools/bundles.md](tools/bundles.md) (human-readable) and [tools/bundles.json](tools/bundles.json) (machine-readable).
 

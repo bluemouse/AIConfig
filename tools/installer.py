@@ -41,6 +41,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SHARED_SKILL_DIR = ".shared/skills/{name}"
 SHARED_AGENT_FILE = ".shared/agents/{name}.md"
 SHARED_COMMAND_FILE = ".shared/commands/{name}.md"
+SHARED_SCRIPTS_DIR = "tools/{name}"
 
 TOOL_SKILL_DIRS = {
     "cursor": ".cursor/skills/{name}",
@@ -60,6 +61,9 @@ TOOL_COMMAND_FILES = {
     "github": ".github/prompts/{name}.prompt.md",
 }
 
+# Scripts are directory trees under tools/<name>/ (no tool wrappers).
+TOOL_SCRIPTS_SCAN_REL_DIRS = ("tools",)
+
 TOOL_SKILL_SCAN_REL_DIRS = (
     ".cursor/skills",
     ".claude/skills",
@@ -78,6 +82,9 @@ TOOL_COMMAND_SCAN_REL_DIRS = (
     (".github/prompts", ".prompt.md"),
 )
 
+# Scripts are discovered as subdirectories of tools/ in the repo root.
+# A scripts "name" is the directory name under tools/.
+
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 RELOAD_REMINDER = (
@@ -94,11 +101,25 @@ TARGET_BUNDLE_DESCRIPTION = (
     "(matching this AIConfig catalog)."
 )
 
-# Dev-workflow harness: a fixed set of skills, a command, and the validation
-# scripts tree, installed/uninstalled together via --dev-workflow.
-DEV_WORKFLOW_SKILLS = ("dev-workflow-orchestrator", "finding-resolver")
+# Dev-workflow harness: the orchestrator plus all phase doer/checker skills,
+# the dev-workflow command, and the validation scripts tree. Installed/
+# uninstalled together via the dev-workflow-harness bundle (and the
+# --dev-workflow CLI alias).
+DEV_WORKFLOW_SKILLS = (
+    "dev-workflow-orchestrator",
+    "prompt-clarifier",
+    "research-guide",
+    "research-reviewer",
+    "plan-guide",
+    "plan-reviewer",
+    "plan-executor",
+    "implementation-auditor",
+    "finding-resolver",
+    "code-reviewer",
+    "commit-message-writer",
+)
 DEV_WORKFLOW_COMMANDS = ("dev-workflow",)
-DEV_WORKFLOW_SCRIPTS_REL = "tools/dev-workflow"
+DEV_WORKFLOW_SCRIPTS = ("dev-workflow",)
 
 BundleSelectionState = Literal["all", "none", "partial"]
 
@@ -108,11 +129,23 @@ class InstallerError(Exception):
 
 
 @dataclass(frozen=True)
-class SkillBundle:
+class Bundle:
     id: str
     name: str
     description: str
     skills: frozenset[str]
+    agents: frozenset[str] = frozenset()
+    commands: frozenset[str] = frozenset()
+    scripts: frozenset[str] = frozenset()
+
+    @property
+    def is_empty(self) -> bool:
+        """Return True if the bundle has no members of any kind."""
+        return not (self.skills or self.agents or self.commands or self.scripts)
+
+
+# Backward-compatible alias.
+SkillBundle = Bundle
 
 
 def bundle_selection_state(
@@ -153,15 +186,15 @@ def format_selection_help(
 
 
 def bundle_help_entries(
-    bundles: Sequence[SkillBundle],
+    bundles: Sequence[Bundle],
     *,
-    present_members: Callable[[frozenset[str]], Sequence[str]],
+    present_members: Callable[[Bundle], Sequence[str]],
     is_selected: Callable[[str], bool],
 ) -> list[tuple[str, str]]:
-    """Return display name and description tuples for bundles with any selected skills."""
+    """Return display name and description tuples for bundles with any selected members."""
     entries: list[tuple[str, str]] = []
     for bundle in bundles:
-        members = present_members(bundle.skills)
+        members = present_members(bundle)
         state = bundle_selection_state(members, is_selected)
         if state == "none":
             continue
@@ -196,8 +229,13 @@ def slugify_name(value: str) -> str:
     return normalized
 
 
-def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[SkillBundle]:
-    """Load workflow skill bundles from bundles.json."""
+def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
+    """Load workflow bundles from bundles.json.
+
+    Each bundle may define any combination of skills, agents, commands, and
+    scripts. Bases are reusable member sets keyed by id; a base may also carry
+    any combination of the four member types.
+    """
     if not path.is_file():
         raise InstallerError(f"Bundle config not found: {path}")
 
@@ -209,13 +247,13 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[SkillBundle]:
     if not isinstance(payload, dict):
         raise InstallerError(f"Invalid bundle config {path}: root must be an object.")
 
-    base_skills = _load_bundle_base_registry(path, payload.get("bases"))
+    base_registry = _load_bundle_base_registry(path, payload.get("bases"))
 
     raw_bundles = payload.get("bundles")
     if not isinstance(raw_bundles, list) or not raw_bundles:
         raise InstallerError(f"Invalid bundle config {path}: 'bundles' must be a non-empty list.")
 
-    bundles: list[SkillBundle] = []
+    bundles: list[Bundle] = []
     seen_ids: set[str] = set()
     for index, entry in enumerate(raw_bundles):
         if not isinstance(entry, dict):
@@ -234,7 +272,11 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[SkillBundle]:
             raise InstallerError(f"Invalid bundle config {path}: duplicate bundle id {bundle_id!r}.")
         seen_ids.add(bundle_id)
 
-        resolved_skills = set()
+        resolved_skills: set[str] = set()
+        resolved_agents: set[str] = set()
+        resolved_commands: set[str] = set()
+        resolved_scripts: set[str] = set()
+
         raw_bundle_bases = entry.get("bases", [])
         if raw_bundle_bases is None:
             raw_bundle_bases = []
@@ -244,74 +286,108 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[SkillBundle]:
             )
         for base_id in raw_bundle_bases:
             base_key = slugify_name(str(base_id))
-            if base_key not in base_skills:
+            if base_key not in base_registry:
                 raise InstallerError(
                     f"Invalid bundle config {path}: bundles[{index}] references unknown base {base_key!r}."
                 )
-            resolved_skills.update(base_skills[base_key])
+            base = base_registry[base_key]
+            resolved_skills.update(base.skills)
+            resolved_agents.update(base.agents)
+            resolved_commands.update(base.commands)
+            resolved_scripts.update(base.scripts)
 
-        if "skills" in entry:
-            raw_skills = entry["skills"]
-            if not isinstance(raw_skills, list):
-                raise InstallerError(
-                    f"Invalid bundle config {path}: bundles[{index}] skills must be a list."
-                )
-            resolved_skills.update(slugify_name(str(skill)) for skill in raw_skills)
+        resolved_skills.update(_parse_member_list(entry, "skills", path, index))
+        resolved_agents.update(_parse_member_list(entry, "agents", path, index))
+        resolved_commands.update(_parse_member_list(entry, "commands", path, index))
+        resolved_scripts.update(_parse_member_list(entry, "scripts", path, index))
 
-        if not raw_bundle_bases and "skills" not in entry:
+        if not (resolved_skills or resolved_agents or resolved_commands or resolved_scripts):
             raise InstallerError(
-                f"Invalid bundle config {path}: bundles[{index}] must define bases and/or skills."
-            )
-        if not resolved_skills:
-            raise InstallerError(
-                f"Invalid bundle config {path}: bundles[{index}] resolved to an empty skill set."
+                f"Invalid bundle config {path}: bundles[{index}] resolved to an empty bundle."
             )
 
         bundles.append(
-            SkillBundle(
+            Bundle(
                 id=bundle_id,
                 name=str(entry["name"]).strip(),
                 description=str(entry["description"]).strip(),
                 skills=frozenset(resolved_skills),
+                agents=frozenset(resolved_agents),
+                commands=frozenset(resolved_commands),
+                scripts=frozenset(resolved_scripts),
             )
         )
 
     return bundles
 
 
-def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, frozenset[str]]:
-    """Parse the top-level bases registry from bundles.json."""
+def _parse_member_list(
+    entry: dict,
+    key: str,
+    path: Path,
+    index: int,
+) -> set[str]:
+    """Parse an optional member list (skills/agents/commands/scripts) from a bundle/base entry."""
+    if key not in entry:
+        return set()
+    raw = entry[key]
+    if not isinstance(raw, list):
+        raise InstallerError(
+            f"Invalid bundle config {path}: bundles[{index}] {key} must be a list."
+        )
+    return {slugify_name(str(name)) for name in raw}
+
+
+def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, Bundle]:
+    """Parse the top-level bases registry from bundles.json.
+
+    A base is a reusable member set. It must define at least one of skills,
+    agents, commands, or scripts. For backward compatibility, a base with only
+    a ``skills`` key is valid.
+    """
     if raw_bases is None:
         return {}
     if not isinstance(raw_bases, list):
         raise InstallerError(f"Invalid bundle config {path}: 'bases' must be a list.")
 
-    base_skills: dict[str, frozenset[str]] = {}
+    base_registry: dict[str, Bundle] = {}
     for index, entry in enumerate(raw_bases):
         if not isinstance(entry, dict):
             raise InstallerError(
                 f"Invalid bundle config {path}: bases[{index}] must be an object."
             )
 
-        missing = [key for key in ("id", "skills") if key not in entry]
-        if missing:
+        if "id" not in entry:
             raise InstallerError(
-                f"Invalid bundle config {path}: bases[{index}] missing keys: {', '.join(missing)}"
+                f"Invalid bundle config {path}: bases[{index}] missing keys: id"
             )
 
         base_id = slugify_name(str(entry["id"]))
-        if base_id in base_skills:
+        if base_id in base_registry:
             raise InstallerError(f"Invalid bundle config {path}: duplicate base id {base_id!r}.")
 
-        raw_skills = entry["skills"]
-        if not isinstance(raw_skills, list) or not raw_skills:
+        skills = frozenset(_parse_member_list(entry, "skills", path, index))
+        agents = frozenset(_parse_member_list(entry, "agents", path, index))
+        commands = frozenset(_parse_member_list(entry, "commands", path, index))
+        scripts = frozenset(_parse_member_list(entry, "scripts", path, index))
+
+        if not (skills or agents or commands or scripts):
             raise InstallerError(
-                f"Invalid bundle config {path}: bases[{index}] skills must be a non-empty list."
+                f"Invalid bundle config {path}: bases[{index}] must define at least one of "
+                "skills, agents, commands, or scripts."
             )
 
-        base_skills[base_id] = frozenset(slugify_name(str(skill)) for skill in raw_skills)
+        base_registry[base_id] = Bundle(
+            id=base_id,
+            name=base_id,
+            description="",
+            skills=skills,
+            agents=agents,
+            commands=commands,
+            scripts=scripts,
+        )
 
-    return base_skills
+    return base_registry
 
 
 def normalize_names(values: Iterable[str]) -> list[str]:
@@ -330,36 +406,116 @@ def known_bundle_ids(path: Path = BUNDLES_JSON) -> list[str]:
     return sorted({bundle.id for bundle in load_skill_bundles(path)} | {TARGET_BUNDLE_ID})
 
 
-def resolve_bundle_skills(
+@dataclass
+class BundleSelection:
+    """Resolved members of one or more bundles, grouped by kind."""
+
+    skills: list[str] = field(default_factory=list)
+    agents: list[str] = field(default_factory=list)
+    commands: list[str] = field(default_factory=list)
+    scripts: list[str] = field(default_factory=list)
+
+    def extend(self, other: "BundleSelection") -> None:
+        self.skills.extend(other.skills)
+        self.agents.extend(other.agents)
+        self.commands.extend(other.commands)
+        self.scripts.extend(other.scripts)
+
+    def dedupe(self) -> None:
+        self.skills = normalize_names(self.skills)
+        self.agents = normalize_names(self.agents)
+        self.commands = normalize_names(self.commands)
+        self.scripts = normalize_names(self.scripts)
+
+    @property
+    def is_empty(self) -> bool:
+        return not (self.skills or self.agents or self.commands or self.scripts)
+
+
+def resolve_bundle(
     bundle_ids: Sequence[str],
     *,
     path: Path = BUNDLES_JSON,
     target_root: Path | None = None,
-) -> list[str]:
-    """Resolve bundle ids from bundles.json into a deduplicated skill list."""
+) -> BundleSelection:
+    """Resolve bundle ids from bundles.json into a grouped member selection."""
     bundles = load_skill_bundles(path)
     by_id = {bundle.id: bundle for bundle in bundles}
     normalized_bundle_ids = normalize_names(bundle_ids)
-    resolved: set[str] = set()
+    selection = BundleSelection()
     for raw_id in bundle_ids:
         bundle_id = slugify_name(str(raw_id))
         if bundle_id == TARGET_BUNDLE_ID:
             if target_root is None:
                 raise InstallerError("Target bundle requires a target project path.")
-            target_skills = build_target_bundle(target_root).skills
-            if not target_skills and normalized_bundle_ids == [TARGET_BUNDLE_ID]:
+            target_bundle = build_target_bundle(target_root)
+            if target_bundle.is_empty and normalized_bundle_ids == [TARGET_BUNDLE_ID]:
                 raise InstallerError(
                     "Target bundle: no matching installed skills found in target project."
                 )
-            resolved.update(target_skills)
+            selection.extend(BundleSelection(skills=sorted(target_bundle.skills)))
             continue
         if bundle_id not in by_id:
             known = ", ".join(known_bundle_ids(path))
             raise InstallerError(
                 f"Unknown bundle {bundle_id!r}. Known bundles: {known}"
             )
-        resolved.update(by_id[bundle_id].skills)
-    return normalize_names(resolved)
+        bundle = by_id[bundle_id]
+        selection.extend(BundleSelection(
+            skills=sorted(bundle.skills),
+            agents=sorted(bundle.agents),
+            commands=sorted(bundle.commands),
+            scripts=sorted(bundle.scripts),
+        ))
+    selection.dedupe()
+    return selection
+
+
+def resolve_bundle_skills(
+    bundle_ids: Sequence[str],
+    *,
+    path: Path = BUNDLES_JSON,
+    target_root: Path | None = None,
+) -> list[str]:
+    """Resolve bundle ids from bundles.json into a deduplicated skill list.
+
+    Backward-compatible wrapper around resolve_bundle for callers that only
+    need skills.
+    """
+    return resolve_bundle(bundle_ids, path=path, target_root=target_root).skills
+
+
+def resolve_cli_selection(
+    *,
+    bundle_ids: Sequence[str] | None,
+    skill_names: Sequence[str] | None,
+    agent_names: Sequence[str] | None,
+    command_names: Sequence[str] | None,
+    script_names: Sequence[str] | None,
+    target_root: Path | None = None,
+) -> BundleSelection:
+    """Resolve CLI selection from bundles, explicit names, or all discovered items."""
+    selection = BundleSelection()
+    if bundle_ids:
+        selection.extend(resolve_bundle(bundle_ids, target_root=target_root))
+    if skill_names:
+        selection.skills.extend(normalize_names(skill_names))
+    if agent_names:
+        selection.agents.extend(normalize_names(agent_names))
+    if command_names:
+        selection.commands.extend(normalize_names(command_names))
+    if script_names:
+        selection.scripts.extend(normalize_names(script_names))
+    if bundle_ids or skill_names or agent_names or command_names or script_names:
+        selection.dedupe()
+        return selection
+    # No explicit selection: default to all discovered items.
+    return BundleSelection(
+        skills=discover_skills(),
+        agents=discover_agents(),
+        commands=discover_commands(),
+        scripts=discover_scripts(),
+    )
 
 
 def resolve_cli_skills(
@@ -368,15 +524,19 @@ def resolve_cli_skills(
     skill_names: Sequence[str] | None,
     target_root: Path | None = None,
 ) -> list[str]:
-    """Resolve CLI skill selection from bundles, explicit names, or all discovered skills."""
-    combined: list[str] = []
-    if bundle_ids:
-        combined.extend(resolve_bundle_skills(bundle_ids, target_root=target_root))
-    if skill_names:
-        combined.extend(normalize_names(skill_names))
-    if bundle_ids or skill_names:
-        return normalize_names(combined)
-    return discover_skills()
+    """Resolve CLI skill selection from bundles, explicit names, or all discovered skills.
+
+    Backward-compatible wrapper around resolve_cli_selection for callers that
+    only need skills.
+    """
+    return resolve_cli_selection(
+        bundle_ids=bundle_ids,
+        skill_names=skill_names,
+        agent_names=None,
+        command_names=None,
+        script_names=None,
+        target_root=target_root,
+    ).skills
 
 
 def discover_skills_in_project(project_root: Path) -> list[str]:
@@ -395,14 +555,14 @@ def build_target_bundle(
     target_root: Path,
     *,
     available_skills: Sequence[str] | None = None,
-) -> SkillBundle:
+) -> Bundle:
     """Build the dynamic target bundle from installed skills in the target project."""
     if available_skills is None:
         available_skills = discover_skills()
     available_set = set(available_skills)
     installed = discover_skills_in_project(target_root)
     members = frozenset(name for name in installed if name in available_set)
-    return SkillBundle(
+    return Bundle(
         id=TARGET_BUNDLE_ID,
         name=TARGET_BUNDLE_NAME,
         description=TARGET_BUNDLE_DESCRIPTION,
@@ -534,6 +694,40 @@ def load_command_descriptions(names: Sequence[str]) -> dict[str, str]:
     return descriptions
 
 
+def discover_scripts() -> list[str]:
+    """Return scripts directory names discovered under REPO_ROOT/tools/."""
+    names: set[str] = set()
+    for rel_dir in TOOL_SCRIPTS_SCAN_REL_DIRS:
+        scan_root = REPO_ROOT / rel_dir
+        if not scan_root.is_dir():
+            continue
+        for child in scan_root.iterdir():
+            if child.is_dir() and not child.name.startswith(".") and not child.name.startswith("__"):
+                names.add(child.name)
+    return sorted(names)
+
+
+def load_scripts_descriptions(names: Sequence[str]) -> dict[str, str]:
+    """Map scripts names to a short description.
+
+    Scripts directories do not carry frontmatter; the description is derived
+    from a README.md in the directory if present, otherwise the name itself.
+    """
+    descriptions: dict[str, str] = {}
+    for name in names:
+        readme = REPO_ROOT / "tools" / name / "README.md"
+        if readme.is_file():
+            try:
+                text = readme.read_text(encoding="utf-8").strip()
+                first_line = text.splitlines()[0].lstrip("# ").strip() if text else ""
+                descriptions[name] = first_line or f"Scripts directory: {name}"
+            except OSError:
+                descriptions[name] = f"Scripts directory: {name}"
+        else:
+            descriptions[name] = f"Scripts directory: {name}"
+    return descriptions
+
+
 def validate_target(source: Path, target: Path, *, create: bool) -> Path:
     target = target.resolve()
     source = source.resolve()
@@ -617,6 +811,17 @@ def command_remove_paths(target_root: Path, name: str) -> list[Path]:
     return paths
 
 
+def scripts_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
+    """Return (src, dest) pairs for a scripts directory tree under tools/<name>/."""
+    src = source_root / SHARED_SCRIPTS_DIR.format(name=name)
+    dest = target_root / SHARED_SCRIPTS_DIR.format(name=name)
+    return [(src, dest)]
+
+
+def scripts_remove_paths(target_root: Path, name: str) -> list[Path]:
+    return [target_root / SHARED_SCRIPTS_DIR.format(name=name)]
+
+
 def remove_path(path: Path) -> None:
     if path.is_dir():
         shutil.rmtree(path)
@@ -641,19 +846,13 @@ def install_items(
     skills: Sequence[str],
     agents: Sequence[str],
     commands: Sequence[str],
-    override: bool,
-    dev_workflow: bool = False,
+    scripts: Sequence[str] = (),
+    override: bool = False,
 ) -> OperationResult:
     result = OperationResult()
     target_root = validate_target(source_root, target_root, create=True)
 
-    effective_skills = list(skills)
-    effective_commands = list(commands)
-    if dev_workflow:
-        effective_skills.extend(DEV_WORKFLOW_SKILLS)
-        effective_commands.extend(DEV_WORKFLOW_COMMANDS)
-
-    for name in effective_skills:
+    for name in skills:
         slug = slugify_name(name)
         pairs = skill_copy_pairs(source_root, target_root, slug)
         shared_src = pairs[0][0]
@@ -699,7 +898,7 @@ def install_items(
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
 
-    for name in effective_commands:
+    for name in commands:
         slug = slugify_name(name)
         pairs = command_copy_pairs(source_root, target_root, slug)
         shared_src = pairs[0][0]
@@ -722,27 +921,25 @@ def install_items(
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
 
-    if dev_workflow:
-        scripts_src = source_root / DEV_WORKFLOW_SCRIPTS_REL
-        scripts_dest = target_root / DEV_WORKFLOW_SCRIPTS_REL
-        rel_dest = format_rel(scripts_dest, target_root)
-        if not scripts_src.is_dir():
+    for name in scripts:
+        slug = slugify_name(name)
+        pairs = scripts_copy_pairs(source_root, target_root, slug)
+        shared_src = pairs[0][0]
+        if not shared_src.is_dir():
             result.errors.append(
-                f"dev-workflow scripts: missing source {format_rel(scripts_src, source_root)}"
+                f"scripts {slug}: missing source {format_rel(shared_src, source_root)}"
             )
-        elif scripts_dest.exists():
-            if not override:
-                result.skipped.append(rel_dest)
-            else:
-                remove_path(scripts_dest)
-                try:
-                    copy_path(scripts_src, scripts_dest)
-                    result.installed.append(rel_dest)
-                except OSError as exc:
-                    result.errors.append(f"{rel_dest}: {exc}")
-        else:
+            continue
+
+        for src, dest in pairs:
+            rel_dest = format_rel(dest, target_root)
+            if dest.exists():
+                if not override:
+                    result.skipped.append(rel_dest)
+                    continue
+                remove_path(dest)
             try:
-                copy_path(scripts_src, scripts_dest)
+                copy_path(src, dest)
                 result.installed.append(rel_dest)
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
@@ -756,20 +953,14 @@ def uninstall_items(
     skills: Sequence[str],
     agents: Sequence[str],
     commands: Sequence[str],
-    dev_workflow: bool = False,
+    scripts: Sequence[str] = (),
 ) -> OperationResult:
     result = OperationResult()
     target_root = validate_target(REPO_ROOT, target_root, create=False)
     if not target_root.exists():
         return result
 
-    effective_skills = list(skills)
-    effective_commands = list(commands)
-    if dev_workflow:
-        effective_skills.extend(DEV_WORKFLOW_SKILLS)
-        effective_commands.extend(DEV_WORKFLOW_COMMANDS)
-
-    for name in effective_skills:
+    for name in skills:
         slug = slugify_name(name)
         for path in skill_remove_paths(target_root, slug):
             if path.exists():
@@ -789,7 +980,7 @@ def uninstall_items(
                 except OSError as exc:
                     result.errors.append(f"{format_rel(path, target_root)}: {exc}")
 
-    for name in effective_commands:
+    for name in commands:
         slug = slugify_name(name)
         for path in command_remove_paths(target_root, slug):
             if path.exists():
@@ -799,14 +990,15 @@ def uninstall_items(
                 except OSError as exc:
                     result.errors.append(f"{format_rel(path, target_root)}: {exc}")
 
-    if dev_workflow:
-        scripts_path = target_root / DEV_WORKFLOW_SCRIPTS_REL
-        if scripts_path.exists():
-            try:
-                remove_path(scripts_path)
-                result.removed.append(format_rel(scripts_path, target_root))
-            except OSError as exc:
-                result.errors.append(f"{format_rel(scripts_path, target_root)}: {exc}")
+    for name in scripts:
+        slug = slugify_name(name)
+        for path in scripts_remove_paths(target_root, slug):
+            if path.exists():
+                try:
+                    remove_path(path)
+                    result.removed.append(format_rel(path, target_root))
+                except OSError as exc:
+                    result.errors.append(f"{format_rel(path, target_root)}: {exc}")
 
     return result
 
@@ -846,12 +1038,12 @@ def run_operation(
     skills: Sequence[str],
     agents: Sequence[str],
     commands: Sequence[str],
-    uninstall: bool,
-    override: bool,
-    dev_workflow: bool = False,
+    scripts: Sequence[str] = (),
+    uninstall: bool = False,
+    override: bool = False,
 ) -> tuple[int, str]:
-    if not skills and not agents and not commands and not dev_workflow:
-        raise InstallerError("Select at least one skill, agent, command, or --dev-workflow.")
+    if not skills and not agents and not commands and not scripts:
+        raise InstallerError("Select at least one skill, agent, command, or scripts.")
 
     if uninstall:
         result = uninstall_items(
@@ -859,7 +1051,7 @@ def run_operation(
             skills=skills,
             agents=agents,
             commands=commands,
-            dev_workflow=dev_workflow,
+            scripts=scripts,
         )
     else:
         result = install_items(
@@ -868,8 +1060,8 @@ def run_operation(
             skills=skills,
             agents=agents,
             commands=commands,
+            scripts=scripts,
             override=override,
-            dev_workflow=dev_workflow,
         )
 
     message = format_result(result, uninstall=uninstall)
@@ -894,8 +1086,9 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
             "  python tools/installer.py /path/to/project --bundles extended-dev-workflow --override\n"
             "  python tools/installer.py /path/to/project --bundles core-dev-workflow --skills cpp-coding\n"
             "  python tools/installer.py /path/to/project --bundles target-bundle\n"
+            "  python tools/installer.py /path/to/project --bundles dev-workflow-harness\n"
             "  python tools/installer.py /path/to/project --dev-workflow\n"
-            "  python tools/installer.py /path/to/project --dev-workflow --uninstall\n"
+            "  python tools/installer.py /path/to/project --scripts dev-workflow\n"
             "  python tools/installer.py /path/to/project --uninstall --agents my-agent\n"
             "  python tools/installer.py /path/to/project --uninstall --commands git-commit\n"
             "\n"
@@ -912,9 +1105,8 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         nargs="+",
         metavar="ID",
         help=(
-            "Bundle ids from bundles.json or target-bundle to install or uninstall "
-            "(skills only; agents and commands still default to all unless "
-            "--agents or --commands is set)."
+            "Bundle ids from bundles.json or target-bundle to install or uninstall. "
+            "A bundle may include skills, agents, commands, and scripts."
         ),
     )
     parser.add_argument(
@@ -936,22 +1128,28 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help="Command names to install or uninstall (default: all discovered commands).",
     )
     parser.add_argument(
+        "--scripts",
+        nargs="+",
+        metavar="NAME",
+        help="Scripts directory names (under tools/) to install or uninstall (default: all discovered).",
+    )
+    parser.add_argument(
         "--dev-workflow",
         action="store_true",
         help=(
-            "Install or uninstall the complete dev-workflow harness "
-            "(2 skills, 1 command, and the tools/dev-workflow/ validation scripts)."
+            "Alias for --bundles dev-workflow-harness: install or uninstall the complete "
+            "dev-workflow harness (11 skills, 1 command, and the tools/dev-workflow/ scripts)."
         ),
     )
     parser.add_argument(
         "--uninstall",
         action="store_true",
-        help="Remove the selected skills, agents, and commands from the target project.",
+        help="Remove the selected skills, agents, commands, and scripts from the target project.",
     )
     parser.add_argument(
         "--override",
         action="store_true",
-        help="Replace existing skills, agents, and commands in the target project.",
+        help="Replace existing skills, agents, commands, and scripts in the target project.",
     )
     return parser.parse_args(argv)
 
@@ -965,29 +1163,26 @@ def run_cli(argv: Sequence[str]) -> int:
 
     try:
         target = Path(args.target).expanduser().resolve()
-        only_dev_workflow = args.dev_workflow and not (
-            args.bundles or args.skills or args.agents or args.commands
+        # --dev-workflow is an alias for --bundles dev-workflow-harness.
+        bundle_ids = list(args.bundles or [])
+        if args.dev_workflow and "dev-workflow-harness" not in bundle_ids:
+            bundle_ids.append("dev-workflow-harness")
+        selection = resolve_cli_selection(
+            bundle_ids=bundle_ids or None,
+            skill_names=args.skills,
+            agent_names=args.agents,
+            command_names=args.commands,
+            script_names=args.scripts,
+            target_root=target,
         )
-        if only_dev_workflow:
-            skills: list[str] = []
-            agents: list[str] = []
-            commands: list[str] = []
-        else:
-            skills = resolve_cli_skills(
-                bundle_ids=args.bundles,
-                skill_names=args.skills,
-                target_root=target,
-            )
-            agents = normalize_names(args.agents) if args.agents else discover_agents()
-            commands = normalize_names(args.commands) if args.commands else discover_commands()
         code, message = run_operation(
             target=target,
-            skills=skills,
-            agents=agents,
-            commands=commands,
+            skills=selection.skills,
+            agents=selection.agents,
+            commands=selection.commands,
+            scripts=selection.scripts,
             uninstall=args.uninstall,
             override=args.override,
-            dev_workflow=args.dev_workflow,
         )
     except InstallerError as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -1070,12 +1265,15 @@ class InstallerApp:
         self.skills = discover_skills()
         self.agents = discover_agents()
         self.commands = discover_commands()
+        self.scripts = discover_scripts()
         self.skill_descriptions = load_skill_descriptions(self.skills)
         self.agent_descriptions = load_agent_descriptions(self.agents)
         self.command_descriptions = load_command_descriptions(self.commands)
+        self.scripts_descriptions = load_scripts_descriptions(self.scripts)
         self.skill_vars: dict[str, tk.BooleanVar] = {}
         self.agent_vars: dict[str, tk.BooleanVar] = {}
         self.command_vars: dict[str, tk.BooleanVar] = {}
+        self.scripts_vars: dict[str, tk.BooleanVar] = {}
 
         self.target_var = tk.StringVar()
         self.mode_var = tk.StringVar(value="install")
@@ -1083,7 +1281,7 @@ class InstallerApp:
         self._syncing_bundle_selection = False
         self.skill_bundles = load_skill_bundles()
         self._bundle_buttons: dict[str, ttk.Checkbutton] = {}
-        self._target_bundle: SkillBundle | None = None
+        self._target_bundle: Bundle | None = None
         self._target_bundle_button: ttk.Checkbutton | None = None
         self._target_bundle_tooltip: HoverTooltip | None = None
         self._help_window: tk.Toplevel | None = None
@@ -1134,6 +1332,15 @@ class InstallerApp:
             descriptions=self.command_descriptions,
             help_command=self._show_commands_help,
         )
+        self._add_checkbox_list(
+            lists,
+            title="Scripts",
+            items=self.scripts,
+            var_map=self.scripts_vars,
+            column=3,
+            descriptions=self.scripts_descriptions,
+            help_command=self._show_scripts_help,
+        )
 
         self._add_bundles_panel(outer)
 
@@ -1181,7 +1388,7 @@ class InstallerApp:
             button = ttk.Checkbutton(
                 bundles,
                 text=bundle.name,
-                command=lambda skills=bundle.skills: self._toggle_bundle(skills),
+                command=lambda b=bundle: self._toggle_bundle(b),
             )
             button.pack(anchor=tk.W)
             self._bundle_buttons[bundle.id] = button
@@ -1217,10 +1424,8 @@ class InstallerApp:
         frame = ttk.LabelFrame(parent, text=title, padding=8)
         if column == 0:
             padx = (0, 4)
-        elif column == 1:
-            padx = (4, 4)
         else:
-            padx = (4, 0)
+            padx = (4, 4)
         frame.grid(row=0, column=column, sticky="nsew", padx=padx)
         parent.columnconfigure(column, weight=1)
         parent.rowconfigure(0, weight=1)
@@ -1267,8 +1472,7 @@ class InstallerApp:
         for item in items:
             var = tk.BooleanVar(value=False)
             var_map[item] = var
-            if skill_selection:
-                var.trace_add("write", lambda *_args: self._on_skill_selection_changed())
+            var.trace_add("write", lambda *_args: self._on_selection_changed())
             button = ttk.Checkbutton(inner, text=item, variable=var)
             button.pack(anchor=tk.W)
             if descriptions is not None:
@@ -1291,51 +1495,81 @@ class InstallerApp:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
 
-    def _effective_bundles(self) -> list[SkillBundle]:
+    def _effective_bundles(self) -> list[Bundle]:
         bundles = list(self.skill_bundles)
         if self._target_bundle is not None:
             bundles.append(self._target_bundle)
         return bundles
 
-    def _all_bundled_skill_names(self) -> list[str]:
+    def _bundle_member_pairs(self, bundle: Bundle) -> list[tuple[frozenset[str], dict[str, tk.BooleanVar]]]:
+        """Return (members, var_map) pairs for each kind present in the bundle."""
+        pairs: list[tuple[frozenset[str], dict[str, tk.BooleanVar]]] = []
+        if bundle.skills:
+            pairs.append((bundle.skills, self.skill_vars))
+        if bundle.agents:
+            pairs.append((bundle.agents, self.agent_vars))
+        if bundle.commands:
+            pairs.append((bundle.commands, self.command_vars))
+        if bundle.scripts:
+            pairs.append((bundle.scripts, self.scripts_vars))
+        return pairs
+
+    def _bundle_present_members(self, members: frozenset[str], var_map: dict[str, tk.BooleanVar]) -> list[str]:
+        return sorted(name for name in members if name in var_map)
+
+    def _all_bundled_member_names(self) -> list[str]:
         names: set[str] = set()
         for bundle in self._effective_bundles():
-            names.update(self._bundle_present_members(bundle.skills))
+            for members, var_map in self._bundle_member_pairs(bundle):
+                names.update(self._bundle_present_members(members, var_map))
         return sorted(names)
 
     def _set_all_bundled_skills(self, value: bool) -> None:
-        present = self._all_bundled_skill_names()
+        present = self._all_bundled_member_names()
         if not present:
             return
         self._syncing_bundle_selection = True
         try:
-            for name in present:
-                self.skill_vars[name].set(value)
+            for bundle in self._effective_bundles():
+                for members, var_map in self._bundle_member_pairs(bundle):
+                    for name in self._bundle_present_members(members, var_map):
+                        var_map[name].set(value)
         finally:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
 
-    def _bundle_present_members(self, members: frozenset[str]) -> list[str]:
-        return sorted(name for name in members if name in self.skill_vars)
-
-    def _toggle_bundle(self, members: frozenset[str]) -> None:
-        present = self._bundle_present_members(members)
-        if not present:
+    def _toggle_bundle(self, bundle: Bundle) -> None:
+        # Collect all present members across all kinds to determine the toggle state.
+        all_present: list[str] = []
+        member_var_pairs: list[tuple[list[str], dict[str, tk.BooleanVar]]] = []
+        for members, var_map in self._bundle_member_pairs(bundle):
+            present = self._bundle_present_members(members, var_map)
+            all_present.extend(present)
+            member_var_pairs.append((present, var_map))
+        if not all_present:
             return
-        state = bundle_selection_state(present, lambda name: self.skill_vars[name].get())
+        state = bundle_selection_state(all_present, lambda name: self._member_is_selected(name, bundle))
         new_value = bundle_toggle_target_state(state)
         self._syncing_bundle_selection = True
         try:
-            for name in present:
-                self.skill_vars[name].set(new_value)
+            for present, var_map in member_var_pairs:
+                for name in present:
+                    var_map[name].set(new_value)
         finally:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
+
+    def _member_is_selected(self, name: str, bundle: Bundle) -> bool:
+        """Return True if a bundle member is currently checked in its var_map."""
+        for members, var_map in self._bundle_member_pairs(bundle):
+            if name in var_map:
+                return var_map[name].get()
+        return False
 
     def _toggle_target_bundle(self) -> None:
         if self._target_bundle is None:
             return
-        self._toggle_bundle(self._target_bundle.skills)
+        self._toggle_bundle(self._target_bundle)
 
     def _update_target_bundle_tooltip(self, text: str) -> None:
         if self._target_bundle_tooltip is not None:
@@ -1394,7 +1628,7 @@ class InstallerApp:
         )
         self._sync_bundle_toggles()
 
-    def _on_skill_selection_changed(self) -> None:
+    def _on_selection_changed(self) -> None:
         if self._syncing_bundle_selection:
             return
         self._sync_bundle_toggles()
@@ -1419,10 +1653,12 @@ class InstallerApp:
             button = self._bundle_buttons.get(bundle.id)
             if button is None:
                 continue
-            members = self._bundle_present_members(bundle.skills)
+            all_present: list[str] = []
+            for members, var_map in self._bundle_member_pairs(bundle):
+                all_present.extend(self._bundle_present_members(members, var_map))
             state = bundle_selection_state(
-                members,
-                lambda name: self.skill_vars[name].get(),
+                all_present,
+                lambda name: self._member_is_selected(name, bundle),
             )
             self._apply_bundle_toggle_state(button, state)
 
@@ -1499,14 +1735,34 @@ class InstallerApp:
         content = format_selection_help(entries, empty_message="No commands selected.")
         self._show_help_window("Commands — Help", content)
 
+    def _show_scripts_help(self) -> None:
+        names = self._selected(self.scripts_vars)
+        entries = self._help_entries_for_selection(names, self.scripts_descriptions)
+        content = format_selection_help(entries, empty_message="No scripts selected.")
+        self._show_help_window("Scripts — Help", content)
+
     def _show_bundles_help(self) -> None:
+        def present(bundle: Bundle) -> Sequence[str]:
+            names: list[str] = []
+            for members, var_map in self._bundle_member_pairs(bundle):
+                names.extend(self._bundle_present_members(members, var_map))
+            return names
+
         entries = bundle_help_entries(
             self._effective_bundles(),
-            present_members=self._bundle_present_members,
-            is_selected=lambda name: self.skill_vars[name].get(),
+            present_members=present,
+            is_selected=lambda name: self._member_is_selected_any(name),
         )
         content = format_selection_help(entries, empty_message="No bundles selected.")
         self._show_help_window("Bundles — Help", content)
+
+    def _member_is_selected_any(self, name: str) -> bool:
+        """Return True if name is checked in any var_map."""
+        for var_map in (self.skill_vars, self.agent_vars, self.command_vars, self.scripts_vars):
+            var = var_map.get(name)
+            if var is not None and var.get():
+                return True
+        return False
 
     def _run(self) -> None:
         target_text = self.target_var.get().strip()
@@ -1517,10 +1773,11 @@ class InstallerApp:
         skills = self._selected(self.skill_vars)
         agents = self._selected(self.agent_vars)
         commands = self._selected(self.command_vars)
-        if not skills and not agents and not commands:
+        scripts = self._selected(self.scripts_vars)
+        if not skills and not agents and not commands and not scripts:
             messagebox.showerror(
                 "Nothing selected",
-                "Select at least one skill, agent, or command.",
+                "Select at least one skill, agent, command, or scripts.",
             )
             return
 
@@ -1531,6 +1788,7 @@ class InstallerApp:
                 skills=skills,
                 agents=agents,
                 commands=commands,
+                scripts=scripts,
                 uninstall=self.mode_var.get() == "uninstall",
                 override=self.override_var.get(),
             )

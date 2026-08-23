@@ -141,7 +141,7 @@ class BundleHelpEntriesTests(unittest.TestCase):
         bundles = [self._bundle("core", "Core bundle", frozenset({"a", "b"}))]
         entries = mod.bundle_help_entries(
             bundles,
-            present_members=lambda members: sorted(members),
+            present_members=lambda bundle: sorted(bundle.skills),
             is_selected=lambda _name: True,
         )
         self.assertEqual(entries, [("Core bundle", "Core bundle description")])
@@ -150,7 +150,7 @@ class BundleHelpEntriesTests(unittest.TestCase):
         bundles = [self._bundle("extended", "Extended bundle", frozenset({"a", "b"}))]
         entries = mod.bundle_help_entries(
             bundles,
-            present_members=lambda members: sorted(members),
+            present_members=lambda bundle: sorted(bundle.skills),
             is_selected=lambda name: name == "a",
         )
         self.assertEqual(entries, [("Extended bundle (partial)", "Extended bundle description")])
@@ -159,7 +159,7 @@ class BundleHelpEntriesTests(unittest.TestCase):
         bundles = [self._bundle("core", "Core bundle", frozenset({"a", "b"}))]
         entries = mod.bundle_help_entries(
             bundles,
-            present_members=lambda members: sorted(members),
+            present_members=lambda bundle: sorted(bundle.skills),
             is_selected=lambda _name: False,
         )
         self.assertEqual(entries, [])
@@ -171,7 +171,7 @@ class BundleHelpEntriesTests(unittest.TestCase):
         ]
         entries = mod.bundle_help_entries(
             bundles,
-            present_members=lambda members: sorted(members),
+            present_members=lambda bundle: sorted(bundle.skills),
             is_selected=lambda name: name in {"a", "b", "c"},
         )
         self.assertEqual(

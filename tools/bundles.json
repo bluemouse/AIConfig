@@ -41,6 +41,30 @@
         "techdoc-reviewer",
         "github-guide"
       ]
+    },
+    {
+      "id": "dev-workflow-harness",
+      "name": "Dev-workflow harness",
+      "description": "Complete dev-workflow harness: the orchestrator plus all phase doer/checker skills, the dev-workflow command, and the tools/dev-workflow/ validation scripts. Installed/uninstalled as a unit.",
+      "skills": [
+        "dev-workflow-orchestrator",
+        "prompt-clarifier",
+        "research-guide",
+        "research-reviewer",
+        "plan-guide",
+        "plan-reviewer",
+        "plan-executor",
+        "implementation-auditor",
+        "finding-resolver",
+        "code-reviewer",
+        "commit-message-writer"
+      ],
+      "commands": [
+        "dev-workflow"
+      ],
+      "scripts": [
+        "dev-workflow"
+      ]
     }
   ]
 }
