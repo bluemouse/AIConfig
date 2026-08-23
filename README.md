@@ -7,7 +7,7 @@ This repository provides a **portable, shared-first layout** for AI-assisted dev
 | Term | Location | Role |
 | --- | --- | --- |
 | **Bootstrap skill** | `skills/<name>/` | Authoritative source. Edit `SKILL.md`, references, scripts, and optional custom tool skill templates in `wrappers/` here. |
-| **Shared skill** | `.shared/skills/<name>/` | Tool-neutral install output — full instructions and bundled resources. |
+| **Shared skill** | `.ai/skills/<name>/` | Tool-neutral install output — full instructions and bundled resources. |
 | **Tool skill** | `.cursor/skills/<name>/`, `.claude/skills/<name>/`, `.github/skills/<name>/` | Thin wrapper per tool that points the agent at the shared skill (or holds tool-specific discovery notes). |
 
 Install a bootstrap skill with `install_portable_skill.py` to generate the shared skill and tool skills. Re-run after edits to `skills/<name>/`.
@@ -17,7 +17,7 @@ Install a bootstrap skill with `install_portable_skill.py` to generate the share
 | Term | Location | Role |
 | --- | --- | --- |
 | **Bootstrap agent** | `agents/<name>/` | Authoritative source when present. Edit `AGENT.md` and optional custom tool wrapper templates in `wrappers/` here. |
-| **Shared agent** | `.shared/agents/<name>.md` | Tool-neutral install output. |
+| **Shared agent** | `.ai/agents/<name>.md` | Tool-neutral install output. |
 | **Tool agent** | `.cursor/agents/<name>.md`, etc. | Thin wrapper per tool that points the agent at the shared file. |
 
 Install a bootstrap agent with `install_portable_agent.py`. Re-run after edits to `agents/<name>/`.
@@ -27,7 +27,7 @@ Install a bootstrap agent with `install_portable_agent.py`. Re-run after edits t
 | Term | Location | Role |
 | --- | --- | --- |
 | **Bootstrap command** | `commands/<name>/` | Authoritative source. Edit `COMMAND.md` and optional custom tool wrapper templates in `wrappers/` here. |
-| **Shared command** | `.shared/commands/<name>.md` | Tool-neutral install output. |
+| **Shared command** | `.ai/commands/<name>.md` | Tool-neutral install output. |
 | **Tool command** | `.cursor/commands/<name>.md`, `.claude/commands/<name>.md`, `.github/prompts/<name>.prompt.md` | Format-transformed slash command or Copilot prompt per tool. |
 
 Install a bootstrap command with `install_portable_command.py`. Re-run after edits to `commands/<name>/`. Invoke as `/command-name` in each IDE.
@@ -86,7 +86,7 @@ repo/
 ├── agents/                            # Optional bootstrap agents (author here, then install)
 ├── commands/                          # Optional bootstrap commands (author here, then install)
 ├── skills-ref/                        # Staging skill templates (read-only input for skill-creator)
-├── .shared/
+├── .ai/
 │   ├── agents/                        # Shared custom agents (canonical)
 │   ├── commands/                      # Shared slash commands (canonical)
 │   └── skills/
@@ -94,7 +94,7 @@ repo/
 ├── .cursor/
 │   ├── commands/                      # Cursor slash commands (.md, no frontmatter)
 │   ├── rules/                         # Cursor rules (.mdc)
-│   ├── skills/<skill-name>/           # Cursor tool skill → points to .shared/skills/
+│   ├── skills/<skill-name>/           # Cursor tool skill → points to .ai/skills/
 │   └── agents/                        # Cursor custom agents
 ├── .claude/
 │   ├── commands/                      # Claude Code slash commands
@@ -115,16 +115,16 @@ repo/
 | `agents/` | **Bootstrap agents** (optional) — edit `agents/<name>/`, then install to produce shared + tool agent wrappers. |
 | `commands/` | **Bootstrap commands** (optional) — edit `commands/<name>/`, then install to produce shared + tool slash commands/prompts. |
 | `skills-ref/` | **Staging templates** — read-only drafts for **skill-creator**; output lands in `skills/<name>/`. |
-| `.shared/agents/` | **Shared custom agents** — tool-neutral install output (or canonical when no bootstrap exists). |
-| `.shared/commands/` | **Shared commands** — tool-neutral slash prompt install output. |
-| `.shared/skills/` | **Shared skills** — tool-neutral packages with full content (`scripts/`, `references/`, `assets/`). |
+| `.ai/agents/` | **Shared custom agents** — tool-neutral install output (or canonical when no bootstrap exists). |
+| `.ai/commands/` | **Shared commands** — tool-neutral slash prompt install output. |
+| `.ai/skills/` | **Shared skills** — tool-neutral packages with full content (`scripts/`, `references/`, `assets/`). |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | **Tool skills** — one wrapper per tool (`SKILL.md` only) that directs the agent to the shared skill. |
 | `coding-behavior-guidelines.md` | Project-wide behavioral guidelines for coding agents (think first, simplicity, surgical changes). |
 | `tools/installer.py` | Copy installed portable skills, agents, and commands from this repo into another project (CLI or GUI). |
 
 ## Bootstrap skills
 
-Bootstrap skills live under `skills/`. Installing one copies content to `.shared/skills/<name>/` and generates tool skills under `.cursor/`, `.claude/`, and `.github/`. This repo includes:
+Bootstrap skills live under `skills/`. Installing one copies content to `.ai/skills/<name>/` and generates tool skills under `.cursor/`, `.claude/`, and `.github/`. This repo includes:
 
 | Skill | Path | Purpose |
 | --- | --- | --- |
@@ -204,31 +204,31 @@ Creates, validates, packages, and iteratively improves portable **skills**.
 | Location | Role |
 | --- | --- |
 | `skills/skill-creator/` | Bootstrap skill (edit scripts and `SKILL.md` here) |
-| `.shared/skills/skill-creator/` | Shared skill |
+| `.ai/skills/skill-creator/` | Shared skill |
 | `.cursor/skills/skill-creator/` | Cursor tool skill |
 | `.claude/skills/skill-creator/` | Claude Code tool skill |
 | `.github/skills/skill-creator/` | GitHub Copilot tool skill |
 
 ### agent-creator
 
-Creates, validates, and iteratively improves portable custom **agents** (`.shared/agents/` + tool wrappers).
+Creates, validates, and iteratively improves portable custom **agents** (`.ai/agents/` + tool wrappers).
 
 | Location | Role |
 | --- | --- |
 | `skills/agent-creator/` | Bootstrap skill (edit scripts and `SKILL.md` here) |
-| `.shared/skills/agent-creator/` | Shared skill |
+| `.ai/skills/agent-creator/` | Shared skill |
 | `.cursor/skills/agent-creator/` | Cursor tool skill |
 | `.claude/skills/agent-creator/` | Claude Code tool skill |
 | `.github/skills/agent-creator/` | GitHub Copilot tool skill |
 
 ### command-creator
 
-Creates, validates, and iteratively improves portable **slash commands and Copilot prompts** (`commands/<name>/` → `.shared/commands/` + tool outputs).
+Creates, validates, and iteratively improves portable **slash commands and Copilot prompts** (`commands/<name>/` → `.ai/commands/` + tool outputs).
 
 | Location | Role |
 | --- | --- |
 | `skills/command-creator/` | Bootstrap skill (edit scripts and `SKILL.md` here) |
-| `.shared/skills/command-creator/` | Shared skill |
+| `.ai/skills/command-creator/` | Shared skill |
 | `.cursor/skills/command-creator/` | Cursor tool skill |
 | `.claude/skills/command-creator/` | Claude Code tool skill |
 | `.github/skills/command-creator/` | GitHub Copilot tool skill |
@@ -249,7 +249,7 @@ python skills/skill-creator/scripts/install_portable_skill.py \
 
 Or ask in chat: **use skill-creator** to install or refresh the meta-skill.
 
-The script copies the bootstrap skill to `.shared/skills/skill-creator/`, generates tool skills, validates all four paths, and prints a summary.
+The script copies the bootstrap skill to `.ai/skills/skill-creator/`, generates tool skills, validates all four paths, and prints a summary.
 
 Reload each tool after install:
 
@@ -273,7 +273,7 @@ python skills/skill-creator/scripts/install_portable_skill.py \
 
 Or ask in chat: **use agent-creator** after ensuring the skill is installed.
 
-The script copies the bootstrap skill to `.shared/skills/agent-creator/`, generates tool skills, validates all four paths, and prints a summary.
+The script copies the bootstrap skill to `.ai/skills/agent-creator/`, generates tool skills, validates all four paths, and prints a summary.
 
 Reload each tool after install (same as skill-creator above).
 
@@ -291,7 +291,7 @@ skills/<name>/
 ├── references/           # Optional: docs loaded on demand
 ├── scripts/              # Optional: executable helpers
 ├── assets/               # Optional: templates, binaries, etc.
-└── wrappers/             # Optional: custom tool skill templates (not copied to .shared/)
+└── wrappers/             # Optional: custom tool skill templates (not copied to .ai/)
     ├── cursor/SKILL.md
     ├── claude/SKILL.md
     └── github/SKILL.md
@@ -302,9 +302,9 @@ skills/<name>/
 - Keep the body **tool-neutral** — no Cursor/Claude/Copilot-specific mechanics
 - Resolve `<SKILL_ROOT>` as the directory containing the skill's `SKILL.md`
 - Put bundled resources only under `references/`, `scripts/`, or `assets/`
-- Cross-link sibling skills with relative paths (e.g. `../cpp-testing/SKILL.md`) — these resolve after install under `.shared/skills/`
+- Cross-link sibling skills with relative paths (e.g. `../cpp-testing/SKILL.md`) — these resolve after install under `.ai/skills/`
 
-**Custom tool skills (recommended):** add thin wrappers under `skills/<name>/wrappers/{cursor,claude,github}/SKILL.md` that point to `../../../.shared/skills/<name>/SKILL.md`, include discovery/reload notes, and document tool-specific mechanics. If omitted, `install_portable_skill.py` generates minimal default tool skills.
+**Custom tool skills (recommended):** add thin wrappers under `skills/<name>/wrappers/{cursor,claude,github}/SKILL.md` that point to `../../../.ai/skills/<name>/SKILL.md`, include discovery/reload notes, and document tool-specific mechanics. If omitted, `install_portable_skill.py` generates minimal default tool skills.
 
 See `skills/code-reviewer/wrappers/` or `skills/cpp-coding/wrappers/` for examples.
 
@@ -322,7 +322,7 @@ python skills/skill-creator/scripts/install_portable_skill.py \
 
 The script:
 
-1. Copies the bootstrap skill to `.shared/skills/<skill-name>/` (excluding `wrappers/`)
+1. Copies the bootstrap skill to `.ai/skills/<skill-name>/` (excluding `wrappers/`)
 2. Writes tool skills to `.cursor/skills/<skill-name>/`, `.claude/skills/<skill-name>/`, and `.github/skills/<skill-name>/`
 3. Validates the shared skill and all three tool skills with `quick_validate.py`
 
@@ -331,7 +331,7 @@ Install multiple related skills in any order when they cross-reference each othe
 ### 3. Validate (optional manual check)
 
 ```bash
-for path in .shared/skills/<skill-name> \
+for path in .ai/skills/<skill-name> \
             .cursor/skills/<skill-name> \
             .claude/skills/<skill-name> \
             .github/skills/<skill-name>; do
@@ -347,7 +347,7 @@ done
 
 ### 5. Re-install after edits
 
-Edit the bootstrap skill under `skills/<name>/`, then re-run the install command. The bootstrap skill remains the source of truth; `.shared/skills/` and tool skills are generated outputs.
+Edit the bootstrap skill under `skills/<name>/`, then re-run the install command. The bootstrap skill remains the source of truth; `.ai/skills/` and tool skills are generated outputs.
 
 **Example — install the C++ cluster:**
 
@@ -397,7 +397,7 @@ python skills/skill-creator/scripts/create_skill.py --root . --name my-skill
 
 This creates:
 
-- `.shared/skills/my-skill/` — shared skill with placeholder resources
+- `.ai/skills/my-skill/` — shared skill with placeholder resources
 - `.cursor/skills/my-skill/SKILL.md` — Cursor tool skill
 - `.claude/skills/my-skill/SKILL.md` — Claude Code tool skill
 - `.github/skills/my-skill/SKILL.md` — Copilot tool skill
@@ -405,7 +405,7 @@ This creates:
 Validate before and after editing:
 
 ```bash
-python skills/skill-creator/scripts/quick_validate.py .shared/skills/my-skill
+python skills/skill-creator/scripts/quick_validate.py .ai/skills/my-skill
 python skills/skill-creator/scripts/quick_validate.py .cursor/skills/my-skill
 ```
 
@@ -432,7 +432,7 @@ python skills/agent-creator/scripts/create_agent.py \
 
 This creates:
 
-- `.shared/agents/my-agent.md` — shared, tool-neutral agent definition
+- `.ai/agents/my-agent.md` — shared, tool-neutral agent definition
 - `.cursor/agents/my-agent.md` — Cursor wrapper
 - `.claude/agents/my-agent.md` — Claude Code wrapper
 - `.github/agents/my-agent.agent.md` — GitHub Copilot wrapper
@@ -451,9 +451,9 @@ When adding assets to this repo or another project, use these locations:
 
 ### Shared (all tools)
 
-- `.shared/agents/<agent-name>.md` — shared custom agent (canonical)
-- `.shared/commands/<command-name>.md` — shared slash command (canonical)
-- `.shared/skills/<skill-name>/` — shared skill (full content)
+- `.ai/agents/<agent-name>.md` — shared custom agent (canonical)
+- `.ai/commands/<command-name>.md` — shared slash command (canonical)
+- `.ai/skills/<skill-name>/` — shared skill (full content)
 
 ### Cursor
 
@@ -483,7 +483,7 @@ Reload VS Code after changes so Copilot picks up new files.
 
 ## Distribute to another project
 
-Use **`tools/installer.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.shared/skills/<name>/`, `.shared/agents/<name>.md`, `.shared/commands/<name>.md`, and any tool wrappers that exist under `.cursor/`, `.claude/`, and `.github/`. It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
+Use **`tools/installer.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.ai/skills/<name>/`, `.ai/agents/<name>.md`, `.ai/commands/<name>.md`, and any tool wrappers that exist under `.cursor/`, `.claude/`, and `.github/`. It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
 
 **CLI** (from this repository root):
 
@@ -521,8 +521,8 @@ python tools/installer.py /path/to/other-project --commands git-commit --uninsta
 | `--skills NAME ...` | Skill slugs to install or uninstall (default: all discovered unless `--bundles` is set) |
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
 | `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered) |
-| `--scripts NAME ...` | Scripts directory names (under `tools/`) to install or uninstall (default: all discovered) |
-| `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (11 skills, 1 command, and the `tools/dev-workflow/` validation scripts) as a unit |
+| `--scripts NAME ...` | Scripts directory names (under `.ai/tools/`) to install or uninstall (default: all discovered) |
+| `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (11 skills, 1 command, and the `.ai/tools/dev-workflow/` validation scripts) as a unit |
 | `--override` | Replace existing paths in the target; without it, skip and report |
 | `--uninstall` | Remove the selected skills, agents, commands, and scripts from the target project |
 | *(no arguments)* | Open a tkinter GUI with skill/agent/command/scripts checkboxes and a **Bundles** panel for workflow batch selection |
@@ -544,14 +544,14 @@ python tools/installer.py
 
 Skills are folders with a `SKILL.md` (YAML frontmatter: `name`, `description`) plus optional bundled resources. The agent discovers skills from frontmatter and loads the body progressively when relevant.
 
-**Portable (recommended):** author a **bootstrap skill** under `skills/<name>/`, install to produce a **shared skill** in `.shared/skills/<name>/` and **tool skills** under `.cursor/`, `.claude/`, and `.github/`.
+**Portable (recommended):** author a **bootstrap skill** under `skills/<name>/`, install to produce a **shared skill** in `.ai/skills/<name>/` and **tool skills** under `.cursor/`, `.claude/`, and `.github/`.
 
 **Standalone:** copy the full skill folder into one tool path (e.g. `.cursor/skills/<name>/` or `~/.cursor/skills/<name>/`) without the shared-first layout.
 
 **Package a shared skill for distribution:**
 
 ```bash
-python skills/skill-creator/scripts/package_skill.py .shared/skills/my-skill
+python skills/skill-creator/scripts/package_skill.py .ai/skills/my-skill
 ```
 
 **Copy installed skills, agents, and commands to another project** (shared + tool wrappers; see [Distribute to another project](#distribute-to-another-project)):
@@ -613,7 +613,7 @@ Rules are `.mdc` files in `.cursor/rules/` with frontmatter controlling `globs` 
 Portable custom agents use a shared-first layout similar to skills:
 
 - `agents/<name>/` — bootstrap source when present (edit here, then install)
-- `.shared/agents/<name>.md` — tool-neutral definition (install output)
+- `.ai/agents/<name>.md` — tool-neutral definition (install output)
 - `.cursor/agents/<name>.md`, `.claude/agents/<name>.md`, `.github/agents/<name>.agent.md` — tool wrappers
 
 Use the **agent-creator** skill to scaffold new agents or **install_portable_agent.py** to install bootstrapped agents under `agents/<name>/`. Not every agent needs all three tool wrappers — bootstrap only the tools you use under `wrappers/`, then validate each installed path.

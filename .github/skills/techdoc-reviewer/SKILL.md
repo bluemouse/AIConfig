@@ -16,14 +16,14 @@ description: 'Review, verify, and synchronize technical documentation for softwa
 Read the shared skill first — it is the source of truth for the documentation review workflow,
 evidence rules, and report format:
 
-`../../../.shared/skills/techdoc-reviewer/SKILL.md`
+`../../../.ai/skills/techdoc-reviewer/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/techdoc-reviewer/`.
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/techdoc-reviewer/`.
 
 ## Discovery and reload
 
 - Project skills: `.github/skills/<name>/SKILL.md` plus the shared package under
-  `.shared/skills/<name>/`.
+  `.ai/skills/<name>/`.
 - Reload VS Code after installing or editing this skill.
 
 ## Install or refresh

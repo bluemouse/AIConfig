@@ -1,21 +1,21 @@
 ---
 name: skill-creator
-description: "Create portable skills for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create a skill from scratch, bootstrap under the skills directory and install to .shared/skills with tool wrappers, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say \"portable skill\" explicitly."
+description: "Create portable skills for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create a skill from scratch, bootstrap under the skills directory and install to .ai/skills with tool wrappers, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say \"portable skill\" explicitly."
 ---
 
 # skill-creator (Claude Code)
 
 Read the shared skill first — it is the source of truth for portable layout, authoring rules, workspace artifacts, and packaging:
 
-`../../../.shared/skills/skill-creator/SKILL.md`
+`../../../.ai/skills/skill-creator/SKILL.md`
 
-Resolve `<SKILL_ROOT>` and `<SKILL_CREATOR_ROOT>` as `../../../.shared/skills/skill-creator`. Resolve paths to `scripts/`, `references/`, `assets/`, and `agents/` from that directory.
+Resolve `<SKILL_ROOT>` and `<SKILL_CREATOR_ROOT>` as `../../../.ai/skills/skill-creator`. Resolve paths to `scripts/`, `references/`, `assets/`, and `agents/` from that directory.
 
 This wrapper adds **Claude Code-native** execution (including Cowork where noted). When this wrapper and the shared skill disagree on mechanics, follow this wrapper for Claude Code.
 
 ## Discovery and reload
 
-- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.shared/skills/<name>/`
+- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.ai/skills/<name>/`
 - **Restart or reload** the Claude Code session after installing or editing skills
 
 ## Install or refresh skill-creator
@@ -66,7 +66,7 @@ Write `eval_metadata.json` per eval directory (assertions may start empty).
 
 ```
 Execute this task:
-- Skill path: .shared/skills/<skill-name>/
+- Skill path: .ai/skills/<skill-name>/
 - Task: <eval prompt>
 - Input files: <eval files or "none">
 - Save outputs to: <workspace>/iteration-<N>/eval-<ID>/with_skill/outputs/
@@ -117,7 +117,7 @@ Complete shared Steps 1–2 (eval queries per `references/description-eval-queri
 cd <SKILL_CREATOR_ROOT>
 python -m scripts.run_loop \
   --eval-set <path-to-trigger-eval.json> \
-  --skill-path .shared/skills/<skill-name> \
+  --skill-path .ai/skills/<skill-name> \
   --model <model-id-for-this-session> \
   --max-iterations 5 \
   --verbose
@@ -151,5 +151,5 @@ Include "Create evals JSON and run generate_review.py for human review" in todos
 
 ## Wrapper policy
 
-- Edit cross-tool behavior in `../../../.shared/skills/skill-creator/`
+- Edit cross-tool behavior in `../../../.ai/skills/skill-creator/`
 - Edit Claude Code / Cowork mechanics here

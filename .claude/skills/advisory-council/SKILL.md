@@ -12,15 +12,15 @@ description: Convene an advisory council, think tank, panel, or structured debat
 
 Read the shared skill first. It is the source of truth for council framing, role design, evidence ledgers, debate rounds, convergence rules, and output formats:
 
-`../../../.shared/skills/advisory-council/SKILL.md`
+`../../../.ai/skills/advisory-council/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/advisory-council/`. Resolve paths to `references/` from that directory.
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/advisory-council/`. Resolve paths to `references/` from that directory.
 
 This wrapper adds Claude Code-native execution. When this wrapper and the shared skill disagree on mechanics, follow this wrapper for Claude Code.
 
 ## Discovery and Reload
 
-- Project skills: `.claude/skills/<name>/SKILL.md` plus shared under `.shared/skills/<name>/`
+- Project skills: `.claude/skills/<name>/SKILL.md` plus shared under `.ai/skills/<name>/`
 - Restart or reload the Claude Code session after installing or editing skills
 
 ## Install or Refresh advisory-council
@@ -48,6 +48,6 @@ If you are on Claude.ai rather than Claude Code, no parallel subagents are avail
 
 ## Wrapper Policy
 
-- Edit cross-tool council behavior in `../../../.shared/skills/advisory-council/`
+- Edit cross-tool council behavior in `../../../.ai/skills/advisory-council/`
 - Edit Claude Code mechanics here
 - Do not duplicate the full shared skill body in this file

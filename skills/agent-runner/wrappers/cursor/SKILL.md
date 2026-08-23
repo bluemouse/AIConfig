@@ -8,9 +8,9 @@ description: dispatch independent coding, debugging, research, or repository tas
 Read the shared skill first — it is the source of truth for partitioning, isolation,
 task packets, integration, and safety gates:
 
-`../../../.shared/skills/agent-runner/SKILL.md`
+`../../../.ai/skills/agent-runner/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/agent-runner/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/agent-runner/`. Resolve paths to
 `references/` from that directory.
 
 This wrapper adds **Cursor-native** execution. When this wrapper and the shared skill
@@ -20,7 +20,7 @@ workflow content and output structure.
 ## Discovery and reload
 
 - Project skills: `.cursor/skills/<name>/SKILL.md` (this file) + shared package under
-  `.shared/skills/<name>/`
+  `.ai/skills/<name>/`
 - Reload the **Cursor window** after adding, editing, or re-installing skills so the
   agent rediscovers them
 
@@ -73,6 +73,6 @@ Changes, Verification, and Risks.
 
 ## Wrapper policy
 
-- Edit cross-tool orchestration behavior in `../../../.shared/skills/agent-runner/`
+- Edit cross-tool orchestration behavior in `../../../.ai/skills/agent-runner/`
 - Edit Cursor-only mechanics here
 - Do not duplicate the full shared skill body in this file

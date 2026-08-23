@@ -8,41 +8,41 @@ A **portable, shared-first layout** for AI-assisted development configuration sh
 
 ## Core architecture
 
-Understanding paths under `skills/`, `.shared/`, `.cursor/`, `.claude/`, and `.github/` is required before editing anything.
+Understanding paths under `skills/`, `.ai/`, `.cursor/`, `.claude/`, and `.github/` is required before editing anything.
 
 ### Skills: bootstrap → shared → tool
 
-1. **Bootstrap** (`skills/<name>/`, source-of-truth) — author here. Contains `SKILL.md`, optional `references/`, `scripts/`, `assets/`, and optional `wrappers/{cursor,claude,github}/SKILL.md` (custom per-tool wrapper templates; not copied to `.shared/`).
-2. **Shared** (`.shared/skills/<name>/`, generated) — tool-neutral install output produced by `install_portable_skill.py`. Full content lives here; cross-skill links (e.g. `../cpp-testing/SKILL.md`) resolve at this layer.
+1. **Bootstrap** (`skills/<name>/`, source-of-truth) — author here. Contains `SKILL.md`, optional `references/`, `scripts/`, `assets/`, and optional `wrappers/{cursor,claude,github}/SKILL.md` (custom per-tool wrapper templates; not copied to `.ai/`).
+2. **Shared** (`.ai/skills/<name>/`, generated) — tool-neutral install output produced by `install_portable_skill.py`. Full content lives here; cross-skill links (e.g. `../cpp-testing/SKILL.md`) resolve at this layer.
 3. **Tool** (`.cursor/skills/<name>/`, `.claude/skills/<name>/`, `.github/skills/<name>/`, generated) — thin per-tool wrapper pointing at the shared skill, or a custom wrapper from `skills/<name>/wrappers/` if one exists.
 
-**Never hand-edit `.shared/skills/` or tool skill folders.** They are generated output. Edit the bootstrap skill under `skills/<name>/` and re-run the install script — otherwise edits are lost on the next install.
+**Never hand-edit `.ai/skills/` or tool skill folders.** They are generated output. Edit the bootstrap skill under `skills/<name>/` and re-run the install script — otherwise edits are lost on the next install.
 
 ### Custom agents: bootstrap → shared → tool
 
-Agents that ship bootstrap source use the same three-layer pattern as skills. Other agents may still be scaffolded directly into `.shared/agents/` with `create_agent.py`.
+Agents that ship bootstrap source use the same three-layer pattern as skills. Other agents may still be scaffolded directly into `.ai/agents/` with `create_agent.py`.
 
 1. **Bootstrap** (`agents/<name>/`, source-of-truth when present) — author `AGENT.md` and optional custom tool wrapper templates in `wrappers/{cursor,claude,github}/AGENT.md`.
-2. **Shared** (`.shared/agents/<name>.md`, generated) — tool-neutral install output produced by `install_portable_agent.py`.
+2. **Shared** (`.ai/agents/<name>.md`, generated) — tool-neutral install output produced by `install_portable_agent.py`.
 3. **Tool** (`.cursor/agents/<name>.md`, `.claude/agents/<name>.md`, `.github/agents/<name>.agent.md`, generated) — thin per-tool wrapper pointing at the shared agent, or a custom wrapper from `agents/<name>/wrappers/` when one exists.
 
-**Never hand-edit `.shared/agents/` or tool agent folders for bootstrapped agents.** Edit `agents/<name>/` and re-run `install_portable_agent.py`. For agents without bootstrap source, edit `.shared/agents/<name>.md` directly or regenerate with `create_agent.py`.
+**Never hand-edit `.ai/agents/` or tool agent folders for bootstrapped agents.** Edit `agents/<name>/` and re-run `install_portable_agent.py`. For agents without bootstrap source, edit `.ai/agents/<name>.md` directly or regenerate with `create_agent.py`.
 
 Not every agent requires all three tool wrappers. For a partial set (e.g. Cursor only), bootstrap under `agents/<name>/wrappers/` with only the tools you need, install, then validate each installed path individually.
 
 ### Commands: bootstrap → shared → tool
 
 1. **Bootstrap** (`commands/<name>/`, source-of-truth) — author `COMMAND.md` and optional custom tool wrapper templates in `wrappers/{cursor,claude,github}/COMMAND.md`.
-2. **Shared** (`.shared/commands/<name>.md`, generated) — tool-neutral install output produced by `install_portable_command.py`.
+2. **Shared** (`.ai/commands/<name>.md`, generated) — tool-neutral install output produced by `install_portable_command.py`.
 3. **Tool** — format-transformed install outputs: `.cursor/commands/<name>.md` (plain Markdown), `.claude/commands/<name>.md` (frontmatter + body), `.github/prompts/<name>.prompt.md` (Copilot prompt).
 
-**Never hand-edit `.shared/commands/` or tool command paths for bootstrapped commands.** Edit `commands/<name>/` and re-run `install_portable_command.py`.
+**Never hand-edit `.ai/commands/` or tool command paths for bootstrapped commands.** Edit `commands/<name>/` and re-run `install_portable_command.py`.
 
 Install always writes all three tool paths plus the shared file (skill-like). Commands are **explicitly invoked** with `/command-name`, unlike skills and agents which load from description.
 
 | | Skills | Custom agents (bootstrap) | Custom agents (direct) | Commands |
 | --- | --- | --- | --- | --- |
-| Authoritative source | `skills/<name>/` | `agents/<name>/` | `.shared/agents/<name>.md` | `commands/<name>/` |
+| Authoritative source | `skills/<name>/` | `agents/<name>/` | `.ai/agents/<name>.md` | `commands/<name>/` |
 | Install / scaffold | `install_portable_skill.py` | `install_portable_agent.py` | `create_agent.py` | `install_portable_command.py` |
 | Direct scaffold | `create_skill.py` | — | `create_agent.py` | `create_command.py` |
 | Distribute to another project | `tools/installer.py` (copies installed shared + wrappers) | same | same | same |
@@ -84,7 +84,7 @@ python skills/skill-creator/scripts/install_portable_skill.py \
   --root . --name <skill-name> --source skills/<skill-name> --overwrite
 ```
 
-Re-run after every bootstrap edit — copies bootstrap → `.shared/skills/<name>/` (excluding `wrappers/`), regenerates the three tool skills, and validates all four paths.
+Re-run after every bootstrap edit — copies bootstrap → `.ai/skills/<name>/` (excluding `wrappers/`), regenerates the three tool skills, and validates all four paths.
 
 **Validate a single skill path (shared or tool):**
 
@@ -92,9 +92,9 @@ Re-run after every bootstrap edit — copies bootstrap → `.shared/skills/<name
 python skills/skill-creator/scripts/quick_validate.py <path-to-skill-dir>
 ```
 
-Run against `.shared/skills/<name>` and each tool skill path after inspection or before considering a skill done.
+Run against `.ai/skills/<name>` and each tool skill path after inspection or before considering a skill done.
 
-**Scaffold a skill without bootstrap** (writes directly to `.shared/` + tool skills — prefer bootstrap under `skills/<name>/` and the **skill-creator** skill for new skills in this repo):
+**Scaffold a skill without bootstrap** (writes directly to `.ai/` + tool skills — prefer bootstrap under `skills/<name>/` and the **skill-creator** skill for new skills in this repo):
 
 ```bash
 python skills/skill-creator/scripts/create_skill.py --root . --name my-skill
@@ -124,7 +124,7 @@ python skills/agent-creator/scripts/quick_validate.py --root . --name my-agent
 For agents with only some tool wrappers (e.g. Cursor-only), validate each existing file:
 
 ```bash
-python skills/agent-creator/scripts/quick_validate.py .shared/agents/<name>.md
+python skills/agent-creator/scripts/quick_validate.py .ai/agents/<name>.md
 python skills/agent-creator/scripts/quick_validate.py .cursor/agents/<name>.md
 ```
 
@@ -154,10 +154,10 @@ python skills/command-creator/scripts/quick_validate.py --root . --name my-comma
 **Package a shared skill for distribution:**
 
 ```bash
-python skills/skill-creator/scripts/package_skill.py .shared/skills/my-skill
+python skills/skill-creator/scripts/package_skill.py .ai/skills/my-skill
 ```
 
-**Copy installed skills, agents, and commands to another project** (from this repo root; copies `.shared/` plus tool wrappers — not bootstrap sources):
+**Copy installed skills, agents, and commands to another project** (from this repo root; copies `.ai/` plus tool wrappers — not bootstrap sources):
 
 ```bash
 python tools/installer.py /path/to/other-project
@@ -176,7 +176,7 @@ Omit `--skills`, `--agents`, and `--commands` to install or uninstall all names 
 
 ```bash
 cd skills/skill-creator && python -m scripts.run_eval \
-  --skill-path ../../.shared/skills/<name> \
+  --skill-path ../../.ai/skills/<name> \
   --eval-set ../../skills/<name>/eval-queries.json
 ```
 

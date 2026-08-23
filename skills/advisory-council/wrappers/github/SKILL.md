@@ -7,15 +7,15 @@ description: Convene an advisory council, think tank, panel, or structured debat
 
 Read the shared skill first. It is the source of truth for council framing, role design, evidence ledgers, debate rounds, convergence rules, and output formats:
 
-`../../../.shared/skills/advisory-council/SKILL.md`
+`../../../.ai/skills/advisory-council/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/advisory-council/`. Resolve paths to `references/` from that directory.
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/advisory-council/`. Resolve paths to `references/` from that directory.
 
 This wrapper adds GitHub Copilot / VS Code-native execution. Copilot Chat usually has no parallel subagent API, so preserve independence through disciplined sequential or simulated rounds.
 
 ## Discovery and Reload
 
-- Project skills: `.github/skills/<name>/SKILL.md` plus shared under `.shared/skills/<name>/`
+- Project skills: `.github/skills/<name>/SKILL.md` plus shared under `.ai/skills/<name>/`
 - Reload VS Code after installing or editing skills so Copilot rediscovers them
 
 ## Install or Refresh advisory-council
@@ -41,6 +41,6 @@ If Copilot is running as a non-interactive coding agent, do not wait for user an
 
 ## Wrapper Policy
 
-- Edit cross-tool council behavior in `../../../.shared/skills/advisory-council/`
+- Edit cross-tool council behavior in `../../../.ai/skills/advisory-council/`
 - Edit Copilot-specific mechanics here
 - Do not duplicate the full shared skill body in this file

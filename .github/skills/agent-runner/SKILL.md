@@ -13,9 +13,9 @@ description: dispatch independent coding, debugging, research, or repository tas
 Read the shared skill first — it is the source of truth for partitioning, isolation,
 task packets, integration, and safety gates:
 
-`../../../.shared/skills/agent-runner/SKILL.md`
+`../../../.ai/skills/agent-runner/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/agent-runner/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/agent-runner/`. Resolve paths to
 `references/` from that directory.
 
 This wrapper adds **GitHub Copilot / VS Code-native** execution. Copilot Chat does not
@@ -23,7 +23,7 @@ expose parallel subagents like Cursor or Claude Code — adapt dispatch accordin
 
 ## Discovery and reload
 
-- Project skills: `.github/skills/<name>/SKILL.md` + shared under `.shared/skills/<name>/`
+- Project skills: `.github/skills/<name>/SKILL.md` + shared under `.ai/skills/<name>/`
 - **Reload VS Code** after installing or editing skills so Copilot rediscovers them
 
 ## Install or refresh agent-runner
@@ -56,6 +56,6 @@ following the shared integration and verification rules.
 
 ## Wrapper policy
 
-- Edit cross-tool orchestration behavior in `../../../.shared/skills/agent-runner/`
+- Edit cross-tool orchestration behavior in `../../../.ai/skills/agent-runner/`
 - Edit Copilot-specific mechanics here
 - Do not duplicate the full shared skill body in this file

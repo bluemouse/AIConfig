@@ -18,9 +18,9 @@ description: 'Guide complex local Git merges and rebases end-to-end: initiate op
 
 This is a tool-specific wrapper. The canonical shared skill is:
 
-`../../../.shared/skills/git-merge-guide/SKILL.md`
+`../../../.ai/skills/git-merge-guide/SKILL.md`
 
-Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<SKILL_ROOT>` as `../../../.shared/skills/git-merge-guide` and resolve paths to `scripts/`, `references/`, and `assets/` from that shared skill directory.
+Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<SKILL_ROOT>` as `../../../.ai/skills/git-merge-guide` and resolve paths to `scripts/`, `references/`, and `assets/` from that shared skill directory.
 
 ## Cursor-specific information
 
@@ -30,5 +30,5 @@ Reload the Cursor window after adding or editing this skill so the agent redisco
 
 - Do not treat this wrapper as the full skill specification.
 - Prefer the shared skill whenever this wrapper and the shared skill conflict.
-- Keep edits to common behavior in `../../../.shared/skills/git-merge-guide/`.
+- Keep edits to common behavior in `../../../.ai/skills/git-merge-guide/`.
 - Keep only Cursor-specific information in this wrapper.

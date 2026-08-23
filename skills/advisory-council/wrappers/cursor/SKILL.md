@@ -7,15 +7,15 @@ description: Convene an advisory council, think tank, panel, or structured debat
 
 Read the shared skill first. It is the source of truth for council framing, role design, evidence ledgers, debate rounds, convergence rules, and output formats:
 
-`../../../.shared/skills/advisory-council/SKILL.md`
+`../../../.ai/skills/advisory-council/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/advisory-council/`. Resolve paths to `references/` from that directory.
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/advisory-council/`. Resolve paths to `references/` from that directory.
 
 This wrapper adds Cursor-native execution. When this wrapper and the shared skill disagree on mechanics, follow this wrapper for Cursor; follow the shared skill for council behavior and output.
 
 ## Discovery and Reload
 
-- Project skills: `.cursor/skills/<name>/SKILL.md` plus shared package under `.shared/skills/<name>/`
+- Project skills: `.cursor/skills/<name>/SKILL.md` plus shared package under `.ai/skills/<name>/`
 - Reload the Cursor window after adding, editing, or reinstalling skills so the agent rediscovers them
 
 ## Install or Refresh advisory-council
@@ -48,6 +48,6 @@ When the council depends on current external facts and web or MCP tools are avai
 
 ## Wrapper Policy
 
-- Edit cross-tool council behavior in `../../../.shared/skills/advisory-council/`
+- Edit cross-tool council behavior in `../../../.ai/skills/advisory-council/`
 - Edit Cursor-only mechanics here
 - Do not duplicate the full shared skill body in this file

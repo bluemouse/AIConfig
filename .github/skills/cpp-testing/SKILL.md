@@ -8,16 +8,16 @@ description: "Write, fix, and configure C++20 unit and integration tests with Go
 Read the shared skill first — it is the source of truth for C++ test workflow, reference
 routing, and completion checklists:
 
-`../../../.shared/skills/cpp-testing/SKILL.md`
+`../../../.ai/skills/cpp-testing/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/cpp-testing/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/cpp-testing/`. Resolve paths to
 `references/` from that directory.
 
 This wrapper adds **GitHub Copilot / VS Code-native** execution.
 
 ## Discovery and reload
 
-- Project skills: `.github/skills/<name>/SKILL.md` + shared under `.shared/skills/<name>/`
+- Project skills: `.github/skills/<name>/SKILL.md` + shared under `.ai/skills/<name>/`
 - **Reload VS Code** after installing or editing skills so Copilot rediscovers them
 
 ## Install or refresh cpp-testing
@@ -25,7 +25,7 @@ This wrapper adds **GitHub Copilot / VS Code-native** execution.
 From repo root (or ask the user to run in a terminal):
 
 ```bash
-python .shared/skills/skill-creator/scripts/install_portable_skill.py \
+python .ai/skills/skill-creator/scripts/install_portable_skill.py \
   --root . --name cpp-testing --source skills/cpp-testing --overwrite
 ```
 
@@ -34,10 +34,10 @@ If bootstrap source exists at `skills/cpp-testing/`, use that path for `--source
 ## Companion skill
 
 For production C++ code under test (RAII, ownership, concurrency, Core Guidelines), use
-`../../../.shared/skills/cpp-coding/SKILL.md`.
+`../../../.ai/skills/cpp-coding/SKILL.md`.
 
 ## Wrapper policy
 
-- Edit cross-tool test behavior in `../../../.shared/skills/cpp-testing/`
+- Edit cross-tool test behavior in `../../../.ai/skills/cpp-testing/`
 - Edit Copilot-specific mechanics here
 - Do not duplicate the full shared skill body in this file

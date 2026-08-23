@@ -75,11 +75,11 @@ class FrontmatterDescriptionTests(unittest.TestCase):
             mod.REPO_ROOT = root
             try:
                 write_markdown(
-                    root / ".shared/skills/alpha" / "SKILL.md",
+                    root / ".ai/skills/alpha" / "SKILL.md",
                     description="Alpha skill",
                 )
                 write_markdown(
-                    root / ".shared/skills/beta" / "SKILL.md",
+                    root / ".ai/skills/beta" / "SKILL.md",
                     description="Beta skill",
                 )
                 descriptions = mod.load_skill_descriptions(["alpha", "beta", "missing"])
@@ -95,7 +95,7 @@ class FrontmatterDescriptionTests(unittest.TestCase):
             mod.REPO_ROOT = root
             try:
                 write_markdown(
-                    root / ".shared/agents/runner.md",
+                    root / ".ai/agents/runner.md",
                     description="Runs tasks",
                 )
                 descriptions = mod.load_agent_descriptions(["runner", "ghost"])

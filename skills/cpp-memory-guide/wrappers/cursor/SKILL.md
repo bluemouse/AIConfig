@@ -8,9 +8,9 @@ description: "Guide C++20 memory design: RAII, unique_ptr/shared_ptr, std::span 
 Read the shared skill first — it is the source of truth for C++20 memory workflow, reference
 routing, and allocator patterns:
 
-`../../../.shared/skills/cpp-memory-guide/SKILL.md`
+`../../../.ai/skills/cpp-memory-guide/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/cpp-memory-guide/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/cpp-memory-guide/`. Resolve paths to
 `references/` from that directory.
 
 This wrapper adds **Cursor-native** execution. When this wrapper and the shared skill
@@ -20,7 +20,7 @@ content and workflow.
 ## Discovery and reload
 
 - Project skills: `.cursor/skills/<name>/SKILL.md` (this file) + shared package under
-  `.shared/skills/<name>/`
+  `.ai/skills/<name>/`
 - Reload the **Cursor window** after adding, editing, or re-installing skills so the
   agent rediscovers them
 
@@ -29,7 +29,7 @@ content and workflow.
 From repo root:
 
 ```bash
-python .shared/skills/skill-creator/scripts/install_portable_skill.py \
+python .ai/skills/skill-creator/scripts/install_portable_skill.py \
   --root . --name cpp-memory-guide --source skills/cpp-memory-guide --overwrite
 ```
 
@@ -39,13 +39,13 @@ If bootstrap source exists at `skills/cpp-memory-guide/`, use that path for `--s
 
 | Task | Path |
 |------|------|
-| General C++20 style, Core Guidelines | `.shared/skills/cpp-coding/SKILL.md` |
-| GPU device memory strategy (VRAM tiers, staging) | `.shared/skills/gpu-rendering-guide/SKILL.md` |
+| General C++20 style, Core Guidelines | `.ai/skills/cpp-coding/SKILL.md` |
+| GPU device memory strategy (VRAM tiers, staging) | `.ai/skills/gpu-rendering-guide/SKILL.md` |
 
 Install companions with `install_portable_skill.py` when bootstrap sources exist under `skills/<name>/`.
 
 ## Wrapper policy
 
-- Edit cross-tool memory behavior in `../../../.shared/skills/cpp-memory-guide/`
+- Edit cross-tool memory behavior in `../../../.ai/skills/cpp-memory-guide/`
 - Edit Cursor-only mechanics here
 - Do not duplicate the full shared skill body in this file

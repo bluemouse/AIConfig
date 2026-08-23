@@ -12,9 +12,9 @@ description: Create portable slash commands and Copilot prompts for Cursor, Clau
 
 This is a tool-specific wrapper. The canonical shared skill is:
 
-`../../../.shared/skills/command-creator/SKILL.md`
+`../../../.ai/skills/command-creator/SKILL.md`
 
-Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<COMMAND_CREATOR_ROOT>` as `../../../.shared/skills/command-creator` and resolve paths to `scripts/` and `references/` from that shared skill directory.
+Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<COMMAND_CREATOR_ROOT>` as `../../../.ai/skills/command-creator` and resolve paths to `scripts/` and `references/` from that shared skill directory.
 
 ## Claude Code-specific information
 

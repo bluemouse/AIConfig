@@ -15,9 +15,9 @@ description: Iteratively clarify ambiguous requirements, definitions, intent, sc
 Read the shared skill first — it is the source of truth for the clarification state
 machine, question selection, contradiction handling, and stopping criteria:
 
-`../../../.shared/skills/prompt-clarifier/SKILL.md`
+`../../../.ai/skills/prompt-clarifier/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/prompt-clarifier/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/prompt-clarifier/`. Resolve paths to
 `references/` from that directory.
 
 This wrapper adds **Cursor-native** mechanics for asking and inspecting. When this
@@ -27,7 +27,7 @@ follow the shared skill for when to ask, what to ask, and when to stop.
 ## Discovery and reload
 
 - Project skills: `.cursor/skills/<name>/SKILL.md` (this file) + shared package under
-  `.shared/skills/<name>/`
+  `.ai/skills/<name>/`
 - Reload the **Cursor window** after adding, editing, or re-installing skills so the
   agent rediscovers them
 
@@ -91,6 +91,6 @@ genuinely required a human decision.
 
 ## Wrapper policy
 
-- Edit cross-tool clarification behavior in `../../../.shared/skills/prompt-clarifier/`
+- Edit cross-tool clarification behavior in `../../../.ai/skills/prompt-clarifier/`
 - Edit Cursor-only mechanics here
 - Do not duplicate the full shared skill body in this file

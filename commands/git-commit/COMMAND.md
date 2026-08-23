@@ -18,7 +18,7 @@ Draft a commit message from **staged changes only**, then commit. Invoking `/git
 
 3. If there are no staged changes, stop and report — do not stage files or commit.
 
-4. Read and follow the **commit-message-writer** skill (`.shared/skills/commit-message-writer/SKILL.md` or the installed tool skill). Use scope **staged** only. Run phases 1–4 (parse, gather evidence, compose, output) — treat `/git-commit` as the explicit commit request exception in that skill's Primary Directive. **Do not** emit or wait on the commit-offer question; proceed to commit once the draft is ready.
+4. Read and follow the **commit-message-writer** skill (`.ai/skills/commit-message-writer/SKILL.md` or the installed tool skill). Use scope **staged** only. Run phases 1–4 (parse, gather evidence, compose, output) — treat `/git-commit` as the explicit commit request exception in that skill's Primary Directive. **Do not** emit or wait on the commit-offer question; proceed to commit once the draft is ready.
 
 5. Extract the final commit text (subject line, blank line, body) from the draft:
    - Prefer the ` ```text ` block under `## Verbose`, or the HEREDOC body inside `## Suggested command` under ` ```bash `.
@@ -27,7 +27,7 @@ Draft a commit message from **staged changes only**, then commit. Invoking `/git
 
 6. If the draft's `Context used:` line includes a split suggestion (`note=` mentioning unrelated or mixed work), or the staged diff clearly mixes unrelated concerns, **stop before committing**. Summarize the split recommendation and ask the user to restage or run separate `/git-commit` invocations — do not auto-commit a blended message.
 
-7. Commit **only staged files** — do not run `git add` unless the user explicitly asked to stage additional paths in the same invocation. For git mechanics and hook behavior, follow **git-guide** (`.shared/skills/git-guide/SKILL.md`, `references/commit.md`):
+7. Commit **only staged files** — do not run `git add` unless the user explicitly asked to stage additional paths in the same invocation. For git mechanics and hook behavior, follow **git-guide** (`.ai/skills/git-guide/SKILL.md`, `references/commit.md`):
    ```bash
    git commit -m "$(cat <<'EOF'
    <subject line>

@@ -24,7 +24,7 @@ A bundle (or base) may include any combination of four member kinds:
 | `skills` | Skill slugs (installed via the skill mechanism: shared + tool wrappers) |
 | `agents` | Agent slugs (installed via the agent mechanism: shared + tool wrappers) |
 | `commands` | Command slugs (installed via the command mechanism: shared + tool wrappers) |
-| `scripts` | Scripts directory names under `tools/` (copied verbatim as directory trees) |
+| `scripts` | Scripts directory names under `.ai/tools/` (copied verbatim as directory trees) |
 
 Resolved membership for tooling is:
 
@@ -58,7 +58,7 @@ The **Target bundle** is not stored in `bundles.json`. It is computed at runtime
 
 Membership is the intersection of:
 
-1. Skills found under `<target>/.shared/skills/*/SKILL.md`
+1. Skills found under `<target>/.ai/skills/*/SKILL.md`
 2. Skills available in this AIConfig repository catalog
 
 ```bash
@@ -79,7 +79,7 @@ python tools/installer.py /path/to/project --dev-workflow
 
 - **Skills (11):** `dev-workflow-orchestrator` (the orchestrator) plus the phase doers and checkers — `prompt-clarifier`, `research-guide` / `research-reviewer`, `plan-guide` / `plan-reviewer`, `plan-executor` / `implementation-auditor`, `finding-resolver` / `code-reviewer`, and `commit-message-writer`.
 - **Command (1):** `dev-workflow` — installed via the standard command mechanism (shared + tool wrappers).
-- **Validation scripts:** the `tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/tools/dev-workflow/`.
+- **Validation scripts:** the `.ai/tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/.ai/tools/dev-workflow/`.
 
 The bundle composes with `--skills`, `--agents`, `--commands`, and other `--bundles` in a single invocation. Use `--override` to replace existing harness paths in the target.
 

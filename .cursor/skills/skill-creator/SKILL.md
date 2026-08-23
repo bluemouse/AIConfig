@@ -2,7 +2,7 @@
 name: skill-creator
 description: Create portable skills for GitHub Copilot, Cursor, and Claude Code using
   a shared-first layout, and iteratively improve them. Use when users want to create
-  a skill from scratch, bootstrap under the skills directory and install to .shared/skills
+  a skill from scratch, bootstrap under the skills directory and install to .ai/skills
   with tool wrappers, edit or optimize an existing skill, run evals to test a skill,
   benchmark skill performance, or optimize a skill's description for better triggering
   accuracy — even if they do not say "portable skill" explicitly.
@@ -12,15 +12,15 @@ description: Create portable skills for GitHub Copilot, Cursor, and Claude Code 
 
 Read the shared skill first — it is the source of truth for portable layout, authoring rules, workspace artifacts, and packaging:
 
-`../../../.shared/skills/skill-creator/SKILL.md`
+`../../../.ai/skills/skill-creator/SKILL.md`
 
-Resolve `<SKILL_ROOT>` and `<SKILL_CREATOR_ROOT>` as `../../../.shared/skills/skill-creator`. Resolve paths to `scripts/`, `references/`, `assets/`, and `agents/` from that directory.
+Resolve `<SKILL_ROOT>` and `<SKILL_CREATOR_ROOT>` as `../../../.ai/skills/skill-creator`. Resolve paths to `scripts/`, `references/`, `assets/`, and `agents/` from that directory.
 
 This wrapper adds **Cursor-native** execution. When this wrapper and the shared skill disagree on mechanics, follow this wrapper for Cursor; follow the shared skill for content structure and portable conventions.
 
 ## Discovery and reload
 
-- Project skills: `.cursor/skills/<name>/SKILL.md` (this file) + shared package under `.shared/skills/<name>/`
+- Project skills: `.cursor/skills/<name>/SKILL.md` (this file) + shared package under `.ai/skills/<name>/`
 - Reload the **Cursor window** after adding, editing, or re-installing skills so the agent rediscovers them
 - Optional frontmatter: add `disable-model-invocation: true` in a wrapper if the skill should load only when @-mentioned
 
@@ -74,7 +74,7 @@ Write `eval_metadata.json` in each eval directory (assertions may start empty).
 
 ```
 Execute this task:
-- Skill path: .shared/skills/<skill-name>/
+- Skill path: .ai/skills/<skill-name>/
 - Task: <eval prompt>
 - Input files: <eval files or "none">
 - Save outputs to: <workspace>/iteration-<N>/eval-<ID>/with_skill/outputs/
@@ -84,7 +84,7 @@ Execute this task:
 **Baseline:**
 
 - **New skill:** same prompt, no skill path → `without_skill/outputs/`
-- **Improving a skill:** snapshot shared skill first (`cp -r .shared/skills/<name> <workspace>/skill-snapshot/`), point baseline at snapshot → `old_skill/outputs/`
+- **Improving a skill:** snapshot shared skill first (`cp -r .ai/skills/<name> <workspace>/skill-snapshot/`), point baseline at snapshot → `old_skill/outputs/`
 
 ### Step 2: Assertions while runs execute
 
@@ -141,6 +141,6 @@ When running evals, add todos so steps are not skipped — e.g. "Create evals JS
 
 ## Wrapper policy
 
-- Edit cross-tool behavior in `../../../.shared/skills/skill-creator/`
+- Edit cross-tool behavior in `../../../.ai/skills/skill-creator/`
 - Edit Cursor-only mechanics here
 - Do not duplicate the full shared skill body in this file

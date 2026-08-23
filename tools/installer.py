@@ -2,7 +2,7 @@
 """
 Install or uninstall portable skills, agents, and commands from this repo into another project.
 
-Copies the shared-first layout (.shared/ plus tool wrappers under .cursor/, .claude/,
+Copies the shared-first layout (.ai/ plus tool wrappers under .cursor/, .claude/,
 .github/) from AIConfig into a target project root.
 
 Examples:
@@ -38,10 +38,10 @@ from typing import Literal
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-SHARED_SKILL_DIR = ".shared/skills/{name}"
-SHARED_AGENT_FILE = ".shared/agents/{name}.md"
-SHARED_COMMAND_FILE = ".shared/commands/{name}.md"
-SHARED_SCRIPTS_DIR = "tools/{name}"
+SHARED_SKILL_DIR = ".ai/skills/{name}"
+SHARED_AGENT_FILE = ".ai/agents/{name}.md"
+SHARED_COMMAND_FILE = ".ai/commands/{name}.md"
+SHARED_SCRIPTS_DIR = ".ai/tools/{name}"
 
 TOOL_SKILL_DIRS = {
     "cursor": ".cursor/skills/{name}",
@@ -61,8 +61,8 @@ TOOL_COMMAND_FILES = {
     "github": ".github/prompts/{name}.prompt.md",
 }
 
-# Scripts are directory trees under tools/<name>/ (no tool wrappers).
-TOOL_SCRIPTS_SCAN_REL_DIRS = ("tools",)
+# Scripts are directory trees under .ai/tools/<name>/ (no tool wrappers).
+TOOL_SCRIPTS_SCAN_REL_DIRS = (".ai/tools",)
 
 TOOL_SKILL_SCAN_REL_DIRS = (
     ".cursor/skills",
@@ -540,9 +540,9 @@ def resolve_cli_skills(
 
 
 def discover_skills_in_project(project_root: Path) -> list[str]:
-    """Return skill slugs installed under project_root/.shared/skills/."""
+    """Return skill slugs installed under project_root/.ai/skills/."""
     names: set[str] = set()
-    shared_root = project_root / ".shared" / "skills"
+    shared_root = project_root / ".ai" / "skills"
     if not shared_root.is_dir():
         return []
     for child in shared_root.iterdir():
@@ -665,7 +665,7 @@ def load_skill_descriptions(names: Sequence[str]) -> dict[str, str]:
     """Map skill slugs to descriptions from shared SKILL.md frontmatter."""
     descriptions: dict[str, str] = {}
     for name in names:
-        path = REPO_ROOT / ".shared/skills" / name / "SKILL.md"
+        path = REPO_ROOT / ".ai/skills" / name / "SKILL.md"
         description = read_description_from_markdown(path)
         if description is not None:
             descriptions[name] = description
@@ -676,7 +676,7 @@ def load_agent_descriptions(names: Sequence[str]) -> dict[str, str]:
     """Map agent slugs to descriptions from shared agent markdown frontmatter."""
     descriptions: dict[str, str] = {}
     for name in names:
-        path = REPO_ROOT / ".shared/agents" / f"{name}.md"
+        path = REPO_ROOT / ".ai/agents" / f"{name}.md"
         description = read_description_from_markdown(path)
         if description is not None:
             descriptions[name] = description
@@ -687,7 +687,7 @@ def load_command_descriptions(names: Sequence[str]) -> dict[str, str]:
     """Map command slugs to descriptions from shared command markdown frontmatter."""
     descriptions: dict[str, str] = {}
     for name in names:
-        path = REPO_ROOT / ".shared/commands" / f"{name}.md"
+        path = REPO_ROOT / ".ai/commands" / f"{name}.md"
         description = read_description_from_markdown(path)
         if description is not None:
             descriptions[name] = description
@@ -695,7 +695,7 @@ def load_command_descriptions(names: Sequence[str]) -> dict[str, str]:
 
 
 def discover_scripts() -> list[str]:
-    """Return scripts directory names discovered under REPO_ROOT/tools/."""
+    """Return scripts directory names discovered under REPO_ROOT/.ai/tools/."""
     names: set[str] = set()
     for rel_dir in TOOL_SCRIPTS_SCAN_REL_DIRS:
         scan_root = REPO_ROOT / rel_dir
@@ -715,7 +715,7 @@ def load_scripts_descriptions(names: Sequence[str]) -> dict[str, str]:
     """
     descriptions: dict[str, str] = {}
     for name in names:
-        readme = REPO_ROOT / "tools" / name / "README.md"
+        readme = REPO_ROOT / ".ai" / "tools" / name / "README.md"
         if readme.is_file():
             try:
                 text = readme.read_text(encoding="utf-8").strip()
@@ -1131,14 +1131,14 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         "--scripts",
         nargs="+",
         metavar="NAME",
-        help="Scripts directory names (under tools/) to install or uninstall (default: all discovered).",
+        help="Scripts directory names (under .ai/tools/) to install or uninstall (default: all discovered).",
     )
     parser.add_argument(
         "--dev-workflow",
         action="store_true",
         help=(
             "Alias for --bundles dev-workflow-harness: install or uninstall the complete "
-            "dev-workflow harness (11 skills, 1 command, and the tools/dev-workflow/ scripts)."
+            "dev-workflow harness (11 skills, 1 command, and the .ai/tools/dev-workflow/ scripts)."
         ),
     )
     parser.add_argument(

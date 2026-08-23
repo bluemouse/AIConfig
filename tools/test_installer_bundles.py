@@ -203,7 +203,7 @@ class CliSkillResolutionTests(unittest.TestCase):
 
 class TargetBundleTests(unittest.TestCase):
     def _write_target_skill(self, root: Path, name: str) -> None:
-        skill_dir = root / ".shared" / "skills" / name
+        skill_dir = root / ".ai" / "skills" / name
         skill_dir.mkdir(parents=True, exist_ok=True)
         (skill_dir / "SKILL.md").write_text(
             f"---\nname: {name}\ndescription: {name} skill\n---\n",
@@ -215,7 +215,7 @@ class TargetBundleTests(unittest.TestCase):
             root = Path(tmp)
             self._write_target_skill(root, "alpha")
             self._write_target_skill(root, "beta")
-            (root / ".shared" / "skills" / "empty").mkdir(parents=True)
+            (root / ".ai" / "skills" / "empty").mkdir(parents=True)
             self.assertEqual(mod.discover_skills_in_project(root), ["alpha", "beta"])
 
     def test_discover_skills_in_project_missing_shared(self) -> None:

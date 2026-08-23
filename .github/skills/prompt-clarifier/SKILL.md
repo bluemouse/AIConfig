@@ -15,9 +15,9 @@ description: Iteratively clarify ambiguous requirements, definitions, intent, sc
 Read the shared skill first — it is the source of truth for the clarification state
 machine, question selection, contradiction handling, and stopping criteria:
 
-`../../../.shared/skills/prompt-clarifier/SKILL.md`
+`../../../.ai/skills/prompt-clarifier/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/prompt-clarifier/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/prompt-clarifier/`. Resolve paths to
 `references/` from that directory.
 
 This wrapper adds **GitHub Copilot / VS Code-native** mechanics. Copilot runs both
@@ -26,7 +26,7 @@ different behavior from the ASK state.
 
 ## Discovery and reload
 
-- Project skills: `.github/skills/<name>/SKILL.md` + shared under `.shared/skills/<name>/`
+- Project skills: `.github/skills/<name>/SKILL.md` + shared under `.ai/skills/<name>/`
 - **Reload VS Code** after installing or editing skills so Copilot rediscovers them
 
 ## Install or refresh prompt-clarifier
@@ -72,6 +72,6 @@ sessions, suggest recording it there.
 
 ## Wrapper policy
 
-- Edit cross-tool clarification behavior in `../../../.shared/skills/prompt-clarifier/`
+- Edit cross-tool clarification behavior in `../../../.ai/skills/prompt-clarifier/`
 - Edit Copilot-specific mechanics here
 - Do not duplicate the full shared skill body in this file

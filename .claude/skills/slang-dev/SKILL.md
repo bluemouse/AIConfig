@@ -8,9 +8,9 @@ description: "Develop, review, port, compile, test, debug, and optimize Slang sh
 Read the shared skill first — it is the source of truth for Slang workflow, reference
 routing, and review checklists:
 
-`../../../.shared/skills/slang-dev/SKILL.md`
+`../../../.ai/skills/slang-dev/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/slang-dev/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/slang-dev/`. Resolve paths to
 `references/` and `scripts/` from that directory.
 
 This wrapper adds **Claude Code-native** execution. When this wrapper and the shared skill
@@ -18,13 +18,13 @@ disagree on mechanics, follow this wrapper for Claude Code.
 
 ## Discovery and reload
 
-- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.shared/skills/<name>/`
+- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.ai/skills/<name>/`
 - **Restart or reload** the Claude Code session after installing or editing skills
 
 ## Install or refresh slang-dev
 
 ```bash
-python .shared/skills/skill-creator/scripts/install_portable_skill.py \
+python .ai/skills/skill-creator/scripts/install_portable_skill.py \
   --root . --name slang-dev --source skills/slang-dev --overwrite
 ```
 
@@ -36,7 +36,7 @@ For repeatable SPIR-V and MSL builds across entry points, run the bundled script
 shared skill root:
 
 ```bash
-python .shared/skills/slang-dev/scripts/slang_compile_matrix.py manifest.json [--print-only]
+python .ai/skills/slang-dev/scripts/slang_compile_matrix.py manifest.json [--print-only]
 ```
 
 Use `--print-only` to emit commands without executing; `--allow-missing-slangc` when
@@ -46,14 +46,14 @@ Use `--print-only` to emit commands without executing; `--allow-missing-slangc` 
 
 | Task | Path |
 |------|------|
-| Vk* pipeline, descriptors, swapchain after SPIR-V | `.shared/skills/vulkan-dev/SKILL.md` |
-| API-agnostic binding model, render graph | `.shared/skills/gpu-rendering-guide/SKILL.md` |
-| C++20 style and build verification | `.shared/skills/cpp-coding/SKILL.md` |
+| Vk* pipeline, descriptors, swapchain after SPIR-V | `.ai/skills/vulkan-dev/SKILL.md` |
+| API-agnostic binding model, render graph | `.ai/skills/gpu-rendering-guide/SKILL.md` |
+| C++20 style and build verification | `.ai/skills/cpp-coding/SKILL.md` |
 
 Install companions with `install_portable_skill.py` when bootstrap sources exist under `skills/<name>/`.
 
 ## Wrapper policy
 
-- Edit cross-tool Slang behavior in `../../../.shared/skills/slang-dev/`
+- Edit cross-tool Slang behavior in `../../../.ai/skills/slang-dev/`
 - Edit Claude Code mechanics here
 - Do not duplicate the full shared skill body in this file

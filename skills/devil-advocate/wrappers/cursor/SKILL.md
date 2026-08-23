@@ -7,15 +7,15 @@ description: Play devil's advocate, red-team, pressure-test, poke holes, pre-mor
 
 Read the shared skill first. It is the source of truth for adversarial review workflow, challenge lenses, finding severity, fixability, and verdicts:
 
-`../../../.shared/skills/devil-advocate/SKILL.md`
+`../../../.ai/skills/devil-advocate/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/devil-advocate/`. Resolve paths to `references/` from that directory.
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/devil-advocate/`. Resolve paths to `references/` from that directory.
 
 This wrapper adds Cursor-native execution. When this wrapper and the shared skill disagree on mechanics, follow this wrapper for Cursor; follow the shared skill for review content and output structure.
 
 ## Discovery and Reload
 
-- Project skills: `.cursor/skills/<name>/SKILL.md` plus shared package under `.shared/skills/<name>/`
+- Project skills: `.cursor/skills/<name>/SKILL.md` plus shared package under `.ai/skills/<name>/`
 - Reload the Cursor window after adding, editing, or reinstalling skills so the agent rediscovers them
 
 ## Install or Refresh devil-advocate
@@ -47,6 +47,6 @@ When the review depends on current external facts and web or MCP tools are avail
 
 ## Wrapper Policy
 
-- Edit cross-tool adversarial review behavior in `../../../.shared/skills/devil-advocate/`
+- Edit cross-tool adversarial review behavior in `../../../.ai/skills/devil-advocate/`
 - Edit Cursor-only mechanics here
 - Do not duplicate the full shared skill body in this file

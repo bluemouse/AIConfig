@@ -8,16 +8,16 @@ description: "Design and review explicit-API renderer architecture (Vulkan/D3D12
 Read the shared skill first — it is the source of truth for renderer architecture, reference
 routing, and engine pattern mappings:
 
-`../../../.shared/skills/gpu-rendering-guide/SKILL.md`
+`../../../.ai/skills/gpu-rendering-guide/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/gpu-rendering-guide/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/gpu-rendering-guide/`. Resolve paths to
 `references/` from that directory.
 
 This wrapper adds **GitHub Copilot / VS Code-native** execution.
 
 ## Discovery and reload
 
-- Project skills: `.github/skills/<name>/SKILL.md` + shared under `.shared/skills/<name>/`
+- Project skills: `.github/skills/<name>/SKILL.md` + shared under `.ai/skills/<name>/`
 - **Reload VS Code** after installing or editing skills so Copilot rediscovers them
 
 ## Install or refresh gpu-rendering-guide
@@ -25,7 +25,7 @@ This wrapper adds **GitHub Copilot / VS Code-native** execution.
 From repo root (or ask the user to run in a terminal):
 
 ```bash
-python .shared/skills/skill-creator/scripts/install_portable_skill.py \
+python .ai/skills/skill-creator/scripts/install_portable_skill.py \
   --root . --name gpu-rendering-guide --source skills/gpu-rendering-guide --overwrite
 ```
 
@@ -35,16 +35,16 @@ If bootstrap source exists at `skills/gpu-rendering-guide/`, use that path for `
 
 | Task | Path |
 |------|------|
-| C++ CPU allocator (arenas, pools, ownership, PMR) | `.shared/skills/cpp-memory-guide/SKILL.md` |
-| Concrete Vulkan API | `.shared/skills/vulkan-dev/SKILL.md` |
-| GLSL language and SPIR-V layouts | `.shared/skills/glsl-coding/SKILL.md` when installed |
-| GLSL shader effects | `.shared/skills/shader-guide/SKILL.md` when installed |
-| Immediate-mode UI draw stream | `.shared/skills/imgui-guide/SKILL.md` when installed |
+| C++ CPU allocator (arenas, pools, ownership, PMR) | `.ai/skills/cpp-memory-guide/SKILL.md` |
+| Concrete Vulkan API | `.ai/skills/vulkan-dev/SKILL.md` |
+| GLSL language and SPIR-V layouts | `.ai/skills/glsl-coding/SKILL.md` when installed |
+| GLSL shader effects | `.ai/skills/shader-guide/SKILL.md` when installed |
+| Immediate-mode UI draw stream | `.ai/skills/imgui-guide/SKILL.md` when installed |
 
 Install companions with `install_portable_skill.py` when bootstrap sources exist under `skills/<name>/`.
 
 ## Wrapper policy
 
-- Edit cross-tool renderer behavior in `../../../.shared/skills/gpu-rendering-guide/`
+- Edit cross-tool renderer behavior in `../../../.ai/skills/gpu-rendering-guide/`
 - Edit Copilot-specific mechanics here
 - Do not duplicate the full shared skill body in this file

@@ -15,9 +15,9 @@ description: Comprehensive C++ performance optimization and investigation guidan
 
 This is a tool-specific wrapper. The canonical shared skill is:
 
-`../../../.shared/skills/cpp-performance-guide/SKILL.md`
+`../../../.ai/skills/cpp-performance-guide/SKILL.md`
 
-Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<SKILL_ROOT>` as `../../../.shared/skills/cpp-performance-guide` and resolve paths to `scripts/`, `references/`, and `assets/` from that shared skill directory.
+Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<SKILL_ROOT>` as `../../../.ai/skills/cpp-performance-guide` and resolve paths to `scripts/`, `references/`, and `assets/` from that shared skill directory.
 
 ## Cursor-specific information
 
@@ -27,5 +27,5 @@ Reload the Cursor window after adding or editing this skill so the agent redisco
 
 - Do not treat this wrapper as the full skill specification.
 - Prefer the shared skill whenever this wrapper and the shared skill conflict.
-- Keep edits to common behavior in `../../../.shared/skills/cpp-performance-guide/`.
+- Keep edits to common behavior in `../../../.ai/skills/cpp-performance-guide/`.
 - Keep only Cursor-specific information in this wrapper.

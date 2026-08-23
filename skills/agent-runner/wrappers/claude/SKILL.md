@@ -8,9 +8,9 @@ description: dispatch independent coding, debugging, research, or repository tas
 Read the shared skill first — it is the source of truth for partitioning, isolation,
 task packets, integration, and safety gates:
 
-`../../../.shared/skills/agent-runner/SKILL.md`
+`../../../.ai/skills/agent-runner/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/agent-runner/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/agent-runner/`. Resolve paths to
 `references/` from that directory.
 
 This wrapper adds **Claude Code-native** execution. When this wrapper and the shared skill
@@ -18,7 +18,7 @@ disagree on mechanics, follow this wrapper for Claude Code.
 
 ## Discovery and reload
 
-- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.shared/skills/<name>/`
+- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.ai/skills/<name>/`
 - **Restart or reload** the Claude Code session after installing or editing skills
 
 ## Install or refresh agent-runner
@@ -54,6 +54,6 @@ session, or ask the user to switch to Claude Code.
 
 ## Wrapper policy
 
-- Edit cross-tool orchestration behavior in `../../../.shared/skills/agent-runner/`
+- Edit cross-tool orchestration behavior in `../../../.ai/skills/agent-runner/`
 - Edit Claude Code mechanics here
 - Do not duplicate the full shared skill body in this file

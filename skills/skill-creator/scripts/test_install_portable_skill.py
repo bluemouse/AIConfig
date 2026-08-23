@@ -57,6 +57,7 @@ frontmatter = create_mod.frontmatter
 SKILL_NAME = "test-skill"
 SKILL_DESCRIPTION = "Test skill for unit tests."
 UPDATED_DESCRIPTION = "Updated shared skill description after bootstrap edit."
+DEV_WORKFLOW_SKILL = "dev-workflow-orchestrator"
 
 
 def normalize_description(description: str) -> str:
@@ -92,6 +93,23 @@ def write_bootstrap(
 
 
 class InstallPortableSkillTests(unittest.TestCase):
+    def test_dev_workflow_bootstrap_uses_installed_scripts_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = SCRIPTS_DIR.parents[2] / "skills" / DEV_WORKFLOW_SKILL
+
+            install_portable_skill(
+                root,
+                source,
+                DEV_WORKFLOW_SKILL,
+                overwrite=True,
+            )
+
+            installed_skill = root / ".ai" / "skills" / DEV_WORKFLOW_SKILL / "SKILL.md"
+            content = installed_skill.read_text(encoding="utf-8")
+            self.assertIn("python .ai/tools/dev-workflow/record_baseline.py", content)
+            self.assertNotIn("python tools/dev-workflow/", content)
+
     def test_sync_description_with_folded_block_wrapper(self) -> None:
         old_description = "Original folded description for wrapper sync test."
         wrapper_body = """\
@@ -99,7 +117,7 @@ class InstallPortableSkillTests(unittest.TestCase):
 
 This is a tool-specific wrapper. The canonical shared skill is:
 
-`../../../.shared/skills/test-skill/SKILL.md`
+`../../../.ai/skills/test-skill/SKILL.md`
 
 Before following this skill, read that shared `SKILL.md` first.
 """
@@ -141,7 +159,7 @@ disable-model-invocation: true
 
 This is a tool-specific wrapper. The canonical shared skill is:
 
-`../../../.shared/skills/{SKILL_NAME}/SKILL.md`
+`../../../.ai/skills/{SKILL_NAME}/SKILL.md`
 
 Before following this skill, read that shared `SKILL.md` first.
 """

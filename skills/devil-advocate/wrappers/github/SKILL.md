@@ -7,15 +7,15 @@ description: Play devil's advocate, red-team, pressure-test, poke holes, pre-mor
 
 Read the shared skill first. It is the source of truth for adversarial review workflow, challenge lenses, finding severity, fixability, and verdicts:
 
-`../../../.shared/skills/devil-advocate/SKILL.md`
+`../../../.ai/skills/devil-advocate/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/devil-advocate/`. Resolve paths to `references/` from that directory.
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/devil-advocate/`. Resolve paths to `references/` from that directory.
 
 This wrapper adds GitHub Copilot / VS Code-native execution. Copilot Chat usually has no parallel subagent API, so deep reviews should run challenge lenses sequentially.
 
 ## Discovery and Reload
 
-- Project skills: `.github/skills/<name>/SKILL.md` plus shared under `.shared/skills/<name>/`
+- Project skills: `.github/skills/<name>/SKILL.md` plus shared under `.ai/skills/<name>/`
 - Reload VS Code after installing or editing skills so Copilot rediscovers them
 
 ## Install or Refresh devil-advocate
@@ -41,6 +41,6 @@ If Copilot is running as a non-interactive coding agent, do not wait for user an
 
 ## Wrapper Policy
 
-- Edit cross-tool adversarial review behavior in `../../../.shared/skills/devil-advocate/`
+- Edit cross-tool adversarial review behavior in `../../../.ai/skills/devil-advocate/`
 - Edit Copilot-specific mechanics here
 - Do not duplicate the full shared skill body in this file

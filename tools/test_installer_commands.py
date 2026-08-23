@@ -39,7 +39,7 @@ class CommandDiscoveryTests(unittest.TestCase):
 
 class CommandInstallTests(unittest.TestCase):
     def _write_source_command(self, root: Path, name: str) -> None:
-        shared = root / ".shared" / "commands" / f"{name}.md"
+        shared = root / ".ai" / "commands" / f"{name}.md"
         shared.parent.mkdir(parents=True, exist_ok=True)
         shared.write_text(
             f"---\nname: {name}\ndescription: {name} command\n---\n\n# {name}\n",
@@ -71,7 +71,7 @@ class CommandInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertTrue((target / ".shared/commands/demo-command.md").is_file())
+            self.assertTrue((target / ".ai/commands/demo-command.md").is_file())
             self.assertTrue((target / ".cursor/commands/demo-command.md").is_file())
             self.assertTrue((target / ".claude/commands/demo-command.md").is_file())
             self.assertTrue((target / ".github/prompts/demo-command.prompt.md").is_file())
@@ -81,7 +81,7 @@ class CommandInstallTests(unittest.TestCase):
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
             self._write_source_command(source, "demo-command")
-            stale = target / ".shared/commands/demo-command.md"
+            stale = target / ".ai/commands/demo-command.md"
             stale.parent.mkdir(parents=True, exist_ok=True)
             stale.write_text("stale", encoding="utf-8")
 
@@ -95,7 +95,7 @@ class CommandInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertIn(".shared/commands/demo-command.md", result.skipped)
+            self.assertIn(".ai/commands/demo-command.md", result.skipped)
             self.assertEqual(stale.read_text(encoding="utf-8"), "stale")
 
     def test_uninstall_command_removes_all_paths(self) -> None:
@@ -111,7 +111,7 @@ class CommandInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertFalse((target / ".shared/commands/demo-command.md").exists())
+            self.assertFalse((target / ".ai/commands/demo-command.md").exists())
             self.assertFalse((target / ".cursor/commands/demo-command.md").exists())
             self.assertFalse((target / ".claude/commands/demo-command.md").exists())
             self.assertFalse((target / ".github/prompts/demo-command.prompt.md").exists())

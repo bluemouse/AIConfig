@@ -1,21 +1,21 @@
 ---
 name: skill-creator
-description: "Create portable skills for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create a skill from scratch, bootstrap under the skills directory and install to .shared/skills with tool wrappers, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say \"portable skill\" explicitly."
+description: "Create portable skills for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create a skill from scratch, bootstrap under the skills directory and install to .ai/skills with tool wrappers, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say \"portable skill\" explicitly."
 ---
 
 # skill-creator (GitHub Copilot)
 
 Read the shared skill first — it is the source of truth for portable layout, authoring rules, workspace artifacts, and packaging:
 
-`../../../.shared/skills/skill-creator/SKILL.md`
+`../../../.ai/skills/skill-creator/SKILL.md`
 
-Resolve `<SKILL_ROOT>` and `<SKILL_CREATOR_ROOT>` as `../../../.shared/skills/skill-creator`. Resolve paths to `scripts/`, `references/`, `assets/`, and `agents/` from that directory.
+Resolve `<SKILL_ROOT>` and `<SKILL_CREATOR_ROOT>` as `../../../.ai/skills/skill-creator`. Resolve paths to `scripts/`, `references/`, `assets/`, and `agents/` from that directory.
 
 This wrapper adds **GitHub Copilot / VS Code-native** execution. Copilot Chat does not expose parallel subagents like Cursor or Claude Code — adapt the eval loop accordingly.
 
 ## Discovery and reload
 
-- Project skills: `.github/skills/<name>/SKILL.md` + shared under `.shared/skills/<name>/`
+- Project skills: `.github/skills/<name>/SKILL.md` + shared under `.ai/skills/<name>/`
 - **Reload VS Code** after installing or editing skills so Copilot rediscovers them
 - Skills load when Copilot matches the skill `description` to the user's request
 
@@ -89,7 +89,7 @@ Run in the integrated terminal:
 
 ```bash
 python <SKILL_CREATOR_ROOT>/scripts/create_skill.py --root . --name my-skill
-python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py .shared/skills/my-skill
+python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py .ai/skills/my-skill
 python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py .github/skills/my-skill
 ```
 
@@ -97,5 +97,5 @@ After creating a new skill, reload VS Code.
 
 ## Wrapper policy
 
-- Edit cross-tool behavior in `../../../.shared/skills/skill-creator/`
+- Edit cross-tool behavior in `../../../.ai/skills/skill-creator/`
 - Edit Copilot-specific mechanics here

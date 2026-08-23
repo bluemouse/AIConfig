@@ -3,7 +3,7 @@ name: agent-creator
 description: Create portable custom agents for GitHub Copilot, Cursor, and Claude
   Code using a shared-first layout, and iteratively improve them. Use when users want
   to create an agent from scratch, bootstrap under the agents directory and install
-  to .shared/agents with tool wrappers, edit or optimize an existing agent, tune an
+  to .ai/agents with tool wrappers, edit or optimize an existing agent, tune an
   agent's description for better triggering, or explain portable agent structure —
   even if they do not say "portable agent" explicitly.
 ---
@@ -12,17 +12,17 @@ description: Create portable custom agents for GitHub Copilot, Cursor, and Claud
 
 Read the shared skill first — it is the source of truth for portable layout, authoring rules, validation, and the agent quality bars (correctness, completeness, efficiency):
 
-`../../../.shared/skills/agent-creator/SKILL.md`
+`../../../.ai/skills/agent-creator/SKILL.md`
 
-Resolve `<AGENT_CREATOR_ROOT>` as `../../../.shared/skills/agent-creator`. Resolve paths to `scripts/` and `references/` from that directory.
+Resolve `<AGENT_CREATOR_ROOT>` as `../../../.ai/skills/agent-creator`. Resolve paths to `scripts/` and `references/` from that directory.
 
 This wrapper adds **Claude Code-native** execution. When this wrapper and the shared skill disagree on mechanics, follow this wrapper for Claude Code.
 
 ## Discovery and reload
 
-- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.shared/skills/<name>/`
+- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.ai/skills/<name>/`
 - **Restart or reload** the Claude Code session after installing or editing skills
-- Custom agents you create live under `.claude/agents/<name>.md` (wrappers pointing to `.shared/agents/`)
+- Custom agents you create live under `.claude/agents/<name>.md` (wrappers pointing to `.ai/agents/`)
 
 ## Install or refresh agent-creator
 
@@ -72,16 +72,16 @@ Claude Code supports **subagents** — use them to test custom agents qualitativ
 
 1. Draft 2–3 test prompts with the user.
 2. For each prompt, spawn a subagent in the same turn when comparing variants, or sequentially for simple review.
-3. Subagent prompt should reference `.claude/agents/<agent-name>.md` and instruct reading `.shared/agents/<agent-name>.md` first.
+3. Subagent prompt should reference `.claude/agents/<agent-name>.md` and instruct reading `.ai/agents/<agent-name>.md` first.
 4. Review against correctness, completeness, and efficiency (shared skill).
-5. Edit bootstrap files (`agents/<agent-name>/`) for cross-tool fixes, or `.shared/agents/<agent-name>.md` on the direct path; then `.claude/agents/` wrapper for Claude-only details. Reinstall after bootstrap edits.
+5. Edit bootstrap files (`agents/<agent-name>/`) for cross-tool fixes, or `.ai/agents/<agent-name>.md` on the direct path; then `.claude/agents/` wrapper for Claude-only details. Reinstall after bootstrap edits.
 6. Re-validate and re-test.
 
 ### Spawn example
 
 ```
 Execute as the custom agent in .claude/agents/<agent-name>.md.
-Read .shared/agents/<agent-name>.md first — it is the source of truth.
+Read .ai/agents/<agent-name>.md first — it is the source of truth.
 
 Task: <user test prompt>
 ```
@@ -95,7 +95,7 @@ No automated loop is bundled for agents. Use shared Steps 1–2 and 4 manually:
 1. Draft trigger eval queries with the user
 2. Mark false positives / false negatives
 3. Skip automated Step 3 (no `run_loop.py` for agents)
-4. Apply revised `description` in the authoritative edit location (`agents/<agent-name>/AGENT.md` or `.shared/agents/<agent-name>.md`) and sync all wrappers; reinstall if bootstrap
+4. Apply revised `description` in the authoritative edit location (`agents/<agent-name>/AGENT.md` or `.ai/agents/<agent-name>.md`) and sync all wrappers; reinstall if bootstrap
 
 Triggering note: custom agents appear in available agent lists; Claude selects them when the description matches and specialized behavior would help.
 
@@ -109,5 +109,5 @@ Copy to `/tmp/agent-creator/`, edit, validate, then copy artifacts back if neede
 
 ## Wrapper policy
 
-- Edit cross-tool behavior in `../../../.shared/skills/agent-creator/` and user bootstrap (`agents/<name>/`) or `.shared/agents/` on the direct path
+- Edit cross-tool behavior in `../../../.ai/skills/agent-creator/` and user bootstrap (`agents/<name>/`) or `.ai/agents/` on the direct path
 - Edit Claude Code mechanics here and in user `.claude/agents/` wrappers

@@ -15,9 +15,9 @@ description: Review git diffs and commits — staged, unstaged, branch, working 
 Read the shared skill first — it is the source of truth for review workflow, scopes, effort
 tiers, and output format:
 
-`../../../.shared/skills/code-reviewer/SKILL.md`
+`../../../.ai/skills/code-reviewer/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/code-reviewer/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/code-reviewer/`. Resolve paths to
 `references/`, `scripts/`, and `assets/` from that directory.
 
 This wrapper adds **Claude Code-native** execution. When this wrapper and the shared skill
@@ -25,7 +25,7 @@ disagree on mechanics, follow this wrapper for Claude Code.
 
 ## Discovery and reload
 
-- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.shared/skills/<name>/`
+- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.ai/skills/<name>/`
 - **Restart or reload** the Claude Code session after installing or editing skills
 
 ## Install or refresh code-reviewer
@@ -68,11 +68,11 @@ verify, and gap-sweep per the shared skill.
 This skill produces the in-chat review report. When the user asks to post findings as PR
 review comments on a **GitHub** repo, finish the review first, then follow the shared
 skill's **Posting to GitHub** section and hand off to
-[github-guide](../../../.shared/skills/github-guide/SKILL.md) (or the installed
+[github-guide](../../../.ai/skills/github-guide/SKILL.md) (or the installed
 `.claude/skills/github-guide/SKILL.md` wrapper).
 
 ## Wrapper policy
 
-- Edit cross-tool review behavior in `../../../.shared/skills/code-reviewer/`
+- Edit cross-tool review behavior in `../../../.ai/skills/code-reviewer/`
 - Edit Claude Code mechanics here
 - Do not duplicate the full shared skill body in this file

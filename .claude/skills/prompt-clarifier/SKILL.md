@@ -15,9 +15,9 @@ description: Iteratively clarify ambiguous requirements, definitions, intent, sc
 Read the shared skill first — it is the source of truth for the clarification state
 machine, question selection, contradiction handling, and stopping criteria:
 
-`../../../.shared/skills/prompt-clarifier/SKILL.md`
+`../../../.ai/skills/prompt-clarifier/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/prompt-clarifier/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/prompt-clarifier/`. Resolve paths to
 `references/` from that directory.
 
 This wrapper adds **Claude Code-native** mechanics for asking and inspecting. When this
@@ -25,7 +25,7 @@ wrapper and the shared skill disagree on mechanics, follow this wrapper for Clau
 
 ## Discovery and reload
 
-- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.shared/skills/<name>/`
+- Project skills: `.claude/skills/<name>/SKILL.md` + shared under `.ai/skills/<name>/`
 - **Restart or reload** the Claude Code session after installing or editing skills
 
 ## Install or refresh prompt-clarifier
@@ -74,6 +74,6 @@ for them, or ask the user to paste the relevant file or configuration.
 
 ## Wrapper policy
 
-- Edit cross-tool clarification behavior in `../../../.shared/skills/prompt-clarifier/`
+- Edit cross-tool clarification behavior in `../../../.ai/skills/prompt-clarifier/`
 - Edit Claude Code mechanics here
 - Do not duplicate the full shared skill body in this file

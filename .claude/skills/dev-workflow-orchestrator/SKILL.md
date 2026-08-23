@@ -16,9 +16,9 @@ description: Orchestrate the full development workflow — clarify → research 
 
 This is a tool-specific wrapper. The canonical shared skill is:
 
-`../../../.shared/skills/dev-workflow-orchestrator/SKILL.md`
+`../../../.ai/skills/dev-workflow-orchestrator/SKILL.md`
 
-Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<SKILL_ROOT>` as `../../../.shared/skills/dev-workflow-orchestrator` and resolve paths to `scripts/`, `references/`, and `assets/` from that shared skill directory.
+Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<SKILL_ROOT>` as `../../../.ai/skills/dev-workflow-orchestrator` and resolve paths to `scripts/`, `references/`, and `assets/` from that shared skill directory.
 
 ## Claude Code-specific information
 
@@ -28,5 +28,5 @@ Restart or reload the Claude Code session after adding or editing this skill so 
 
 - Do not treat this wrapper as the full skill specification.
 - Prefer the shared skill whenever this wrapper and the shared skill conflict.
-- Keep edits to common behavior in `../../../.shared/skills/dev-workflow-orchestrator/`.
+- Keep edits to common behavior in `../../../.ai/skills/dev-workflow-orchestrator/`.
 - Keep only Claude Code-specific information in this wrapper.

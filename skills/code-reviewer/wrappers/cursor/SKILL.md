@@ -8,9 +8,9 @@ description: Review git diffs and commits — staged changes, unstaged changes, 
 Read the shared skill first — it is the source of truth for review workflow, scopes, effort
 tiers, and output format:
 
-`../../../.shared/skills/code-reviewer/SKILL.md`
+`../../../.ai/skills/code-reviewer/SKILL.md`
 
-Resolve `<SKILL_ROOT>` as `../../../.shared/skills/code-reviewer/`. Resolve paths to
+Resolve `<SKILL_ROOT>` as `../../../.ai/skills/code-reviewer/`. Resolve paths to
 `references/`, `scripts/`, and `assets/` from that directory.
 
 This wrapper adds **Cursor-native** execution. When this wrapper and the shared skill
@@ -20,7 +20,7 @@ content and output structure.
 ## Discovery and reload
 
 - Project skills: `.cursor/skills/<name>/SKILL.md` (this file) + shared package under
-  `.shared/skills/<name>/`
+  `.ai/skills/<name>/`
 - Reload the **Cursor window** after adding, editing, or re-installing skills so the
   agent rediscovers them
 
@@ -71,7 +71,7 @@ text message.
 This skill produces the in-chat review report. When the user asks to post findings as PR
 review comments on a **GitHub** repo, finish the review first, then follow the shared
 skill's **Posting to GitHub** section and hand off to
-[github-guide](../../../.shared/skills/github-guide/SKILL.md) (or the installed
+[github-guide](../../../.ai/skills/github-guide/SKILL.md) (or the installed
 `.cursor/skills/github-guide/SKILL.md` wrapper).
 
 On Cursor, you may also suggest the built-in `/code-review --comment` for a quick native
@@ -80,6 +80,6 @@ batching, or thread resolution via `gh api`.
 
 ## Wrapper policy
 
-- Edit cross-tool review behavior in `../../../.shared/skills/code-reviewer/`
+- Edit cross-tool review behavior in `../../../.ai/skills/code-reviewer/`
 - Edit Cursor-only mechanics here
 - Do not duplicate the full shared skill body in this file

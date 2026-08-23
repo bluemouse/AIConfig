@@ -12,7 +12,7 @@ loops, backward edges for upstream root causes, artifact contracts, and mode enf
 ## Steps
 
 1. Read and follow the **dev-workflow-orchestrator** skill
-   (`.shared/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill). Treat
+   (`.ai/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill). Treat
    `/dev-workflow` as the explicit start signal — proceed to orchestrate the workflow
    without asking for a second confirmation.
 

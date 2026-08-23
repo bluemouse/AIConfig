@@ -28,7 +28,7 @@ mod = load_installer_module()
 
 def write_source_skill(root: Path, name: str) -> None:
     """Write a minimal skill (shared dir + SKILL.md + three tool wrappers)."""
-    shared = root / ".shared" / "skills" / name / "SKILL.md"
+    shared = root / ".ai" / "skills" / name / "SKILL.md"
     shared.parent.mkdir(parents=True, exist_ok=True)
     shared.write_text(
         f"---\nname: {name}\ndescription: {name} skill\n---\n\n# {name}\n",
@@ -46,7 +46,7 @@ def write_source_skill(root: Path, name: str) -> None:
 
 def write_source_command(root: Path, name: str) -> None:
     """Write a minimal command (shared file + three tool wrappers)."""
-    shared = root / ".shared" / "commands" / f"{name}.md"
+    shared = root / ".ai" / "commands" / f"{name}.md"
     shared.parent.mkdir(parents=True, exist_ok=True)
     shared.write_text(
         f"---\nname: {name}\ndescription: {name} command\n---\n\n# {name}\n",
@@ -64,7 +64,7 @@ def write_source_command(root: Path, name: str) -> None:
 
 def write_source_scripts(root: Path, name: str = "dev-workflow") -> None:
     """Write a minimal tools/<name>/ scripts tree with a checks/ subpackage."""
-    scripts = root / "tools" / name
+    scripts = root / ".ai" / "tools" / name
     scripts.mkdir(parents=True, exist_ok=True)
     (scripts / "validate_phase.py").write_text("# validate_phase\n", encoding="utf-8")
     (scripts / "check_pre_phase.py").write_text("# check_pre_phase\n", encoding="utf-8")
@@ -123,18 +123,18 @@ class ScriptsInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            scripts = target / "tools" / "dev-workflow"
+            scripts = target / ".ai" / "tools" / "dev-workflow"
             self.assertTrue(scripts.is_dir())
             self.assertTrue((scripts / "validate_phase.py").is_file())
             self.assertTrue((scripts / "checks" / "__init__.py").is_file())
-            self.assertIn("tools/dev-workflow", result.installed)
+            self.assertIn(".ai/tools/dev-workflow", result.installed)
 
     def test_install_scripts_skips_existing_without_override(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
             write_source_scripts(source)
-            stale = target / "tools" / "dev-workflow" / "stale.txt"
+            stale = target / ".ai" / "tools" / "dev-workflow" / "stale.txt"
             stale.parent.mkdir(parents=True, exist_ok=True)
             stale.write_text("stale", encoding="utf-8")
 
@@ -149,7 +149,7 @@ class ScriptsInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertIn("tools/dev-workflow", result.skipped)
+            self.assertIn(".ai/tools/dev-workflow", result.skipped)
             self.assertEqual(stale.read_text(encoding="utf-8"), "stale")
 
     def test_install_scripts_override_replaces(self) -> None:
@@ -157,7 +157,7 @@ class ScriptsInstallTests(unittest.TestCase):
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
             write_source_scripts(source)
-            stale = target / "tools" / "dev-workflow" / "stale.txt"
+            stale = target / ".ai" / "tools" / "dev-workflow" / "stale.txt"
             stale.parent.mkdir(parents=True, exist_ok=True)
             stale.write_text("stale", encoding="utf-8")
 
@@ -172,7 +172,7 @@ class ScriptsInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertIn("tools/dev-workflow", result.installed)
+            self.assertIn(".ai/tools/dev-workflow", result.installed)
             self.assertFalse(stale.exists())
 
     def test_install_scripts_missing_source_records_error(self) -> None:
@@ -224,8 +224,8 @@ class ScriptsUninstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertFalse((target / "tools" / "dev-workflow").exists())
-            self.assertIn("tools/dev-workflow", result.removed)
+            self.assertFalse((target / ".ai" / "tools" / "dev-workflow").exists())
+            self.assertIn(".ai/tools/dev-workflow", result.removed)
 
     def test_uninstall_scripts_when_not_installed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -285,9 +285,9 @@ class DevWorkflowBundleTests(unittest.TestCase):
 
             self.assertTrue(result.ok, result.errors)
             for skill in mod.DEV_WORKFLOW_SKILLS:
-                self.assertTrue((target / ".shared" / "skills" / skill / "SKILL.md").is_file())
-            self.assertTrue((target / ".shared" / "commands" / "dev-workflow.md").is_file())
-            self.assertTrue((target / "tools" / "dev-workflow" / "validate_phase.py").is_file())
+                self.assertTrue((target / ".ai" / "skills" / skill / "SKILL.md").is_file())
+            self.assertTrue((target / ".ai" / "commands" / "dev-workflow.md").is_file())
+            self.assertTrue((target / ".ai" / "tools" / "dev-workflow" / "validate_phase.py").is_file())
 
     def test_run_operation_scripts_only_does_not_raise(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

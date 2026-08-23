@@ -51,5 +51,7 @@ timing.json
 # Claude Code runtime
 .claude/scheduled_tasks.lock
 
-# dev-workflow temp files
-.ai/**
+# AI temp artifacts (installed content under .ai/ is committed)
+.ai/workflow/
+.ai/plans/
+.ai/researches/
