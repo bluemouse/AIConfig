@@ -65,7 +65,15 @@ class BundleLoadingTests(unittest.TestCase):
         )
         self.assertEqual(harness.commands, frozenset({"dev-workflow"}))
         self.assertEqual(harness.scripts, frozenset({"dev-workflow"}))
-        self.assertEqual(harness.agents, frozenset())
+        self.assertEqual(
+            harness.agents,
+            frozenset({
+                "research-reviewer",
+                "plan-reviewer",
+                "implementation-auditor",
+                "code-reviewer",
+            }),
+        )
 
     def test_bases_composition(self) -> None:
         config = {

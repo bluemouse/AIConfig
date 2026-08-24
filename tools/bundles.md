@@ -78,6 +78,7 @@ python tools/installer.py /path/to/project --dev-workflow
 `--dev-workflow` is a CLI alias for `--bundles dev-workflow-harness`. The harness consists of:
 
 - **Skills (11):** `dev-workflow-orchestrator` (the orchestrator) plus the phase doers and checkers — `prompt-clarifier`, `research-guide` / `research-reviewer`, `plan-guide` / `plan-reviewer`, `plan-executor` / `implementation-auditor`, `finding-resolver` / `code-reviewer`, and `commit-message-writer`.
+- **Agents (4):** the four checker agents — `research-reviewer`, `plan-reviewer`, `implementation-auditor`, `code-reviewer` — installed via the agent mechanism (shared `.ai/agents/<name>.md` + tool wrappers). These wrap the checker skills with fresh-context isolation, read-only enforcement, and model pinning for native-mode dispatch.
 - **Command (1):** `dev-workflow` — installed via the standard command mechanism (shared + tool wrappers).
 - **Validation scripts:** the `.ai/tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/.ai/tools/dev-workflow/`.
 

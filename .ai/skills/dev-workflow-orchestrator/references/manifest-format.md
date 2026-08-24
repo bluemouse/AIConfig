@@ -72,6 +72,11 @@ The run manifest is the orchestrator's state file. It tracks the entire run so t
 |-------|-------|----------|---------|----------------------|---------------|
 | research | validate_phase | error | Missing required section | stopped | — |
 | research | validate_phase | warning | Missing optional section | continued | Section not relevant for this feature |
+
+## Dispatch log
+- Dispatch mode: <native | delegated | simulated>
+- Evaluated at: phase 0
+- Notes: <e.g., "Copilot Chat — no subagent API, fell back to delegated">
 ```
 
 ## Rules

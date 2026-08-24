@@ -64,6 +64,12 @@
       ],
       "scripts": [
         "dev-workflow"
+      ],
+      "agents": [
+        "research-reviewer",
+        "plan-reviewer",
+        "implementation-auditor",
+        "code-reviewer"
       ]
     }
   ]

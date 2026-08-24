@@ -127,7 +127,7 @@ For all other phases, run the doer → checker loop:
 6. **Post-flight:** Run `check_post_phase.py --phase <name> --run-dir <path>`. If it fails, stop and report.
 7. **Route:** Apply the loop contract:
    - **Accepted** (verdict is in the accept set) → run `validate_phase.py --phase <name> --run-dir <path>`. If validation passes, update manifest, go forward to next phase. If validation fails, handle per validation rules below.
-   - **Needs revision** (root-cause-phase = `local`) → increment round counter. If round < cap, loop back to doer pass with the checker's feedback. If round = cap, escalate.
+   - **Needs revision** (root-cause-phase = `local`) → increment round counter. If round < cap: when the next round will be round > 1, first copy the current checker artifact to `<name>-r1.md` (e.g. `11-research-review.md` → `11-research-review-r1.md`) so the fresh-context checker in the next round can see prior findings and preserve finding ids; then loop back to doer pass with the checker's feedback, and include the `-r1` path in the next round's task packet (native mode) or named-pass context (delegated mode). If round = cap, escalate.
    - **Needs revision** (root-cause-phase = upstream) → create backward handoff packet, route to target phase (see Backward edge below).
    - **Blocked** → escalate immediately.
 8. **Update manifest** after every step.
@@ -228,10 +228,14 @@ Mode is enforced by the orchestrator's per-phase instructions (prevention) and t
 
 ## Dispatch model
 
-- All phases use named passes at the orchestrator level.
-- The orchestrator invokes each skill as a named pass with explicit input/output paths.
+- The orchestrator selects a dispatch mode for checker phases per [references/dispatch-modes.md](references/dispatch-modes.md): **native** (spawn the checker as a subagent with a fresh isolated context), **delegated** (invoke the checker skill as a named pass — current behavior), or **simulated** (same as delegated, labeled honestly).
+- Evaluate the dispatch mode **once per run** at phase 0 (Clarify) and record it in the manifest's `## Dispatch log` section. Host capability does not change mid-run.
+- In **native mode**, the orchestrator constructs a task packet per checker dispatch (objective, input artifact path, output artifact path, read-only scope, verdict format, `root-cause-phase` requirement, prior-round `-r1` review path for rounds > 1) and spawns the checker agent as a subagent. Dispatch is by subagent type, not by agent description.
+- In **delegated/simulated mode**, the orchestrator invokes the checker skill as a named pass with explicit input/output paths — the current behavior before the agent conversion.
+- The orchestrator reads the verdict from the **on-disk artifact** (`## Verdict` heading), not from the subagent's return message. The artifact is the source of truth; the return message is a convenience (status + summary).
 - The doer never reads the checker's verdict — only the orchestrator does.
 - The checker owns the loop verdict; the orchestrator owns phase transitions and backward edges.
+- If a subagent spawn fails (e.g., the pinned model is unavailable on the host), the orchestrator records the failure in the dispatch log and falls back to delegated mode for that checker. Do not silently retry or block the workflow.
 - Phase 3 (Implement) may use real subagents internally via plan-executor + agent-runner. This is invisible to the orchestrator.
 - Phase 1 (Research) may use advisory-council internally for consequential decisions. This is invisible to the orchestrator.
 

@@ -74,6 +74,31 @@ def write_source_scripts(root: Path, name: str = "dev-workflow") -> None:
     (checks / "mode_checks.py").write_text("# mode_checks\n", encoding="utf-8")
 
 
+def write_source_agent(root: Path, name: str) -> None:
+    """Write a minimal agent (shared file + three tool wrappers).
+
+    Paths mirror the installer's TOOL_AGENT_FILES and SHARED_AGENT_FILE:
+    - .ai/agents/<name>.md
+    - .cursor/agents/<name>.md
+    - .claude/agents/<name>.md
+    - .github/agents/<name>.agent.md  (note the .agent.md suffix for Copilot)
+    """
+    shared = root / ".ai" / "agents" / f"{name}.md"
+    shared.parent.mkdir(parents=True, exist_ok=True)
+    shared.write_text(
+        f"---\nname: {name}\ndescription: {name} agent\n---\n\n# {name}\n",
+        encoding="utf-8",
+    )
+    for rel in (
+        f".cursor/agents/{name}.md",
+        f".claude/agents/{name}.md",
+        f".github/agents/{name}.agent.md",
+    ):
+        path = root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"# {name}\n", encoding="utf-8")
+
+
 def write_full_harness_source(root: Path) -> None:
     """Write the full dev-workflow harness into a source root."""
     for skill in mod.DEV_WORKFLOW_SKILLS:
@@ -81,6 +106,8 @@ def write_full_harness_source(root: Path) -> None:
     for command in mod.DEV_WORKFLOW_COMMANDS:
         write_source_command(root, command)
     write_source_scripts(root)
+    for agent in mod.DEV_WORKFLOW_AGENTS:
+        write_source_agent(root, agent)
 
 
 class DevWorkflowConstantsTests(unittest.TestCase):
@@ -103,6 +130,15 @@ class DevWorkflowConstantsTests(unittest.TestCase):
         )
         self.assertEqual(mod.DEV_WORKFLOW_COMMANDS, ("dev-workflow",))
         self.assertEqual(mod.DEV_WORKFLOW_SCRIPTS, ("dev-workflow",))
+        self.assertEqual(
+            mod.DEV_WORKFLOW_AGENTS,
+            (
+                "research-reviewer",
+                "plan-reviewer",
+                "implementation-auditor",
+                "code-reviewer",
+            ),
+        )
 
 
 class ScriptsInstallTests(unittest.TestCase):
@@ -265,7 +301,30 @@ class DevWorkflowBundleTests(unittest.TestCase):
         )
         self.assertEqual(selection.commands, ["dev-workflow"])
         self.assertEqual(selection.scripts, ["dev-workflow"])
-        self.assertEqual(selection.agents, [])
+        self.assertEqual(
+            selection.agents,
+            [
+                "code-reviewer",
+                "implementation-auditor",
+                "plan-reviewer",
+                "research-reviewer",
+            ],
+        )
+
+    def test_dev_workflow_bundle_includes_agents_in_bundles_json(self) -> None:
+        """t-013: the dev-workflow-harness bundle in bundles.json has an agents key."""
+        import json
+
+        bundles_path = TOOLS_DIR / "bundles.json"
+        payload = json.loads(bundles_path.read_text(encoding="utf-8"))
+        harness = next(
+            b for b in payload["bundles"] if b["id"] == "dev-workflow-harness"
+        )
+        self.assertIn("agents", harness)
+        self.assertEqual(
+            sorted(harness["agents"]),
+            ["code-reviewer", "implementation-auditor", "plan-reviewer", "research-reviewer"],
+        )
 
     def test_install_harness_via_explicit_params(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -277,7 +336,7 @@ class DevWorkflowBundleTests(unittest.TestCase):
                 source_root=source,
                 target_root=target,
                 skills=list(mod.DEV_WORKFLOW_SKILLS),
-                agents=[],
+                agents=list(mod.DEV_WORKFLOW_AGENTS),
                 commands=list(mod.DEV_WORKFLOW_COMMANDS),
                 scripts=list(mod.DEV_WORKFLOW_SCRIPTS),
                 override=False,
@@ -288,6 +347,111 @@ class DevWorkflowBundleTests(unittest.TestCase):
                 self.assertTrue((target / ".ai" / "skills" / skill / "SKILL.md").is_file())
             self.assertTrue((target / ".ai" / "commands" / "dev-workflow.md").is_file())
             self.assertTrue((target / ".ai" / "tools" / "dev-workflow" / "validate_phase.py").is_file())
+            # t-014: agents are installed via --dev-workflow
+            for agent in mod.DEV_WORKFLOW_AGENTS:
+                self.assertTrue((target / ".ai" / "agents" / f"{agent}.md").is_file())
+                self.assertTrue((target / ".cursor" / "agents" / f"{agent}.md").is_file())
+                self.assertTrue((target / ".claude" / "agents" / f"{agent}.md").is_file())
+                self.assertTrue((target / ".github" / "agents" / f"{agent}.agent.md").is_file())
+
+    def test_uninstall_harness_removes_agents(self) -> None:
+        """Uninstalling the harness removes agent files from the target."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            write_full_harness_source(source)
+
+            install_result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=list(mod.DEV_WORKFLOW_SKILLS),
+                agents=list(mod.DEV_WORKFLOW_AGENTS),
+                commands=list(mod.DEV_WORKFLOW_COMMANDS),
+                scripts=list(mod.DEV_WORKFLOW_SCRIPTS),
+                override=False,
+            )
+            self.assertTrue(install_result.ok, install_result.errors)
+
+            uninstall_result = mod.uninstall_items(
+                target_root=target,
+                skills=list(mod.DEV_WORKFLOW_SKILLS),
+                agents=list(mod.DEV_WORKFLOW_AGENTS),
+                commands=list(mod.DEV_WORKFLOW_COMMANDS),
+                scripts=list(mod.DEV_WORKFLOW_SCRIPTS),
+            )
+            self.assertTrue(uninstall_result.ok, uninstall_result.errors)
+            for agent in mod.DEV_WORKFLOW_AGENTS:
+                self.assertFalse(
+                    (target / ".ai" / "agents" / f"{agent}.md").is_file(),
+                    f"Agent {agent} shared file not removed by uninstall",
+                )
+                self.assertFalse(
+                    (target / ".cursor" / "agents" / f"{agent}.md").is_file(),
+                    f"Agent {agent} cursor wrapper not removed by uninstall",
+                )
+
+    def test_override_replaces_agent_files(self) -> None:
+        """--override replaces existing agent files in the target."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            write_full_harness_source(source)
+
+            # First install
+            result1 = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=list(mod.DEV_WORKFLOW_AGENTS),
+                commands=[],
+                scripts=[],
+                override=False,
+            )
+            self.assertTrue(result1.ok, result1.errors)
+
+            # Modify a target agent file to simulate stale content
+            stale_path = target / ".ai" / "agents" / "implementation-auditor.md"
+            stale_path.write_text("STALE CONTENT", encoding="utf-8")
+
+            # Override install
+            result2 = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=list(mod.DEV_WORKFLOW_AGENTS),
+                commands=[],
+                scripts=[],
+                override=True,
+            )
+            self.assertTrue(result2.ok, result2.errors)
+            self.assertNotEqual(
+                stale_path.read_text(encoding="utf-8"),
+                "STALE CONTENT",
+                "Override did not replace stale agent file",
+            )
+
+    def test_compose_dev_workflow_with_agents(self) -> None:
+        """--dev-workflow composes with --agents in a single invocation."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            write_full_harness_source(source)
+
+            result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=list(mod.DEV_WORKFLOW_SKILLS),
+                agents=list(mod.DEV_WORKFLOW_AGENTS),
+                commands=list(mod.DEV_WORKFLOW_COMMANDS),
+                scripts=list(mod.DEV_WORKFLOW_SCRIPTS),
+                override=False,
+            )
+            self.assertTrue(result.ok, result.errors)
+            for agent in mod.DEV_WORKFLOW_AGENTS:
+                self.assertTrue(
+                    (target / ".ai" / "agents" / f"{agent}.md").is_file(),
+                    f"Composed install did not install agent {agent}",
+                )
 
     def test_run_operation_scripts_only_does_not_raise(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
