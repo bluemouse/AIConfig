@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import tempfile
 import unittest
@@ -128,7 +129,16 @@ class DevWorkflowConstantsTests(unittest.TestCase):
                 "commit-message-writer",
             ),
         )
-        self.assertEqual(mod.DEV_WORKFLOW_COMMANDS, ("dev-workflow",))
+        self.assertEqual(
+            mod.DEV_WORKFLOW_COMMANDS,
+            (
+                "dev-workflow",
+                "dev-workflow-research",
+                "dev-workflow-plan",
+                "dev-workflow-implement",
+                "dev-workflow-review",
+            ),
+        )
         self.assertEqual(mod.DEV_WORKFLOW_SCRIPTS, ("dev-workflow",))
         self.assertEqual(
             mod.DEV_WORKFLOW_AGENTS,
@@ -299,7 +309,16 @@ class DevWorkflowBundleTests(unittest.TestCase):
                 "research-reviewer",
             ],
         )
-        self.assertEqual(selection.commands, ["dev-workflow"])
+        self.assertEqual(
+            selection.commands,
+            [
+                "dev-workflow",
+                "dev-workflow-implement",
+                "dev-workflow-plan",
+                "dev-workflow-research",
+                "dev-workflow-review",
+            ],
+        )
         self.assertEqual(selection.scripts, ["dev-workflow"])
         self.assertEqual(
             selection.agents,
@@ -481,6 +500,139 @@ class DevWorkflowBundleTests(unittest.TestCase):
                     override=False,
                 )
             self.assertIn("scripts", str(ctx.exception))
+
+
+class BundlesJsonPhaseCommandsTests(unittest.TestCase):
+    """Tests that bundles.json dev-workflow-harness includes the per-phase commands."""
+
+    def test_bundles_json_dev_workflow_harness_commands_includes_phases(self) -> None:
+        bundles_path = TOOLS_DIR / "bundles.json"
+        with bundles_path.open(encoding="utf-8") as f:
+            data = json.load(f)
+
+        harness = next(
+            (b for b in data["bundles"] if b["id"] == "dev-workflow-harness"),
+            None,
+        )
+        self.assertIsNotNone(harness, "dev-workflow-harness bundle not found")
+        assert harness is not None  # for type checkers
+        self.assertEqual(
+            harness["commands"],
+            [
+                "dev-workflow",
+                "dev-workflow-research",
+                "dev-workflow-plan",
+                "dev-workflow-implement",
+                "dev-workflow-review",
+            ],
+        )
+
+
+class PhaseCommandsInstallTests(unittest.TestCase):
+    """Integration tests for install/uninstall/override of the per-phase commands."""
+
+    def test_install_dev_workflow_harness_installs_phase_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            write_full_harness_source(source)
+
+            result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=list(mod.DEV_WORKFLOW_COMMANDS),
+                scripts=[],
+                override=False,
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            for name in mod.DEV_WORKFLOW_COMMANDS:
+                for rel in (
+                    f".ai/commands/{name}.md",
+                    f".cursor/commands/{name}.md",
+                    f".claude/commands/{name}.md",
+                    f".github/prompts/{name}.prompt.md",
+                ):
+                    self.assertTrue(
+                        (target / rel).is_file(),
+                        f"Expected installed command file missing: {rel}",
+                    )
+
+    def test_uninstall_dev_workflow_harness_removes_phase_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            write_full_harness_source(source)
+
+            mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=list(mod.DEV_WORKFLOW_COMMANDS),
+                scripts=[],
+                override=False,
+            )
+
+            result = mod.uninstall_items(
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=list(mod.DEV_WORKFLOW_COMMANDS),
+                scripts=[],
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            for name in mod.DEV_WORKFLOW_COMMANDS:
+                for rel in (
+                    f".ai/commands/{name}.md",
+                    f".cursor/commands/{name}.md",
+                    f".claude/commands/{name}.md",
+                    f".github/prompts/{name}.prompt.md",
+                ):
+                    self.assertFalse(
+                        (target / rel).exists(),
+                        f"Command file should be removed after uninstall: {rel}",
+                    )
+
+    def test_install_dev_workflow_harness_override_replaces_phase_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            write_full_harness_source(source)
+
+            mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=list(mod.DEV_WORKFLOW_COMMANDS),
+                scripts=[],
+                override=False,
+            )
+
+            # Write a stale marker into one of the new command paths.
+            stale = target / ".ai" / "commands" / "dev-workflow-research.md"
+            stale.write_text("stale content", encoding="utf-8")
+
+            result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=list(mod.DEV_WORKFLOW_COMMANDS),
+                scripts=[],
+                override=True,
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            self.assertNotEqual(
+                stale.read_text(encoding="utf-8"),
+                "stale content",
+                "Override should replace stale content",
+            )
 
 
 if __name__ == "__main__":

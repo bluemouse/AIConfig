@@ -63,7 +63,16 @@ class BundleLoadingTests(unittest.TestCase):
                 "commit-message-writer",
             }),
         )
-        self.assertEqual(harness.commands, frozenset({"dev-workflow"}))
+        self.assertEqual(
+            harness.commands,
+            frozenset({
+                "dev-workflow",
+                "dev-workflow-research",
+                "dev-workflow-plan",
+                "dev-workflow-implement",
+                "dev-workflow-review",
+            }),
+        )
         self.assertEqual(harness.scripts, frozenset({"dev-workflow"}))
         self.assertEqual(
             harness.agents,

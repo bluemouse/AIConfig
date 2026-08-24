@@ -118,7 +118,13 @@ DEV_WORKFLOW_SKILLS = (
     "code-reviewer",
     "commit-message-writer",
 )
-DEV_WORKFLOW_COMMANDS = ("dev-workflow",)
+DEV_WORKFLOW_COMMANDS = (
+    "dev-workflow",
+    "dev-workflow-research",
+    "dev-workflow-plan",
+    "dev-workflow-implement",
+    "dev-workflow-review",
+)
 DEV_WORKFLOW_SCRIPTS = ("dev-workflow",)
 DEV_WORKFLOW_AGENTS = (
     "research-reviewer",
@@ -1206,7 +1212,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         action="store_true",
         help=(
             "Alias for --bundles dev-workflow-harness: install or uninstall the complete "
-            "dev-workflow harness (11 skills, 4 checker agents, 1 command, and the "
+            "dev-workflow harness (11 skills, 4 checker agents, 5 commands, and the "
             ".ai/tools/dev-workflow/ scripts)."
         ),
     )

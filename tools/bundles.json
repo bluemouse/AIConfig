@@ -60,7 +60,11 @@
         "commit-message-writer"
       ],
       "commands": [
-        "dev-workflow"
+        "dev-workflow",
+        "dev-workflow-research",
+        "dev-workflow-plan",
+        "dev-workflow-implement",
+        "dev-workflow-review"
       ],
       "scripts": [
         "dev-workflow"
