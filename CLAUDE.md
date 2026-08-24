@@ -6,7 +6,7 @@ Claude Code-specific guidance for this repository. Read [AGENTS.md](AGENTS.md) f
 
 - **Project skills:** `.claude/skills/<name>/SKILL.md` (wrapper) + `.ai/skills/<name>/` (shared content)
 - **Custom agents:** `.claude/agents/<name>.md` (wrapper) + `.ai/agents/<name>.md` (shared content)
-- **Slash commands:** `.claude/commands/<name>.md` (installed from `commands/<name>/` bootstrap via command-creator)
+- **Slash commands:** `.claude/commands/<name>.md` (installed from `commands/<name>/` bootstrap via command-creator). Available commands include `/dev-workflow` (full pipeline) and `/dev-workflow-{research,plan,implement,review}` (individual phase loops), plus `/git-commit`
 - **Restart or reload** the Claude Code session after installing or editing skills, agents, or commands
 
 When a tool skill wrapper says to read the shared skill first, resolve paths from `.ai/skills/<name>/` — not from `.claude/skills/<name>/`.

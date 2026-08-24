@@ -193,6 +193,7 @@ Several installed skills cross-link as companions — install related skills tog
 | Decision deliberation | `advisory-council`, `devil-advocate`, `prompt-clarifier`, `research-guide`, `plan-reviewer` | Clarify ambiguous decisions → council debate for multi-perspective synthesis → adversarial stress-test with proceed/rework/reject verdict → research and plan-audit companions |
 | Research workflow | `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor` | Interactive discovery and research report → readiness audit → implementation plan → plan audit → execution |
 | Implementation quality | `test-driven-dev-guide`, `debugging-guide`, `implementation-auditor`, `code-reviewer`, `techdoc-reviewer` | TDD during implementation → systematic root-cause debugging → evidence-based correctness audit → structured diff review → documentation verification and synchronization when behavior or contracts change |
+| Dev-workflow harness | `dev-workflow-orchestrator`, `prompt-clarifier`, `research-guide`/`research-reviewer`, `plan-guide`/`plan-reviewer`, `plan-executor`/`implementation-auditor`, `finding-resolver`/`code-reviewer`, `commit-message-writer` | Full pipeline via `/dev-workflow` or individual phase loops via `/dev-workflow-{research,plan,implement,review}`; installed/uninstalled as a unit via `--dev-workflow` |
 | Parallel execution | `agent-runner` | Dispatch independent workstreams to isolated subagents; defers diff review to `code-reviewer`, git mechanics to `git-guide`, skill evals to `skill-creator`, harness orchestration to `research-plan-harness` |
 
 Per-skill deferrals, companion links, and boundary rules live in each installed skill's body and in the cluster tables above. For step-by-step workflow sequencing and intake routing, see [dev-workflow.md](dev-workflow.md).
@@ -500,7 +501,7 @@ python tools/installer.py /path/to/other-project --commands git-commit
 python tools/installer.py /path/to/other-project --bundles core-dev-workflow
 python tools/installer.py /path/to/other-project --bundles extended-dev-workflow --override
 
-# Install the dev-workflow harness (11 skills, 1 command, validation scripts)
+# Install the dev-workflow harness (11 skills, 5 commands, validation scripts)
 python tools/installer.py /path/to/other-project --dev-workflow
 python tools/installer.py /path/to/other-project --bundles dev-workflow-harness
 python tools/installer.py /path/to/other-project --scripts dev-workflow --uninstall
@@ -522,7 +523,7 @@ python tools/installer.py /path/to/other-project --commands git-commit --uninsta
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
 | `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered) |
 | `--scripts NAME ...` | Scripts directory names (under `.ai/tools/`) to install or uninstall (default: all discovered) |
-| `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (11 skills, 1 command, and the `.ai/tools/dev-workflow/` validation scripts) as a unit |
+| `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (11 skills, 5 commands — `/dev-workflow` plus `/dev-workflow-{research,plan,implement,review}`, and the `.ai/tools/dev-workflow/` validation scripts) as a unit |
 | `--override` | Replace existing paths in the target; without it, skip and report |
 | `--uninstall` | Remove the selected skills, agents, commands, and scripts from the target project |
 | *(no arguments)* | Open a tkinter GUI with skill/agent/command/scripts checkboxes and a **Bundles** panel for workflow batch selection |
