@@ -73,6 +73,12 @@ ctest --test-dir build -L unit --output-on-failure    # fast subset first
 ctest --test-dir build --output-on-failure            # full suite
 ```
 
+Run builds and tests in **sync terminal mode** per `coding-behavior-guidelines.md` →
+Terminal execution. Never background `cmake`/`ctest` with `&`/`nohup`/`disown` — a
+hung build or a fixture waiting on stdin will silently miss the completion
+notification and stall the turn. Set a `timeout` only as a safety net for suites you
+suspect may hang.
+
 Use `--gtest_filter` for single-test reproduction and CTest `-R` for suite filters — see
 [cmake-ctest.md](references/cmake-ctest.md) and
 [debugging-flakiness.md](references/debugging-flakiness.md).

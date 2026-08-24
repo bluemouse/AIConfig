@@ -38,13 +38,13 @@ Construct, as applicable:
 Useful local commands include:
 
 ```bash
-git diff --name-status <base>..<side-a>
-git diff --name-status <base>..<side-b>
-git diff <base>..<side-a> -- <path>
-git diff <base>..<side-b> -- <path>
-git show <commit>
-git log -p -- <path>
-git blame <rev> -- <path>
+git --no-pager diff --name-status <base>..<side-a>
+git --no-pager diff --name-status <base>..<side-b>
+git --no-pager diff <base>..<side-a> -- <path>
+git --no-pager diff <base>..<side-b> -- <path>
+git --no-pager show <commit>
+git --no-pager log -p -- <path>
+git --no-pager blame <rev> -- <path>
 git range-diff <old-range> <new-range>
 ```
 

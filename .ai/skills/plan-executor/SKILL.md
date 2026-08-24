@@ -138,6 +138,10 @@ After all units are integrated:
 - Run every verification command specified by the plan.
 - Run the most relevant existing test/build/lint/typecheck commands for touched areas.
 - Prefer targeted verification first, then broader verification when cost is reasonable.
+- Run all verification in **sync terminal mode** per `coding-behavior-guidelines.md` →
+  Terminal execution. Never background builds/tests with `&`/`nohup`/`disown`; a missed
+  completion notification stalls the wave and the whole plan. Set a `timeout` only as a
+  safety net for suites you suspect may hang.
 - If verification fails, first retry within the plan's scope: re-read the failing task, correct an obvious execution mistake, and rerun.
 - If the failure is not an obvious execution mistake and its cause is unclear, switch to [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) to prove root cause, apply the minimal fix, then resume execution.
 - If the plan itself is unsafe, impossible, internally inconsistent, or contradicts the repository, stop and return to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) with an execution-blocker report instead of forcing the plan through.

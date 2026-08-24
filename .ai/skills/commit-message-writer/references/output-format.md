@@ -110,7 +110,7 @@ omit the commit offer (the draft is for review or rewrite, not an immediate comm
 
 - **Verbose** and **Suggested command** are each in a fenced code block (`text` / `bash`)
   so users can copy with one click
-- **Subject** is a valid Conventional Commit line suitable for `git log --oneline`
+- **Subject** is a valid Conventional Commit line suitable for `git --no-pager log --oneline`
 - **Body** follows the style contract (prose-first) and explains *why*, not only *what*
 - Message describes one coherent logical change
 - Output shape is the same regardless of host assistant

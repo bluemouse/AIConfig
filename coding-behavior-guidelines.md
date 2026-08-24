@@ -60,6 +60,40 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. Terminal Execution
+
+**Run terminating commands sync. Never block on a missed completion notification.**
+
+The agent does not actively wait — the terminal tool layer suspends the turn until a
+result is ready. Stuck-agent incidents almost always trace to a terminating command run
+in async mode (or backgrounded) whose early/silent exit produced no completion
+notification. Follow these rules to avoid that gap:
+
+- **Sync mode for terminating commands.** Builds, tests, lint, install, compile, git
+  reads — all sync. Sync returns inline on any exit code (0 or non-zero); there is no
+  "wait for notification" gap. This is the default and the strongly preferred mode.
+- **Async mode only for long-running processes.** Servers, watchers, dev daemons.
+  End the turn and let the completion notification arrive; do not poll, `sleep`, or
+  loop on `get_terminal_output`.
+- **Never background terminating commands.** No `&`, `nohup`, `disown`, or
+  daemonizing wrappers for builds/tests. Backgrounding breaks exit detection — the
+  parent exits but the child holds the pty, so the terminal never sees EOF and never
+  considers the command finished.
+- **Disable pagers and interactive readers.** Use `git --no-pager`, `GIT_PAGER=cat`,
+  and pipe through `cat` (never `less`/`more`/`tail -f`). Never pipe an interactive
+  prompt through `tail`/`head`/`grep` — it hides the prompt from the terminal and
+  prevents the "needs input" signal from firing.
+- **Prefer non-interactive flags.** `GIT_EDITOR=true`, `GIT_SEQUENCE_EDITOR=true`,
+  `gh ... --body-file -`, `pip install --no-input`. Route any remaining interactive
+  prompt (password, y/n confirm) to the user; never send secrets through the model.
+- **Timeout as a safety net only.** Set a `timeout` for commands you suspect may hang.
+  If it trips, the command moves to background — treat that as async and wait for the
+  notification rather than polling.
+- **If a command exits early with an error, do not keep waiting.** Sync mode returns
+  the error inline; act on it. For async, if no notification arrives within a
+  reasonable window, call `get_terminal_output` once to check status rather than
+  ending the turn and stalling the conversation.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

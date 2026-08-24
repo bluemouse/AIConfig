@@ -43,7 +43,7 @@ Teaching how existing code works without reviewing changes → code-professor.
 Every invocation resolves three independent inputs before any review work starts:
 
 - **Source** — *what* to diff. Infer from context when possible; otherwise defaults to
-  **staged changes** (`git diff --staged`). Do not prompt unless the user explicitly
+  **staged changes** (`git --no-pager diff --staged`). Do not prompt unless the user explicitly
   wants a guided, interactive setup (see **Interactive Mode** below).
 - **Scope** — *which* lenses to apply. Optional; defaults to all six scopes if
   unspecified.
@@ -56,13 +56,18 @@ explicitly wants a guided, interactive setup (see **Interactive Mode** below).
 
 | # | Target | Command |
 |---|--------|---------|
-| 1 | Staged changes | `git diff --staged` |
-| 2 | Unstaged changes | `git diff` |
-| 3 | All working tree changes | `git diff HEAD` (staged + unstaged vs HEAD), plus `git status --porcelain` to surface any new untracked files — `git diff` never shows untracked content |
-| 4 | Last commit (HEAD) | `git show HEAD` (equivalently `git diff HEAD~1..HEAD`) |
-| 5 | Specific commit | `git show <sha-or-ref>` |
+| 1 | Staged changes | `git --no-pager diff --staged` |
+| 2 | Unstaged changes | `git --no-pager diff` |
+| 3 | All working tree changes | `git --no-pager diff HEAD` (staged + unstaged vs HEAD), plus `git status --porcelain` to surface any new untracked files — `git diff` never shows untracked content |
+| 4 | Last commit (HEAD) | `git --no-pager show HEAD` (equivalently `git --no-pager diff HEAD~1..HEAD`) |
+| 5 | Specific commit | `git --no-pager show <sha-or-ref>` |
 | 6 | Range of commits | see below |
 | 7 | Branch changes (pre-push) | see below |
+
+**Run all git commands in sync terminal mode** per `coding-behavior-guidelines.md` →
+Terminal execution. `git diff`, `git show`, and `git log` all invoke the default pager
+(`less`) when stdout is a TTY and **must** use `--no-pager` (or `GIT_PAGER=cat`) so they
+do not block on stdin and stall the review.
 
 **Branch changes (pre-push)** — everything on the current branch since it diverged from a
 base ref, **plus** all local uncommitted edits (staged and unstaged). This is the usual
@@ -72,12 +77,12 @@ base ref, **plus** all local uncommitted edits (staged and unstaged). This is th
    default branch (`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null`, or
    `origin/main` / `origin/master`, or local `main` / `master`).
 2. Compute merge-base: `MB=$(git merge-base HEAD <base>)`.
-3. Gather the patch: `git diff "$MB"` — diff from merge-base to the current working tree
-   (includes committed branch commits and local index/worktree changes).
+3. Gather the patch: `git --no-pager diff "$MB"` — diff from merge-base to the current
+   working tree (includes committed branch commits and local index/worktree changes).
 4. Surface untracked files: `git status --porcelain` (same as other targets — diff never
    shows untracked content).
 5. Record in the report: target `branch changes`, base ref, merge-base sha, and the
-   resolved command `git diff $(git merge-base HEAD <base>)`.
+   resolved command `git --no-pager diff $(git merge-base HEAD <base>)`.
 
 Phrases like "review my branch," "before I push," "pre-push review," or "review against
 main" map here when the user means their full branch delta — not only staged hunks or a
@@ -89,10 +94,11 @@ single commit.
   from A's tree to B's tree."
 - Three-dot (`A...B`, or phrasing like "my branch vs main"): based on the merge-base, so
   commits made on the base branch after divergence don't pollute the diff — this is
-  usually what people mean by "review my branch." Prefer `git diff A...B` for this case.
-- "Last N commits": use `git diff HEAD~N..HEAD` for one cumulative diff, or if the user
-  wants per-commit granularity, enumerate with `git log --oneline -n N` and review each
-  via `git show <sha>`.
+  usually what people mean by "review my branch." Prefer `git --no-pager diff A...B` for
+  this case.
+- "Last N commits": use `git --no-pager diff HEAD~N..HEAD` for one cumulative diff, or if
+  the user wants per-commit granularity, enumerate with `git --no-pager log --oneline -n N`
+  and review each via `git --no-pager show <sha>`.
 - If it's genuinely unclear which the user means, ask one line: "Do you want everything
   different between the two refs since they diverged (`A...B`), or a literal diff from
   A's tree to B's tree (`A..B`)?"
@@ -103,7 +109,7 @@ impacted call sites and dependents, tests added/changed/missing, and whether the
 matches any intent implied by the current chat session.
 
 **Resolution rule**: if the source is unspecified and cannot be inferred from context,
-default to **staged changes** (`git diff --staged`) and proceed — state the assumed
+default to **staged changes** (`git --no-pager diff --staged`) and proceed — state the assumed
 target in the **Review Target** section of the output. Do not interrupt to ask unless
 **Interactive Mode** is triggered.
 
@@ -147,7 +153,7 @@ changes:
 
 1. State the blocker briefly.
 2. Fall back to **natural-language review**: build a change list from `git status
-   --porcelain`, `git diff --name-only`, recent `git log`, or paths the user named in
+   --porcelain`, `git --no-pager diff --name-only`, recent `git --no-pager log`, or paths the user named in
    chat. Read those files directly.
 3. Write a `Change description` block — one header per file
    (`<path> (added|modified|deleted|renamed)`) with bullets of what changed; mention
@@ -164,7 +170,7 @@ changes:
 ## Large-Diff Handling
 
 Measure patch size after gathering (approximate changed lines from diff output, plus
-changed file count from `git diff --name-only` / status). When the change is large, adapt
+changed file count from `git --no-pager diff --name-only` / status). When the change is large, adapt
 before scope passes — do not skim the entire patch in one pass.
 
 **Thresholds** (either triggers large-diff mode):
@@ -337,7 +343,7 @@ You are reviewing a code change through the "<scope>" lens only.
 
 ## The diff under review
 <the full resolved diff, or exact instructions to reproduce it, e.g. "run
-`git diff --staged` yourself in the repo at <cwd>">
+`git --no-pager diff --staged` yourself in the repo at <cwd>">
 
 ## Context on intent (from a prior alignment pass)
 <2-5 sentence summary: what the change appears to be trying to do, and any

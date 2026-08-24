@@ -31,9 +31,9 @@ commit-message-writer \
 | Argument | Default | Meaning |
 | --- | --- | --- |
 | *(none)* | `--staged` | Changes currently in the index |
-| `--staged` | — | Staged changes only (`git diff --cached`) |
-| `--working` | — | All tracked changes vs `HEAD` — staged and unstaged (`git diff HEAD`) |
-| `--commit <sha>` | — | One existing commit (`git show <sha>`) |
+| `--staged` | — | Staged changes only (`git --no-pager diff --cached`) |
+| `--working` | — | All tracked changes vs `HEAD` — staged and unstaged (`git --no-pager diff HEAD`) |
+| `--commit <sha>` | — | One existing commit (`git --no-pager show <sha>`) |
 | `--range <rev-range>` | — | Combined diff and log for a commit range (e.g. `abc123..def456`, `main..HEAD`, `HEAD~3..HEAD`) |
 | `--context` | — | Extra context: attached file path, URL, design doc, plan, ticket link, or inline text |
 | `--jira` | — | Jira ticket id(s) (e.g. `PROJ-123`); fetch details via Atlassian MCP when available |

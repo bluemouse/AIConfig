@@ -218,7 +218,7 @@ Include applicable results for:
 
 - unresolved Git entries;
 - conflict-marker scan;
-- `git diff --check`;
+- `git --no-pager diff --check`;
 - compile/build;
 - type checking;
 - static analysis;

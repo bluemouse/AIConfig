@@ -1,6 +1,10 @@
 ---
 name: cpp-testing
-description: "Write, fix, and configure C++20 unit and integration tests with GoogleTest/GoogleMock, CMake/CTest, coverage, and sanitizers. Use when adding or updating C++ tests, fixing failing or flaky tests, setting up test targets, diagnosing gtest failures, or adding regression/coverage/sanitizer test builds \u2014 even if the user says \"add tests\" or \"this test is flaky\" without naming a framework."
+description: Write, fix, and configure C++20 unit and integration tests with GoogleTest/GoogleMock,
+  CMake/CTest, coverage, and sanitizers. Use when adding or updating C++ tests, fixing
+  failing or flaky tests, setting up test targets, diagnosing gtest failures, or adding
+  regression/coverage/sanitizer test builds — even if the user says "add tests" or
+  "this test is flaky" without naming a framework.
 ---
 
 # cpp-testing (GitHub Copilot)

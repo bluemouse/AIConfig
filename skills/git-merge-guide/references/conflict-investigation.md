@@ -32,15 +32,15 @@ Useful commands include:
 
 ```bash
 git status
-git diff --name-only --diff-filter=U
+git --no-pager diff --name-only --diff-filter=U
 git ls-files -u
-git show <commit>
-git show <commit> -- path/to/file
-git log --oneline --decorate --graph --all -- path/to/file
-git log -p --follow -- path/to/file
-git blame <rev> -- path/to/file
+git --no-pager show <commit>
+git --no-pager show <commit> -- path/to/file
+git --no-pager log --oneline --decorate --graph --all -- path/to/file
+git --no-pager log -p --follow -- path/to/file
+git --no-pager blame <rev> -- path/to/file
 git merge-base <a> <b>
-git diff <base>..<side> -- path/to/file
+git --no-pager diff <base>..<side> -- path/to/file
 ```
 
 During rebase, inspect `REBASE_HEAD` and the current rebase metadata when available to determine the commit being replayed. The already-rebased `HEAD` may contain previously replayed commits and earlier conflict resolutions, so compare behavior rather than assuming it equals the original upstream tip.

@@ -48,7 +48,7 @@ Useful commands include:
 git rev-parse HEAD
 git rev-parse <target-or-upstream>
 git merge-base HEAD <target-or-upstream>
-git log --reverse --format='%H %s' <upstream>..HEAD
+git --no-pager log --reverse --format='%H %s' <upstream>..HEAD
 ```
 
 For `rebase --onto`, derive and record the exact replay range from the requested old base/branch. Do not assume the simple `<upstream>..HEAD` range.
@@ -63,9 +63,9 @@ For an unmerged path, inspect:
 
 ```bash
 git ls-files -u -- path/to/file
-git show :1:path/to/file   # stage 1: base where available
-git show :2:path/to/file   # stage 2
-git show :3:path/to/file   # stage 3
+git --no-pager show :1:path/to/file   # stage 1: base where available
+git --no-pager show :2:path/to/file   # stage 2
+git --no-pager show :3:path/to/file   # stage 3
 ```
 
 For a normal two-head merge:
@@ -102,7 +102,7 @@ A requested rebase authorizes the rewritten commits inherently produced by that 
 Before starting, record the commits expected to replay, for example:
 
 ```bash
-git log --reverse --oneline <upstream>..HEAD
+git --no-pager log --reverse --oneline <upstream>..HEAD
 ```
 
 For more complicated `--onto` requests, derive the replay range from the exact requested old base/branch rather than assuming `<upstream>..HEAD`.

@@ -119,6 +119,23 @@ When a subagent returns `failed`:
 - Parent chooses one path: retry the failed packet in a new wave with refined context, reassign to a different isolation strategy, or escalate to the user.
 - Do not start the next wave until failed writers are resolved or explicitly excluded with user approval.
 
+### Hung subagent handling
+
+A subagent that returns no verdict within the host's bounded window — or is reported idle
+without completing — is treated as `failed` with cause `timeout`, not as "still running."
+Do not let one hung subagent stall the wave indefinitely. The most common root cause is a
+subagent that ran a terminating command (build/test/install) in async mode or backgrounded
+it, then ended its turn waiting for a completion notification that an early/silent exit
+never produced. To recover:
+
+- Call `get_terminal_output` once on the subagent's terminal id (if exposed) to confirm
+  the early exit; do not poll or `sleep`.
+- Re-dispatch the packet in a new wave with an explicit instruction to run verification
+  commands in sync terminal mode per `coding-behavior-guidelines.md` → Terminal execution
+  (never background builds/tests; disable pagers; prefer non-interactive flags).
+- If the subagent surface exposes no terminal id and no bounded-idle signal, escalate to
+  the user rather than waiting indefinitely.
+
 ### 6. Integrate safely
 
 After every subagent in the wave finishes (or blocked/failed agents are resolved per above):

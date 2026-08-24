@@ -207,7 +207,9 @@ Mode is enforced by the orchestrator's per-phase instructions (prevention) and t
 
 - Write source per the implementation plan.
 - Write to `30-*.md` and `31-*.md` artifacts.
-- Run tests and builds.
+- Run tests and builds — in **sync terminal mode** per `coding-behavior-guidelines.md` →
+  Terminal execution. Never background builds/tests; a missed completion notification
+  stalls the phase.
 - No committing, pushing, deploying, or destructive commands.
 - The auditor (implementation-auditor) is read-only within this phase.
 
@@ -215,7 +217,7 @@ Mode is enforced by the orchestrator's per-phase instructions (prevention) and t
 
 - Write source only to fix review findings (via finding-resolver).
 - Write to `40-*.md` and `41-*.md` artifacts.
-- Run tests and builds.
+- Run tests and builds — sync terminal mode, same contract as Implement mode.
 - No committing, pushing, deploying, or scope expansion beyond findings.
 - code-reviewer is read-only within this phase.
 

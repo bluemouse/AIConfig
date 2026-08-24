@@ -79,7 +79,13 @@ Details: [input-and-scope.md](references/input-and-scope.md)
 ### 2. Gather git evidence
 
 Run the git commands for the chosen scope from the repository root. Prefer parallel reads
-where independent. Also collect recent message style (`git log`), branch name, and status.
+where independent. Also collect recent message style (`git --no-pager log`), branch name,
+and status.
+
+Run all git commands in **sync terminal mode** per `coding-behavior-guidelines.md` →
+Terminal execution. `git log` and `git show` invoke the default pager (`less`) and
+**must** use `--no-pager` (or `GIT_PAGER=cat`) so they do not block on stdin and stall
+the commit-message workflow.
 
 Details: [git-evidence.md](references/git-evidence.md)
 
@@ -93,8 +99,8 @@ Synthesize intent from git evidence and all context sources:
 3. Write a **body** per the style contract — prose paragraphs first; motivation,
    approach, impact, breaking changes, and test/evidence when relevant.
 4. Align with session context when the diff alone looks mechanical.
-5. Match recent branch history from `git log -10` for type, scope, and body layout when
-   a clear pattern exists.
+5. Match recent branch history from `git --no-pager log -10` for type, scope, and body
+   layout when a clear pattern exists.
 
 Details: [message-style-contract.md](references/message-style-contract.md),
 [conventional-commits.md](references/conventional-commits.md)
@@ -153,7 +159,7 @@ Before returning draft messages:
 
 - **Verbose** and **Suggested command** each use a fenced code block (`text` / `bash`) for
   one-click copy in chat UIs.
-- **Subject** stands alone in `git log --oneline`.
+- **Subject** stands alone in `git --no-pager log --oneline`.
 - **Body** uses complete sentences; reference ticket ids when provided.
 - If the diff mixes unrelated work, record a split suggestion in `Context used:` (`note=`)
   instead of blending unrelated intent into one message.

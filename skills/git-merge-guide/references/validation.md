@@ -7,12 +7,12 @@ Use this after integration code review and impact-based testing/verification. Th
 Use commands such as:
 
 ```bash
-git diff --check
-git diff --name-only --diff-filter=U
+git --no-pager diff --check
+git --no-pager diff --name-only --diff-filter=U
 git ls-files -u
 git status
-git diff
-git diff --cached
+git --no-pager diff
+git --no-pager diff --cached
 ```
 
 Ensure no unmerged entries remain. Search intended text/source files for accidental conflict markers such as `<<<<<<<`, `=======`, and `>>>>>>>`, while avoiding false positives in fixtures/docs where those strings are deliberate.
@@ -24,7 +24,7 @@ Inspect the final current/staged diff for accidental structural mistakes:
 - unintended deletions or file resurrecting;
 - duplicated blocks introduced by conflict editing;
 - missing/duplicate imports, declarations, build entries, or generated artifacts;
-- whitespace/error markers reported by `git diff --check`;
+- whitespace/error markers reported by `git --no-pager diff --check`;
 - integration fixes that were accidentally left unstaged when they are intended to be part of the local result;
 - unrelated user changes accidentally staged or modified.
 

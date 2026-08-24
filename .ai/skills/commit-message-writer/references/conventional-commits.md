@@ -131,7 +131,7 @@ BREAKING CHANGE: v1 /users routes removed; clients must migrate to v2.
 
 ## Repo alignment
 
-When recent `git log -10` on the current branch shows a clear local pattern:
+When recent `git --no-pager log -10` on the current branch shows a clear local pattern:
 
 - Match presence or absence of type prefixes
 - Match scope conventions

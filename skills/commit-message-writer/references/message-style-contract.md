@@ -23,7 +23,7 @@ or a different body layout, **this contract wins**.
 
 Apply rules in this order when sources disagree:
 
-1. **Recent repo history** — `git log -10 --format=fuller` on the current branch for
+1. **Recent repo history** — `git --no-pager log -10 --format=fuller` on the current branch for
    type prefixes, scopes, subject casing, and body habits (prose vs bullets)
 2. **This contract** — structure, length limits, vocabulary, output envelope
 3. **Conventional Commits v1.0.0** — baseline `<type>[scope]: <description>` grammar

@@ -27,8 +27,8 @@ during, and after scope passes — they govern *how* to review, while
 Before scope passes, build enough context that findings are grounded in intent and project
 norms:
 
-1. **Change metadata** — commit message(s) for the reviewed range (`git log` on the
-   range); if a PR is open, read title/body (`gh pr view` when `gh` is available).
+1. **Change metadata** — commit message(s) for the reviewed range (`git --no-pager log`
+   on the range); if a PR is open, read title/body (`gh pr view` when `gh` is available).
 2. **Project norms** — skim applicable guidance when present: `AGENTS.md`, `CONTRIBUTING`,
    `README` sections for the touched area, `.cursor/rules/` or tool-specific review rules
    (e.g. `.cursor/BUGBOT.md`), and established patterns in neighboring files.

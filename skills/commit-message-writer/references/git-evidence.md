@@ -15,12 +15,17 @@ repository root. Prefer parallel reads where independent.
 
 ## Commands by scope
 
+Run all `git log` and `git show` commands with `--no-pager` (or `GIT_PAGER=cat`) per
+`coding-behavior-guidelines.md` → Terminal execution — they invoke the default pager
+(`less`) when stdout is a TTY and will block on stdin if paged. `git diff` is also paged
+by default; use `--no-pager` there too, or pipe through `cat`.
+
 | Scope | Primary commands |
 | --- | --- |
-| `--staged` | `git diff --cached --stat`, `git diff --cached`, `git diff --cached --name-status` |
-| `--working` | `git diff HEAD --stat`, `git diff HEAD`, `git diff HEAD --name-status` |
-| `--commit <sha>` | `git show <sha> --stat`, `git show <sha> --format=fuller`, `git show <sha>` |
-| `--range <rev-range>` | `git log --oneline <range>`, `git diff <range> --stat`, `git diff <range>`, `git log <range> --format=fuller` |
+| `--staged` | `git --no-pager diff --cached --stat`, `git --no-pager diff --cached`, `git --no-pager diff --cached --name-status` |
+| `--working` | `git --no-pager diff HEAD --stat`, `git --no-pager diff HEAD`, `git --no-pager diff HEAD --name-status` |
+| `--commit <sha>` | `git --no-pager show <sha> --stat`, `git --no-pager show <sha> --format=fuller`, `git --no-pager show <sha>` |
+| `--range <rev-range>` | `git --no-pager log --oneline <range>`, `git --no-pager diff <range> --stat`, `git --no-pager diff <range>`, `git --no-pager log <range> --format=fuller` |
 
 For `--range`:
 
@@ -34,8 +39,8 @@ Run for all scopes except single `--commit` when redundant:
 | Command | Purpose |
 | --- | --- |
 | `git status --short` | Sanity check for unstaged/untracked noise |
-| `git log -10 --oneline` | Recent message style on this branch |
-| `git log -10 --format=fuller` | Body layout (prose vs bullets), scopes, footers |
+| `git --no-pager log -10 --oneline` | Recent message style on this branch |
+| `git --no-pager log -10 --format=fuller` | Body layout (prose vs bullets), scopes, footers |
 | `git branch --show-current` | Branch name may hint at feature scope |
 
 ## Large diffs
@@ -50,8 +55,8 @@ Record in `Context used:` with `note=` when the diff was sampled due to size.
 
 ## Repo style discovery
 
-Read `git log -10 --oneline` and `--format=fuller` when types/scopes or body layout are
-unclear to detect:
+Read `git --no-pager log -10 --oneline` and `--format=fuller` when types/scopes or body
+layout are unclear to detect:
 
 - Whether the repo uses Conventional Commit type prefixes
 - Common scopes (e.g. `feat(skills):`, `docs(workflow):`)

@@ -109,7 +109,7 @@ Before modifying anything:
 8. Resolve branch names and target refs locally. If a required ref is absent, report that it is unavailable locally; do not fetch it.
 9. For a requested operation on another local branch, switch to that branch only when the working tree is safe to switch.
 
-Prefer explicit local commands such as `git status`, `git rev-parse`, `git branch`, `git log`, `git show`, `git diff`, `git merge-base`, `git ls-files -u`, `git blame`, and `git reflog`.
+Prefer explicit local commands such as `git status`, `git rev-parse`, `git branch`, `git log`, `git show`, `git diff`, `git merge-base`, `git ls-files -u`, `git blame`, and `git reflog`. Run all read-only git commands with `--no-pager` (or `GIT_PAGER=cat`) per `coding-behavior-guidelines.md` → Terminal execution — `git log`, `git show`, `git diff`, `git blame`, and `git reflog` all invoke the default pager (`less`) when stdout is a TTY and will block on stdin if paged.
 
 ### 2. Initiate or resume the requested operation
 
@@ -184,7 +184,7 @@ Never invent unrelated behavior merely to make tests pass.
 4. Run focused tests/checks that exercise the resolved behavior when available. Add or adapt a focused regression/integration test when it materially increases confidence.
 5. Investigate failures as evidence of an integration defect or wrong hypothesis; do not weaken tests merely to obtain green results.
 6. Stage the resolved files only after the logical conflict is coherent and its focused checks are acceptable.
-7. Re-check `git diff --cached` and unmerged entries after staging.
+7. Re-check `git --no-pager diff --cached` and unmerged entries after staging.
 
 These focused checks are an intermediate conflict-resolution gate only. They do not replace final impact-based verification.
 
@@ -193,7 +193,7 @@ These focused checks are an intermediate conflict-resolution gate only. They do 
 For a rebase:
 
 1. Confirm the current stop has no unresolved index entries and its focused conflict checks are acceptable.
-2. Run normal `git rebase --continue` without invoking an interactive editor when the existing commit message can be preserved.
+2. Run normal `git rebase --continue` without invoking an interactive editor when the existing commit message can be preserved. Set `GIT_EDITOR=true` and `GIT_SEQUENCE_EDITOR=true` in the environment so any editor invocation returns immediately instead of blocking the terminal on stdin.
 3. If the next replayed commit conflicts, restart the conflict inventory and intent investigation for that commit. Do not blindly reuse the previous resolution.
 4. If Git wants to skip/drop a commit or a commit becomes empty, stop and follow the approval rules in [references/operation-semantics.md](references/operation-semantics.md).
 5. Repeat until the rebase completes.
@@ -259,7 +259,7 @@ Follow [references/validation.md](references/validation.md):
 
 - verify no unresolved index entries remain;
 - scan intended source files for accidental conflict markers;
-- run `git diff --check` and inspect final staged/current diffs;
+- run `git --no-pager diff --check` and inspect final staged/current diffs;
 - verify rebase replay integrity or resolved merge metadata as applicable;
 - confirm unrelated work remains untouched;
 - capture final branch, `HEAD`, staged/unstaged/untracked state.

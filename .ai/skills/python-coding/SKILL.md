@@ -129,12 +129,19 @@ Default to these rules unless project conventions contradict them:
 When a terminal or code execution tool is available, use it for real projects:
 
 - Discover: `python --version`, `python -m pip list`, `python -m pytest --collect-only`.
-- Environment: `python -m venv .venv`, activate, `python -m pip install -e ".[dev]"` when
-  applicable.
+- Environment: `python -m venv .venv`, activate, `python -m pip install --no-input -e ".[dev]"`
+  when applicable.
 - Quality: `python -m compileall`, `python -m ruff format --check .`, `python -m ruff check .`,
   `python -m pyright` or `python -m mypy`.
 - Test: `python -m pytest -q`, targeted `-k`, or `python -m unittest discover -s tests`.
 - Run: `python script.py --help` or `python -m package.module`.
+
+Run all of the above in **sync terminal mode** per `coding-behavior-guidelines.md` →
+Terminal execution. These are terminating commands — never background them with
+`&`/`nohup`/`disown`. Use `pip install --no-input` so dependency conflicts surface as a
+non-zero exit code instead of an interactive prompt that blocks the terminal. Reserve
+async mode for genuine long-running servers/watchers; if `python script.py` starts a
+server, run it async and end the turn rather than polling.
 
 If command planning would help, run or inspect
 `<SKILL_ROOT>/scripts/python_cli_plan.py` to generate a compact CLI implementation checklist.

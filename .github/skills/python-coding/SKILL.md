@@ -1,6 +1,11 @@
 ---
 name: python-coding
-description: "Write, review, refactor, test, debug, and package modern Python 3.12+ command-line scripts and utilities using project-local toolchain settings. Use when implementing or fixing Python code, designing argparse CLIs, improving scripts, applying type hints, configuring pyproject.toml, ruff, pyright, pytest, or pip/uv workflows, building small utilities, or producing packaging metadata \u2014 even if the user says \"Python help\" or \"fix this script\" without naming a framework."
+description: Write, review, refactor, test, debug, and package modern Python 3.12+
+  command-line scripts and utilities using project-local toolchain settings. Use when
+  implementing or fixing Python code, designing argparse CLIs, improving scripts,
+  applying type hints, configuring pyproject.toml, ruff, pyright, pytest, or pip/uv
+  workflows, building small utilities, or producing packaging metadata — even if the
+  user says "Python help" or "fix this script" without naming a framework.
 ---
 
 # python-coding wrapper for GitHub Copilot
