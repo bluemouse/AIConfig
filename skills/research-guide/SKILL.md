@@ -168,6 +168,12 @@ Challenge without derailing:
 
 When the user chooses finalize, produce a report using [references/research-report-template.md](references/research-report-template.md) as the default structure. Adapt sections only when they are genuinely irrelevant.
 
+### Artifact output path
+
+When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path), write the research report to `.ai/researches/<feature-or-topic-slug>.md`. The `.ai/researches/` directory is gitignored. Do not write planning artifacts to the repository root — it pollutes the working tree and risks accidental commits.
+
+When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.ai/workflow/<slug>/10-research-report.md`); use that path instead.
+
 The report must be consumable by an implementation planner. It must include:
 - Agreed problem statement and scope
 - Goals, non-goals, and success metrics

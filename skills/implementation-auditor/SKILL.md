@@ -80,6 +80,12 @@ Default to read-only auditing. Do not modify implementation files unless the use
    - Include commands run, results, coverage by requirement, defects, risks, and actionable next steps.
    - Make the verdict evidence-weighted: `pass`, `pass with risks`, `blocked`, or `fail`.
 
+### Artifact output path
+
+When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path), write the audit report to `.ai/plans/<feature-or-topic-slug>-audit.md`. The `.ai/plans/` directory is gitignored. Do not write audit artifacts to the repository root — it pollutes the working tree and risks accidental commits.
+
+When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.ai/workflow/<slug>/31-implementation-audit.md`); use that path instead.
+
 ## Boundary with code review
 
 This skill proves **whether requirements are met** with fresh evidence: requirement coverage, correctness, and test-to-behavior mapping. It does not judge diff quality, design, readability, or maintainability — that is [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md). When both are wanted, audit first (outcome proof), then review the diff.

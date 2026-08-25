@@ -284,6 +284,12 @@ If the user overrides to staged mode when linear was recommended (or vice versa)
 
 Use [references/implementation-plan-template.md](references/implementation-plan-template.md) as the default structure. Adapt sections to the actual task while preserving traceability, test design, verification, and handoff readiness.
 
+#### Artifact output path
+
+When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path), write the implementation plan to `.ai/plans/<feature-or-topic-slug>.md`. The `.ai/plans/` directory is gitignored. Do not write planning artifacts to the repository root — it pollutes the working tree and risks accidental commits.
+
+When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.ai/workflow/<slug>/20-implementation-plan.md`); use that path instead.
+
 Include:
 - Planning readiness and review status.
 - Source traceability.

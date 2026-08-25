@@ -160,6 +160,12 @@ Before presenting the report, run [references/review-quality-checklist.md](refer
 
 Use [references/review-report-template.md](references/review-report-template.md) as the default structure. Keep the report concise but specific enough for the author to revise the research report.
 
+#### Artifact output path
+
+When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path), write the review report to `.ai/researches/<feature-or-topic-slug>-review.md`. The `.ai/researches/` directory is gitignored. Do not write review artifacts to the repository root — it pollutes the working tree and risks accidental commits.
+
+When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.ai/workflow/<slug>/11-research-review.md`); use that path instead.
+
 For `needs revision` and `blocked` verdicts — and for `conditionally ready` when the conditions are not already accepted — include a handoff packet using [references/research-guide-handoff-contract.md](references/research-guide-handoff-contract.md). The packet gives [../research-guide/SKILL.md](../research-guide/SKILL.md) a concrete, prioritized revision path back to planning readiness without re-reading the full review. State whether re-review is required before planning.
 
 ### 9. End with a review gate

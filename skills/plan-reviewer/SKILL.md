@@ -171,6 +171,12 @@ Before presenting the report, run [references/review-quality-checklist.md](refer
 
 Use [references/review-report-template.md](references/review-report-template.md) as the default structure. Keep the report concise but specific enough for plan-guide to repair the plan.
 
+#### Artifact output path
+
+When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path), write the review report to `.ai/plans/<feature-or-topic-slug>-review.md`. The `.ai/plans/` directory is gitignored. Do not write review artifacts to the repository root — it pollutes the working tree and risks accidental commits.
+
+When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.ai/workflow/<slug>/21-plan-review.md`); use that path instead.
+
 The review-report must include a **Guide handoff packet**. This packet is the contract with plan-guide; use [references/guide-handoff-contract.md](references/guide-handoff-contract.md) for semantics.
 
 ### 7. End with a review gate

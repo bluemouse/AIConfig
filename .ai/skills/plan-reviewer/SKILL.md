@@ -144,6 +144,7 @@ Apply input-mode-specific emphasis:
 | Codebase-led | Spot-check named files, interfaces, tests, commands, and repository conventions when tools are available; flag invented paths or unsupported assumptions. |
 | Plan normalization | Confirm the thin/external plan was expanded into traceability, TDD-first tests, task-level verification, readiness status, and no placeholders. |
 | Review repair loop | Preserve finding ids, audit dispositions before adding new findings, and use [references/re-review-protocol.md](references/re-review-protocol.md). |
+| Stage-exit review | Compare completed stage artifacts (implementation report + audit + code review) against plan §4 assumptions and §10 stage breakdown for remaining stages. Emit `plan-current` (light refinement) or `plan-stale` (full re-plan). See [references/stage-exit-review-contract.md](references/stage-exit-review-contract.md) for the input contract, comparison surface, verdict semantics, and evidence threshold. |
 
 Use [references/validation-rubric.md](references/validation-rubric.md) for severity and verdict rules.
 
@@ -170,6 +171,12 @@ Before presenting the report, run [references/review-quality-checklist.md](refer
 
 Use [references/review-report-template.md](references/review-report-template.md) as the default structure. Keep the report concise but specific enough for plan-guide to repair the plan.
 
+#### Artifact output path
+
+When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path), write the review report to `.ai/plans/<feature-or-topic-slug>-review.md`. The `.ai/plans/` directory is gitignored. Do not write review artifacts to the repository root — it pollutes the working tree and risks accidental commits.
+
+When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.ai/workflow/<slug>/21-plan-review.md`); use that path instead.
+
 The review-report must include a **Guide handoff packet**. This packet is the contract with plan-guide; use [references/guide-handoff-contract.md](references/guide-handoff-contract.md) for semantics.
 
 ### 7. End with a review gate
@@ -188,6 +195,40 @@ Review gate: choose one:
 If the verdict is blocked or needs revision, do not offer accept or execute as executable-ready options. Offer `execute` only when the verdict is `validated`, or when the verdict is `conditionally validated` and the user explicitly accepts the conditions as execution risks.
 
 For updated plans, follow [references/re-review-protocol.md](references/re-review-protocol.md): after a `blocked` verdict, the repaired plan must be re-reviewed before execution. After `needs revision`, re-review the updated plan unless every finding was trivial and self-evidently fixed. After `conditionally validated`, re-review only if the conditions changed the plan's structure or risk; otherwise proceed with the accepted risks recorded.
+
+## Stage-exit review mode
+
+When invoked in stage-exit review mode (between implementation stages in a staged dev-workflow run), follow [references/stage-exit-review-contract.md](references/stage-exit-review-contract.md) as the source of truth for the input contract, comparison surface, verdict semantics, and evidence threshold.
+
+### Input
+
+- Completed stage artifacts: `30-stageN-implementation-report.md`, `31-stageN-implementation-audit.md`, `40-stageN-code-review.md`
+- Plan context: §4 Assumptions and decisions, §10 Stage breakdown (for remaining stages)
+- Run manifest: `00-run-manifest.md` (current stage, `Run mode: staged`)
+
+### Comparison
+
+Compare the completed stage's implementation reality against the plan's assumptions for remaining stages. Check:
+- Interfaces (did the implementation match what remaining stages expect to consume?)
+- Dependencies (did the implementation add/remove/change a dependency?)
+- Architecture decisions (did the implementation contradict a planned boundary or data flow?)
+- Data contracts (did the implementation produce/consume a different schema or API?)
+- Acceptance criteria (did the implementation reveal a criterion is impossible, redundant, or already satisfied?)
+
+### Verdict
+
+Emit exactly one verdict:
+
+- **`plan-current`**: No plan assumption for remaining stages is contradicted. Task details may need refinement, but architecture, interfaces, dependencies, data contracts, and acceptance criteria hold. Route to `plan-guide` for light refinement of the next stage's task details.
+- **`plan-stale`**: At least one plan assumption for a remaining stage is contradicted. Must cite: (1) the specific plan assumption, (2) the specific evidence from stage artifacts, (3) why it affects a remaining stage. Route to `plan-guide` for full re-plan with `plan-reviewer` re-audit.
+
+### Output
+
+Produce `32-stageN-exit-review.md` with `## Verdict` heading containing `plan-current` or `plan-stale`, plus the comparison and evidence per the contract document.
+
+### Relationship to in-stage backward edges
+
+In-stage backward edges (root-cause repair) and stage-exit reviews (forward-looking plan validity) are independent. An in-stage backward edge does not trigger a stage-exit review. A stage-exit review does not create a backward edge.
 
 ## Quality bar
 

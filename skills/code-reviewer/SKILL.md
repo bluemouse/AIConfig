@@ -394,6 +394,12 @@ template. When large-diff mode truncated coverage, fill in the template's covera
 
 Do not duplicate the template body here — read it before assembling the report.
 
+### Artifact output path
+
+When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path) and the user wants the review report saved as a file, write it to `.ai/plans/<feature-or-topic-slug>-code-review.md`. The `.ai/plans/` directory is gitignored. Do not write review artifacts to the repository root — it pollutes the working tree and risks accidental commits.
+
+When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.ai/workflow/<slug>/40-code-review.md`); use that path instead. When the user has not asked for a file, return the report in chat without writing a file.
+
 ## Routing Findings Back
 
 Findings that need code changes route back into the lifecycle by type. State the recommended

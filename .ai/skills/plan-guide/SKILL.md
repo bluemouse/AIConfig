@@ -233,9 +233,62 @@ Avoid fixed-length plans. Use as many tasks as required, but split the plan when
 
 When tasks can run independently, define execution waves for [../plan-executor/SKILL.md](../plan-executor/SKILL.md). Parallel tasks in the same wave must have disjoint write paths and no dependency ordering. If tasks share mutable files, public contracts, generated files, or ordering dependencies, mark them `sequential` or reserve the shared change for an `integration` task.
 
+### 7a. Stage decomposition and staged-mode recommendation
+
+After decomposing work into tasks (§7), decide whether the plan should use **staged mode**. Staged mode decomposes the plan into self-contained, verifiable, committable stages — each stage is a group of `pg-NNN` tasks that together form a unit running the full implement → audit → review → commit loop, with `plan-reviewer` stage-exit review between stages and a final deep code review on the cumulative diff.
+
+#### When to recommend staged mode
+
+Recommend `Execution mode: staged` when **any** of the following conditions hold:
+
+- Planning depth is `rigorous` (high-risk, cross-cutting, security/privacy/compliance-sensitive, migration-heavy, performance-sensitive, or user-visible work).
+- Task count is **> 5** (the plan has 6 or more `pg-NNN` tasks). This is a tunable threshold — adjust based on project context, but 5 is the default boundary.
+- The user explicitly requests staged mode (e.g., "I want per-stage commits" or "use staged mode").
+
+When none of these conditions hold, default to `Execution mode: linear` (the current behavior).
+
+#### Single-stage guard (fr-14)
+
+Do **not** recommend staged mode when the plan decomposes to a single stage. A single-stage staged plan degenerates to linear mode plus overhead (stage-exit review with no remaining stages to check). If the plan has only one stage, use `Execution mode: linear`.
+
+The user may still override at the plan gate to force staged mode for a single-stage plan if they want per-stage commit semantics.
+
+#### Stage grouping
+
+When recommending staged mode, group tasks into stages in §10 `Stage breakdown`:
+
+- Each stage is an ordered group of `pg-NNN` task ids.
+- Stages are ordered by dependency: stage N depends on stage N-1's committed output.
+- Each stage has a commit checkpoint (the Conventional Commit message or checkpoint description).
+- Each stage has a verification target (the command or check that proves the stage is complete).
+- Tasks within a stage may be sequential or parallel (waves), but stages themselves are sequential.
+- A stage should be large enough to carry a meaningful review gate but small enough to be independently verifiable and committable.
+
+#### Plan gate extension
+
+When staged mode is recommended, extend the plan gate (§11) to offer `execute (staged)`:
+
+```markdown
+Plan gate: choose one:
+1. review: send this plan to plan-reviewer before execution
+2. iterate: revise the plan on [specific scope, finding, or task area]
+3. finalize: accept this plan at the stated readiness level
+4. execute: hand off to plan-executor (linear mode)
+5. execute (staged): hand off to plan-executor in staged mode (per-stage implement→audit→review→commit loop)
+6. block: stop planning until [specific missing input or decision] is resolved
+```
+
+If the user overrides to staged mode when linear was recommended (or vice versa), record the override and the rationale in the plan.
+
 ### 8. Produce the implementation plan
 
 Use [references/implementation-plan-template.md](references/implementation-plan-template.md) as the default structure. Adapt sections to the actual task while preserving traceability, test design, verification, and handoff readiness.
+
+#### Artifact output path
+
+When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path), write the implementation plan to `.ai/plans/<feature-or-topic-slug>.md`. The `.ai/plans/` directory is gitignored. Do not write planning artifacts to the repository root — it pollutes the working tree and risks accidental commits.
+
+When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.ai/workflow/<slug>/20-implementation-plan.md`); use that path instead.
 
 Include:
 - Planning readiness and review status.
