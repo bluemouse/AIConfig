@@ -76,6 +76,42 @@ Each loop has a doer (produces), a checker (audits), a round cap, an exit condit
 | Escalation | `NOT READY` → root cause classification → backward edge to Plan or Research, or ask user |
 | Root cause field | `root-cause-phase`: `local` / `research` / `plan` / `implement` / `code-review` |
 
+## Loop 5: Stage-Exit Review (staged mode only)
+
+Runs between implementation stages in a staged dev-workflow run. This is a forward-looking plan-validity check, not a root-cause repair.
+
+| Element | Value |
+|---------|-------|
+| Doer | plan-reviewer (stage-exit mode) |
+| Checker | none (single pass, no loop) |
+| Round cap | 1 (no loop — binary verdict) |
+| Exit (accept) | verdict `plan-current` → light refinement of next stage's task details by plan-guide |
+| Exit (revise) | verdict `plan-stale` → full re-plan by plan-guide with plan-reviewer re-audit |
+| Feedback format | `32-stageN-exit-review.md` with `## Verdict` heading |
+| Terminal labels | `plan-current`, `plan-stale` |
+| Escalation | `plan-stale` → plan-guide re-derives remaining stages; user re-confirms at plan gate |
+| Root cause field | n/a (forward-looking, not root-cause repair) |
+| Artifact | `32-stageN-exit-review.md` (see `stage-exit-review-contract.md` in plan-reviewer references) |
+
+## Loop 6: Final Deep Review (staged mode only)
+
+Runs after all stages commit, on the cumulative commit range. This is the full code review that compensates for per-stage light reviews.
+
+| Element | Value |
+|---------|-------|
+| Doer | finding-resolver |
+| Checker | code-reviewer |
+| Round cap | 5 |
+| Exit (accept) | verdict `ready to commit` or `ready with notes` |
+| Exit (revise) | verdict `needs revision` → finding-resolver applies fixes as new commits on top (fr-13, no amend/rebase) |
+| Feedback format | `cr-NNN` findings + verdict field |
+| Terminal labels | `ready to commit`, `ready with notes`, `needs revision`, `NOT READY` (cap hit) |
+| Escalation | `NOT READY` → root cause classification → backward edge to Plan or Research, or ask user |
+| Root cause field | `root-cause-phase`: `local` / `research` / `plan` / `implement` / `code-review` |
+| Review scope | Cumulative commit range (`HEAD~N..HEAD` where N = number of stage commits) |
+| Review effort | `deep` |
+| Artifacts | `40-final-deep-review.md`, `41-final-fix-report.md` (if findings) |
+
 ## Escalation flow
 
 When a loop hits its round cap without converging:

@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 from . import Finding
-from .verdicts import CHECKER_VERDICTS, extract_verdict, match_verdict
+from .verdicts import CHECKER_VERDICTS, extract_verdict, lookup_verdicts_for_filename, match_verdict
 
 # Loop round caps per phase. Clarify has no cap (interactive, no fixed round limit).
 LOOP_CAPS: dict[str, int] = {
@@ -56,7 +56,7 @@ def check_verdict_valid(run_dir: Path, phase: str) -> list[Finding]:
         return []  # Already reported by artifact_checks
 
     text = path.read_text(encoding="utf-8")
-    valid_verdicts = CHECKER_VERDICTS.get(checker_file, set())
+    valid_verdicts = lookup_verdicts_for_filename(checker_file, CHECKER_VERDICTS)
 
     found_verdict = extract_verdict(text)
 

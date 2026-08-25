@@ -13,6 +13,7 @@ The run manifest is the orchestrator's state file. It tracks the entire run so t
 - Last updated: <ISO timestamp>
 - Current phase: <research | plan | implement | code-review | commit | done>
 - Run status: <in-progress | completed | blocked | abandoned>
+- Run mode: <linear | staged> (default: linear; set to `staged` when plan §10 declares `Execution mode: staged`)
 - Git baseline at phase start: <HEAD sha or 'no-git'>
 
 ## Input
@@ -52,6 +53,38 @@ The run manifest is the orchestrator's state file. It tracks the entire run so t
 ### Phase 5: Commit
 - Status: <not-started | in-progress | completed>
 - Terminal artifact: 50-commit.md
+
+## Stage status
+[Include only when Run mode is `staged`. Tracks per-stage progress in the staged iterator.]
+
+- Current stage: <stage-1 | stage-2 | ... | done>
+- Total stages: <N>
+
+### Stage 1
+- Status: <not-started | in-progress | implement | audit | review | commit | stage-exit | accepted | failed>
+- Task ids: <pg-001, pg-002>
+- Implementation report: 30-stage1-implementation-report.md
+- Implementation audit: 31-stage1-implementation-audit.md
+- Code review: 40-stage1-code-review.md
+- Stage-exit review: 32-stage1-exit-review.md
+- Commit hash: <sha or 'not-committed'>
+- Stage-exit verdict: <plan-current | plan-stale | n/a>
+
+### Stage 2
+- Status: <not-started | in-progress | implement | audit | review | commit | stage-exit | accepted | failed>
+- Task ids: <pg-003>
+- Implementation report: 30-stage2-implementation-report.md
+- Implementation audit: 31-stage2-implementation-audit.md
+- Code review: 40-stage2-code-review.md
+- Stage-exit review: 32-stage2-exit-review.md
+- Commit hash: <sha or 'not-committed'>
+- Stage-exit verdict: <plan-current | plan-stale | n/a>
+
+### Final deep review
+- Status: <not-started | in-progress | accepted | failed>
+- Commit range: <HEAD~N..HEAD>
+- Code review: 40-final-deep-review.md
+- Fix report: 41-final-fix-report.md (if findings)
 
 ## Artifact registry
 | Artifact | Path | Phase | Status |

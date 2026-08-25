@@ -10,6 +10,8 @@ section in references/loop-contracts.md.
 
 from __future__ import annotations
 
+import fnmatch
+
 # Valid verdicts per checker artifact filename.
 # Each set contains the exact verdict strings the checker must emit.
 # The verdict is the first non-empty line after a "## Verdict" or
@@ -38,6 +40,13 @@ CHECKER_VERDICTS: dict[str, set[str]] = {
         "ready with notes",
         "needs revision",
     },
+    # Stage-exit review artifacts use a glob pattern: 32-stageN-exit-review.md
+    # where N is the 1-indexed stage number. Register the verdicts under a
+    # glob key that check functions can match against stage-indexed filenames.
+    "32-stage*-exit-review.md": {
+        "plan-current",
+        "plan-stale",
+    },
 }
 
 # Accept verdicts (loop exits forward) per checker artifact.
@@ -46,6 +55,7 @@ ACCEPT_VERDICTS: dict[str, set[str]] = {
     "21-plan-review.md": {"validated", "conditionally validated"},
     "31-implementation-audit.md": {"pass", "pass with risks"},
     "40-code-review.md": {"ready to commit", "ready with notes"},
+    "32-stage*-exit-review.md": {"plan-current"},
 }
 
 # Revise verdicts (loop continues) per checker artifact.
@@ -54,6 +64,7 @@ REVISE_VERDICTS: dict[str, set[str]] = {
     "21-plan-review.md": {"needs revision"},
     "31-implementation-audit.md": {"fail"},
     "40-code-review.md": {"needs revision"},
+    "32-stage*-exit-review.md": {"plan-stale"},
 }
 
 # Blocked verdicts (escalate immediately) per checker artifact.
@@ -62,7 +73,24 @@ BLOCKED_VERDICTS: dict[str, set[str]] = {
     "21-plan-review.md": {"blocked"},
     "31-implementation-audit.md": {"blocked"},
     "40-code-review.md": set(),  # code-review has no blocked verdict
+    "32-stage*-exit-review.md": set(),  # stage-exit has no blocked verdict
 }
+
+
+def lookup_verdicts_for_filename(filename: str, verdicts_dict: dict[str, set[str]]) -> set[str]:
+    """Look up valid verdicts for a filename, supporting glob patterns.
+
+    First tries an exact match. If no exact match, tries glob patterns
+    (keys containing '*') using fnmatch.
+    """
+    # Exact match first
+    if filename in verdicts_dict:
+        return verdicts_dict[filename]
+    # Glob pattern match
+    for pattern, verdicts in verdicts_dict.items():
+        if "*" in pattern and fnmatch.fnmatch(filename, pattern):
+            return verdicts
+    return set()
 
 
 def strip_markdown_emphasis(text: str) -> str:

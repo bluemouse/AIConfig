@@ -21,6 +21,26 @@ Use this rubric to assign severity, verdict, confidence, and execution readiness
 | Needs revision | One or more major findings prevent reliable execution, but targeted fixes can make the plan executable. |
 | Blocked | One or more blocker findings make execution unsafe, misleading, or impossible. |
 
+### Stage-exit review verdicts
+
+When reviewing in stage-exit mode (between implementation stages in a staged dev-workflow run), use these verdicts instead of the standard plan-review verdicts:
+
+| verdict | required conditions |
+|---|---|
+| `plan-current` | The completed stage's implementation does not contradict any plan assumption for remaining stages. Task details may need refinement, but architecture, interfaces, dependencies, data contracts, and acceptance criteria hold. |
+| `plan-stale` | The completed stage's implementation contradicts at least one plan assumption for a remaining stage. The reviewer must cite: (1) the specific plan assumption, (2) the specific evidence from stage artifacts, (3) why it affects a remaining stage. |
+
+See [stage-exit-review-contract.md](stage-exit-review-contract.md) for the full input contract, comparison surface, and evidence threshold.
+
+Never assign `plan-current` when:
+- A public API or interface consumed by a remaining stage has changed.
+- A dependency was added, removed, or changed in a way that affects remaining stages.
+- An architecture decision contradicts what the plan assumed for remaining stages.
+- A data contract (schema, format, API) differs from what the plan assumed.
+- An acceptance criterion for a remaining stage is revealed to be impossible, redundant, or already satisfied.
+
+Never assign `plan-stale` without citing all three evidence elements (plan assumption, stage artifact evidence, impact on remaining stages).
+
 Never assign Validated when any of these are absent or contradictory:
 - Goal and scope.
 - Input mode and planning depth for plan-guide plans.

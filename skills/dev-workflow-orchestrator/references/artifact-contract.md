@@ -29,6 +29,20 @@ Phase-grouped numbered filenames:
 | 5 (commit) | Commit record | `50-commit.md` | git-commit | (terminal) | Terminal |
 | (backward) | Backward handoff packet | `back-<from>-<to>-<n>.md` | Any reviewer/auditor | Target phase | Handoff |
 
+## Stage-indexed artifacts (staged mode only)
+
+When `Run mode: staged`, per-stage artifacts use the naming scheme `30-stageN-*`, `31-stageN-*`, `32-stageN-*`, `40-stageN-*`, `41-stageN-*` where N is the 1-indexed stage number. Linear-mode artifacts (without the `stageN` segment) remain valid and unchanged.
+
+| Phase | Artifact | Filename (staged mode) | Producer | Consumer | Type |
+|-------|----------|------------------------|----------|----------|------|
+| 3 (implement) | Stage implementation report | `30-stageN-implementation-report.md` | plan-executor | implementation-auditor, code-reviewer | Terminal (per stage) |
+| 3 (implement) | Stage implementation audit | `31-stageN-implementation-audit.md` | implementation-auditor | plan-executor (loop), orchestrator | Loop output (per stage) |
+| 3 (implement) | Stage-exit review | `32-stageN-exit-review.md` | plan-reviewer | orchestrator | Loop output (between stages) |
+| 4 (review) | Stage code review | `40-stageN-code-review.md` | code-reviewer | finding-resolver (loop), orchestrator | Loop output (per stage) |
+| 4 (review) | Stage fix report | `41-stageN-fix-report.md` | finding-resolver | code-reviewer (loop), orchestrator | Loop output (per stage) |
+| 4 (review) | Final deep review | `40-final-deep-review.md` | code-reviewer | finding-resolver (loop), orchestrator | Loop output (after all stages) |
+| 4 (review) | Final fix report | `41-final-fix-report.md` | finding-resolver | code-reviewer (loop), orchestrator | Loop output (after all stages) |
+
 ## Boundary rules
 
 - Only the orchestrator writes `00-run-manifest.md`.

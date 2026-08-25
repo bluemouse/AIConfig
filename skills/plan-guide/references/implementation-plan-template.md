@@ -110,6 +110,7 @@ Collaboration notes: [How Tests Designer aligned with Requirements Mapper, Archi
 |  | high/medium/low | high/medium/low |  |  |  |
 
 ## 10. Execution handoff
+- Execution mode: linear | staged
 - Recommended execution order:
 - Execution waves:
   - Wave 1: [parallel task ids and file ownership]
@@ -124,6 +125,20 @@ Collaboration notes: [How Tests Designer aligned with Requirements Mapper, Archi
 - TDD evidence the implementer must collect: failing test output before production code, passing test after each task
 - Review checkpoints:
 - Post-implementation validation:
+
+### Stage breakdown
+[Include when Execution mode is `staged`. Omit for linear plans. A stage is a group of `pg-NNN` tasks that together form a self-contained, verifiable, committable unit. Each stage runs the full implement → audit → review → commit loop, with `plan-reviewer` stage-exit review between stages.]
+
+| stage id | task ids | commit checkpoint | verification target |
+|---|---|---|---|
+| stage-1 | pg-001, pg-002 | [commit message or checkpoint description] | [verification command or check] |
+| stage-2 | pg-003 | [commit message or checkpoint description] | [verification command or check] |
+| stage-N | [task ids] | [commit message or checkpoint description] | [verification command or check] |
+
+Stage notes:
+- Stages are ordered; each stage depends on the prior stage's committed output.
+- Between stages, `plan-reviewer` runs a stage-exit review emitting `plan-current` (light refinement) or `plan-stale` (full re-plan).
+- After all stages commit, a final deep code review runs on the cumulative commit range.
 
 ## 11. Reviewer feedback status
 [Include when a plan-reviewer report was provided.]

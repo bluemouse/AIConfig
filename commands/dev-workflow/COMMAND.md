@@ -31,6 +31,15 @@ loops, backward edges for upstream root causes, artifact contracts, and mode enf
 4. Continue following the orchestrator skill through all phases, loops, backward edges, and
    validation checks until the workflow completes or escalates.
 
+5. **Stage-aware mode detection (after Plan phase):** When the Plan phase produces
+   `20-implementation-plan.md`, read the `Execution mode` field from §10. If
+   `Execution mode: staged`, write `Run mode: staged` to the manifest's `Run metadata`
+   section. The orchestrator will then use the staged iterator procedure for the
+   Implement phase (per-stage implement → audit → review → commit loop with stage-exit
+   review between stages and a final deep review after all stages). If `Execution mode:
+   linear` or absent, the manifest defaults to `Run mode: linear` and the standard
+   linear pipeline runs unchanged.
+
 ## Optional arguments
 
 If the user adds text after `/dev-workflow`, treat it as the requirement or feature

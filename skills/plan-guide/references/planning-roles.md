@@ -10,7 +10,7 @@ Use these roles as lenses. Do not produce separate speeches from each role; synt
 | Requirements Mapper | Any source requirements exist | Requirement coverage, priority, acceptance criteria, non-goal conflicts, traceability. |
 | Architecture Planner | Existing system, new architecture, integrations, APIs, or data contracts matter | Boundaries, interfaces, dependencies, sequencing, compatibility, migration. |
 | Tests Designer | Always (implementation plans) | TDD-first test scenarios from requirements and architecture; red-phase specs; edge and negative cases; test file/name/fixture plans; collaboration with Requirements Mapper, Architecture Planner, Task Decomposer, and Verification Planner. |
-| Task Decomposer | Always | Cohesive task slices, dependency order, review checkpoints, independently testable deliverables shaped by planned failing tests. |
+| Task Decomposer | Always | Cohesive task slices, dependency order, review checkpoints, independently testable deliverables shaped by planned failing tests. **Stage grouping:** when staged mode is recommended, groups tasks into self-contained, verifiable, committable stages (ordered groups of task ids with commit checkpoints and verification targets). |
 | Verification Planner | Always | Validation commands, manual checks, observability signals, expected outcomes, verification matrix; complements Tests Designer automated test plans. |
 | Risk and Release Planner | Rollout, migration, production, security, reliability, or users are affected | Risk controls, rollback, feature flags, telemetry, support, operational readiness. |
 | Execution Handoff Recorder | Always | Assumptions, stop conditions, commands, handoff notes, review status. |

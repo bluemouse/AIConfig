@@ -22,6 +22,7 @@ REQUIRED_MANIFEST_SECTIONS = [
 
 VALID_PHASES = {"clarify", "research", "plan", "implement", "code-review", "commit", "done"}
 VALID_RUN_STATUSES = {"in-progress", "completed", "blocked", "abandoned"}
+VALID_RUN_MODES = {"linear", "staged"}
 VALID_PHASE_STATUSES = {
     "not-started", "in-progress", "loop-active", "accepted",
     "backward-edge-received", "completed",
@@ -108,6 +109,26 @@ def check_run_status_valid(run_dir: Path) -> list[Finding]:
     return findings
 
 
+def check_run_mode_valid(run_dir: Path) -> list[Finding]:
+    """Check that the Run mode field, if present, is valid.
+
+    Run mode is optional — if absent, it defaults to linear. If present,
+    it must be one of VALID_RUN_MODES (linear or staged).
+    """
+    findings: list[Finding] = []
+    text = _read_manifest(run_dir)
+    if text is None:
+        return []
+    match = re.search(r"Run mode:\s*(\S+)", text)
+    if match and match.group(1).lower() not in VALID_RUN_MODES:
+        findings.append(Finding(
+            severity="error",
+            check="manifest_state",
+            message=f"Invalid run mode: {match.group(1)}. Expected one of: {', '.join(sorted(VALID_RUN_MODES))}",
+        ))
+    return findings
+
+
 def check_backward_edge_counts(run_dir: Path) -> list[Finding]:
     """Check that backward edge counts in the manifest match the back-*.md files on disk."""
     findings: list[Finding] = []
@@ -163,5 +184,6 @@ def run_all(run_dir: Path, phase: str) -> list[Finding]:
     findings.extend(check_manifest_sections(run_dir))
     findings.extend(check_current_phase_valid(run_dir))
     findings.extend(check_run_status_valid(run_dir))
+    findings.extend(check_run_mode_valid(run_dir))
     findings.extend(check_backward_edge_counts(run_dir))
     return findings

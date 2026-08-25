@@ -16,6 +16,13 @@ You are implementing one isolated unit from an implementation plan.
 ## Plan context
 <only the relevant plan excerpt and any parent assumptions needed for this unit>
 
+## Stage context (staged mode only)
+- Stage id: <stage-id, e.g., stage-2>
+- Stage task ids: <task ids scoped to this stage, e.g., pg-003, pg-004>
+- Stage commit checkpoint: <commit message or checkpoint description>
+- Stage verification target: <verification command or check>
+- Note: Execute only the tasks listed above. Do not touch tasks from other stages.
+
 ## Repository context
 - Current branch: <branch-name or "current branch">
 - Do not create, switch, or rename branches.

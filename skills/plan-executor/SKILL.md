@@ -54,9 +54,10 @@ At the start, state that you are using the `plan-executor` skill. If concurrent 
 ### 1. Load and review the plan
 
 1. Read the full plan and identify the intended outcome, required files, dependencies, and verification steps.
-2. Review critically before editing. Look for missing prerequisites, contradictory steps, unsafe actions, broad refactors hidden inside small tasks, or dependencies that prevent parallelization. This is a lightweight execution sanity check — not a substitute for [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md).
-3. Stop for clarification only when the blocker would make implementation unsafe or likely wrong. Otherwise, make a conservative assumption and record it in the report. When the gap is a requirement-level ambiguity rather than an execution detail, resolve it in this session with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) or return to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) — never pass the ambiguity down to a subagent, which cannot ask the user.
-4. Create a visible todo list or equivalent execution tracker from the plan.
+2. **Stage scope (staged mode only):** If a stage scope is provided (e.g., `--stage stage-2` or an equivalent parameter), read only that stage's tasks from plan §10 `Stage breakdown` and execute only those units. Produce a stage-indexed implementation report (e.g., `30-stageN-implementation-report.md`). If no stage scope is provided, execute the whole plan (linear behavior). Stage-scoped execution still follows all non-negotiable rules: no commit, no push, protect user work, run verifications, generate a report.
+3. Review critically before editing. Look for missing prerequisites, contradictory steps, unsafe actions, broad refactors hidden inside small tasks, or dependencies that prevent parallelization. This is a lightweight execution sanity check — not a substitute for [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md).
+4. Stop for clarification only when the blocker would make implementation unsafe or likely wrong. Otherwise, make a conservative assumption and record it in the report. When the gap is a requirement-level ambiguity rather than an execution detail, resolve it in this session with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) or return to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) — never pass the ambiguity down to a subagent, which cannot ask the user.
+5. Create a visible todo list or equivalent execution tracker from the plan (or from the scoped stage's tasks).
 
 ### 2. Establish baseline
 

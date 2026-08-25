@@ -259,6 +259,69 @@ The lifecycle is not one-directional. Each quality gate can send work backward. 
 
 Loops are intentional and human-gated. Do not auto-cycle between two skills without an explicit decision.
 
+## Staged Mode
+
+For large, complex tasks that are too big for a single implementation pass, the dev-workflow supports an opt-in **staged mode**. Staged mode decomposes the work into self-contained, verifiable, committable stages, each running the full implement → audit → review → commit loop, with plan refinement between stages and a final deep code review on the cumulative diff.
+
+### When to use staged mode
+
+[plan-guide](skills/plan-guide/SKILL.md) recommends staged mode when any of the following hold:
+
+- Planning depth is `rigorous` (high-risk, cross-cutting, security/privacy/compliance-sensitive, migration-heavy, or user-visible work).
+- Task count exceeds 5 (the plan has 6 or more tasks).
+- The user explicitly requests staged mode.
+
+The user confirms at the plan gate. [plan-guide](skills/plan-guide/SKILL.md) does not recommend staged mode for single-stage plans (a single stage degenerates to linear plus overhead).
+
+### Staged-mode topology
+
+```text
+For each stage (1..N):
+  implement → audit → review(light) → commit
+       ↓ (on failure: full loop for this stage)
+  plan-reviewer stage-exit review (plan-current / plan-stale)
+       ↓ (plan-stale: full re-plan, re-derive stages)
+  next stage
+       ↓ (all stages committed)
+Final deep code review (full Loop 4, deep effort, cumulative commit range)
+       ↓
+Terminal delivery: pull-request-guide → github-guide (PR creation)
+```
+
+### How staged mode differs from linear
+
+| Aspect | Linear mode | Staged mode |
+| --- | --- | --- |
+| Implementation | Single pass: all tasks, then one audit, one review | Per-stage: each stage runs implement → audit → review → commit |
+| Plan refinement | None (plan is fixed after plan-reviewer) | Between stages: `plan-reviewer` stage-exit review judges if remaining plan is still valid |
+| Code review | Single review after all implementation | Light review per stage + final deep review on cumulative diff |
+| Commits | Single commit chain at delivery | Per-stage commit (no push by default); PR at end |
+| Quality gates | One audit, one review | N light audits + N light reviews + 1 final deep review |
+
+### Stage-exit review
+
+Between stages, [plan-reviewer](skills/plan-reviewer/SKILL.md) runs a stage-exit review comparing the completed stage's implementation against the plan's assumptions for remaining stages. It emits:
+
+- **`plan-current`**: No plan assumption is contradicted. [plan-guide](skills/plan-guide/SKILL.md) performs light refinement of the next stage's task details.
+- **`plan-stale`**: At least one plan assumption is contradicted (with explicit evidence). [plan-guide](skills/plan-guide/SKILL.md) performs a full re-plan with [plan-reviewer](skills/plan-reviewer/SKILL.md) re-audit.
+
+### Final deep review
+
+After all stages commit, a full deep code review ([code-reviewer](skills/code-reviewer/SKILL.md) with `deep` effort) runs on the cumulative commit range. Fixes are applied as **new commits on top** (no history rewrite, no amend). This catches cross-stage and cumulative issues that per-stage light reviews cannot detect.
+
+### Backward edges in staged mode
+
+In-stage backward edges (root-cause repair) and between-stage stage-exit reviews (forward-looking plan validity) are independent. An in-stage backward edge does not trigger a stage-exit review. A stage-exit review does not create a backward edge.
+
+### Governance: staged-mode change classes
+
+| Change class | Mandatory gates in staged mode |
+| --- | --- |
+| Cross-stage security/auth change | Full loop per stage AND final deep review |
+| Migration spanning multiple stages | Full loop per stage AND final deep review AND techdoc-reviewer |
+| Public API change across stages | Full loop per stage AND final deep review AND techdoc-reviewer |
+| Refactor across 3+ modules (staged) | Full loop per stage AND final deep review |
+
 ## Governance: Mandatory vs Optional Gates
 
 The core bundle is always available. The extended-bundle gates are optional by default but become mandatory for higher-risk change classes. Teams can tighten this table, not loosen the safety-critical rows.
