@@ -1,6 +1,12 @@
 ---
 name: csharp-coding
-description: "Write, review, refactor, test, debug, and optimize modern C# and .NET code using project-local toolchain settings. Use when working on .cs, .csproj, .sln, NuGet, Roslyn analyzers, MSTest/NUnit/xUnit, ASP.NET, console, library, worker, or service code; explaining C# grammar or language-version behavior; choosing dotnet/MSBuild/NuGet commands; fixing compiler, analyzer, runtime, or test failures; or applying idiomatic nullable-safe async C# \u2014 even if the user says \"C# help\" or \"fix this .NET code\" without naming a framework."
+description: Write, review, refactor, test, debug, and optimize modern C# and .NET
+  code using project-local toolchain settings. Use when working on .cs, .csproj, .sln,
+  NuGet, Roslyn analyzers, MSTest/NUnit/xUnit, ASP.NET, console, library, worker,
+  or service code; explaining C# grammar or language-version behavior; choosing dotnet/MSBuild/NuGet
+  commands; fixing compiler, analyzer, runtime, or test failures; or applying idiomatic
+  nullable-safe async C# — even if the user says "C# help" or "fix this .NET code"
+  without naming a framework.
 ---
 
 # csharp-coding wrapper for GitHub Copilot

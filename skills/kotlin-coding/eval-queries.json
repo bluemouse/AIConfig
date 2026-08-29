@@ -9,7 +9,7 @@
     "query": "why does smart cast fail on this mutable property and how do I fix the type model",
     "should_trigger": true,
     "split": "train",
-    "rationale": "compiler/nullability semantics -> language-grammar.md / testing-debugging.md"
+    "rationale": "compiler/nullability semantics -> language-grammar.md / debugging.md"
   },
   {
     "query": "choose between Sequence and List for this multi-step collection pipeline on 10k items",
@@ -33,7 +33,7 @@
     "query": "NullPointerException from Java platform type at Kotlin boundary — how do I model this safely",
     "should_trigger": true,
     "split": "train",
-    "rationale": "runtime debugging and Java interop -> testing-debugging.md / patterns.md"
+    "rationale": "runtime debugging and Java interop -> debugging.md / patterns.md"
   },
   {
     "query": "write Kotest property tests for this parser with MockK suspend mocks",

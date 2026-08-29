@@ -42,14 +42,19 @@ run_or_print() {
 }
 
 TASKS=""
-if TASK_OUTPUT=$("${GRADLE[@]}" tasks --all -q 2>/dev/null); then
-  TASKS="$TASK_OUTPUT"
-else
-  echo "Could not list Gradle tasks; falling back to common task names." >&2
+if [[ "$MODE" != "dry-run" ]]; then
+  if TASK_OUTPUT=$("${GRADLE[@]}" tasks --all -q 2>/dev/null); then
+    TASKS="$TASK_OUTPUT"
+  else
+    echo "Could not list Gradle tasks; falling back to common task names." >&2
+  fi
 fi
 
 has_task() {
   local task="$1"
+  if [[ "$MODE" == "dry-run" ]]; then
+    return 0
+  fi
   if [[ -z "$TASKS" ]]; then
     [[ "$task" == "test" || "$task" == "check" ]]
   else

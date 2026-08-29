@@ -1,6 +1,11 @@
 ---
 name: cpp-coding
-description: "Write, review, and refactor modern C++20 code following C++ Core Guidelines \u2014 RAII, concepts, value semantics, and safe concurrency. Use when implementing C++ classes or functions, reviewing C++ diffs, choosing between language alternatives (enum vs enum class, raw pointer vs smart pointer), refactoring C++ modules, or enforcing idiomatic C++20 style \u2014 even if the user says \"C++ help\" or \"fix this C++ code\" without naming a standard."
+description: Write, review, and refactor modern C++20 code following C++ Core Guidelines
+  — RAII, concepts, value semantics, and safe concurrency. Use when implementing C++
+  classes or functions, reviewing C++ diffs, choosing between language alternatives
+  (enum vs enum class, raw pointer vs smart pointer), refactoring C++ modules, or
+  enforcing idiomatic C++20 style — even if the user says "C++ help" or "fix this
+  C++ code" without naming a standard.
 ---
 
 # cpp-coding (GitHub Copilot)

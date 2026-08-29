@@ -63,7 +63,7 @@ Use `TargetFrameworks` only when multi-targeting is necessary. Conditionalize pa
 Project references are preferred over NuGet references for same-repo code:
 
 ```bash
-dotnet reference add ../MyLib/MyLib.csproj
+dotnet add reference ../MyLib/MyLib.csproj
 ```
 
 ## 3. CLI command map

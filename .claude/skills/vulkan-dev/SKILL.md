@@ -1,6 +1,12 @@
 ---
 name: vulkan-dev
-description: "Develop, modernize, review, and debug Vulkan 1.3 renderers and GPU-compute programs: instance/device/queue setup, pNext feature chains and extension detection, VkDeviceMemory sub-allocation and staging, VkImageMemoryBarrier2 and layout transitions, timeline/binary semaphores and fences, descriptor sets and descriptor-indexing bindless, VkPipeline + pipeline cache + dynamic rendering, command pools and swapchain, compute dispatch, validation and performance triage. Use for Vk*/vkCmd*/vkCreate* code and Vulkan API decisions even when the user does not say 'Vulkan'."
+description: 'Develop, modernize, review, and debug Vulkan 1.3 renderers and GPU-compute
+  programs: instance/device/queue setup, pNext feature chains and extension detection,
+  VkDeviceMemory sub-allocation and staging, VkImageMemoryBarrier2 and layout transitions,
+  timeline/binary semaphores and fences, descriptor sets and descriptor-indexing bindless,
+  VkPipeline + pipeline cache + dynamic rendering, command pools and swapchain, compute
+  dispatch, validation and performance triage. Use for Vk*/vkCmd*/vkCreate* code and
+  Vulkan API decisions even when the user does not say ''Vulkan''.'
 ---
 
 # vulkan-dev (Claude Code)
@@ -39,7 +45,7 @@ not a validator):
 python .ai/skills/vulkan-dev/scripts/vulkan_antipattern_scan.py <paths> [--severity info|medium|high]
 ```
 
-## Companion skills
+## Companion Skills
 
 | Task | Path |
 |------|------|

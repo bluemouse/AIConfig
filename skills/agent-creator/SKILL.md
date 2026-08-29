@@ -1,6 +1,6 @@
 ---
 name: agent-creator
-description: Create portable custom agents for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create an agent from scratch, bootstrap under the agents directory and install to .ai/agents with tool wrappers, edit or optimize an existing agent, tune an agent's description for better triggering, or explain portable agent structure — even if they do not say "portable agent" explicitly.
+description: Create portable custom agents for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create an agent from scratch, bootstrap under the agents directory and install to .ai/agents with tool wrappers, edit or optimize an existing agent, tune an agent's description for better triggering, or explain portable agent structure — even if they do not say "portable agent" explicitly. Does not trigger on creating skills (skill-creator) or slash commands and Copilot prompts (command-creator).
 ---
 
 # Agent Creator
@@ -21,6 +21,11 @@ At a high level, creating an agent goes like this:
 **Tool-specific execution** (how to spawn agent runs, reload steps, frontmatter fields such as `model` or `readonly`, and subagent mechanics) lives in your **tool wrapper** — read it after this shared skill. Do not assume subagents, a particular CLI, or a browser unless your wrapper documents them.
 
 Your job is to figure out where the user is in this process and help them progress. If they already have a draft agent, go straight to review and iterate. If they prefer a lightweight pass without formal test runs, follow their lead.
+
+## When NOT to Use
+
+- **Creating a skill** — use [../skill-creator/SKILL.md](../skill-creator/SKILL.md), which follows a shared-first layout for skills with bundled resources and eval loops
+- **Creating a slash command or Copilot prompt** — use [../command-creator/SKILL.md](../command-creator/SKILL.md), which follows a shared-first layout for commands
 
 ---
 

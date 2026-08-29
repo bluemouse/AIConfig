@@ -1,6 +1,11 @@
 ---
 name: slang-dev
-description: "Develop, review, port, compile, test, debug, and optimize Slang shaders and C++ host integration for Vulkan SPIR-V and Metal MSL renderers: modules, import/__include, capabilities, ParameterBlock, generics/interfaces, slangc, IGlobalSession/ISession, ProgramLayout reflection, descriptor/argument-buffer layout, and cross-backend portability. Use for .slang files, slang compiler API, SPIR-V/MSL emission, shader entry points, or shader correctness/performance \u2014 even when the user does not say 'Slang'."
+description: 'Develop, review, port, compile, test, debug, and optimize Slang shaders
+  and C++ host integration for Vulkan SPIR-V and Metal MSL renderers: modules, import/__include,
+  capabilities, ParameterBlock, generics/interfaces, slangc, IGlobalSession/ISession,
+  ProgramLayout reflection, descriptor/argument-buffer layout, and cross-backend portability.
+  Use for .slang files, slang compiler API, SPIR-V/MSL emission, shader entry points,
+  or shader correctness/performance — even when the user does not say ''Slang''.'
 ---
 
 # slang-dev (Claude Code)
@@ -42,7 +47,7 @@ python .ai/skills/slang-dev/scripts/slang_compile_matrix.py manifest.json [--pri
 Use `--print-only` to emit commands without executing; `--allow-missing-slangc` when
 `slangc` is not on PATH.
 
-## Companion skills
+## Companion Skills
 
 | Task | Path |
 |------|------|

@@ -2,7 +2,7 @@
 
 ## Repository reference draft (tutorial-writer)
 
-- **Path:** `references/skills/tutorial-writer/SKILL.md` and bundled
+- **Path:** `SKILL.md` and bundled
   `references/tutorial-patterns.md`
 - **Last reviewed:** 2026-08-15
 - **Used for:**

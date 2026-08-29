@@ -15,6 +15,7 @@ android {
     ndkVersion = "28.0.13004108"  // pin; r28+ aligns 16 KB by default
 
     defaultConfig {
+        // minSdk is illustrative; choose per app requirements
         minSdk = 26
         targetSdk = 36
 

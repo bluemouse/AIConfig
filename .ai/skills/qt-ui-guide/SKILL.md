@@ -181,7 +181,7 @@ Load only what the task needs:
 - `.ui` generation/editing: `references/ui-file-guide.md`
 - Starter templates: `assets/dialog-template.ui`, `assets/mainwindow-template.ui`
 
-## Companion skills
+## Companion Skills
 
 - [qt-dev](../qt-dev/SKILL.md) — C++/CMake Widgets implementation after design is settled
 - [cpp-coding](../cpp-coding/SKILL.md) — non-Qt C++ when UI work touches shared engine code

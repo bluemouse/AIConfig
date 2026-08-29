@@ -26,7 +26,7 @@ Phase-grouped numbered filenames:
 | 3 (implement) | Implementation audit | `31-implementation-audit.md` | implementation-auditor | plan-executor (loop), orchestrator | Loop output |
 | 4 (review) | Code review | `40-code-review.md` | code-reviewer | code-review-resolver (loop), orchestrator | Loop output |
 | 4 (review) | Fix report | `41-fix-report.md` | code-review-resolver | code-reviewer (loop), orchestrator | Loop output |
-| 5 (commit) | Commit record | `50-commit.md` | git-commit | (terminal) | Terminal |
+| 5 (commit) | Commit record | `50-commit.md` | commit-message-writer | (terminal) | Terminal |
 | (backward) | Backward handoff packet | `back-<from>-<to>-<n>.md` | Any reviewer/auditor | Target phase | Handoff |
 
 ## Stage-indexed artifacts (staged mode only)

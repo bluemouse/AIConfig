@@ -86,7 +86,7 @@ PROJ-1234: the flag store was hit ~40x per request, adding ~15ms p95. Memoize it
 Part of the flag-perf set: !123, !124.
 ```
 
-## Progressive Disclosure
+## Progressive disclosure
 
 - Read [references/description.md](references/description.md) - Load when writing or reviewing the PR description text (what/why/how, length, links, screenshots)
 - Read [references/size-and-atomicity.md](references/size-and-atomicity.md) - Load when a PR feels large, mixes concerns, or needs splitting

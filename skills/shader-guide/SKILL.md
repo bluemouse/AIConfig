@@ -137,7 +137,7 @@ This skill covers **creative real-time GLSL effect authoring**: implicit surface
 - **shader-debugging** — Visual debug substitutions for SDF, normals, UV, and march cost
 - **performance-budget** — Loop, octave, and nested-iteration limits for real-time effects
 
-## Reference Routing
+## Reference routing
 
 | Task | Read |
 |------|------|
@@ -169,7 +169,7 @@ Complete rendering pipelines assembled from technique modules — see [reference
 - Procedural landscape (terrain + biplanar texturing + sky + water)
 - Stylized 2D art (2D SDF + palettes + kaleidoscope + bloom)
 
-## Progressive Disclosure
+## Progressive disclosure
 
 - Read [references/effect-recipes.md](references/effect-recipes.md) — Load when assembling a multi-technique pipeline
 - Read [references/shader-debugging.md](references/shader-debugging.md) — Load when output looks wrong and you need to isolate normals, SDF, UV, or march cost

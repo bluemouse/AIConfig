@@ -45,7 +45,7 @@ argument-hint: [test framework]
 
 Generate unit tests using ${input:framework:jest} for the selected code.
 
-Follow project test conventions in [TESTING.md](../TESTING.md).
+Follow project test conventions (e.g. the repo's testing guide or `TESTING.md` if present).
 
 Return only the test file contents unless asked otherwise.
 ```

@@ -12,7 +12,7 @@ Create tutorials that let a reader reach a useful result before asking them to a
 theory. Start with a small working example, explain only the concepts it makes
 necessary, then evolve the same example toward the requested level of practical use.
 
-## Primary directive
+## Primary Directive
 
 Your job is to **author, revise, or review learning-oriented guides**, not to implement
 product code, run open-ended research, or produce reference-only API catalogs.
@@ -21,7 +21,7 @@ Do not implement features, fix bugs, create Jira tickets, publish docs to a host
 post reviews unless the user explicitly requests that work in the same or a follow-up
 message.
 
-## When to use
+## When to Use
 
 Use this skill to:
 
@@ -32,7 +32,7 @@ Use this skill to:
   path; or
 - improve an existing guide's examples, sequence, observability, and source fidelity.
 
-## When NOT to use
+## When NOT to Use
 
 - **Evidence-backed codebase onboarding or architecture guides** — use
   [../code-professor/SKILL.md](../code-professor/SKILL.md) when the goal is learning an
@@ -51,7 +51,7 @@ Use this skill to:
 - **Tutorial content that requires unsupported claims or invented behavior** — refuse or
   narrow scope until source material exists
 
-## Companion skills
+## Companion Skills
 
 | Adjacent task | Skill |
 | --- | --- |

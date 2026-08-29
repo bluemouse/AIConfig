@@ -16,7 +16,7 @@ python "<SKILL_ROOT>/scripts/instrumentation_guard.py" begin \
   --repo "$PWD" --state-dir "$STATE_DIR" -- path/to/file1 path/to/file2
 ```
 
-Replace `<SKILL_ROOT>` with the absolute path to the installed shared skill directory (e.g. `.ai/skills/code-professor/` after install, or `skills/code-professor/` during bootstrap development).
+Replace `<SKILL_ROOT>` with the absolute path to the skill directory containing this skill's `SKILL.md` (under `skills/code-professor/` during bootstrap development).
 
 4. Add minimal instrumentation marked `CODE_PROFESSOR_TEMP`.
 5. Do not log credentials, secrets, tokens, private payloads, or unnecessary user data.

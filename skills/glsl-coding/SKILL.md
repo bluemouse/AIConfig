@@ -88,7 +88,7 @@ Vulkan fragment output example: `layout(location = 0) out vec4 outColor;` — no
 5. **Patch** — smallest useful corrected shader
 6. **Validation** — compile/link logs, SPIR-V validation, descriptor layout check, GPU capture if perf claims matter
 
-## Reference Routing
+## Reference routing
 
 | Task | Read |
 |------|------|
@@ -111,7 +111,7 @@ Vulkan fragment output example: `layout(location = 0) out vec4 outColor;` — no
 - **Dead code is still checked** — ill-formed statements inside `if (false)` must still compile.
 - **Reserved identifiers** — avoid `patch`, `sample`, `filter`, `input`, `output`, `common`, `partition`, `active` as variable names.
 
-## Progressive Disclosure
+## Progressive disclosure
 
 - Read [references/glsl-modern-primer.md](references/glsl-modern-primer.md) — Load when explaining stages, resources, or teaching shader fundamentals
 - Read [references/opengl-vulkan-glsl.md](references/opengl-vulkan-glsl.md) — Load when choosing OpenGL vs Vulkan layouts, coordinates, or SPIR-V constraints

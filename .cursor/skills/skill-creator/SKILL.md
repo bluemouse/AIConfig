@@ -5,7 +5,9 @@ description: Create portable skills for GitHub Copilot, Cursor, and Claude Code 
   a skill from scratch, bootstrap under the skills directory and install to .ai/skills
   with tool wrappers, edit or optimize an existing skill, run evals to test a skill,
   benchmark skill performance, or optimize a skill's description for better triggering
-  accuracy — even if they do not say "portable skill" explicitly.
+  accuracy — even if they do not say "portable skill" explicitly. Does not trigger
+  on creating custom agents (agent-creator) or slash commands and Copilot prompts
+  (command-creator).
 ---
 
 # skill-creator (Cursor)

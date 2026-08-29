@@ -43,7 +43,7 @@ python .ai/skills/slang-dev/scripts/slang_compile_matrix.py manifest.json [--pri
 Use `--print-only` to emit commands without executing; `--allow-missing-slangc` when
 `slangc` is not on PATH.
 
-## Companion skills
+## Companion Skills
 
 | Task | Path |
 |------|------|

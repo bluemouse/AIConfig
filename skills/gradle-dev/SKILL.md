@@ -110,7 +110,7 @@ When debugging failures, return:
 | Kotlin language/API design | [kotlin-coding](../kotlin-coding/SKILL.md) |
 | AGP, Android variants, lint, R8, signing | [gradle-android-dev](../gradle-android-dev/SKILL.md) |
 
-## Companion skills
+## Companion Skills
 
 - Use [gradle-android-dev](../gradle-android-dev/SKILL.md) for Android Gradle Plugin and Android build topics.
 - Use [kotlin-coding](../kotlin-coding/SKILL.md) for Kotlin language/API/design work.

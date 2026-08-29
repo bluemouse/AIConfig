@@ -58,13 +58,14 @@ clarify → research → plan → implement → code-review → commit
       backward edges (upstream root causes)
 ```
 
-Backward edges (6 total):
+Backward edges (7 total):
 - Research → Clarify (requirement fundamentally ambiguous)
 - Plan → Research (research insufficient)
 - Implement → Plan (plan unsafe/impossible)
 - Implement → Research (requirement wrong)
 - Code Review → Plan (design issue)
 - Code Review → Research (approach wrong)
+- Code Review → Implement (implementation defect rooted in execution approach)
 
 Read [references/artifact-contract.md](references/artifact-contract.md) for the full artifact
 registry. Read [references/loop-contracts.md](references/loop-contracts.md) for the five loop
@@ -149,9 +150,9 @@ For each stage N (1..total_stages):
 After all stages are committed:
 
 1. Run Loop 4 (code-review-resolver → code-reviewer, cap 5, `deep` effort) on the cumulative commit range (`HEAD~N..HEAD` where N = number of stage commits). Output: `40-final-deep-review.md`.
-2. If findings: `code-review-resolver` applies fixes as **new commits on top** (no `git rebase`, no `git commit --amend` — fr-13). `code-reviewer` re-reviews the new commit range. Output: `41-final-fix-report.md`.
+2. If findings: `code-review-resolver` applies fixes as **new commits on top** (no `git rebase`, no `git commit --amend` — fixes land as new commits on top, no amend/rebase). `code-reviewer` re-reviews the new commit range. Output: `41-final-fix-report.md`.
 3. If a finding is design-level with `root-cause-phase: plan`, create a backward edge to `plan-guide` for root-cause repair.
-4. If reader-visible contracts changed, invoke `techdoc-reviewer` (fr-11).
+4. If reader-visible contracts changed, invoke `techdoc-reviewer` (reader-visible contracts changed, invoke techdoc-reviewer).
 5. Proceed to terminal delivery: `pull-request-guide` → `github-guide` (PR creation, once).
 
 #### Standard procedure (linear mode, or non-Implement phases in staged mode)

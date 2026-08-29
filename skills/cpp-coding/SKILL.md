@@ -104,7 +104,7 @@ state while writing or reviewing C++:
    [cpp-testing](../cpp-testing/SKILL.md) and rerun sanitizer-enabled builds per
    [build-and-verification.md](references/build-and-verification.md).
 
-## Reference Routing
+## Reference routing
 
 | Task | Read |
 |------|------|
@@ -123,7 +123,7 @@ need both [core-guidelines.md](references/core-guidelines.md) (T.*) and
 [modern-cpp20.md](references/modern-cpp20.md); concurrent code needs core-guidelines (CP.*)
 and modern-cpp20.
 
-## Quick Completion Checklist
+## Quick completion checklist
 
 Complete **both** parts before marking ordinary C++ work done; add part 3 when a native
 crash or UB was fixed:

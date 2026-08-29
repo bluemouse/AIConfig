@@ -9,7 +9,7 @@ Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. 
 
 Write, fix, and gate plain Kotlin/JVM tests. Read bundled references on demand — do not load all reference files unless the task requires them.
 
-This skill supersedes test-design content in [kotlin-coding/references/testing-debugging.md](../kotlin-coding/references/testing-debugging.md). For production language/API fixes under test, use [kotlin-coding](../kotlin-coding/SKILL.md).
+This skill supersedes test-design content in [kotlin-coding/references/debugging.md](../kotlin-coding/references/debugging.md). For production language/API fixes under test, use [kotlin-coding](../kotlin-coding/SKILL.md).
 
 ## Scope
 
@@ -110,7 +110,7 @@ When asked to fix failing tests, return:
 4. The verification command.
 5. Any flake-prevention change if timing, randomness, concurrency, or shared state was involved.
 
-## Companion skills
+## Companion Skills
 
 - Use [kotlin-coding](../kotlin-coding/SKILL.md) for production Kotlin language/API/design work.
 - Use [gradle-dev](../gradle-dev/SKILL.md) for Gradle build engineering, version catalogs, task wiring, CI, and build/configuration cache.

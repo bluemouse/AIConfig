@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Create portable skills for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create a skill from scratch, bootstrap under the skills directory and install to .ai/skills with tool wrappers, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say "portable skill" explicitly.
+description: Create portable skills for GitHub Copilot, Cursor, and Claude Code using a shared-first layout, and iteratively improve them. Use when users want to create a skill from scratch, bootstrap under the skills directory and install to .ai/skills with tool wrappers, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say "portable skill" explicitly. Does not trigger on creating custom agents (agent-creator) or slash commands and Copilot prompts (command-creator).
 ---
 
 # Skill Creator
@@ -21,6 +21,11 @@ At a high level, creating a skill goes like this:
 **Tool-specific execution** (how to spawn eval runs, baselines, description optimization, and reload steps) lives in your **tool wrapper** — read it after this shared skill. Do not assume subagents, a particular CLI, or a browser unless your wrapper documents them.
 
 Your job is to figure out where the user is in this process and help them progress. If they already have a draft skill, go straight to eval/iterate. If they prefer a lightweight pass without formal evals, follow their lead.
+
+## When NOT to Use
+
+- **Creating a custom agent** — use [../agent-creator/SKILL.md](../agent-creator/SKILL.md), which follows a shared-first layout for agents
+- **Creating a slash command or Copilot prompt** — use [../command-creator/SKILL.md](../command-creator/SKILL.md), which follows a shared-first layout for commands
 
 ---
 

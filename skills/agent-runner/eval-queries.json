@@ -51,7 +51,7 @@
     "query": "research this feature and produce an implementation plan",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: research/plan workflow -> research-guide or research-plan-harness"
+    "rationale": "near-miss: research/plan workflow -> research-guide or dev-workflow-orchestrator"
   },
   {
     "query": "create a feature worktree for this branch",
@@ -93,6 +93,6 @@
     "query": "start the research planning harness for this new feature",
     "should_trigger": false,
     "split": "validation",
-    "rationale": "validation negative: fixed harness pipeline -> research-plan-harness"
+    "rationale": "validation negative: fixed harness pipeline -> dev-workflow-orchestrator"
   }
 ]

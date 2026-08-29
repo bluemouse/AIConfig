@@ -1,5 +1,7 @@
 # GLSL Examples and Output Patterns
 
+> Examples below use `#version 450 core` (or `#version 450` for Vulkan) for cases that do not require 4.6-specific features. `#version 460 core` is the baseline when 4.6 features are needed.
+
 ## Table of contents
 
 1. Minimal OpenGL vertex/fragment pair

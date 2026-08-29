@@ -19,7 +19,7 @@ API-agnostic architecture for a low-level GPU renderer. The concepts hold across
 
 - High-level engine runtime work (Unity C# SRP scripts, Unreal C++ gameplay/render plugins) — use engine docs; this skill covers architecture only
 - Concrete API calls (`Vk*`, `vkCmd*`, `ID3D12*`, Metal objects) — use [vulkan-dev](../vulkan-dev/SKILL.md) for Vulkan (or the matching API skill when available)
-- Immediate-mode UI draw streams — use **imgui-guide**
+- Immediate-mode UI draw streams — out of scope for this skill set
 - GLSL language, layouts, SPIR-V bindings, compile validation — use [glsl-coding](../glsl-coding/SKILL.md)
 - WebGL-only or driver-managed rendering with no explicit memory/sync ownership
 - CPU-side C++ allocator/ownership design (arenas, PMR, smart pointers) — use [cpp-memory-guide](../cpp-memory-guide/SKILL.md) (GPU device memory stays in [references/gpu-memory-strategy.md](references/gpu-memory-strategy.md))
@@ -71,7 +71,7 @@ Conceptual parallels only — not engine API how-tos.
 | UE timeline semaphores / RDG barrier automation | [references/synchronization.md](references/synchronization.md) |
 | Unity HDR Output / UE HDR display pipeline | [references/hdr-output.md](references/hdr-output.md) |
 
-## Reference Routing
+## Reference routing
 
 | Task | Read |
 |------|------|
@@ -102,7 +102,7 @@ Conceptual parallels only — not engine API how-tos.
 - Reading the GPU visible count back to size a CPU draw loop defeats GPU-driven rendering — use indirect draw, see [references/gpu-driven-rendering.md](references/gpu-driven-rendering.md).
 - Async-compute passes need queue ownership + cross-queue waits at graph boundaries, not just intra-queue barriers.
 
-## Progressive Disclosure
+## Progressive disclosure
 
 - Read [references/render-graph.md](references/render-graph.md) - Load when ordering passes, automating barriers/transitions, or aliasing transient targets
 - Read [references/shader-system.md](references/shader-system.md) - Load when compiling shaders, handling variants/permutations, reflection, or hot-reload
@@ -130,6 +130,5 @@ Paths below assume `<SKILL_ROOT>` is the directory containing this skill's `SKIL
 | OpenUSD Hydra 2.0 scene-index pipelines | [../usd-hydra2-dev/SKILL.md](../usd-hydra2-dev/SKILL.md) |
 | GLSL language, layouts, SPIR-V bindings | [../glsl-coding/SKILL.md](../glsl-coding/SKILL.md) |
 | GLSL shader effects and techniques | [../shader-guide/SKILL.md](../shader-guide/SKILL.md) |
-| Immediate-mode UI draw stream to GPU | **imgui-guide** — `.ai/skills/imgui-guide/SKILL.md` when installed |
 
 When a companion is installed to `.ai/skills/<name>/`, read that copy and resolve `<SKILL_ROOT>` from its directory.

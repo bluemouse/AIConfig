@@ -52,9 +52,7 @@ what separate `deep` from `standard`.
 
 This skill produces the in-chat review report. When the user asks to post findings as PR
 review comments on a **GitHub** repo, finish the review first, then follow the shared
-skill's **Posting to GitHub** section and hand off to
-[github-guide](../../../.ai/skills/github-guide/SKILL.md) (or the installed
-`.github/skills/github-guide/SKILL.md` wrapper).
+skill's **Posting to GitHub** section, which hands off to `github-guide` for delivery.
 
 ## Wrapper policy
 

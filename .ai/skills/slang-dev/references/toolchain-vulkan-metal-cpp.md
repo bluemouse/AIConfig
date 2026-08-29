@@ -37,11 +37,13 @@ slangc shader.slang -entry computeMain -stage compute -target spirv     -profile
 Warnings and macros:
 
 ```bash
-slangc shader.slang -entry main -stage compute -target spirv -profile glsl_460 -Wall -Wextra -Werror all -o main.spv
+slangc shader.slang -entry main -stage compute -target spirv -profile glsl_460 -o main.spv
 slangc shader.slang -entry main -stage compute -target spirv -DMY_FEATURE=1 -o main.spv
 ```
 
-Choose `-profile glsl_450` or newer to match the engine's minimum Vulkan feature level.
+Note: warning flags are version-specific (`-W<id>`, `-warnings-as-errors`, `-warnings-disable`, etc.) and should be verified against `slangc -help` for the installed version. slangc does not accept GCC-style aggregate warning flags (e.g. all-warnings or warnings-as-error booleans); use the `-W<id>` / `-warnings-as-errors` forms above instead.
+
+Choose `-profile glsl_450` or newer to match the engine's minimum Vulkan feature level. The examples in this guide use `glsl_460` as the default profile.
 
 ### Multi-target and preprocessor rules
 

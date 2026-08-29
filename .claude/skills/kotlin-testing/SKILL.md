@@ -1,6 +1,13 @@
 ---
 name: kotlin-testing
-description: "Write, fix, and configure plain Kotlin/JVM tests with kotlin.test, JUnit Platform, Kotest, MockK, coroutine tests, property/data-driven tests, Kover coverage, and flaky-test triage. Use when adding or updating Kotlin tests, fixing failing or flaky tests, choosing test frameworks, or debugging assertion/coroutine test failures \u2014 even if the user says \"add tests\" without naming a framework. For Gradle build engineering, test task wiring, version catalogs, dependency resolution, CI, or build cache, use gradle-dev. For production Kotlin language/API design, use kotlin-coding. Excludes Android, KMP, Native, JS/Web, backend, and platform-specific testing."
+description: Write, fix, and configure plain Kotlin/JVM tests with kotlin.test, JUnit
+  Platform, Kotest, MockK, coroutine tests, property/data-driven tests, Kover coverage,
+  and flaky-test triage. Use when adding or updating Kotlin tests, fixing failing
+  or flaky tests, choosing test frameworks, or debugging assertion/coroutine test
+  failures — even if the user says "add tests" without naming a framework. For Gradle
+  build engineering, test task wiring, version catalogs, dependency resolution, CI,
+  or build cache, use gradle-dev. For production Kotlin language/API design, use kotlin-coding.
+  Excludes Android, KMP, Native, JS/Web, backend, and platform-specific testing.
 ---
 
 # kotlin-testing wrapper for Claude Code

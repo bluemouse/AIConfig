@@ -1,6 +1,14 @@
 ---
 name: kotlin-coding
-description: "Write, review, refactor, debug, and explain plain Kotlin/JVM language code, standard-library APIs, idioms, coroutines, and kotlinc workflows. Use when implementing Kotlin classes or functions, reviewing Kotlin diffs, fixing compiler or runtime errors, choosing stdlib APIs, or improving null-safety and type modeling \u2014 even if the user says \"Kotlin help\" without naming a topic. For test design, frameworks, mocks, property tests, coverage, or flaky-test triage, use kotlin-testing. For Gradle build files, version catalogs, task wiring, CI, or build cache, use gradle-dev. For Android Gradle Plugin builds, use gradle-android-dev. Excludes Android, KMP, Kotlin/Native, Kotlin/JS/Web, Compose, Ktor/backend, and platform-specific architecture."
+description: Write, review, refactor, debug, and explain plain Kotlin/JVM language
+  code, standard-library APIs, idioms, coroutines, and kotlinc workflows. Use when
+  implementing Kotlin classes or functions, reviewing Kotlin diffs, fixing compiler
+  or runtime errors, choosing stdlib APIs, or improving null-safety and type modeling
+  — even if the user says "Kotlin help" without naming a topic. For test design, frameworks,
+  mocks, property tests, coverage, or flaky-test triage, use kotlin-testing. For Gradle
+  build files, version catalogs, task wiring, CI, or build cache, use gradle-dev.
+  For Android Gradle Plugin builds, use gradle-android-dev. Excludes Android, KMP,
+  Kotlin/Native, Kotlin/JS/Web, Compose, Ktor/backend, and platform-specific architecture.
 ---
 
 # kotlin-coding wrapper for Cursor

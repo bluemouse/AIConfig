@@ -44,7 +44,7 @@ not a validator):
 python .ai/skills/vulkan-dev/scripts/vulkan_antipattern_scan.py <paths> [--severity info|medium|high]
 ```
 
-## Companion skills
+## Companion Skills
 
 | Task | Path |
 |------|------|

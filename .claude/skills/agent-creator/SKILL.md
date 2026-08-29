@@ -3,9 +3,10 @@ name: agent-creator
 description: Create portable custom agents for GitHub Copilot, Cursor, and Claude
   Code using a shared-first layout, and iteratively improve them. Use when users want
   to create an agent from scratch, bootstrap under the agents directory and install
-  to .ai/agents with tool wrappers, edit or optimize an existing agent, tune an
-  agent's description for better triggering, or explain portable agent structure —
-  even if they do not say "portable agent" explicitly.
+  to .ai/agents with tool wrappers, edit or optimize an existing agent, tune an agent's
+  description for better triggering, or explain portable agent structure — even if
+  they do not say "portable agent" explicitly. Does not trigger on creating skills
+  (skill-creator) or slash commands and Copilot prompts (command-creator).
 ---
 
 # agent-creator (Claude Code)

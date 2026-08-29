@@ -18,7 +18,7 @@ Resolve `<SKILL_ROOT>` as `../../../.ai/skills/advisory-council/`. Resolve paths
 
 This wrapper adds Claude Code-native execution. When this wrapper and the shared skill disagree on mechanics, follow this wrapper for Claude Code.
 
-## Discovery and Reload
+## Discovery and reload
 
 - Project skills: `.claude/skills/<name>/SKILL.md` plus shared under `.ai/skills/<name>/`
 - Restart or reload the Claude Code session after installing or editing skills

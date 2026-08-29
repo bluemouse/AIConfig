@@ -74,7 +74,7 @@ Prioritize correctness, reflection-validated layout, and measurable performance.
 - **Many entry points × backends** → [scripts/slang_compile_matrix.py](scripts/slang_compile_matrix.py) with a JSON manifest
 - **VkDescriptorSetLayout / pipeline after SPIR-V** → [`../vulkan-dev/SKILL.md`](../vulkan-dev/SKILL.md)
 
-## Reference Routing
+## Reference routing
 
 | Task | Read |
 |------|------|
@@ -109,7 +109,7 @@ Prioritize correctness, reflection-validated layout, and measurable performance.
 - Suggested commands/API calls target the same entry points the code declares
 - Performance advice names bottleneck and tradeoff
 
-## Progressive Disclosure
+## Progressive disclosure
 
 - [references/language-grammar.md](references/language-grammar.md) — load for modules, syntax, capabilities, ParameterBlock, entry points
 - [references/toolchain-vulkan-metal-cpp.md](references/toolchain-vulkan-metal-cpp.md) — load for `slangc`, C++ API, reflection, backend layout

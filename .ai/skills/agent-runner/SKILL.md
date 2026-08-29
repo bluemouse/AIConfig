@@ -22,7 +22,7 @@ Delegate one independent problem domain per subagent. Give every subagent only t
 
 - **Structured diff or code review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md), including `deep` parallel scope passes and prompts like "review this diff"
 - **Skill or agent eval loops** — use [../skill-creator/SKILL.md](../skill-creator/SKILL.md) or [../agent-creator/SKILL.md](../agent-creator/SKILL.md)
-- **Research/plan harness orchestration** — use [../research-plan-harness/SKILL.md](../research-plan-harness/SKILL.md) for the fixed multi-role research → plan pipeline
+- **Dev-workflow orchestration** — use [../dev-workflow-orchestrator/SKILL.md](../dev-workflow-orchestrator/SKILL.md) for the fixed multi-role research → plan pipeline
 - **Git worktree mechanics alone** — use [../git-guide/SKILL.md](../git-guide/SKILL.md); this skill may reference worktrees for isolation but does not replace git-guide
 - **Active local merge/rebase integration** — use
   [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md); while that operation is active,
@@ -178,4 +178,4 @@ Do not dispatch a packet such as "fix all tests." Do not omit errors, constraint
 | Structured diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
 | Git worktrees, commit, push, rebase | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
 | Skill eval loops and description optimization | [../skill-creator/SKILL.md](../skill-creator/SKILL.md) |
-| Research → plan harness orchestration | [../research-plan-harness/SKILL.md](../research-plan-harness/SKILL.md) |
+| Dev-workflow orchestration | [../dev-workflow-orchestrator/SKILL.md](../dev-workflow-orchestrator/SKILL.md) |

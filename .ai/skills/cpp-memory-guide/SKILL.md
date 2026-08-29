@@ -51,7 +51,7 @@ C++20 memory design: ownership, allocators, RAII, smart pointers, `span`, PMR, a
 - **`std::pmr::monotonic_buffer_resource`** - Standard scratch arena for parse/build temporaries
 - **Rule of 0/3/5** - Let RAII members manage resources; see decision table in [references/raii-and-smart-pointers.md](references/raii-and-smart-pointers.md)
 
-## Reference Routing
+## Reference routing
 
 | Task | Read |
 |------|------|
@@ -72,7 +72,7 @@ C++20 memory design: ownership, allocators, RAII, smart pointers, `span`, PMR, a
 - Mixing `new`/`delete` with `malloc`/`free` is undefined behavior — pick one strategy.
 - Exception-throwing code paths must not leak — RAII or scope guards, never manual cleanup only on success path.
 
-## Progressive Disclosure
+## Progressive disclosure
 
 - Read [references/caller-owns-memory.md](references/caller-owns-memory.md) - Load when designing an API's allocation boundary or a non-allocating library
 - Read [references/ownership-and-lifetimes.md](references/ownership-and-lifetimes.md) - Load when deciding who owns/frees memory and how long it lives

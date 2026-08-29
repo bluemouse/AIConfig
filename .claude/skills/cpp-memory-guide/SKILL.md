@@ -1,6 +1,11 @@
 ---
 name: cpp-memory-guide
-description: "Guide C++20 memory design: RAII, unique_ptr/shared_ptr, std::span borrows, caller-owned buffers, arena/bump/pool allocators, std::pmr, ownership and lifetimes, virtual-memory reserve/commit, leak/use-after-free prevention. Use when implementing or reviewing C++ allocation, custom allocators, move semantics, API buffer ownership, or debugging memory bugs with sanitizers \u2014 even if the user says 'memory leak' without naming an allocator."
+description: 'Guide C++20 memory design: RAII, unique_ptr/shared_ptr, std::span borrows,
+  caller-owned buffers, arena/bump/pool allocators, std::pmr, ownership and lifetimes,
+  virtual-memory reserve/commit, leak/use-after-free prevention. Use when implementing
+  or reviewing C++ allocation, custom allocators, move semantics, API buffer ownership,
+  or debugging memory bugs with sanitizers — even if the user says ''memory leak''
+  without naming an allocator.'
 ---
 
 # cpp-memory-guide (Claude Code)
@@ -30,7 +35,7 @@ python .ai/skills/skill-creator/scripts/install_portable_skill.py \
 
 If bootstrap source exists at `skills/cpp-memory-guide/`, use that path for `--source` only.
 
-## Companion skills
+## Companion Skills
 
 | Task | Path |
 |------|------|

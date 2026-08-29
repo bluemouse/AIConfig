@@ -18,6 +18,8 @@ override fun onCreate(savedInstanceState: Bundle?) {
 }
 ```
 
+`enableEdgeToEdge()` comes from `androidx.activity` and is an extension on `ComponentActivity` (which `AppCompatActivity` extends), so the activity must be a `ComponentActivity` — not a plain `android.app.Activity`. Import `androidx.activity.enableEdgeToEdge`.
+
 In Compose, apply safe insets on interactive content:
 
 ```kotlin

@@ -40,8 +40,8 @@ constexpr T clamp(T value, T lo, T hi) {
     return value < lo ? lo : (value > hi ? hi : value);
 }
 
-void log_reading(std::span<const double> samples) {
-    std::format("count={}\n", samples.size());
+std::string log_reading(std::span<const double> samples) {
+    return std::format("count={}\n", samples.size());
 }
 ```
 
@@ -128,7 +128,6 @@ Follow CP.* in [core-guidelines.md](core-guidelines.md). C++20 additions:
 ```cpp
 #include <jthread>
 #include <mutex>
-#include <scoped_lock>
 
 class WorkerPool {
 public:

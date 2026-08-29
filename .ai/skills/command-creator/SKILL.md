@@ -1,6 +1,6 @@
 ---
 name: command-creator
-description: Create portable slash commands and Copilot prompts for Cursor, Claude Code, and GitHub Copilot using a shared-first layout, and iteratively improve them. Use when users want to create a command or prompt from scratch, bootstrap under the commands directory and install to .cursor/commands, .claude/commands, and .github/prompts, edit or review an existing command, or explain portable command structure and best practices — even if they do not say "slash command" or "prompt file" explicitly.
+description: Create portable slash commands and Copilot prompts for Cursor, Claude Code, and GitHub Copilot using a shared-first layout, and iteratively improve them. Use when users want to create a command or prompt from scratch, bootstrap under the commands directory and install to .cursor/commands, .claude/commands, and .github/prompts, edit or review an existing command, or explain portable command structure and best practices — even if they do not say "slash command" or "prompt file" explicitly. Does not trigger on creating skills (skill-creator) or custom agents (agent-creator).
 ---
 
 # Command Creator
@@ -21,6 +21,11 @@ At a high level, creating a command goes like this:
 **Tool-specific execution** (reload steps, frontmatter keys such as `allowed-tools`, `agent`, or `tools`, and IDE-specific argument syntax) lives in your **tool wrapper** — read it after this shared skill. Do not assume a particular IDE unless your wrapper documents it.
 
 Your job is to figure out where the user is in this process and help them progress. If they already have a draft command, go straight to review and iterate.
+
+## When NOT to Use
+
+- **Creating a skill** — use [../skill-creator/SKILL.md](../skill-creator/SKILL.md) when the workflow needs passive discovery, autonomous triggering, or bundled resources
+- **Creating a custom agent** — use [../agent-creator/SKILL.md](../agent-creator/SKILL.md) for portable custom agents
 
 ---
 

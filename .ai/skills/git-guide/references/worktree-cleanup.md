@@ -29,7 +29,7 @@ git branch -d feature/auth-redesign
 
 # Remove stale worktree (but keep if uncommitted changes)
 git worktree remove ../project-feature-db --force
-git branch -d feature/db-migration
+git branch -D feature/db-migration
 
 # Verify cleanup
 git worktree list
@@ -42,4 +42,4 @@ git worktree list
 - Identify feature worktrees with `*-feature-*` pattern
 - Check merge status: `git branch --merged <source>`
 - Categorize: merged, stale (>30 days no commits), active
-- Remove selected: `git worktree remove <path>` + `git branch -d <branch>`
+- Remove selected: `git worktree remove <path>` + `git branch -d <branch>` (merged) or `git branch -D <branch>` (stale/unmerged)

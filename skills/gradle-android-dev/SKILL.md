@@ -105,7 +105,7 @@ When debugging Android build failures, return:
 | Plain Kotlin test design and frameworks | [kotlin-testing](../kotlin-testing/SKILL.md) |
 | Kotlin language/API design | [kotlin-coding](../kotlin-coding/SKILL.md) |
 
-## Companion skills
+## Companion Skills
 
 - Use [gradle-dev](../gradle-dev/SKILL.md) for all non-Android Gradle fundamentals and shared build engineering.
 - Use [kotlin-coding](../kotlin-coding/SKILL.md) for Kotlin language/API/design issues in Android source code.

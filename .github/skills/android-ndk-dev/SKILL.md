@@ -1,6 +1,12 @@
 ---
 name: android-ndk-dev
-description: "android ndk and c++ integration guidance for kotlin android 16/api 36+ apps. use when designing, implementing, reviewing, or troubleshooting native libraries, cmake, externalnativebuild, jni bridges from kotlin, prebuilt libraries, abi packaging, native memory, native threads, image/media processing in c++, native debugging, sanitizers, symbols, and performance profiling. prefer android-dev for app-layer kotlin, compose, sdk camera/media, permissions, and release architecture. prefer android-vulkan-dev for vulkan renderer internals and gpu rendering through the ndk."
+description: android ndk and c++ integration guidance for kotlin android 16/api 36+
+  apps. use when designing, implementing, reviewing, or troubleshooting native libraries,
+  cmake, externalnativebuild, jni bridges from kotlin, prebuilt libraries, abi packaging,
+  native memory, native threads, image/media processing in c++, native debugging,
+  sanitizers, symbols, and performance profiling. prefer android-dev for app-layer
+  kotlin, compose, sdk camera/media, permissions, and release architecture. prefer
+  android-vulkan-dev for vulkan renderer internals and gpu rendering through the ndk.
 ---
 
 # android-ndk-dev wrapper for GitHub Copilot

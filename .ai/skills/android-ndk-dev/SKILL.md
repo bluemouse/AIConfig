@@ -26,7 +26,7 @@ Assume Android 16/API 36+ target and Kotlin-only managed app code. JNI is still 
 - C++ allocator/ownership design (arenas, PMR) — [cpp-memory-guide](../cpp-memory-guide/SKILL.md)
 - GoogleTest/CMake native test targets — [cpp-testing](../cpp-testing/SKILL.md)
 
-## Scope boundaries
+## Scope
 
 - Own C++, CMake, `externalNativeBuild`, JNI, native libraries, ABIs, native memory/threading, native camera/media/image processing, debug symbols, sanitizers, and native profiling.
 - Do not duplicate app architecture, Compose UI, permissions, or SDK camera/media guidance; use [android-dev](../android-dev/SKILL.md) for those.
@@ -131,12 +131,9 @@ class NativeImageProcessor : Closeable {
 | App-layer Kotlin/Compose | [android-dev](../android-dev/SKILL.md) |
 | Vulkan on Android | [android-vulkan-dev](../android-vulkan-dev/SKILL.md) |
 
-## Companion skills
+## Companion Skills
 
-- Use [android-dev](../android-dev/SKILL.md) for Kotlin app architecture, Compose, SDK camera/media, and permissions.
-- Use [android-vulkan-dev](../android-vulkan-dev/SKILL.md) for Vulkan GPU rendering through the NDK.
-- Use [gradle-android-dev](../gradle-android-dev/SKILL.md) for AGP build configuration and release packaging.
-- Use [cpp-coding](../cpp-coding/SKILL.md), [cpp-memory-guide](../cpp-memory-guide/SKILL.md), and [cpp-testing](../cpp-testing/SKILL.md) for C++ implementation and testing.
+For cross-skill delegation, see the Reference routing table above.
 
 ## References
 

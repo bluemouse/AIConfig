@@ -35,7 +35,7 @@ python .ai/skills/skill-creator/scripts/install_portable_skill.py \
 
 If bootstrap source exists at `skills/cpp-memory-guide/`, use that path for `--source` only.
 
-## Companion skills
+## Companion Skills
 
 | Task | Path |
 |------|------|

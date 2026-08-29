@@ -6,6 +6,7 @@ description: Create portable slash commands and Copilot prompts for Cursor, Clau
   the commands directory and install to .cursor/commands, .claude/commands, and .github/prompts,
   edit or review an existing command, or explain portable command structure and best
   practices — even if they do not say "slash command" or "prompt file" explicitly.
+  Does not trigger on creating skills (skill-creator) or custom agents (agent-creator).
 ---
 
 # command-creator wrapper for GitHub Copilot

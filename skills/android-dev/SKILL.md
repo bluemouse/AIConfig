@@ -26,7 +26,7 @@ Assume `compileSdk` and `targetSdk` are Android 16 / API 36 or newer unless the 
 - C++, CMake, JNI, native libraries, native memory, or NDK debugging — [android-ndk-dev](../android-ndk-dev/SKILL.md)
 - Vulkan instance/device/swapchain/shader/pipeline/synchronization on Android — [android-vulkan-dev](../android-vulkan-dev/SKILL.md)
 
-## Scope boundaries
+## Scope
 
 - Use Kotlin only for app code. Do not generate Java classes. XML is allowed only for manifest, resources, legacy interop, and build metadata.
 - Use this skill for architecture, Compose UI, camera/media SDK usage, app permissions, testing, accessibility, memory/performance, and release quality.
@@ -153,13 +153,9 @@ Minimum gates:
 | JNI, CMake, native libraries | [android-ndk-dev](../android-ndk-dev/SKILL.md) |
 | Vulkan renderer on Android | [android-vulkan-dev](../android-vulkan-dev/SKILL.md) |
 
-## Companion skills
+## Companion Skills
 
-- Use [kotlin-coding](../kotlin-coding/SKILL.md) for plain Kotlin language, stdlib, and coroutine semantics.
-- Use [kotlin-testing](../kotlin-testing/SKILL.md) for test design, mocks, and flaky-test triage.
-- Use [gradle-android-dev](../gradle-android-dev/SKILL.md) for Android Gradle Plugin and build engineering.
-- Use [android-ndk-dev](../android-ndk-dev/SKILL.md) for C++/JNI/native-library integration.
-- Use [android-vulkan-dev](../android-vulkan-dev/SKILL.md) for Vulkan GPU rendering through the NDK.
+For cross-skill delegation, see the Reference routing table above.
 
 ## References
 

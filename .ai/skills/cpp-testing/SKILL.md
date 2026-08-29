@@ -93,7 +93,7 @@ Use `--gtest_filter` for single-test reproduction and CTest `-R` for suite filte
 Complete the two-part checklist in **Quick Completion Checklist** below before marking
 test work done.
 
-## Reference Routing
+## Reference routing
 
 | Task | Read |
 |------|------|
@@ -109,7 +109,7 @@ need [gtest-gmock.md](references/gtest-gmock.md),
 [coverage-sanitizers.md](references/coverage-sanitizers.md) (TSAN), and
 [debugging-flakiness.md](references/debugging-flakiness.md).
 
-## Quick Completion Checklist
+## Quick completion checklist
 
 Two-part gate — complete **both** before marking test work done:
 

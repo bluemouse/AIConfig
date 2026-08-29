@@ -24,7 +24,7 @@ Corrected or scoped down:
 
 ## Kotlin-coding audit alignment
 
-This testing skill supersedes test-design content in [kotlin-coding/references/testing-debugging.md](../../kotlin-coding/references/testing-debugging.md). It delegates production-language design questions to [kotlin-coding](../../kotlin-coding/SKILL.md) and aligns with its rules:
+This testing skill supersedes test-design content in [kotlin-coding/references/debugging.md](../../kotlin-coding/references/debugging.md). It delegates production-language design questions to [kotlin-coding](../../kotlin-coding/SKILL.md) and aligns with its rules:
 
 - Prefer `val`, immutable public APIs, and explicit domain types.
 - Avoid unsafe `!!`; test nullability and platform-type boundaries.

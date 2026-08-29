@@ -1,6 +1,14 @@
 ---
 name: gradle-android-dev
-description: "Configure and debug Android Gradle Plugin builds for Android app and library projects. Use when working with com.android.application, com.android.library, android blocks, SDK levels, namespace, build types, product flavors, variants, lint, R8/ProGuard, signing, Android unit/instrumented test tasks, Android Studio sync, AGP upgrades, or Android build performance \u2014 even if the user says \"fix my Android Gradle sync\" without naming AGP. Always use gradle-dev for general Gradle concepts, wrapper, Kotlin DSL, dependency management, build cache/configuration cache, CI, and custom task logic. For plain Kotlin test design, use kotlin-testing. For Kotlin source language/API fixes, use kotlin-coding."
+description: Configure and debug Android Gradle Plugin builds for Android app and
+  library projects. Use when working with com.android.application, com.android.library,
+  android blocks, SDK levels, namespace, build types, product flavors, variants, lint,
+  R8/ProGuard, signing, Android unit/instrumented test tasks, Android Studio sync,
+  AGP upgrades, or Android build performance — even if the user says "fix my Android
+  Gradle sync" without naming AGP. Always use gradle-dev for general Gradle concepts,
+  wrapper, Kotlin DSL, dependency management, build cache/configuration cache, CI,
+  and custom task logic. For plain Kotlin test design, use kotlin-testing. For Kotlin
+  source language/API fixes, use kotlin-coding.
 ---
 
 # gradle-android-dev wrapper for GitHub Copilot

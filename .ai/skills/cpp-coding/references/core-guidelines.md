@@ -465,7 +465,7 @@ constexpr int MAX_SENSORS = 256;
 class ThreadSafeQueue {
 public:
     void push(int value) {
-        std::lock_guard<std::mutex> lock(mutex_);  // CP.44: named!
+        std::lock_guard lock(mutex_);  // CP.44: named! (CTAD, C++17+)
         queue_.push(value);
         cv_.notify_one();
     }

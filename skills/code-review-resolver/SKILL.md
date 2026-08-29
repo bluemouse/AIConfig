@@ -103,7 +103,7 @@ Separate findings into two groups:
 ### 2. Classify and route upstream findings
 
 For each upstream finding, create a backward handoff packet following the canonical
-format in [../../dev-workflow-orchestrator/references/backward-handoff-format.md](../../dev-workflow-orchestrator/references/backward-handoff-format.md).
+format in [../dev-workflow-orchestrator/references/backward-handoff-format.md](../dev-workflow-orchestrator/references/backward-handoff-format.md).
 Set the routing and source fields as follows:
 
 - `From phase`: code-review

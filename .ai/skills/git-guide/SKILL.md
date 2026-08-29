@@ -89,7 +89,7 @@ verification, or a merge report.
 - Hooks in `.git/hooks/` are not version-controlled — share via `core.hooksPath` pointing at a tracked directory
 - `.gitignore` only ignores untracked files; already-tracked files need `git rm --cached` to stop tracking
 
-## Progressive Disclosure
+## Progressive disclosure
 
 ### Commit and Branch Operations
 

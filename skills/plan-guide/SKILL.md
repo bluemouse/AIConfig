@@ -32,8 +32,6 @@ Your job is to **author and repair implementation plans**, not to implement code
 
 **Boundary vs code-professor:** this skill outputs an **implementation plan** with tasks and TDD specs. [../code-professor/SKILL.md](../code-professor/SKILL.md) outputs **learning guides**. Narrow codebase inspection here supports task breakdown; full orientation or module teaching belongs in code-professor.
 
-**Boundary vs legacy template:** this bootstrap skill authors **implementation plans** and runs the plan-reviewer repair loop. It is not the legacy plan-document lifecycle template at repo root `references/skills/plan-guide/SKILL.md` (`plan-research`, `plan-create`, `plan-continue`).
-
 ## Companion Skills
 
 - Preferred input from [../research-guide/SKILL.md](../research-guide/SKILL.md); optional audit via [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
@@ -247,7 +245,7 @@ Recommend `Execution mode: staged` when **any** of the following conditions hold
 
 When none of these conditions hold, default to `Execution mode: linear` (the current behavior).
 
-#### Single-stage guard (fr-14)
+#### Single-stage guard (single-stage guard)
 
 Do **not** recommend staged mode when the plan decomposes to a single stage. A single-stage staged plan degenerates to linear mode plus overhead (stage-exit review with no remaining stages to check). If the plan has only one stage, use `Execution mode: linear`.
 

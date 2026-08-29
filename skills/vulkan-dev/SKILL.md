@@ -78,7 +78,7 @@ This skill is the concrete **Vulkan 1.3 implementation** layer: the `Vk*` object
 - **Compute work** → [references/compute.md](references/compute.md) for dispatch/workgroups/subgroups; link up to [`../gpu-rendering-guide/SKILL.md`](../gpu-rendering-guide/SKILL.md) for GPU-driven architecture.
 - **Performance / stutter** → the triage workflow in [references/best-practices.md](references/best-practices.md) (classify CPU/GPU/bandwidth/stutter bound first).
 
-## Reference Routing
+## Reference routing
 
 | Task | Read |
 |------|------|
@@ -104,7 +104,7 @@ This skill is the concrete **Vulkan 1.3 implementation** layer: the `Vk*` object
 - A queue-family release barrier without a matching acquire (or vice versa) corrupts the resource; semaphores order queues but do not replace intra-queue barriers.
 - Enabling/using a feature (descriptor indexing, timeline semaphores) without enabling its bit at device creation is invalid — query and enable first.
 
-## Progressive Disclosure
+## Progressive disclosure
 
 - Read [references/capabilities-and-setup.md](references/capabilities-and-setup.md) — Load when choosing a target, probing features/extensions, ranking devices, or designing fallbacks
 - Read [references/device-and-queues.md](references/device-and-queues.md) — Load when creating the instance/device or selecting queue families

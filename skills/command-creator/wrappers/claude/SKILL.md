@@ -3,7 +3,7 @@ name: command-creator
 description: "Create portable slash commands and Copilot prompts for Cursor, Claude Code, and GitHub Copilot using a shared-first layout, and iteratively improve them. Use when users want to create a command or prompt from scratch, bootstrap under the commands directory and install to .cursor/commands, .claude/commands, and .github/prompts, edit or review an existing command, or explain portable command structure and best practices — even if they do not say \"slash command\" or \"prompt file\" explicitly."
 ---
 
-# command-creator wrapper for Claude Code
+# command-creator (Claude Code)
 
 This is a tool-specific wrapper. The canonical shared skill is:
 
@@ -11,9 +11,10 @@ This is a tool-specific wrapper. The canonical shared skill is:
 
 Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<COMMAND_CREATOR_ROOT>` as `../../../.ai/skills/command-creator` and resolve paths to `scripts/` and `references/` from that shared skill directory.
 
-## Claude Code-specific information
+## Discovery and reload
 
-Restart or reload the Claude Code session after adding or editing this skill or installed commands so the agent rediscovers them.
+- Project skills: `.claude/skills/<name>/SKILL.md` plus shared under `.ai/skills/<name>/`
+- **Restart or reload** the Claude Code session after adding or editing this skill or installed commands so the agent rediscovers them.
 
 ## Install or refresh command-creator
 

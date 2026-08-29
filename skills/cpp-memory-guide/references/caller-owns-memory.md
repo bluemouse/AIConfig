@@ -2,7 +2,7 @@
 
 ## Guideline
 
-A library never allocates heap memory; the caller provides all storage and the library operates on it. Functions take non-owning views (`std::span`, references) plus capacities and return status or `std::expected` — never freshly allocated owning pointers.
+A library never allocates heap memory; the caller provides all storage and the library operates on it. Functions take non-owning views (`std::span`, references) plus capacities and return status or error codes (`std::optional<std::errc>`) — never freshly allocated owning pointers.
 
 ## Rationale
 
@@ -19,26 +19,26 @@ Hidden allocations are the root of leaks, ownership confusion, and surprise allo
 ## Example
 
 ```cpp
+#include <optional>
 #include <span>
-#include <expected>
 
 struct EntitySystem {
     std::span<float> x, y;
     std::size_t count = 0;
 };
 
-[[nodiscard]] std::expected<void, std::errc>
+[[nodiscard]] std::optional<std::errc>
 entity_system_init(EntitySystem& s, std::span<float> x, std::span<float> y) {
-    if (x.size() != y.size()) return std::unexpected(std::errc::invalid_argument);
+    if (x.size() != y.size()) return std::errc::invalid_argument;
     s.x = x; s.y = y; s.count = 0;
-    return {};
+    return std::nullopt;
 }
 
-[[nodiscard]] std::expected<void, std::errc>
+[[nodiscard]] std::optional<std::errc>
 entity_add(EntitySystem& s, float x, float y) {
-    if (s.count >= s.x.size()) return std::unexpected(std::errc::no_buffer_space);
+    if (s.count >= s.x.size()) return std::errc::no_buffer_space;
     s.x[s.count] = x; s.y[s.count] = y; ++s.count;
-    return {};
+    return std::nullopt;
 }
 
 // Bad: hidden allocation — who owns it? leaks on exception paths, heap on hot path.

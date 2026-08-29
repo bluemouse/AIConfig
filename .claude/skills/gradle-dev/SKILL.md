@@ -1,6 +1,14 @@
 ---
 name: gradle-dev
-description: "Create, review, troubleshoot, optimize, and modernize Gradle builds for general JVM, Kotlin, and Java projects. Use when editing build.gradle.kts, settings.gradle.kts, gradle.properties, version catalogs, wrapper usage, custom tasks/plugins, test/check task wiring, CI commands, build cache, or configuration cache \u2014 even if the user says \"fix my Gradle build\" without naming a topic. For Android Gradle Plugin, AGP modules, variants, lint, R8, SDK configuration, or Android build performance, use gradle-android-dev. For Kotlin test design and framework patterns, use kotlin-testing. For Kotlin language/API design, use kotlin-coding. Avoids Android-specific guidance unless cross-referencing gradle-android-dev."
+description: Create, review, troubleshoot, optimize, and modernize Gradle builds for
+  general JVM, Kotlin, and Java projects. Use when editing build.gradle.kts, settings.gradle.kts,
+  gradle.properties, version catalogs, wrapper usage, custom tasks/plugins, test/check
+  task wiring, CI commands, build cache, or configuration cache — even if the user
+  says "fix my Gradle build" without naming a topic. For Android Gradle Plugin, AGP
+  modules, variants, lint, R8, SDK configuration, or Android build performance, use
+  gradle-android-dev. For Kotlin test design and framework patterns, use kotlin-testing.
+  For Kotlin language/API design, use kotlin-coding. Avoids Android-specific guidance
+  unless cross-referencing gradle-android-dev.
 ---
 
 # gradle-dev wrapper for Claude Code

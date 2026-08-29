@@ -156,7 +156,7 @@ gh api graphql -f query='mutation($t:ID!){resolveReviewThread(input:{threadId:$t
   -f t=PRRT_kwDOxxxxx
 ```
 
-## Progressive Disclosure
+## Progressive disclosure
 
 Each reference is a trigger — read only the one matching the user's intent; do not preload everything.
 

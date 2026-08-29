@@ -26,12 +26,10 @@ Assume the app targets Android 16/API 36+ but still performs runtime Vulkan capa
 - Kotlin app architecture, Compose UI, CameraX/Media3, permissions — [android-dev](../android-dev/SKILL.md)
 - General C++20 style — [cpp-coding](../cpp-coding/SKILL.md)
 
-## Scope boundaries
+## Scope
 
 - Own Android Vulkan surface/swapchain lifecycle, WSI extensions, AHB external memory, AVP selection, wide color, camera/media GPU interop, and Android-specific performance/validation.
-- Use [android-ndk-dev](../android-ndk-dev/SKILL.md) for Gradle/CMake/JNI/native-library setup and native memory/threading fundamentals.
-- Use [android-dev](../android-dev/SKILL.md) for app-layer Kotlin, Compose UI, CameraX/Media3, permissions, storage, ViewModels, and release architecture.
-- Use [vulkan-dev](../vulkan-dev/SKILL.md) for Vulkan 1.3 implementation defaults (synchronization2, dynamic rendering, timeline semaphores, descriptor indexing).
+- For cross-skill delegation, see the Reference routing table below.
 
 ## When Vulkan is appropriate
 
@@ -124,13 +122,9 @@ The native side should convert `Surface` to `ANativeWindow`, create a Vulkan sur
 | JNI/CMake/native libs | [android-ndk-dev](../android-ndk-dev/SKILL.md) |
 | Kotlin app layer | [android-dev](../android-dev/SKILL.md) |
 
-## Companion skills
+## Companion Skills
 
-- Use [vulkan-dev](../vulkan-dev/SKILL.md) for concrete Vulkan 1.3 API implementation.
-- Use [gpu-rendering-guide](../gpu-rendering-guide/SKILL.md) for API-agnostic renderer architecture.
-- Use [android-ndk-dev](../android-ndk-dev/SKILL.md) for CMake/JNI/native-library integration.
-- Use [android-dev](../android-dev/SKILL.md) for Kotlin app architecture, Compose, and SDK camera/media.
-- Use [cpp-coding](../cpp-coding/SKILL.md) for C++ renderer host code style.
+For cross-skill delegation, see the Reference routing table above. Use [cpp-coding](../cpp-coding/SKILL.md) for C++ renderer host code style.
 
 ## References
 

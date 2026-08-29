@@ -29,7 +29,7 @@
 
 ## git-guide commit reference (synthesis metadata)
 
-- **Path:** `skills-ref/git-guide/references/commit.md`
+- **Path:** `skills/git-guide/references/commit.md`
 - **Last reviewed:** 2026-07-06
 - **Used for:**
   - Cross-check type detection patterns; **not** copied auto-commit behavior

@@ -9,7 +9,7 @@ Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. 
 
 Write and review plain Kotlin/JVM code: language semantics, standard-library APIs, idioms, coroutines-as-language, `kotlinc`, compiler/runtime debugging, and maintainability. Read bundled references on demand — do not load all reference files unless the task requires them.
 
-For test design, framework choice, mocks/fakes, coroutine tests, property tests, coverage, and flaky-test triage, use [kotlin-testing](../kotlin-testing/SKILL.md). That skill supersedes test-design content formerly in [testing-debugging.md](references/testing-debugging.md).
+For test design, framework choice, mocks/fakes, coroutine tests, property tests, coverage, and flaky-test triage, use [kotlin-testing](../kotlin-testing/SKILL.md). That skill supersedes test-design content formerly in [debugging.md](references/debugging.md).
 
 ## Scope
 
@@ -96,13 +96,13 @@ scripts/kotlin_project_check.sh --full
 | Standard-library packages, collections, sequences, strings | [stdlib-api.md](references/stdlib-api.md) |
 | Idiomatic modeling, null safety, errors, coroutines, Java interop | [patterns.md](references/patterns.md) |
 | Project layout, `kotlinc`, compiler options, ktlint/detekt, KDoc | [tooling.md](references/tooling.md) |
-| Compiler/runtime/performance debugging | [testing-debugging.md](references/testing-debugging.md) |
+| Compiler/runtime/performance debugging | [debugging.md](references/debugging.md) |
 | Style, correctness, efficiency, API design, review checklist | [best-practices.md](references/best-practices.md) |
 | Test design, Kotest, MockK, coroutine tests, Kover, flakes | [kotlin-testing](../kotlin-testing/SKILL.md) |
 | Gradle build files, catalogs, task wiring, CI, caches | [gradle-dev](../gradle-dev/SKILL.md) |
 | AGP, Android variants, lint, R8, signing | [gradle-android-dev](../gradle-android-dev/SKILL.md) |
 
-## Companion skills
+## Companion Skills
 
 - Use [kotlin-testing](../kotlin-testing/SKILL.md) for test design, framework choice, mocks/fakes, coroutine tests, property tests, coverage, and flaky-test debugging.
 - Use [gradle-dev](../gradle-dev/SKILL.md) for Gradle build engineering, version catalogs, task wiring, CI, and build/configuration cache.
@@ -115,6 +115,6 @@ scripts/kotlin_project_check.sh --full
 - [stdlib-api.md](references/stdlib-api.md): standard-library packages, collections, sequences, strings, ranges, scope functions, resources, and API selection.
 - [patterns.md](references/patterns.md): idiomatic modeling, null safety, errors, extension functions, DSLs, coroutines, and Java interop boundaries.
 - [tooling.md](references/tooling.md): project layout, `kotlinc`, compiler options, lint/static analysis, KDoc/Dokka, and dependency hygiene pointers.
-- [testing-debugging.md](references/testing-debugging.md): compiler/runtime/performance debugging and verification commands (not test design).
+- [debugging.md](references/debugging.md): compiler/runtime/performance debugging and verification commands (not test design).
 - [best-practices.md](references/best-practices.md): style, correctness, efficiency, API design, concurrency, documentation, and review checklist.
 - [source-notes.md](references/source-notes.md): source synthesis and scope notes.
