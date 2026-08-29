@@ -19,7 +19,7 @@ gh api --method POST repos/{owner}/{repo}/pulls/123/reviews \
   -f 'comments[][path]=src/app.ts' \
   -F 'comments[][line]=42' \
   -f 'comments[][side]=RIGHT' \
-  -f 'comments[][body]=**critical (blocking):** guard against null here.'
+  -f 'comments[][body]=**blocker (blocking):** guard against null here.'
 ```
 
 ## Map code-reviewer findings
@@ -28,17 +28,17 @@ After `code-reviewer` returns its Output Contract, translate each finding:
 
 1. **Inline comments** — one per finding that has `Location: path:line`. Set `path`, `line`, `side=RIGHT` (default), and compose `body` as `{severity prefix} {What's wrong}. {Why it matters}. {Proposed fix}` using the table in the parent skill's **Handoff from code-reviewer** section.
 2. **Summary `body`** — Overall Verdict, a Findings bullet list (with "(see inline)" for anchored items), and material open questions.
-3. **`event`** — per the parent skill's **Handoff from code-reviewer** verdict table: `REQUEST_CHANGES` for any `critical` finding on someone else's PR; `APPROVE` when merge-ready; default to `COMMENT` when posting actionable inline feedback; on your own PR use `COMMENT` only (never `APPROVE` or `REQUEST_CHANGES`).
+3. **`event`** — per the parent skill's **Handoff from code-reviewer** verdict table: `REQUEST_CHANGES` for any `blocker` finding on someone else's PR; `APPROVE` when merge-ready; default to `COMMENT` when posting actionable inline feedback; on your own PR use `COMMENT` only (never `APPROVE` or `REQUEST_CHANGES`).
 
-Example mapping from one `critical` finding at `src/app.ts:42`:
+Example mapping from one `blocker` finding at `src/app.ts:42`:
 
 ```bash
 # body (review summary)
--f body=$'## Summary\nNot merge-ready: one critical correctness issue.\n\n## Findings\n- **critical** — `src/app.ts:42`: null user not guarded (see inline)'
+-f body=$'## Summary\nNot merge-ready: one blocker correctness issue.\n\n## Findings\n- **blocker** — `src/app.ts:42`: null user not guarded (see inline)'
 
 # inline comment
 -f 'comments[][path]=src/app.ts' -F 'comments[][line]=42' -f 'comments[][side]=RIGHT' \
-  -f 'comments[][body]=**critical (blocking):** `user` may be null here. Crashes the handler on missing session. Guard or return early.'
+  -f 'comments[][body]=**blocker (blocking):** `user` may be null here. Crashes the handler on missing session. Guard or return early.'
 ```
 
 For many comments, build the JSON and pipe it instead of repeating `comments[]`:

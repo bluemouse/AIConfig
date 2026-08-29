@@ -126,7 +126,7 @@ For each changed behavior, ask:
 
 Classify gaps as:
 
-- **critical:** missing test for core requirement or known bug reproduction.
+- **blocker:** missing test for core requirement or known bug reproduction.
 - **major:** missing platform, integration, failure-path, or concurrency coverage.
 - **minor:** missing low-risk edge case or documentation of manual verification.
 

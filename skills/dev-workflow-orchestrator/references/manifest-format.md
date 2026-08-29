@@ -98,7 +98,7 @@ The run manifest is the orchestrator's state file. It tracks the entire run so t
 | # | From | To | Finding id | Packet path | Resolved |
 |---|------|----|-----------|-------------|----------|
 | 1 | implement | plan | pr-003 | back-impl-to-plan-1.md | yes |
-| 2 | code-review | research | cr-007 | back-review-to-research-1.md | in-progress |
+| 2 | code-review | research | cr-007 | back-code-review-to-research-1.md | in-progress |
 
 ## Validation log
 | Phase | Check | Severity | Finding | Orchestrator decision | Justification |

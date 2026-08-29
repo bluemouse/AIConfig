@@ -16,8 +16,8 @@ during, and after scope passes — they govern *how* to review, while
   file you read; drop hypotheticals with no supporting code path (especially security).
 - **Constructive and specific** — state what is wrong, why it matters, and a concrete fix
   or next step; avoid vague "consider refactoring" without a target.
-- **Blockers vs improvements vs questions** — map to `critical`, `important`, and
-  `suggestion`; use **Open questions** when ambiguity could change the verdict, not when
+- **Blockers vs improvements vs questions** — map to `blocker`, `major`, and
+  `minor`; use **Open questions** when ambiguity could change the verdict, not when
   you are guessing at a defect.
 - **Respect scope** — flag accidental or unrelated changes; do not expand the review into
   unrequested redesign of code the diff did not touch.
@@ -89,7 +89,7 @@ A reportable finding must include:
 
 | Field | Bar |
 |-------|-----|
-| Severity | Justified: `critical` = should block merge; `important` = should fix soon; `suggestion` = optional improvement |
+| Severity | Justified: `blocker` = should block merge; `major` = should fix soon; `minor` = optional improvement |
 | Location | `path:line` when possible; `unanchored` only when the issue is cross-cutting |
 | Evidence | Grounded in the diff or a file you read for this review |
 | Impact | Concrete failure mode, regression, or operational risk — not personal taste |
@@ -110,14 +110,14 @@ A reportable finding must include:
 - Explain **why** the issue matters (user impact, data loss, incident class, maintenance
   cost).
 - Prefer **one merged finding** over three comments on the same root cause.
-- For design disagreements at `important` or below, describe the tradeoff and a minimal
-  alternative — do not demand a full rewrite unless `critical`.
+- For design disagreements at `major` or below, describe the tradeoff and a minimal
+  alternative — do not demand a full rewrite unless `blocker`.
 - When something is done well (clear test, good error handling, sensible abstraction),
   note it briefly in **What went well** — only when substantive; skip empty praise.
 
 ## PR and change hygiene signals
 
-Flag (usually as `suggestion` or open questions) when the change makes review harder:
+Flag (usually as `minor` or open questions) when the change makes review harder:
 
 - Diff too large or mixed concerns (refactor + behavior + formatting) — suggest
   [pull-request-guide](../../pull-request-guide/SKILL.md) for split/self-review.

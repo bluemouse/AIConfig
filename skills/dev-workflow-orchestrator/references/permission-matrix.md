@@ -20,7 +20,7 @@ When `Run mode: staged` (declared in plan §10 and confirmed at the plan gate), 
 | Phase | Per-stage commit | Per-stage push | Final deep review fixes |
 |-------|-----------------|----------------|--------------------------|
 | Implement (staged) | yes (per-stage commit via commit-message-writer → git-guide) | no (default) | n/a |
-| Final deep review | yes (new commits on top, no amend/rebase — fr-13) | no (unless asked) | yes (finding-resolver applies fixes as new commits) |
+| Final deep review | yes (new commits on top, no amend/rebase — fr-13) | no (unless asked) | yes (code-review-resolver applies fixes as new commits) |
 
 **Terminology note:** "per-stage commit" and "staged-mode commit" refer to commits produced at the end of each stage in staged mode. This is distinct from the existing "staged only" in the Commit phase row above, which refers to git's staging area (`git add`). The two concepts are unrelated.
 

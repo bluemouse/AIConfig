@@ -66,11 +66,11 @@ Each loop has a doer (produces), a checker (audits), a round cap, an exit condit
 
 | Element | Value |
 |---------|-------|
-| Doer | finding-resolver |
+| Doer | code-review-resolver |
 | Checker | code-reviewer |
 | Round cap | 5 |
 | Exit (accept) | verdict `ready to commit` or `ready with notes` |
-| Exit (revise) | verdict `needs revision` → finding-resolver applies fixes |
+| Exit (revise) | verdict `needs revision` → code-review-resolver applies fixes |
 | Feedback format | `cr-NNN` findings + verdict field |
 | Terminal labels | `ready to commit`, `ready with notes`, `needs revision`, `NOT READY` (cap hit) |
 | Escalation | `NOT READY` → root cause classification → backward edge to Plan or Research, or ask user |
@@ -99,11 +99,11 @@ Runs after all stages commit, on the cumulative commit range. This is the full c
 
 | Element | Value |
 |---------|-------|
-| Doer | finding-resolver |
+| Doer | code-review-resolver |
 | Checker | code-reviewer |
 | Round cap | 5 |
 | Exit (accept) | verdict `ready to commit` or `ready with notes` |
-| Exit (revise) | verdict `needs revision` → finding-resolver applies fixes as new commits on top (fr-13, no amend/rebase) |
+| Exit (revise) | verdict `needs revision` → code-review-resolver applies fixes as new commits on top (fr-13, no amend/rebase) |
 | Feedback format | `cr-NNN` findings + verdict field |
 | Terminal labels | `ready to commit`, `ready with notes`, `needs revision`, `NOT READY` (cap hit) |
 | Escalation | `NOT READY` → root cause classification → backward edge to Plan or Research, or ask user |

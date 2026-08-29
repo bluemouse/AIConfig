@@ -2,7 +2,7 @@
 
 Run **only the Code Review phase** (Loop 4) of the dev-workflow harness to acceptance or
 escalation, without driving the full pipeline. Loads the `dev-workflow-orchestrator`
-skill's Phase 4 procedure and the `finding-resolver` / `code-reviewer` skills.
+skill's Phase 4 procedure and the `code-review-resolver` / `code-reviewer` skills.
 
 ## Steps
 
@@ -38,7 +38,7 @@ skill's Phase 4 procedure and the `finding-resolver` / `code-reviewer` skills.
    orchestrator's procedure changes, update all four `/dev-workflow-*` commands:
    - **Record baseline**: `python .ai/tools/dev-workflow/record_baseline.py --phase code-review --run-dir .ai/workflow/<slug>`
    - **Pre-flight**: `python .ai/tools/dev-workflow/check_pre_phase.py --phase code-review --run-dir .ai/workflow/<slug>`. If it fails, stop and report.
-   - **Doer pass**: invoke `finding-resolver` as a named pass with input `30-implementation-report.md` (and the working-tree diff) and output `41-fix-report.md`.
+   - **Doer pass**: invoke `code-review-resolver` as a named pass with input `30-implementation-report.md` (and the working-tree diff) and output `41-fix-report.md`.
    - **Checker pass**: invoke `code-reviewer` as a named pass with input `30-implementation-report.md` (and the working-tree diff) and output `40-code-review.md`. The checker must include `root-cause-phase` on every finding.
    - **Post-flight**: `python .ai/tools/dev-workflow/check_post_phase.py --phase code-review --run-dir .ai/workflow/<slug>`. If it fails, stop and report.
    - **Read verdict** from the `## Verdict` heading in `40-code-review.md`.
@@ -50,7 +50,7 @@ skill's Phase 4 procedure and the `finding-resolver` / `code-reviewer` skills.
    - **Update manifest** after every step.
 
 5. **Enforce Code Review mode**: write source only to fix review findings (via
-   `finding-resolver`); write to `40-*.md` and `41-*.md` artifacts; run tests and builds;
+   `code-review-resolver`); write to `40-*.md` and `41-*.md` artifacts; run tests and builds;
    no committing, pushing, deploying, or scope expansion beyond findings.
 
 ## Optional arguments

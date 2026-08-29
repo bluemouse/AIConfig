@@ -13,6 +13,17 @@ Per-phase permissions define what each phase is allowed to do. The principle of 
 | Code Review | yes | yes (fixes only) | yes | yes | no | no | no |
 | Commit | yes | no | yes (commit record) | no | yes (staged only) | no (unless asked) | no |
 
+## Staged-mode permissions
+
+When `Run mode: staged` (declared in plan §10 and confirmed at the plan gate), the following additional permissions apply:
+
+| Phase | Per-stage commit | Per-stage push | Final deep review fixes |
+|-------|-----------------|----------------|--------------------------|
+| Implement (staged) | yes (per-stage commit via commit-message-writer → git-guide) | no (default) | n/a |
+| Final deep review | yes (new commits on top, no amend/rebase — fr-13) | no (unless asked) | yes (code-review-resolver applies fixes as new commits) |
+
+**Terminology note:** "per-stage commit" and "staged-mode commit" refer to commits produced at the end of each stage in staged mode. This is distinct from the existing "staged only" in the Commit phase row above, which refers to git's staging area (`git add`). The two concepts are unrelated.
+
 ## Principles
 
 1. **Doer/checker = write/read split.** In each loop, the doer writes (research-guide writes the report, plan-executor writes code) and the checker reads (research-reviewer reads the report, implementation-auditor reads the code). The checker never writes the thing it's checking.

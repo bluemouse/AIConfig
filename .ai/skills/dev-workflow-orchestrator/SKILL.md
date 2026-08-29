@@ -44,7 +44,7 @@ You are the brain; the skills are the producers.
 | Research | [../research-guide/SKILL.md](../research-guide/SKILL.md) | [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md) |
 | Plan | [../plan-guide/SKILL.md](../plan-guide/SKILL.md) | [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) |
 | Implement | [../plan-executor/SKILL.md](../plan-executor/SKILL.md) | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |
-| Code Review | [../finding-resolver/SKILL.md](../finding-resolver/SKILL.md) | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
+| Code Review | [../code-review-resolver/SKILL.md](../code-review-resolver/SKILL.md) | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
 | Commit | [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) | — |
 
 ## Workflow topology
@@ -96,6 +96,65 @@ for the requirement ledger format.
 4. Continue from the current state — do not restart completed phases unless a backward edge requires it.
 
 ### Within a phase (the loop)
+
+**Mode check:** If `Run mode: staged` and current phase is Implement, run the **staged iterator procedure** (see below) instead of the standard doer → checker loop. The staged iterator *replaces* the top-level Implement phase loop; the existing Loop 3 (plan-executor → implementation-auditor) runs *inside* the iterator per stage as the doer/checker pair. Otherwise, proceed with the Clarify or all-other-phases path below.
+
+#### Staged iterator procedure (staged mode, Implement phase)
+
+When `Run mode: staged`, iterate over the stages declared in plan §10 `Stage breakdown`:
+
+For each stage N (1..total_stages):
+
+1. **Record baseline:** Run `record_baseline.py --phase implement --run-dir <path>`.
+2. **Pre-flight:** Run `check_pre_phase.py --phase implement --run-dir <path>`.
+3. **Doer pass (stage-scoped):** Invoke `plan-executor` as a named pass with `--stage stage-N`. Tell it:
+   - The input artifact path (`20-implementation-plan.md`).
+   - The output artifact path (`30-stageN-implementation-report.md`).
+   - The stage scope (only execute tasks listed in §10 Stage breakdown for stage-N).
+   - The mode constraints for this phase.
+4. **Checker pass:** Invoke `implementation-auditor` as a named pass. Tell it:
+   - The input artifact path (`30-stageN-implementation-report.md`).
+   - The output artifact path (`31-stageN-implementation-audit.md`).
+   - To include the `root-cause-phase` field on every finding.
+5. **Read verdict:** Read the audit verdict.
+6. **Post-flight:** Run `check_post_phase.py --phase implement --run-dir <path>`.
+7. **Route audit:**
+   - `pass` or `pass with risks` → proceed to review (step 8).
+   - `fail` with `root-cause-phase: local` → escalate to full Loop 3 for this stage (increment round counter, cap 3). Loop back to doer pass.
+   - `fail` with `root-cause-phase: upstream` → backward edge to Plan or Research.
+   - `blocked` → escalate immediately.
+8. **Review pass (light):** Invoke `code-reviewer` as a named pass. Tell it:
+   - The input artifact path (the stage's diff or commit range).
+   - The output artifact path (`40-stageN-code-review.md`).
+   - Review effort: `standard` (not `deep` — the final deep review runs after all stages).
+   - To include the `root-cause-phase` field on every finding.
+9. **Read review verdict:**
+   - `ready to commit` or `ready with notes` → proceed to commit (step 10).
+   - `needs revision` with `blocker` or `major` findings → escalate to full Loop 4 for this stage (increment round counter, cap 5). Loop back to code-review-resolver.
+   - `needs revision` with `root-cause-phase: upstream` → backward edge to Plan or Research.
+10. **Per-stage commit:** Invoke `commit-message-writer` to draft the commit message, then `git-guide` to commit (per-stage commit only, no push). Record the commit hash in the manifest's `## Stage status` section.
+11. **Stage-exit review (between stages, not after the last stage):** If this is not the last stage, invoke `plan-reviewer` in stage-exit review mode. The last stage skips the stage-exit review because the final deep review (below) provides cumulative validation. Tell it:
+    - The input artifacts: `30-stageN-implementation-report.md`, `31-stageN-implementation-audit.md`, `40-stageN-code-review.md`, plan §4 assumptions, §10 stage breakdown for remaining stages.
+    - The output artifact path (`32-stageN-exit-review.md`).
+    - To emit `plan-current` or `plan-stale` per the stage-exit review contract.
+12. **Route stage-exit verdict:**
+    - `plan-current` → `plan-guide` performs light refinement of the next stage's task details. Proceed to next stage.
+    - `plan-stale` → `plan-guide` performs full re-plan (re-derive remaining stages). `plan-reviewer` re-audits the revised plan. User re-confirms at a plan gate. Then resume from the affected stage.
+13. **Update manifest** after every step.
+
+**Backward-edge independence:** In-stage backward edges (e.g., `code-reviewer` `design` finding → `plan-guide`) are root-cause repair of the *current* stage's plan. They do **not** automatically trigger the between-stage stage-exit review. The two mechanisms are independent — backward edges repair root cause in-stage; stage-exit review judges forward-looking plan validity between stages.
+
+#### Final deep review (after all stages commit)
+
+After all stages are committed:
+
+1. Run Loop 4 (code-review-resolver → code-reviewer, cap 5, `deep` effort) on the cumulative commit range (`HEAD~N..HEAD` where N = number of stage commits). Output: `40-final-deep-review.md`.
+2. If findings: `code-review-resolver` applies fixes as **new commits on top** (no `git rebase`, no `git commit --amend` — fr-13). `code-reviewer` re-reviews the new commit range. Output: `41-final-fix-report.md`.
+3. If a finding is design-level with `root-cause-phase: plan`, create a backward edge to `plan-guide` for root-cause repair.
+4. If reader-visible contracts changed, invoke `techdoc-reviewer` (fr-11).
+5. Proceed to terminal delivery: `pull-request-guide` → `github-guide` (PR creation, once).
+
+#### Standard procedure (linear mode, or non-Implement phases in staged mode)
 
 For the Clarify phase (Phase 0), there is no checker. Run prompt-clarifier as a single named pass:
 
@@ -215,7 +274,7 @@ Mode is enforced by the orchestrator's per-phase instructions (prevention) and t
 
 ### Code review mode
 
-- Write source only to fix review findings (via finding-resolver).
+- Write source only to fix review findings (via code-review-resolver).
 - Write to `40-*.md` and `41-*.md` artifacts.
 - Run tests and builds — sync terminal mode, same contract as Implement mode.
 - No committing, pushing, deploying, or scope expansion beyond findings.

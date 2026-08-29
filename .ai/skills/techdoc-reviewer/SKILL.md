@@ -228,11 +228,11 @@ presenting speculation as a defect.
 
 Use the severity definitions in the rubric:
 
-- `critical`: unsafe instructions, likely data loss, severe security exposure, or major outage;
-- `high`: primary workflow or important contract is wrong or cannot succeed;
-- `medium`: material misinformation or omission likely to produce incorrect integration,
+- `blocker`: unsafe instructions, likely data loss, severe security exposure, or major outage;
+- `major`: primary workflow or important contract is wrong or cannot succeed;
+- `minor`: material misinformation or omission likely to produce incorrect integration,
   operation, or debugging decisions, with a workaround;
-- `low`: real but limited reader cost;
+- `nit`: real but limited reader cost;
 - suppress `nit` findings by default.
 
 Do not report a style preference, an unchanged unrelated document, or a hypothetical gap with no

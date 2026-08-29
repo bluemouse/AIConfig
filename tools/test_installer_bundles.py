@@ -58,7 +58,7 @@ class BundleLoadingTests(unittest.TestCase):
                 "plan-reviewer",
                 "plan-executor",
                 "implementation-auditor",
-                "finding-resolver",
+                "code-review-resolver",
                 "code-reviewer",
                 "commit-message-writer",
             }),

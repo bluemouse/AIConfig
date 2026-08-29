@@ -114,7 +114,7 @@ DEV_WORKFLOW_SKILLS = (
     "plan-reviewer",
     "plan-executor",
     "implementation-auditor",
-    "finding-resolver",
+    "code-review-resolver",
     "code-reviewer",
     "commit-message-writer",
 )

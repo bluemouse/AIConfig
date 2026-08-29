@@ -124,11 +124,11 @@ are distinguishable from normal operation.
 
 | Severity | Reader impact |
 | --- | --- |
-| `critical` | Plausible severe security exposure, destructive action, data loss, major outage, or fundamentally unsafe operation. |
-| `high` | A primary documented workflow cannot succeed, an important public/operational contract is materially wrong, or a required prerequisite or constraint is absent and likely blocks users. |
-| `medium` | A material ambiguity, omission, inconsistency, or semantic mismatch can cause incorrect integration, implementation, debugging, or operations, but a workaround normally exists. |
-| `low` | Limited but real discoverability, terminology, maintainability, or clarity cost. |
-| `nit` | Grammar or preference with no material technical impact; suppress by default. |
+| `blocker` | Plausible severe security exposure, destructive action, data loss, major outage, or fundamentally unsafe operation. |
+| `major` | A primary documented workflow cannot succeed, an important public/operational contract is materially wrong, or a required prerequisite or constraint is absent and likely blocks users. |
+| `minor` | A material ambiguity, omission, inconsistency, or semantic mismatch can cause incorrect integration, implementation, debugging, or operations, but a workaround normally exists. |
+| `nit` | Limited but real discoverability, terminology, maintainability, or clarity cost. |
+| `nit` (suppress) | Grammar or preference with no material technical impact; suppress by default. |
 
 Do not inflate severity merely because a claim is technically wrong. Classify the likely harm to
 the reader who follows it.

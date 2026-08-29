@@ -44,7 +44,7 @@ You are the brain; the skills are the producers.
 | Research | [../research-guide/SKILL.md](../research-guide/SKILL.md) | [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md) |
 | Plan | [../plan-guide/SKILL.md](../plan-guide/SKILL.md) | [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) |
 | Implement | [../plan-executor/SKILL.md](../plan-executor/SKILL.md) | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |
-| Code Review | [../finding-resolver/SKILL.md](../finding-resolver/SKILL.md) | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
+| Code Review | [../code-review-resolver/SKILL.md](../code-review-resolver/SKILL.md) | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
 | Commit | [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) | — |
 
 ## Workflow topology
@@ -130,7 +130,7 @@ For each stage N (1..total_stages):
    - To include the `root-cause-phase` field on every finding.
 9. **Read review verdict:**
    - `ready to commit` or `ready with notes` → proceed to commit (step 10).
-   - `needs revision` with `blocker` or `major` findings → escalate to full Loop 4 for this stage (increment round counter, cap 5). Loop back to finding-resolver.
+   - `needs revision` with `blocker` or `major` findings → escalate to full Loop 4 for this stage (increment round counter, cap 5). Loop back to code-review-resolver.
    - `needs revision` with `root-cause-phase: upstream` → backward edge to Plan or Research.
 10. **Per-stage commit:** Invoke `commit-message-writer` to draft the commit message, then `git-guide` to commit (per-stage commit only, no push). Record the commit hash in the manifest's `## Stage status` section.
 11. **Stage-exit review (between stages, not after the last stage):** If this is not the last stage, invoke `plan-reviewer` in stage-exit review mode. The last stage skips the stage-exit review because the final deep review (below) provides cumulative validation. Tell it:
@@ -148,8 +148,8 @@ For each stage N (1..total_stages):
 
 After all stages are committed:
 
-1. Run Loop 4 (finding-resolver → code-reviewer, cap 5, `deep` effort) on the cumulative commit range (`HEAD~N..HEAD` where N = number of stage commits). Output: `40-final-deep-review.md`.
-2. If findings: `finding-resolver` applies fixes as **new commits on top** (no `git rebase`, no `git commit --amend` — fr-13). `code-reviewer` re-reviews the new commit range. Output: `41-final-fix-report.md`.
+1. Run Loop 4 (code-review-resolver → code-reviewer, cap 5, `deep` effort) on the cumulative commit range (`HEAD~N..HEAD` where N = number of stage commits). Output: `40-final-deep-review.md`.
+2. If findings: `code-review-resolver` applies fixes as **new commits on top** (no `git rebase`, no `git commit --amend` — fr-13). `code-reviewer` re-reviews the new commit range. Output: `41-final-fix-report.md`.
 3. If a finding is design-level with `root-cause-phase: plan`, create a backward edge to `plan-guide` for root-cause repair.
 4. If reader-visible contracts changed, invoke `techdoc-reviewer` (fr-11).
 5. Proceed to terminal delivery: `pull-request-guide` → `github-guide` (PR creation, once).
@@ -274,7 +274,7 @@ Mode is enforced by the orchestrator's per-phase instructions (prevention) and t
 
 ### Code review mode
 
-- Write source only to fix review findings (via finding-resolver).
+- Write source only to fix review findings (via code-review-resolver).
 - Write to `40-*.md` and `41-*.md` artifacts.
 - Run tests and builds — sync terminal mode, same contract as Implement mode.
 - No committing, pushing, deploying, or scope expansion beyond findings.

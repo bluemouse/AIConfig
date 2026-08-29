@@ -4,7 +4,7 @@
 - Run directory: <path>
 - Source review: <path to 40-code-review.md>
 - Created: <ISO timestamp>
-- Resolver: finding-resolver
+- Resolver: code-review-resolver
 
 ## Summary
 - Total findings: <count>
@@ -27,7 +27,7 @@
 
 | Finding id | Target phase | Packet path | Root cause summary |
 |------------|-------------|--------------|-------------------|
-| cr-003 | plan | back-review-to-plan-1.md | <one-line summary> |
+| cr-003 | plan | back-code-review-to-plan-1.md | <one-line summary> |
 
 ## Verification
 

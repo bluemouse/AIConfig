@@ -124,7 +124,7 @@ class DevWorkflowConstantsTests(unittest.TestCase):
                 "plan-reviewer",
                 "plan-executor",
                 "implementation-auditor",
-                "finding-resolver",
+                "code-review-resolver",
                 "code-reviewer",
                 "commit-message-writer",
             ),
@@ -296,10 +296,10 @@ class DevWorkflowBundleTests(unittest.TestCase):
         self.assertEqual(
             selection.skills,
             [
+                "code-review-resolver",
                 "code-reviewer",
                 "commit-message-writer",
                 "dev-workflow-orchestrator",
-                "finding-resolver",
                 "implementation-auditor",
                 "plan-executor",
                 "plan-guide",

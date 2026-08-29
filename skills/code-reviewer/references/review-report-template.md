@@ -33,25 +33,25 @@ Optional — 0–3 substantive bullets only; omit the section if nothing notable
 
 ## 4. Findings
 
-List confirmed findings first, ordered by severity (`critical` → `important` → `suggestion`).
+List confirmed findings first, ordered by severity (`blocker` → `major` → `minor`).
 If none were found, write `No findings.` and skip the table and detail subsections.
 
 | id | severity | scope | location | issue | root-cause-phase | recommended route |
 |----|----------|-------|----------|-------|------------------|-------------------|
-| cr-001 | critical/important/suggestion | design/correctness/maintainability/security/performance/tests/scope-intent-alignment | `path:line` or unanchored | <short title> | local/research/plan/implement/code-review | direct edit / plan-executor / debugging-guide / plan-guide / test-driven-dev-guide / implementation-auditor |
+| cr-001 | blocker/major/minor | design/correctness/maintainability/security/performance/tests/scope-intent-alignment | `path:line` or unanchored | <short title> | local/research/plan/implement/code-review | direct edit / plan-executor / debugging-guide / plan-guide / test-driven-dev-guide / implementation-auditor |
 
 ### Finding details
 
 #### cr-001: [short title]
 
-- Severity: <critical | important | suggestion>
+- Severity: <blocker | major | minor>
 - Scope: <scope tag(s); comma-separate when merged from multiple scopes>
 - Location: `<path:line>` or `unanchored`
 - What is wrong: <concrete description grounded in the diff>
 - Why it matters: <regression, security, maintainability, or merge-risk impact>
 - Proposed fix: <actionable fix or improvement — not a vague suggestion>
 - Verdict (deep effort only): <CONFIRMED | PLAUSIBLE — omit at basic/standard effort>
-- root-cause-phase: <local | research | plan | implement | code-review> — use `local` when the finding is a code defect fixable by finding-resolver; use `research`, `plan`, or `implement` when the root cause traces to an earlier phase. When the dev-workflow-orchestrator is active, it reads this field to route backward handoff packets; outside the orchestrator, the field is informational.
+- root-cause-phase: <local | research | plan | implement | code-review> — use `local` when the finding is a code defect fixable by code-review-resolver; use `research`, `plan`, or `implement` when the root cause traces to an earlier phase. When the dev-workflow-orchestrator is active, it reads this field to route backward handoff packets; outside the orchestrator, the field is informational.
 - Recommended route: <direct scoped edit | plan-executor | debugging-guide | plan-guide | test-driven-dev-guide | implementation-auditor>
 
 ## 5. Open questions or assumptions
@@ -83,7 +83,7 @@ One line per scope actually run:
 
 ## 8. Overall verdict
 
-- Loop verdict: <ready to commit | ready with notes | needs revision> — `ready to commit` when no critical or important findings remain; `ready with notes` when only suggestion-level findings remain; `needs revision` when any critical or important finding remains. When the dev-workflow-orchestrator is active, it reads this field to route the code review loop; outside the orchestrator, use merge readiness below.
+- Loop verdict: <ready to commit | ready with notes | needs revision> — `ready to commit` when no blocker or major findings remain; `ready with notes` when only minor-level findings remain; `needs revision` when any blocker or major finding remains. When the dev-workflow-orchestrator is active, it reads this field to route the code review loop; outside the orchestrator, use merge readiness below.
 - Merge readiness: <ready | ready with fixes | not ready>
 - Risk summary: <one or two sentences on overall risk>
 - Top next actions:
@@ -98,11 +98,11 @@ Rules:
   not emit this template; reply in one sentence per parent skill **Empty Or Blocked Diff**.
 - Findings must be the largest section of the report.
 - Order findings by severity, then by impact within the same severity.
-- Use `critical` only for defects that should block merge (correctness bugs, security
+- Use `blocker` only for defects that should block merge (correctness bugs, security
   holes, data loss, broken invariants).
-- Use `important` for material issues that should be fixed before or immediately after
+- Use `major` for material issues that should be fixed before or immediately after
   merge.
-- Use `suggestion` for improvements that do not block merge.
+- Use `minor` for improvements that do not block merge.
 - Every finding needs a concrete proposed fix when one exists — prefer specific code or
   test changes over generic advice.
 - Reference exact files and lines when practical; mark `unanchored` when the issue spans
@@ -124,7 +124,7 @@ Rules:
 
 Severity → GitHub handoff (when posting via github-guide):
 
-- `critical` → `**critical (blocking):**` prefix
-- `important` → `**important:**` prefix
-- `suggestion` → `**suggestion:**` prefix
+- `blocker` → `**blocker (blocking):**` prefix
+- `major` → `**major:**` prefix
+- `minor` → `**minor:**` prefix
 - Anchored findings (`path:line`) → inline PR comments; unanchored → summary body only

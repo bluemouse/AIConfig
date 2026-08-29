@@ -360,7 +360,7 @@ patterns) before flagging anything. Cap yourself at 6 candidates for this
 scope.
 
 Return each candidate as a markdown block with: Severity
-(critical/important/suggestion), Location (file and line), What's wrong, Why it matters,
+(blocker/major/minor), Location (file and line), What's wrong, Why it matters,
 Proposed fix.
 ```
 
@@ -405,14 +405,32 @@ When invoked **inside the orchestrator**, the orchestrator assigns the output pa
 Findings that need code changes route back into the lifecycle by type. State the recommended
 route in the report so the fix does not stall:
 
-- Missing or incorrect behavior → implementation via [../plan-executor/SKILL.md](../plan-executor/SKILL.md) or a direct scoped edit.
+- Findings classified `root-cause-phase: local` (discrete code defects in the current diff) → [../code-review-resolver/SKILL.md](../code-review-resolver/SKILL.md) for targeted fixes and a fix report for re-review.
+- Missing or incorrect behavior spanning multiple tasks → implementation via [../plan-executor/SKILL.md](../plan-executor/SKILL.md).
 - Regression, crash, or unexplained failure → [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) to prove root cause before changing code.
 - Design or architecture mismatch → [../plan-guide/SKILL.md](../plan-guide/SKILL.md) to plan the repair.
 - Missing or weak tests → [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md), or [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) for requirement-level proof.
 - Missing, stale, unsafe, or contradictory technical documentation → [../techdoc-reviewer/SKILL.md](../techdoc-reviewer/SKILL.md) for evidence-based documentation review or synchronization.
 
-After the author applies fixes, re-run this skill on the amended diff before delivery. This
-skill does not apply the fixes itself.
+After fixes are applied (via [../code-review-resolver/SKILL.md](../code-review-resolver/SKILL.md) for
+`local` findings), re-run this skill on the amended diff before delivery. This skill does
+not apply the fixes itself.
+
+## Re-review mode
+
+When invoked as a re-review after [../code-review-resolver/SKILL.md](../code-review-resolver/SKILL.md),
+the input includes a finding disposition (which finding ids were `fixed`, `unresolved`,
+`deferred`, or `upstream`) and the amended diff. In re-review mode:
+
+1. **Verify fixed findings** — for each finding id marked `fixed`, confirm the amended diff
+   actually resolves the issue. If the fix is incomplete or wrong, raise a new finding
+   referencing the original finding id.
+2. **Carry forward unresolved/deferred findings** — mark any `unresolved` or `deferred`
+   findings as still-open in the re-review report.
+3. **Fresh pass for new findings** — run the standard review workflow on the amended diff to
+   catch any new issues introduced by the fixes.
+4. **Loop continuation** — the loop continues until the verdict is `ready to commit` or
+   `ready with notes`, or the round cap (5) is hit.
 
 ## Posting to GitHub
 
@@ -429,9 +447,9 @@ When the user asks to **post the review on GitHub** (or "submit review comments 
    [review-post.md](../github-guide/references/review-post.md) reference and map each
    finding per the **Handoff from code-reviewer** section in
    [github-guide](../github-guide/SKILL.md) (full verdict table):
-   - `critical` → `**critical (blocking):**` prefix; `REQUEST_CHANGES` when reviewing
+   - `blocker` → `**blocker (blocking):**` prefix; `REQUEST_CHANGES` when reviewing
      **someone else's** PR, `COMMENT` on **your own** PR (GitHub returns 422 otherwise)
-   - `important` → `**important:**`; `suggestion` → `**suggestion:**`
+   - `major` → `**major:**`; `minor` → `**minor:**`
    - file+line locations → inline `comments[]`; unanchored findings → summary body only
 3. Confirm auth and PR number (`gh auth status`, `gh pr view`) before posting.
 
@@ -469,6 +487,7 @@ tooling when available.
 
 | Task | Path |
 | --- | --- |
+| Apply targeted fixes to `local` findings and produce a fix report | [../code-review-resolver/SKILL.md](../code-review-resolver/SKILL.md) |
 | Local merge/rebase integration and verification | [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) |
 | Documentation review, documentation impact, and synchronization | [../techdoc-reviewer/SKILL.md](../techdoc-reviewer/SKILL.md) |
 | Pre-review correctness audit | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |

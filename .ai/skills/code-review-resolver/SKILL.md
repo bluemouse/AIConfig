@@ -1,9 +1,9 @@
 ---
-name: finding-resolver
-description: "Use when resolving, fixing, or addressing code review findings classified as local — applying targeted code fixes only to the specific findings, running verification, and producing a fix report for re-review. Also classifies findings as upstream and emits backward handoff packets when the root cause traces to an earlier phase. Triggers on prompts to fix review findings, resolve code review issues, address review comments, or apply review fixes — even when the user doesn't say 'finding resolver'. Does not trigger on code review itself (code-reviewer), plan execution (plan-executor), debugging a reproducible defect (debugging-guide), or git commit (git-commit)."
+name: code-review-resolver
+description: "Use when resolving, fixing, or addressing code review findings classified as local — applying targeted code fixes only to the specific findings, running verification, and producing a fix report for re-review. Also classifies findings as upstream and emits backward handoff packets when the root cause traces to an earlier phase. Triggers on prompts to fix review findings, resolve code review issues, address review comments, or apply review fixes — even when the user doesn't say 'code review resolver'. Does not trigger on code review itself (code-reviewer), plan execution (plan-executor), debugging a reproducible defect (debugging-guide), or git commit (git-commit)."
 ---
 
-# Finding Resolver
+# Code Review Resolver
 
 Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve
 paths to `references/` from that directory.
@@ -86,11 +86,13 @@ Always:
 Read the code review report. For each finding, extract:
 
 - Finding id (e.g., `cr-001`)
-- Severity (`blocker`, `major`, `minor`, `note`)
+- Severity (`blocker`, `major`, `minor`)
 - `root-cause-phase` field (`local`, `research`, `plan`, `implement`)
 - Location (file, line range, symbol)
-- Issue description
-- Required fix or recommendation
+- Scope (design/correctness/maintainability/security/performance/tests/scope-intent-alignment)
+- Issue description (What is wrong)
+- Why it matters
+- Proposed fix
 
 Separate findings into two groups:
 
@@ -100,20 +102,24 @@ Separate findings into two groups:
 
 ### 2. Classify and route upstream findings
 
-For each upstream finding, create a backward handoff packet. The packet must follow the
-backward handoff format defined by the dev-workflow-orchestrator. For each packet:
+For each upstream finding, create a backward handoff packet following the canonical
+format in [../../dev-workflow-orchestrator/references/backward-handoff-format.md](../../dev-workflow-orchestrator/references/backward-handoff-format.md).
+Set the routing and source fields as follows:
 
 - `From phase`: code-review
-- `To phase`: the `root-cause-phase` value
-- `Source finding`: the finding id and severity
-- `Root cause classification`: why this is not a local defect and why the target phase is
-  the root
-- `What the target phase must resolve`: the issue, why it matters, the required fix, and
-  evidence
-- `Context from the source phase`: what was attempted (if anything) and why local fix is
-  insufficient
+- `To phase`: the `root-cause-phase` value (must be `research`, `plan`, or `implement`)
+- `Backward edge count for target phase`: <n> of 2
+- `Created`: <ISO timestamp>
+- `Source finding` → `Finding id`: the finding id (e.g., `cr-007`)
+- `Source finding` → `Severity`: the finding severity (`blocker`/`major`/`minor`)
+- `Source finding` → `Source artifact`: path to `40-code-review.md`
+- `Root cause classification` → `Classification`: upstream
+- `Root cause classification` → `Why this is not a local defect`: <explanation>
+- `Root cause classification` → `Why the target phase is the root`: <explanation — trace to the earliest phase whose artifact is the cause>
+- `What the target phase must resolve` → `Issue`, `Why it matters`, `Required fix`, `Evidence`: <from the finding's what-is-wrong, why-it-matters, proposed-fix, plus file/symbol evidence>
+- `Context from the source phase` → `What was attempted`, `Why local fix is insufficient`, `Artifacts to review`: <what was attempted, why local fix is insufficient, paths to `41-fix-report.md` if any>
 
-Write each packet to `back-review-to-<target-phase>-<n>.md` in the run directory.
+Write each packet to `back-code-review-to-<target-phase>-<n>.md` in the run directory.
 
 Do not attempt a local fix for an upstream finding. A local patch for a systemic problem
 creates technical debt and hides the root cause.
@@ -125,7 +131,7 @@ fix order:
 
 1. Fix blockers first.
 2. Fix majors next.
-3. Fix minors and notes last (or defer them if the user or reviewer indicated they are
+3. Fix minors last (or defer them if the user or reviewer indicated they are
    optional).
 
 For each fix, identify:
@@ -188,6 +194,22 @@ as the default structure. The report must include:
 Do not create a report file in the repository unless the dev-workflow-orchestrator or user
 asks for one at a specific path. Otherwise, provide the report in the response or at the
 path the orchestrator specifies.
+
+## Re-review handoff contract
+
+After producing the fix report, hand off to [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
+for re-review. The handoff provides:
+
+- **Fix report path** (or in-chat content): the `41-fix-report.md` artifact or response.
+- **Amended diff**: the working-tree diff after all local fixes (not the original diff).
+- **Finding disposition**: which finding ids were `fixed`, `unresolved`, `deferred`, or
+  `upstream` (with backward handoff packet paths for upstream findings).
+
+What code-reviewer re-reviews: the **amended diff** (the cumulative changes including
+fixes), not the original diff. code-reviewer treats this as a fresh review pass — it does
+not assume prior findings are resolved; it verifies the fixes against the finding ids and
+may raise new findings introduced by the fixes. The loop continues until code-reviewer
+returns `ready to commit` or `ready with notes`, or the round cap is hit.
 
 ## Scope discipline rules
 

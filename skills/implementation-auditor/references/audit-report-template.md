@@ -36,7 +36,7 @@ Use this exact structure unless the user requested a different format.
 
 ### Test gaps
 
-- <critical/major/minor gap and why it matters, or `none identified`>
+- <blocker/major/minor gap and why it matters, or `none identified`>
   - `root-cause-phase`: `local` | `research` | `plan` | `implement` | `code-review` (same semantics as Defects above)
 
 ### Risks and assumptions
@@ -59,7 +59,7 @@ Verdict rules:
 - `pass`: requirements are covered by code review and relevant tests/builds passed.
 - `pass with risks`: core evidence passed, but limited environment, skipped tests, minor gaps, or low-confidence areas remain.
 - `blocked`: audit cannot reach a correctness conclusion because required validation could not run.
-- `fail`: implementation defect, failing relevant test, unmet requirement, or critical missing test evidence.
+- `fail`: implementation defect, failing relevant test, unmet requirement, or blocker missing test evidence.
 
 Next-action routing by verdict (state in "Recommended next actions"):
 

@@ -23,19 +23,19 @@ irrelevant, but do not omit the evidence and verification basis for material fin
 
 ## 3. Findings
 
-Order by severity: `critical`, `high`, `medium`, `low`.
+Order by severity: `blocker`, `major`, `minor`, `nit`.
 
 If none were found, write `No material findings.` Do not create filler findings.
 
 | id | severity | drift type | documentation location | summary |
 | --- | --- | --- | --- | --- |
-| td-001 | high | semantic drift | `docs/path.md:line` | <short title> |
+| td-001 | major | semantic drift | `docs/path.md:line` | <short title> |
 
 ### Finding details
 
 #### td-001: <short title>
 
-- Severity: <critical | high | medium | low>
+- Severity: <blocker | major | minor | nit>
 - Drift type: <contradiction | omission | removal | rename | semantic | example | workflow | architecture | default/configuration | discoverability | safety/security>
 - Documentation location: `<path:line or section>`
 - Finding: <specific mismatch or missing material>

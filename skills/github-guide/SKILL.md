@@ -95,11 +95,11 @@ Prefix each inline `comments[].body` with the finding's severity label:
 
 | `code-reviewer` severity | Inline prefix | Blocking? |
 | --- | --- | --- |
-| `critical` | `**critical (blocking):**` | Yes — drives `REQUEST_CHANGES` (not on self-review; use `COMMENT`) |
-| `important` | `**important:**` | No |
-| `suggestion` | `**suggestion:**` | No |
+| `blocker` | `**blocker (blocking):**` | Yes — drives `REQUEST_CHANGES` (not on self-review; use `COMMENT`) |
+| `major` | `**major:**` | No |
+| `minor` | `**minor:**` | No |
 
-Compose the rest from the finding fields: `{What's wrong}. {Why it matters}. {Proposed fix}`. Optionally lead with the scope in brackets, e.g. `[security] **critical (blocking):** …`.
+Compose the rest from the finding fields: `{What's wrong}. {Why it matters}. {Proposed fix}`. Optionally lead with the scope in brackets, e.g. `[security] **blocker (blocking):** …`.
 
 Only findings with a resolvable **file + line** become inline comments. Findings without a line anchor belong in the review summary body only.
 
@@ -107,14 +107,14 @@ Only findings with a resolvable **file + line** become inline comments. Findings
 
 | Condition | `event` |
 | --- | --- |
-| Any `critical` finding (reviewing **someone else's** PR) | `REQUEST_CHANGES` |
+| Any `blocker` finding (reviewing **someone else's** PR) | `REQUEST_CHANGES` |
 | No findings; overall verdict is merge-ready | `APPROVE` |
-| Only `important` / `suggestion` with actionable inline feedback | `COMMENT` (**default** when posting inline comments that need a response) |
+| Only `major` / `minor` with actionable inline feedback | `COMMENT` (**default** when posting inline comments that need a response) |
 | Only minor nits and reviewer **explicitly** approves | `APPROVE` (optional inline comments for nits) |
 
-**`COMMENT` vs `APPROVE`:** when you post inline comments the author should address, default to `COMMENT` even if nothing is `critical`. Use `APPROVE` only when the reviewer clearly wants to approve merge and inline notes are optional context, not requested changes.
+**`COMMENT` vs `APPROVE`:** when you post inline comments the author should address, default to `COMMENT` even if nothing is `blocker`. Use `APPROVE` only when the reviewer clearly wants to approve merge and inline notes are optional context, not requested changes.
 
-**Self-review (your own PR):** GitHub allows `COMMENT` only — never `APPROVE` or `REQUEST_CHANGES` (HTTP 422). Use `event=COMMENT` regardless of severity. Keep `**critical (blocking):**` prefixes on inline comments and state in the summary that formal merge blocking requires another reviewer.
+**Self-review (your own PR):** GitHub allows `COMMENT` only — never `APPROVE` or `REQUEST_CHANGES` (HTTP 422). Use `event=COMMENT` regardless of severity. Keep `**blocker (blocking):**` prefixes on inline comments and state in the summary that formal merge blocking requires another reviewer.
 
 `REQUEST_CHANGES` and `COMMENT` require a non-empty summary `body`.
 
@@ -147,7 +147,7 @@ gh api --method POST repos/{owner}/{repo}/pulls/123/reviews \
   -f 'comments[][path]=src/app.ts' \
   -F 'comments[][line]=42' \
   -f 'comments[][side]=RIGHT' \
-  -f 'comments[][body]=**critical (blocking):** guard against a null `user` here.'
+  -f 'comments[][body]=**blocker (blocking):** guard against a null `user` here.'
 
 # 3. list threads, then resolve by node id (never by line) — GraphQL only
 gh api graphql -f query='query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){reviewThreads(first:100){nodes{id isResolved path comments(first:1){nodes{databaseId body}}}}}}}' \
