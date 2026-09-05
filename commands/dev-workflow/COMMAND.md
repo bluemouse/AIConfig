@@ -1,13 +1,14 @@
 ---
 name: dev-workflow
-description: Run the full development workflow — research → plan → implement → code-review → commit — on a requirement or feature, with bounded loops, backward edges, and validation. Loads the dev-workflow-orchestrator skill.
+description: Run the full development workflow — clarify → research → plan → implement → code-review → commit — on a requirement or feature, with bounded loops, backward edges, and validation. Loads the dev-workflow-orchestrator skill.
 ---
 
 # Dev Workflow
 
 Start the full development workflow on a requirement or feature. This command loads the
-`dev-workflow-orchestrator` skill, which orchestrates the 5-phase pipeline with bounded
-loops, backward edges for upstream root causes, artifact contracts, and mode enforcement.
+`dev-workflow-orchestrator` skill, which orchestrates the 6-phase pipeline (clarify →
+research → plan → implement → code-review → commit) with bounded loops, backward
+edges for upstream root causes, artifact contracts, and mode enforcement.
 
 ## Steps
 
@@ -24,9 +25,9 @@ loops, backward edges for upstream root causes, artifact contracts, and mode enf
    - Create a feature slug.
    - Create `.ai/workflow/<slug>/`.
    - Write `00-run-manifest.md` and `01-feature-brief.md`.
-   - Activate research mode.
+   - Activate clarify mode.
    - Run the pre-flight check.
-   - Start Phase 1 (Research loop).
+   - Start Phase 0 (Clarify loop).
 
 4. Continue following the orchestrator skill through all phases, loops, backward edges, and
    validation checks until the workflow completes or escalates.

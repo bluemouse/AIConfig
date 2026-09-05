@@ -75,6 +75,7 @@ Each loop has a doer (produces), a checker (audits), a round cap, an exit condit
 | Terminal labels | `ready to commit`, `ready with notes`, `needs revision`, `NOT READY` (cap hit) |
 | Escalation | `NOT READY` → root cause classification → backward edge to Plan or Research, or ask user |
 | Root cause field | `root-cause-phase`: `local` / `research` / `plan` / `implement` / `code-review` |
+| Round-1 ordering | Checker (code-reviewer) runs first on round 1 to produce findings; doer (code-review-resolver) runs first on round > 1 to apply prior fixes. The resolver requires findings as input, so a clean first pass has nothing to resolve. |
 
 ## Loop 5: Stage-Exit Review (staged mode only)
 

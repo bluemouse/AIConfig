@@ -38,18 +38,18 @@ PHASE_ARTIFACTS: dict[str, list[tuple[str, list[str]]]] = {
     ],
 }
 
-# Phases that support stage-indexed artifacts in staged mode.
-# Maps a phase to the set of artifact prefixes that can have stage-indexed variants.
-# For example, "implement" phase has artifacts with prefixes 30, 31, 32, 33.
-# In staged mode, 30-stage1-implementation-report.md satisfies the 30-implementation-report.md requirement.
-STAGED_PHASE_PREFIXES: dict[str, set[str]] = {
-    "implement": {"30", "31", "32", "33"},
-    "code-review": {"40", "41", "42", "43"},
-}
-
 # Regex to extract the stage number from a stage-indexed filename.
 # Matches patterns like 30-stage1-implementation-report.md, 31-stage2-implementation-audit.md, etc.
 _STAGE_INDEX_RE = re.compile(r"^(\d{2})-stage(\d+)-(.+\.md)$")
+
+# Staged-mode "final" artifact aliases. In staged mode, the final deep review
+# and final fix report use the ``-final-`` infix instead of ``-stageN-``. These
+# satisfy the canonical code-review artifact requirements in staged mode, so
+# ``_resolve_artifact_path`` maps them here. See SKILL.md "Final deep review".
+_FINAL_ARTIFACT_ALIASES: dict[str, str] = {
+    "40-code-review.md": "40-final-deep-review.md",
+    "41-fix-report.md": "41-final-fix-report.md",
+}
 
 
 def _is_staged_mode(run_dir: Path) -> bool:
@@ -69,6 +69,102 @@ def _is_staged_mode(run_dir: Path) -> bool:
     return False
 
 
+def _resolve_artifact_path(
+    run_dir: Path, filename: str, phase: str, staged_mode: bool
+) -> Path | None:
+    """Resolve the on-disk path for an expected artifact.
+
+    Returns the exact filename path if it exists, a stage-indexed variant
+    in staged mode, or None if no matching artifact is present.
+
+    The stage-indexed lookup is cross-phase: a stage-indexed variant of
+    ``30-implementation-report.md`` (e.g. ``30-stage1-implementation-report.md``)
+    satisfies the requirement regardless of which phase is asking, because the
+    artifact was produced by the implement phase but is consumed by code-review.
+
+    In staged mode, the final deep review (``40-final-deep-review.md``) and
+    final fix report (``41-final-fix-report.md``) also satisfy the canonical
+    ``40-code-review.md`` / ``41-fix-report.md`` requirements — see
+    ``_FINAL_ARTIFACT_ALIASES``.
+    """
+    path = run_dir / filename
+    if path.exists():
+        return path
+    if staged_mode:
+        # Staged-mode "final" aliases (40-final-deep-review.md, 41-final-fix-report.md).
+        alias = _FINAL_ARTIFACT_ALIASES.get(filename)
+        if alias is not None:
+            alias_path = run_dir / alias
+            if alias_path.exists():
+                return alias_path
+        stage_path = _find_stage_indexed_artifact(run_dir, filename, phase)
+        if stage_path is not None:
+            return stage_path
+    return None
+
+
+def _code_review_has_findings(run_dir: Path, staged_mode: bool) -> bool:
+    """Determine whether the code-review phase produced findings requiring a fix report.
+
+    The fix report (41-fix-report.md) is required only when a review verdict is
+    `needs revision` — the revise verdict that sends findings to
+    code-review-resolver. Accept verdicts (`ready to commit`, `ready with
+    notes`) exit the loop forward without a resolver pass, even when minor
+    findings with cr-NNN ids are present, so no fix report is expected.
+    A missing or unreadable verdict is reported separately by
+    check_verdict_valid; it does not require a fix report here.
+    In staged mode, any stage's code review or the final deep review counts.
+    """
+    from .verdicts import extract_verdict, match_verdict, REVISE_VERDICTS
+
+    # Candidate review artifacts to inspect. In staged mode, also gather all
+    # per-stage reviews (40-stageN-code-review.md) and the final deep review
+    # explicitly, so findings detection does not depend on cross-phase
+    # resolution happening to route 40-code-review.md to a stage variant.
+    review_paths: list[Path] = []
+    canonical = run_dir / "40-code-review.md"
+    if canonical.exists():
+        review_paths.append(canonical)
+    if staged_mode:
+        final_path = run_dir / "40-final-deep-review.md"
+        if final_path.exists():
+            review_paths.append(final_path)
+        for path in run_dir.iterdir():
+            if not path.is_file() or not path.name.endswith(".md"):
+                continue
+            # Per-stage reviews: 40-stageN-code-review.md
+            if _STAGE_INDEX_RE.match(path.name) and path.name.startswith("40-"):
+                if path not in review_paths:
+                    review_paths.append(path)
+
+    # Revise verdicts that require a fix report, across code-review artifacts.
+    revise_verdicts = REVISE_VERDICTS.get("40-code-review.md", set())
+
+    for path in review_paths:
+        text = path.read_text(encoding="utf-8")
+        verdict = extract_verdict(text)
+        if verdict is not None and match_verdict(verdict, revise_verdicts):
+            return True
+    return False
+
+
+def _required_artifacts(run_dir: Path, phase: str, staged_mode: bool) -> list[tuple[str, list[str]]]:
+    """Return the artifacts required for a phase in this run.
+
+    Most phases require all artifacts in PHASE_ARTIFACTS. The code-review
+    phase conditionally requires the fix report (41-fix-report.md) only when
+    the review produced findings or a `needs revision` verdict.
+    """
+    artifacts = list(PHASE_ARTIFACTS.get(phase, []))
+    if phase == "code-review" and not _code_review_has_findings(run_dir, staged_mode):
+        artifacts = [
+            (filename, sections)
+            for filename, sections in artifacts
+            if not filename.startswith("41-")
+        ]
+    return artifacts
+
+
 def _find_stage_indexed_artifact(
     run_dir: Path, expected_filename: str, phase: str
 ) -> Path | None:
@@ -79,6 +175,11 @@ def _find_stage_indexed_artifact(
     directory for a stage-indexed file matching the expected filename's
     prefix and suffix.
 
+    The lookup is cross-phase: the ``phase`` argument is accepted for API
+    compatibility but does not restrict the search, because stage-indexed
+    artifacts are produced by one phase and consumed by another (e.g. the
+    implement phase produces 30-stageN-* which the code-review phase consumes).
+
     Returns the path to the stage-indexed file if found, None otherwise.
     """
     # Extract the prefix (e.g., "30") and the suffix (e.g., "implementation-report.md")
@@ -87,11 +188,6 @@ def _find_stage_indexed_artifact(
         return None
     prefix = expected_filename[:2]
     suffix = expected_filename[3:]  # e.g., "implementation-report.md"
-
-    # Check if this phase supports stage-indexed variants for this prefix
-    allowed_prefixes = STAGED_PHASE_PREFIXES.get(phase, set())
-    if prefix not in allowed_prefixes:
-        return None
 
     # Search for a file matching {prefix}-stage{N}-{suffix}
     for path in run_dir.iterdir():
@@ -114,19 +210,16 @@ def check_artifacts_exist(run_dir: Path, phase: str) -> list[Finding]:
     (e.g., 30-stage1-implementation-report.md) are accepted in place of the
     exact filename (e.g., 30-implementation-report.md) for phases that support
     stage-indexed artifacts.
+
+    For the code-review phase, the fix report (41-fix-report.md) is only
+    required when the review produced findings or a `needs revision` verdict.
     """
     findings: list[Finding] = []
-    artifacts = PHASE_ARTIFACTS.get(phase, [])
     staged_mode = _is_staged_mode(run_dir)
+    artifacts = _required_artifacts(run_dir, phase, staged_mode)
     for filename, _sections in artifacts:
-        path = run_dir / filename
-        if path.exists():
-            continue  # Exact filename found — done
-        if staged_mode:
-            # Try to find a stage-indexed variant
-            stage_path = _find_stage_indexed_artifact(run_dir, filename, phase)
-            if stage_path is not None:
-                continue  # Stage-indexed variant found
+        if _resolve_artifact_path(run_dir, filename, phase, staged_mode) is not None:
+            continue  # Exact or stage-indexed variant found
         findings.append(
             Finding(
                 severity="error",
@@ -144,20 +237,12 @@ def check_artifact_sections(run_dir: Path, phase: str) -> list[Finding]:
     when the exact filename is not present.
     """
     findings: list[Finding] = []
-    artifacts = PHASE_ARTIFACTS.get(phase, [])
     staged_mode = _is_staged_mode(run_dir)
+    artifacts = _required_artifacts(run_dir, phase, staged_mode)
     for filename, required_sections in artifacts:
-        path = run_dir / filename
-        if not path.exists():
-            if staged_mode:
-                # Try to find a stage-indexed variant
-                stage_path = _find_stage_indexed_artifact(run_dir, filename, phase)
-                if stage_path is not None:
-                    path = stage_path
-                else:
-                    continue  # Already reported by check_artifacts_exist
-            else:
-                continue  # Already reported by check_artifacts_exist
+        path = _resolve_artifact_path(run_dir, filename, phase, staged_mode)
+        if path is None:
+            continue  # Already reported by check_artifacts_exist
         text = path.read_text(encoding="utf-8")
         for section in required_sections:
             if section not in text:

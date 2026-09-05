@@ -25,8 +25,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from checks import Finding
+from checks import artifact_checks
 
 # Expected input artifacts per phase (the terminal artifact from the previous phase).
+# In staged mode, stage-indexed variants (e.g. 30-stage1-implementation-report.md)
+# or the final deep review (40-final-deep-review.md) satisfy these requirements.
 PHASE_INPUTS: dict[str, list[str]] = {
     "clarify": ["01-feature-brief.md"],
     "research": ["02-requirement-ledger.md"],
@@ -59,16 +62,31 @@ def run_pre_flight(run_dir: Path, phase: str) -> list[Finding]:
             message="Run manifest missing: 00-run-manifest.md",
         ))
 
-    # Check expected input artifacts exist.
+    # Check expected input artifacts exist. In staged mode, stage-indexed
+    # variants (or the final deep review for the commit phase) are accepted.
+    staged_mode = artifact_checks._is_staged_mode(run_dir)
     inputs = PHASE_INPUTS.get(phase, [])
     for filename in inputs:
-        path = run_dir / filename
-        if not path.exists():
-            findings.append(Finding(
-                severity="error",
-                check="pre_flight",
-                message=f"Expected input artifact missing for {phase}: {filename}",
-            ))
+        if staged_mode:
+            resolved = artifact_checks._resolve_artifact_path(
+                run_dir, filename, phase, staged_mode
+            )
+            # For the commit phase in staged mode, the final deep review
+            # (40-final-deep-review.md) also satisfies the 40-code-review.md input.
+            if resolved is None and filename == "40-code-review.md":
+                final_path = run_dir / "40-final-deep-review.md"
+                if final_path.exists():
+                    continue
+            if resolved is not None:
+                continue
+        else:
+            if (run_dir / filename).exists():
+                continue
+        findings.append(Finding(
+            severity="error",
+            check="pre_flight",
+            message=f"Expected input artifact missing for {phase}: {filename}",
+        ))
     return findings
 
 

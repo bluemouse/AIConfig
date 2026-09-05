@@ -18,6 +18,7 @@ import subprocess
 from pathlib import Path
 
 from . import Finding
+from . import artifact_checks
 
 # Allowed artifact filename prefixes per phase.
 # These are the only files a phase should create/modify in the run directory.
@@ -294,9 +295,19 @@ def check_no_commits_in_non_commit_phase(repo_root: Path, phase: str, run_dir: P
 
     Compares the current HEAD against the baseline HEAD. If they differ and
     the phase is not a commit phase, a commit was made during the phase.
+
+    Exception: in staged mode, the Implement phase produces per-stage commits
+    and the Code Review phase produces final-deep-review fix commits (as new
+    commits on top). These are permitted by the staged-mode permission matrix.
     """
     findings: list[Finding] = []
     if phase in COMMIT_PHASES:
+        return []
+
+    # In staged mode, per-stage commits (implement) and final-deep-review fix
+    # commits (code-review) are allowed by the permission matrix.
+    staged_mode = artifact_checks._is_staged_mode(run_dir)
+    if staged_mode and phase in {"implement", "code-review"}:
         return []
 
     baseline = _read_baseline(run_dir)

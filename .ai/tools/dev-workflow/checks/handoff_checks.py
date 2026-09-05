@@ -72,9 +72,15 @@ def check_plan_consumer_ready(run_dir: Path) -> list[Finding]:
 def check_impl_report_consumer_ready(run_dir: Path) -> list[Finding]:
     """Check that the implementation report has sections code-reviewer needs."""
     findings: list[Finding] = []
-    path = run_dir / "30-implementation-report.md"
-    if not path.exists():
-        return []
+    # Resolve the implementation report path, including stage-indexed variants
+    # in staged mode (e.g. 30-stage1-implementation-report.md).
+    from . import artifact_checks
+    staged = artifact_checks._is_staged_mode(run_dir)
+    path = artifact_checks._resolve_artifact_path(
+        run_dir, "30-implementation-report.md", "implement", staged
+    )
+    if path is None:
+        return []  # Already reported by artifact_checks
     text = path.read_text(encoding="utf-8")
     for section in IMPL_REPORT_FOR_REVIEW:
         if section not in text:
@@ -101,21 +107,38 @@ def check_backward_packet_finding_exists(run_dir: Path, packet_path: Path) -> li
 
     finding_id = finding_match.group(1).strip().lower()
 
-    # Determine source artifact from packet filename.
-    name = packet_path.name.lower()
+    # Determine the source artifact. Prefer the packet's own "Source artifact:"
+    # field (authoritative); fall back to inferring from the filename prefix
+    # for packets that don't declare it.
     source_artifact = None
-    if name.startswith("back-review"):
-        source_artifact = "40-code-review.md"
-    elif name.startswith("back-impl"):
-        source_artifact = "31-implementation-audit.md"
-    elif name.startswith("back-plan"):
-        source_artifact = "21-plan-review.md"
+    source_match = re.search(r"Source artifact:\s*(\S+)", text, re.IGNORECASE)
+    if source_match:
+        source_artifact = source_match.group(1).strip()
+
+    if source_artifact is None:
+        # Fallback: infer from the packet filename prefix.
+        name = packet_path.name.lower()
+        if name.startswith("back-code-review") or name.startswith("back-review"):
+            source_artifact = "40-code-review.md"
+        elif name.startswith("back-implement") or name.startswith("back-impl"):
+            source_artifact = "31-implementation-audit.md"
+        elif name.startswith("back-plan"):
+            source_artifact = "21-plan-review.md"
+        elif name.startswith("back-research"):
+            source_artifact = "11-research-review.md"
 
     if source_artifact is None:
         return []
 
-    source_path = run_dir / source_artifact
-    if not source_path.exists():
+    # Resolve the source artifact path, including stage-indexed variants and
+    # staged-mode "final" aliases (e.g. 40-final-deep-review.md) so a packet
+    # declaring the canonical name still finds a stage-indexed source on disk.
+    from . import artifact_checks
+    staged = artifact_checks._is_staged_mode(run_dir)
+    source_path = artifact_checks._resolve_artifact_path(
+        run_dir, source_artifact, "code-review", staged
+    )
+    if source_path is None:
         return []
 
     source_text = source_path.read_text(encoding="utf-8")

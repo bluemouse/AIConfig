@@ -40,6 +40,24 @@ CHECKER_VERDICTS: dict[str, set[str]] = {
         "ready with notes",
         "needs revision",
     },
+    # Stage-indexed variants (staged mode). These share the verdict vocabularies
+    # of their linear-mode counterparts so loop_checks can validate them.
+    "31-stage*-implementation-audit.md": {
+        "pass",
+        "pass with risks",
+        "fail",
+        "blocked",
+    },
+    "40-stage*-code-review.md": {
+        "ready to commit",
+        "ready with notes",
+        "needs revision",
+    },
+    "40-final-deep-review.md": {
+        "ready to commit",
+        "ready with notes",
+        "needs revision",
+    },
     # Stage-exit review artifacts use a glob pattern: 32-stageN-exit-review.md
     # where N is the 1-indexed stage number. Register the verdicts under a
     # glob key that check functions can match against stage-indexed filenames.
@@ -55,6 +73,9 @@ ACCEPT_VERDICTS: dict[str, set[str]] = {
     "21-plan-review.md": {"validated", "conditionally validated"},
     "31-implementation-audit.md": {"pass", "pass with risks"},
     "40-code-review.md": {"ready to commit", "ready with notes"},
+    "31-stage*-implementation-audit.md": {"pass", "pass with risks"},
+    "40-stage*-code-review.md": {"ready to commit", "ready with notes"},
+    "40-final-deep-review.md": {"ready to commit", "ready with notes"},
     "32-stage*-exit-review.md": {"plan-current"},
 }
 
@@ -64,6 +85,9 @@ REVISE_VERDICTS: dict[str, set[str]] = {
     "21-plan-review.md": {"needs revision"},
     "31-implementation-audit.md": {"fail"},
     "40-code-review.md": {"needs revision"},
+    "31-stage*-implementation-audit.md": {"fail"},
+    "40-stage*-code-review.md": {"needs revision"},
+    "40-final-deep-review.md": {"needs revision"},
     "32-stage*-exit-review.md": {"plan-stale"},
 }
 
@@ -73,6 +97,9 @@ BLOCKED_VERDICTS: dict[str, set[str]] = {
     "21-plan-review.md": {"blocked"},
     "31-implementation-audit.md": {"blocked"},
     "40-code-review.md": set(),  # code-review has no blocked verdict
+    "31-stage*-implementation-audit.md": {"blocked"},
+    "40-stage*-code-review.md": set(),
+    "40-final-deep-review.md": set(),
     "32-stage*-exit-review.md": set(),  # stage-exit has no blocked verdict
 }
 
@@ -101,23 +128,44 @@ def strip_markdown_emphasis(text: str) -> str:
 def extract_verdict(text: str) -> str | None:
     """Extract the verdict from a checker report.
 
-    Looks for a verdict after a "## Verdict" or "## Loop verdict" heading.
+    Tolerant of the heading/line forms used across checker templates:
+    - ``## Verdict`` / ``## Loop verdict`` / ``## Overall verdict`` headings
+      (with or without a leading ``N.`` number, e.g. ``## 1. Verdict``).
+    - The verdict value on the next non-empty line, OR a ``- Verdict:`` /
+      ``- Loop verdict:`` list item on the next non-empty line.
+
     Strips markdown emphasis and returns the lowercased verdict string.
     Returns None if no verdict heading is found.
     """
     import re
 
-    # Look for verdict headings.
-    patterns = [
-        r"## Verdict\s*\n+([^\n]+)",
-        r"## Loop verdict\s*\n+([^\n]+)",
-    ]
+    # Heading forms: "## Verdict", "## 1. Verdict", "## Loop verdict",
+    # "## Overall verdict", "## 8. Overall verdict" (case-insensitive).
+    # Capture the heading line so we can look at the following content.
+    heading_re = re.compile(
+        r"^##\s+(?:\d+\.\s+)?(?:loop\s+)?(?:overall\s+)?verdict\s*$",
+        re.IGNORECASE | re.MULTILINE,
+    )
 
-    for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            raw_verdict = match.group(1).strip()
-            return strip_markdown_emphasis(raw_verdict)
+    match = heading_re.search(text)
+    if match:
+        # Take the first non-empty line after the heading.
+        after = text[match.end():]
+        for line in after.splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            # Accept a list-item form: "- Verdict: <value>", "- Loop verdict:
+            # <value>", or "- Overall verdict: <value>" (case-insensitive).
+            list_match = re.match(
+                r"^[-*]\s+(?:loop\s+)?(?:overall\s+)?verdict:\s*(.+)$",
+                stripped,
+                re.IGNORECASE,
+            )
+            if list_match:
+                return strip_markdown_emphasis(list_match.group(1))
+            # Otherwise treat the whole line as the verdict value.
+            return strip_markdown_emphasis(stripped)
 
     return None
 

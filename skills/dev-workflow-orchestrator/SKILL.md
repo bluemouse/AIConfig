@@ -36,6 +36,10 @@ You are the brain; the skills are the producers.
 - **Code diff review without the full workflow** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 - **Interactive research or brainstorming** — use [../research-guide/SKILL.md](../research-guide/SKILL.md)
 
+## Relationship to the dev-workflow guide
+
+This skill automates the pipeline described in the `dev-workflow.md` guide at the repository root. That guide defines the intake classification (which phase to start from based on input type) and the governance tables (Mandatory vs Optional Gates by change class). The orchestrator relies on those decisions; this skill enforces them with artifact contracts and validation scripts. When the harness is not active, the guide's prose describes the same workflow for manual skill-by-skill use.
+
 ## Companion Skills
 
 | Phase | Doer | Checker |
@@ -120,7 +124,7 @@ For each stage N (1..total_stages):
 5. **Read verdict:** Read the audit verdict.
 6. **Post-flight:** Run `check_post_phase.py --phase implement --run-dir <path>`.
 7. **Route audit:**
-   - `pass` or `pass with risks` → proceed to review (step 8).
+   - `pass` or `pass with risks` → run `validate_phase.py --phase implement --run-dir <path>`. If validation passes, proceed to review (step 8). If validation fails, handle per validation rules below. (`validate_phase.py` takes no `--stage` argument: it validates the stage-indexed artifacts found on disk, resolving to the first `30-stageN-*`/`31-stageN-*` match. The current stage's own verdict is read at step 5.)
    - `fail` with `root-cause-phase: local` → escalate to full Loop 3 for this stage (increment round counter, cap 3). Loop back to doer pass.
    - `fail` with `root-cause-phase: upstream` → backward edge to Plan or Research.
    - `blocked` → escalate immediately.
@@ -149,11 +153,12 @@ For each stage N (1..total_stages):
 
 After all stages are committed:
 
-1. Run Loop 4 (code-review-resolver → code-reviewer, cap 5, `deep` effort) on the cumulative commit range (`HEAD~N..HEAD` where N = number of stage commits). Output: `40-final-deep-review.md`.
+1. Run Loop 4 (code-reviewer → code-review-resolver, cap 5, `deep` effort; round-1 ordering per the Code Review exception — the reviewer runs first to produce findings) on the cumulative commit range (`HEAD~N..HEAD` where N = number of stage commits). Output: `40-final-deep-review.md`.
 2. If findings: `code-review-resolver` applies fixes as **new commits on top** (no `git rebase`, no `git commit --amend` — fixes land as new commits on top, no amend/rebase). `code-reviewer` re-reviews the new commit range. Output: `41-final-fix-report.md`.
-3. If a finding is design-level with `root-cause-phase: plan`, create a backward edge to `plan-guide` for root-cause repair.
-4. If reader-visible contracts changed, invoke `techdoc-reviewer` (reader-visible contracts changed, invoke techdoc-reviewer).
-5. Proceed to terminal delivery: `pull-request-guide` → `github-guide` (PR creation, once).
+3. Run `validate_phase.py --phase code-review --run-dir <path>` to validate the final deep review (artifact structure, verdict, mode enforcement, handoff integrity). If validation fails, handle per validation rules below.
+4. If a finding is design-level with `root-cause-phase: plan`, create a backward edge to `plan-guide` for root-cause repair.
+5. If reader-visible contracts changed, invoke `techdoc-reviewer` (reader-visible contracts changed, invoke techdoc-reviewer).
+6. Proceed to terminal delivery: `pull-request-guide` → `github-guide` (PR creation, once).
 
 #### Standard procedure (linear mode, or non-Implement phases in staged mode)
 
@@ -171,7 +176,7 @@ For the Clarify phase (Phase 0), there is no checker. Run prompt-clarifier as a 
 6. **Validate:** Run `validate_phase.py --phase clarify --run-dir <path>`. If validation passes, update manifest, go forward to Research.
 7. **Update manifest** after every step.
 
-For all other phases, run the doer → checker loop:
+For all other phases, run the doer → checker loop. **Code Review exception:** on round 1, the checker (code-reviewer) runs first to produce findings, then the doer (code-review-resolver) applies fixes. On subsequent rounds (round > 1), the doer runs first (applying fixes from the prior round's findings), then the checker re-reviews. This is because the resolver requires findings as input — there is nothing to resolve on a clean first pass.
 
 1. **Record baseline:** Run `record_baseline.py --phase <name> --run-dir <path>`. This captures the git HEAD and dirty paths at phase start.
 2. **Pre-flight:** Run `check_pre_phase.py --phase <name> --run-dir <path>`. If it fails, stop and report.
@@ -187,7 +192,7 @@ For all other phases, run the doer → checker loop:
 6. **Post-flight:** Run `check_post_phase.py --phase <name> --run-dir <path>`. If it fails, stop and report.
 7. **Route:** Apply the loop contract:
    - **Accepted** (verdict is in the accept set) → run `validate_phase.py --phase <name> --run-dir <path>`. If validation passes, update manifest, go forward to next phase. If validation fails, handle per validation rules below.
-   - **Needs revision** (root-cause-phase = `local`) → increment round counter. If round < cap: when the next round will be round > 1, first copy the current checker artifact to `<name>-r1.md` (e.g. `11-research-review.md` → `11-research-review-r1.md`) so the fresh-context checker in the next round can see prior findings and preserve finding ids; then loop back to doer pass with the checker's feedback, and include the `-r1` path in the next round's task packet (native mode) or named-pass context (delegated mode). If round = cap, escalate.
+   - **Needs revision** (root-cause-phase = `local`) → increment round counter. If round < cap: when the next round will be round > 1, first copy the current checker artifact to `<name>-r<N>.md` where `<N>` is the round number just completed (e.g. on round 2, copy `11-research-review.md` → `11-research-review-r1.md`; on round 3, copy → `11-research-review-r2.md`) so the fresh-context checker in the next round can see prior findings and preserve finding ids without overwriting earlier rounds; then loop back to doer pass with the checker's feedback, and include all prior `-r1`, `-r2`, … paths in the next round's task packet (native mode) or named-pass context (delegated mode). If round = cap, escalate.
    - **Needs revision** (root-cause-phase = upstream) → create backward handoff packet, route to target phase (see Backward edge below).
    - **Blocked** → escalate immediately.
 8. **Update manifest** after every step.

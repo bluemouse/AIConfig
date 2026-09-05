@@ -13,6 +13,16 @@ Use this guide when developing a software feature, new product requirement, bug 
 Skill bundle membership and selection guidance live in [tools/bundles.md](tools/bundles.md).
 Machine-readable bundle configuration is in [tools/bundles.json](tools/bundles.json).
 
+## Automation: the dev-workflow harness
+
+This guide describes the workflow skill-by-skill. The **dev-workflow harness** automates the same pipeline end-to-end with bounded doer/checker loops, backward edges for upstream root causes, artifact contracts, and deterministic validation scripts.
+
+- **Full pipeline:** run `/dev-workflow` to orchestrate all phases (clarify → research → plan → implement → code-review → commit). It loads the [dev-workflow-orchestrator](skills/dev-workflow-orchestrator/SKILL.md) skill, which owns state, routing, and integration.
+- **Single phase:** run `/dev-workflow-research`, `/dev-workflow-plan`, `/dev-workflow-implement`, or `/dev-workflow-review` to run one phase's doer/checker loop to acceptance or escalation without driving the full pipeline.
+- **Install the harness:** `python tools/installer.py /path/to/project --bundles dev-workflow-harness` (installs the orchestrator, all phase skills, the commands, and the `.ai/tools/dev-workflow/` validation scripts as a unit).
+
+The harness relies on this guide's intake classification (§1) and governance tables (Mandatory vs Optional Gates) to decide which phases and gates apply. When the harness is active, the orchestrator's artifact contracts and validation scripts enforce the workflow; this guide's prose describes the same workflow for manual or partial automation use.
+
 ## Operational Workflow
 
 ### 1. Intake: classify the work

@@ -11,7 +11,7 @@ The run manifest is the orchestrator's state file. It tracks the entire run so t
 - Feature slug: <slug>
 - Created: <ISO timestamp>
 - Last updated: <ISO timestamp>
-- Current phase: <research | plan | implement | code-review | commit | done>
+- Current phase: <clarify | research | plan | implement | code-review | commit | done>
 - Run status: <in-progress | completed | blocked | abandoned>
 - Run mode: <linear | staged> (default: linear; set to `staged` when plan §10 declares `Execution mode: staged`)
 - Git baseline at phase start: <HEAD sha or 'no-git'>

@@ -129,6 +129,73 @@ def check_run_mode_valid(run_dir: Path) -> list[Finding]:
     return findings
 
 
+def _parse_backward_edge_counts_from_manifest(text: str) -> dict[str, int]:
+    """Parse per-phase backward edge counts from the manifest.
+
+    The manifest uses ``### Phase N: <Name>`` section headers followed by a
+    ``- Backward edges received: <n>`` line. Phase names in the manifest use
+    display forms ("Code Review") that must be mapped to phase ids
+    ("code-review"). This function splits the manifest into sections and
+    extracts each section's count, so a greedy regex cannot misattribute one
+    phase's count to another.
+    """
+    # Map display-name fragments (as they appear in "### Phase N: <Name>")
+    # to canonical phase ids used elsewhere in the checks.
+    display_to_id = {
+        "clarify": "clarify",
+        "research": "research",
+        "plan": "plan",
+        "implement": "implement",
+        "code review": "code-review",
+        "code-review": "code-review",
+    }
+    counts: dict[str, int] = {}
+    # Split on "### " headers; each chunk starts with the header line.
+    for chunk in re.split(r"(?=^###\s+Phase\b)", text, flags=re.MULTILINE):
+        header_match = re.match(r"^###\s+Phase\s+\d+:\s*(.+?)\s*$", chunk, re.MULTILINE)
+        if not header_match:
+            continue
+        display_name = header_match.group(1).strip().lower()
+        phase_id = display_to_id.get(display_name)
+        if phase_id is None:
+            # Fall back to substring matching for robustness.
+            for key, pid in display_to_id.items():
+                if key in display_name:
+                    phase_id = pid
+                    break
+        if phase_id is None:
+            continue
+        count_match = re.search(
+            r"Backward edges received:\s*(\d+)", chunk, re.IGNORECASE
+        )
+        if count_match:
+            counts[phase_id] = int(count_match.group(1))
+    return counts
+
+
+def _parse_backward_edge_counts_from_disk(run_dir: Path) -> dict[str, int]:
+    """Count backward handoff packet files per target phase on disk.
+
+    Packet filename format: ``back-<from>-to-<to>-<n>.md`` where ``<from>``
+    and ``<to>`` are phase names (e.g. ``back-implement-to-plan-1.md``).
+    """
+    counts: dict[str, int] = {}
+    for path in run_dir.iterdir():
+        if not path.is_file() or not path.name.startswith("back-"):
+            continue
+        stem = path.name.removesuffix(".md")
+        # Split on "-to-" to separate the from-phase from the to-phase+n.
+        # e.g. "back-implement-to-plan-1" -> ["back-implement", "plan-1"]
+        if "-to-" not in stem:
+            continue
+        _from_part, _, to_part = stem.partition("-to-")
+        # to_part is "<to>-<n>"; the to-phase is everything before the last "-<n>".
+        # Phase names may contain hyphens (e.g. "code-review"), so split from the right.
+        target = to_part.rsplit("-", 1)[0] if "-" in to_part else to_part
+        counts[target] = counts.get(target, 0) + 1
+    return counts
+
+
 def check_backward_edge_counts(run_dir: Path) -> list[Finding]:
     """Check that backward edge counts in the manifest match the back-*.md files on disk."""
     findings: list[Finding] = []
@@ -136,26 +203,14 @@ def check_backward_edge_counts(run_dir: Path) -> list[Finding]:
     if text is None:
         return []
 
-    # Count actual backward handoff packet files per target phase
-    disk_counts: dict[str, int] = {}
-    for path in run_dir.iterdir():
-        if not path.is_file() or not path.name.startswith("back-"):
-            continue
-        # Filename format: back-<from>-to-<to>-<n>.md
-        parts = path.name.removesuffix(".md").split("-")
-        if len(parts) >= 4 and parts[1] == "to":
-            target = parts[2]
-            disk_counts[target] = disk_counts.get(target, 0) + 1
+    manifest_counts = _parse_backward_edge_counts_from_manifest(text)
+    disk_counts = _parse_backward_edge_counts_from_disk(run_dir)
 
-    # Check manifest backward edge counts
     for phase in ("clarify", "research", "plan", "implement", "code-review"):
-        match = re.search(
-            rf"### Phase.*{phase}.*\n.*Backward edges received:\s*(\d+)",
-            text, re.IGNORECASE | re.DOTALL,
-        )
-        if match:
-            manifest_count = int(match.group(1))
-            disk_count = disk_counts.get(phase, 0)
+        manifest_count = manifest_counts.get(phase, 0)
+        disk_count = disk_counts.get(phase, 0)
+        if phase in manifest_counts:
+            # Manifest recorded a count for this phase — it must match disk.
             if manifest_count != disk_count:
                 findings.append(Finding(
                     severity="error",
@@ -165,15 +220,26 @@ def check_backward_edge_counts(run_dir: Path) -> list[Finding]:
                         f"manifest={manifest_count}, disk={disk_count}"
                     ),
                 ))
-            if manifest_count > 2:
-                findings.append(Finding(
-                    severity="error",
-                    check="manifest_state",
-                    message=(
-                        f"Backward edge cap exceeded for {phase}: "
-                        f"{manifest_count} > 2"
-                    ),
-                ))
+        elif disk_count > 0:
+            # No manifest entry for this phase, but packets exist on disk —
+            # the manifest is out of sync with the run directory.
+            findings.append(Finding(
+                severity="error",
+                check="manifest_state",
+                message=(
+                    f"Backward packets on disk for {phase} ({disk_count}) but "
+                    f"manifest has no 'Backward edges received' entry"
+                ),
+            ))
+        if manifest_count > 2:
+            findings.append(Finding(
+                severity="error",
+                check="manifest_state",
+                message=(
+                    f"Backward edge cap exceeded for {phase}: "
+                    f"{manifest_count} > 2"
+                ),
+            ))
     return findings
 
 
