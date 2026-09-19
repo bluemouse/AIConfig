@@ -16,7 +16,7 @@ Use this structure for the final response after executing an implementation plan
 |---|---|---|---|---|
 | <id> | <subagent/direct> | <files/modules> | <done/partial/blocked> | <pass/fail/skipped> |
 
-### Files Changed
+### Files changed
 - `<path>`: <why it changed>
 - `<path>`: <why it changed>
 

@@ -125,6 +125,23 @@ def strip_markdown_emphasis(text: str) -> str:
     return text.replace("**", "").replace("*", "").strip().lower()
 
 
+def strip_placeholder_options(text: str) -> str:
+    """Reduce a bracketed placeholder line to its first option.
+
+    Template placeholders list the allowed verdicts as ``<a | b | c>`` or
+    ``<a | b | c> — note`` (trailing content after the closing bracket).
+    A template rendered as-is (or a checker that copied the placeholder
+    line verbatim) must still yield a matchable verdict, so keep only the
+    first option and drop any trailing note.
+    """
+    import re
+
+    match = re.match(r"^<([^<>|]+)\|.*?>(?:\s.*$)?", text.strip())
+    if match:
+        return match.group(1).strip()
+    return text
+
+
 def extract_verdict(text: str) -> str | None:
     """Extract the verdict from a checker report.
 
@@ -163,9 +180,11 @@ def extract_verdict(text: str) -> str | None:
                 re.IGNORECASE,
             )
             if list_match:
-                return strip_markdown_emphasis(list_match.group(1))
+                return strip_markdown_emphasis(
+                    strip_placeholder_options(list_match.group(1))
+                )
             # Otherwise treat the whole line as the verdict value.
-            return strip_markdown_emphasis(stripped)
+            return strip_markdown_emphasis(strip_placeholder_options(stripped))
 
     return None
 

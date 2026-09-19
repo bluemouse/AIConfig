@@ -6,7 +6,7 @@ Use this structure for the final review-report. Adapt only when sections are irr
 # Research Review Report: [Research Report / Feature / Idea Name]
 
 ## 1. Verdict
-- Verdict: ready | conditionally ready | needs revision | blocked
+- Verdict: <ready | conditionally ready | needs revision | blocked — choose exactly one>
 - Confidence: high | medium | low
 - Audit posture: balanced | aggressive
 - Review depth: focused | standard | rigorous

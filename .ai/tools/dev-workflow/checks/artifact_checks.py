@@ -38,6 +38,44 @@ PHASE_ARTIFACTS: dict[str, list[tuple[str, list[str]]]] = {
     ],
 }
 
+
+def _heading_variants(heading: str) -> list[str]:
+    """Return the heading plus a numbered variant (e.g. ``## 3. Problem statement``).
+
+    Templates number some sections (``## 3. Problem statement``) while the
+    required-section lists use unnumbered forms. Both satisfy the requirement;
+    a numbered heading is the same section with an index prefix.
+    """
+    import re
+
+    match = re.match(r"^(#{1,6})\s+(.+)$", heading)
+    if not match:
+        return [heading]
+    hashes, title = match.groups()
+    return [heading, f"{hashes} N. {title}"]
+
+
+def _section_present(text: str, section: str) -> bool:
+    """Check that a required section heading is present, tolerating numbering.
+
+    Matches the exact unnumbered form (``## Problem statement``) or a
+    numbered form (``## 3. Problem statement``) of the same heading.
+    """
+    for variant in _heading_variants(section):
+        if variant in text:
+            return True
+    # Numbered variant: any digits between the hashes and the title.
+    match = re.match(r"^(#{1,6})\s+(.+)$", section)
+    if match:
+        hashes, title = match.groups()
+        if re.search(
+            rf"^{re.escape(hashes)}\s+\d+\.\s+{re.escape(title)}\s*$",
+            text,
+            re.MULTILINE,
+        ):
+            return True
+    return False
+
 # Regex to extract the stage number from a stage-indexed filename.
 # Matches patterns like 30-stage1-implementation-report.md, 31-stage2-implementation-audit.md, etc.
 _STAGE_INDEX_RE = re.compile(r"^(\d{2})-stage(\d+)-(.+\.md)$")
@@ -245,7 +283,7 @@ def check_artifact_sections(run_dir: Path, phase: str) -> list[Finding]:
             continue  # Already reported by check_artifacts_exist
         text = path.read_text(encoding="utf-8")
         for section in required_sections:
-            if section not in text:
+            if not _section_present(text, section):
                 findings.append(
                     Finding(
                         severity="error",

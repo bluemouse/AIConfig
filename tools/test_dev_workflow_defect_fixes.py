@@ -367,7 +367,8 @@ class StagedModeAwarenessTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             run_dir = _make_run_dir(tmpdir, self.STAGED_MANIFEST)
             (run_dir / "30-stage1-implementation-report.md").write_text(
-                "# Implementation Report\n", encoding="utf-8",
+                "# Implementation Report\n## Files changed\n- foo.py\n",
+                encoding="utf-8",
             )
             findings = check_pre_phase.run_pre_flight(run_dir, "code-review")
             self.assertEqual(

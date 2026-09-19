@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from checks import Finding
 from checks import artifact_checks
+from checks import handoff_checks
 
 # Expected input artifacts per phase (the terminal artifact from the previous phase).
 # In staged mode, stage-indexed variants (e.g. 30-stage1-implementation-report.md)
@@ -37,6 +38,17 @@ PHASE_INPUTS: dict[str, list[str]] = {
     "implement": ["20-implementation-plan.md"],
     "code-review": ["30-implementation-report.md"],
     "commit": ["40-code-review.md"],
+}
+
+# Handoff consumer-ready checks to run at pre-flight, keyed by the phase whose
+# INPUT is being consumed. A phase cannot start on an input artifact that is
+# missing sections its consumer needs (dw-016: pre-flight was existence-only,
+# so a research report or plan missing required sections passed pre-flight and
+# surfaced only post-hoc in validate_phase).
+PRE_FLIGHT_HANDOFF_CHECKS: dict[str, list] = {
+    "plan": [handoff_checks.check_research_report_consumer_ready],
+    "implement": [handoff_checks.check_plan_consumer_ready],
+    "code-review": [handoff_checks.check_impl_report_consumer_ready],
 }
 
 
@@ -87,6 +99,11 @@ def run_pre_flight(run_dir: Path, phase: str) -> list[Finding]:
             check="pre_flight",
             message=f"Expected input artifact missing for {phase}: {filename}",
         ))
+
+    # Handoff consumer-ready checks: the input artifact must contain the
+    # sections its consumer needs, not merely exist (dw-016).
+    for check in PRE_FLIGHT_HANDOFF_CHECKS.get(phase, []):
+        findings.extend(check(run_dir))
     return findings
 
 

@@ -29,6 +29,7 @@ edges for upstream root causes, artifact contracts, and mode enforcement.
    - Create `.ai/workflow/<slug>/`.
    - Write `00-run-manifest.md` and `01-feature-brief.md`.
    - Activate clarify mode.
+   - Record the baseline: `python .ai/tools/dev-workflow/record_baseline.py --phase clarify --run-dir .ai/workflow/<slug>` (captures git HEAD and dirty paths so mode-enforcement checks can distinguish pre-existing changes from changes made during the phase).
    - Run the pre-flight check.
    - Start Phase 0 (Clarify loop).
 

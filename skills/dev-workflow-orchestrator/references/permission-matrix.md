@@ -21,8 +21,17 @@ When `Run mode: staged` (declared in plan §10 and confirmed at the plan gate), 
 |-------|-----------------|----------------|--------------------------|
 | Implement (staged) | yes (per-stage commit via commit-message-writer → git-guide) | no (default) | n/a |
 | Final deep review | yes (new commits on top, no amend/rebase — fixes land as new commits on top, no amend/rebase) | no (unless asked) | yes (code-review-resolver applies fixes as new commits) |
+| Terminal delivery (after final deep review) | no (the PR is opened, not committed) | yes (PR branch push, only when the user asks for delivery) | n/a |
 
 **Terminology note:** "per-stage commit" and "staged-mode commit" refer to commits produced at the end of each stage in staged mode. This is distinct from the existing "staged only" in the Commit phase row above, which refers to git's staging area (`git add`). The two concepts are unrelated.
+
+**Terminal delivery mode (staged mode only).** After the final deep review is accepted, the
+orchestrator runs delivery as a distinct, non-writing step: `pull-request-guide` drafts the PR
+narrative and `github-guide` opens the PR on GitHub-hosted repos. Neither edits source and neither
+writes run artifacts, so no `4x-*.md`/`5x-*.md` file is produced. The delivery step is permitted to
+push the PR branch; it is never permitted to amend, rebase, or force-push. `mode_checks.py` treats
+`implement` and `code-review` as commit-permitted phases in staged mode; delivery happens outside a
+phase boundary and is gated on explicit user authorization instead.
 
 ## Principles
 

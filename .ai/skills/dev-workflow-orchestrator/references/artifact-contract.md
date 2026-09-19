@@ -8,7 +8,7 @@ Phase-grouped numbered filenames:
 - Tens digit = phase (0=meta+clarify, 1=research, 2=plan, 3=implement, 4=review, 5=commit)
 - Ones digit = artifact within phase
 - `-r2`, `-r3` suffixes for loop rounds
-- `back-<from>-<to>-<n>.md` for backward handoff packets
+- `back-<from>-to-<to>-<n>.md` for backward handoff packets
 
 ## Artifact registry
 
@@ -27,7 +27,7 @@ Phase-grouped numbered filenames:
 | 4 (review) | Code review | `40-code-review.md` | code-reviewer | code-review-resolver (loop), orchestrator | Loop output |
 | 4 (review) | Fix report | `41-fix-report.md` | code-review-resolver | code-reviewer (loop), orchestrator | Loop output |
 | 5 (commit) | Commit record | `50-commit.md` | commit-message-writer | (terminal) | Terminal |
-| (backward) | Backward handoff packet | `back-<from>-<to>-<n>.md` | Any reviewer/auditor | Target phase | Handoff |
+| (backward) | Backward handoff packet | `back-<from>-to-<to>-<n>.md` | Any reviewer/auditor | Target phase | Handoff |
 
 ## Stage-indexed artifacts (staged mode only)
 

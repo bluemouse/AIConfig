@@ -15,6 +15,12 @@ It does not own the work that follows — see **When NOT to Use** for deferrals.
 
 Use this skill to settle blocking decisions, then hand the settled requirement ledger to the skill that performs the work (see **When NOT to Use**).
 
+The requirement ledger is this skill's terminal output. Its shape is defined in
+[references/requirement-ledger.md](references/requirement-ledger.md) — read it before writing a
+ledger. Inside the dev-workflow harness the ledger is the Phase 0 artifact
+(`.ai/workflow/<slug>/02-requirement-ledger.md`) consumed by `research-guide`; standalone, it is the
+confirmation summary you carry into the handoff.
+
 ## When NOT to Use
 
 - **Open-ended discovery and feature research with agreement gates** — use [../research-guide/SKILL.md](../research-guide/SKILL.md)

@@ -83,7 +83,7 @@ One line per scope actually run:
 
 ## 8. Overall verdict
 
-- Loop verdict: <ready to commit | ready with notes | needs revision> — `ready to commit` when no blocker or major findings remain; `ready with notes` when only minor-level findings remain; `needs revision` when any blocker or major finding remains. When the dev-workflow-orchestrator is active, it reads this field to route the code review loop; outside the orchestrator, use merge readiness below.
+- Loop verdict: <ready to commit | ready with notes | needs revision> — choose exactly one. `ready to commit` when no blocker or major findings remain; `ready with notes` when only minor-level findings remain; `needs revision` when any blocker or major finding remains. When the dev-workflow-orchestrator is active, it reads this field to route the code review loop; outside the orchestrator, use merge readiness below.
 - Merge readiness: <ready | ready with fixes | not ready>
 - Risk summary: <one or two sentences on overall risk>
 - Top next actions:

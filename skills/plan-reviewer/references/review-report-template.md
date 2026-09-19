@@ -6,7 +6,7 @@ Use this structure for the review output. Keep it concise, but include enough de
 # Plan Review Report: [Plan Name]
 
 ## 1. Verdict
-- Verdict: validated | conditionally validated | needs revision | blocked
+- Verdict: <validated | conditionally validated | needs revision | blocked — choose exactly one>
 - Confidence: high | medium | low
 - Execution recommendation: proceed | proceed with accepted risks | revise first | do not execute
 - Review posture: balanced | aggressive

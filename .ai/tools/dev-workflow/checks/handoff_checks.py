@@ -10,8 +10,11 @@ import re
 from pathlib import Path
 
 from . import Finding
+from . import artifact_checks
 
 # Required sections in the research report for plan-guide to consume.
+# Numbered variants (e.g. "## 3. Problem statement") are matched via
+# artifact_checks._section_present — templates number some sections.
 RESEARCH_REPORT_FOR_PLAN = [
     "## Problem statement",
     "## Goals",
@@ -39,7 +42,7 @@ def check_research_report_consumer_ready(run_dir: Path) -> list[Finding]:
         return []  # Already reported by artifact_checks
     text = path.read_text(encoding="utf-8")
     for section in RESEARCH_REPORT_FOR_PLAN:
-        if section not in text:
+        if not artifact_checks._section_present(text, section):
             findings.append(Finding(
                 severity="error",
                 check="handoff_integrity",
@@ -58,7 +61,7 @@ def check_plan_consumer_ready(run_dir: Path) -> list[Finding]:
         return []
     text = path.read_text(encoding="utf-8")
     for section in PLAN_FOR_EXECUTOR:
-        if section not in text:
+        if not artifact_checks._section_present(text, section):
             findings.append(Finding(
                 severity="error",
                 check="handoff_integrity",
@@ -83,7 +86,7 @@ def check_impl_report_consumer_ready(run_dir: Path) -> list[Finding]:
         return []  # Already reported by artifact_checks
     text = path.read_text(encoding="utf-8")
     for section in IMPL_REPORT_FOR_REVIEW:
-        if section not in text:
+        if not artifact_checks._section_present(text, section):
             findings.append(Finding(
                 severity="error",
                 check="handoff_integrity",

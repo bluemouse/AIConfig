@@ -41,4 +41,4 @@ A backward handoff packet carries context from a later phase to an earlier phase
 - The `Backward edge count for target phase` must not exceed 2.
 - The `Finding id` must reference a real finding in the source artifact.
 - The packet is write-once by the discovering checker. The target phase reads it but does not edit it.
-- Filename: `back-<from>-<to>-<n>.md` where `<n>` is the sequential number for that from-to pair.
+- Filename: `back-<from>-to-<to>-<n>.md` (e.g. `back-code-review-to-plan-1.md`) where `<n>` is the sequential number for that from-to pair.

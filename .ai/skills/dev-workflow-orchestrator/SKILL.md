@@ -31,7 +31,7 @@ You are the brain; the skills are the producers.
 ## When NOT to Use
 
 - **Individual phase tasks** — use the phase-specific skill directly (research-guide,
-  plan-guide, plan-executor, code-reviewer, git-commit)
+  plan-guide, plan-executor, code-reviewer, code-review-resolver, commit-message-writer)
 - **Git mechanics alone** — use [../git-guide/SKILL.md](../git-guide/SKILL.md)
 - **Code diff review without the full workflow** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 - **Interactive research or brainstorming** — use [../research-guide/SKILL.md](../research-guide/SKILL.md)
@@ -71,13 +71,8 @@ Backward edges (7 total):
 - Code Review → Research (approach wrong)
 - Code Review → Implement (implementation defect rooted in execution approach)
 
-Read [references/artifact-contract.md](references/artifact-contract.md) for the full artifact
-registry. Read [references/loop-contracts.md](references/loop-contracts.md) for the five loop
-contracts (including the simplified clarify loop). Read [references/backward-handoff-format.md](references/backward-handoff-format.md)
-for the backward handoff packet format. Read [references/manifest-format.md](references/manifest-format.md)
-for the run manifest format. Read [references/permission-matrix.md](references/permission-matrix.md)
-for the per-phase permission matrix. Read [references/requirement-ledger-template.md](references/requirement-ledger-template.md)
-for the requirement ledger format.
+See [References](#references) below for the full reference index — read each one before the step
+that uses it.
 
 ## Orchestrator procedure
 
@@ -169,7 +164,7 @@ For the Clarify phase (Phase 0), there is no checker. Run prompt-clarifier as a 
 3. **Clarifier pass:** Invoke prompt-clarifier as a named pass. Tell it:
    - The input artifact path (`01-feature-brief.md`).
    - The output artifact path (`02-requirement-ledger.md`).
-   - To use the requirement ledger template at `references/requirement-ledger-template.md`.
+   - To use the requirement ledger template at `<SKILL_ROOT>/references/requirement-ledger-template.md` (resolve `<SKILL_ROOT>` to the installed orchestrator skill directory; the ledger schema is also summarized in the prompt-clarifier skill itself).
    - The mode constraints for this phase (read-only, interactive).
 4. **Read status:** prompt-clarifier's internal `CHECK` state is the exit condition. If `actionable`, proceed. If `blocked`, escalate immediately.
 5. **Post-flight:** Run `check_post_phase.py --phase clarify --run-dir <path>`. If it fails, stop and report.
@@ -202,7 +197,7 @@ For all other phases, run the doer → checker loop. **Code Review exception:** 
 When a checker finding has `root-cause-phase` set to an earlier phase:
 
 1. Check the backward edge count for the target phase in the manifest (< 2?).
-2. Create a backward handoff packet at `back-<from>-<to>-<n>.md` using the format in [references/backward-handoff-format.md](references/backward-handoff-format.md).
+2. Create a backward handoff packet at `back-<from>-to-<to>-<n>.md` (e.g. `back-code-review-to-plan-1.md`) using the format in [references/backward-handoff-format.md](references/backward-handoff-format.md).
 3. Validate the packet: `python .ai/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir <path>`.
 4. Update manifest: target phase status = `backward-edge-received`, increment backward edge count.
 5. Route to the target phase. The target phase:
@@ -289,7 +284,7 @@ Mode is enforced by the orchestrator's per-phase instructions (prevention) and t
 ### Commit mode
 
 - No source edits.
-- Stage and commit only (via git-commit command).
+- Stage and commit only (via commit-message-writer to draft the message, then git-guide to commit).
 - Write to `50-*.md` artifact.
 - No push unless the user explicitly asks.
 
@@ -316,6 +311,26 @@ The orchestrator reads `00-run-manifest.md` at the start of every turn to know:
 - Validation log
 
 The manifest is the orchestrator's memory across turns. Without it, the orchestrator cannot resume. Always update the manifest after every step.
+
+## References
+
+Read each reference before the step that uses it. All paths are relative to `<SKILL_ROOT>`.
+
+| Reference | Read before |
+| --- | --- |
+| [references/artifact-contract.md](references/artifact-contract.md) | Writing or consuming any phase artifact — the full artifact registry, naming scheme, stage-indexed variants, and boundary rules |
+| [references/loop-contracts.md](references/loop-contracts.md) | Running any phase loop — doer/checker pairs, round caps, accept/revise/blocked verdicts, loop 0 (clarify), and the two staged-only loops |
+| [references/backward-handoff-format.md](references/backward-handoff-format.md) | Creating a backward handoff packet (Backward edge procedure) |
+| [references/manifest-format.md](references/manifest-format.md) | Starting or resuming a run — required manifest section headers (`# Run Manifest`, `## Run metadata`, `## Phase status`, `## Artifact registry`) and valid field values |
+| [references/permission-matrix.md](references/permission-matrix.md) | Enforcing phase mode — per-phase read/write/commit permissions, staged-mode additions, and forbidden actions |
+| [references/dispatch-modes.md](references/dispatch-modes.md) | Selecting a dispatch mode at phase 0 and constructing a checker task packet |
+| [references/requirement-ledger-template.md](references/requirement-ledger-template.md) | The Clarify pass — pass this path to prompt-clarifier as its output template |
+
+> **Installation note.** `tools/installer.py` copies the whole skill directory, so these files ship
+> as `<skill-root>/references/*.md` in the target project. When passing a template path to a phase
+> skill, pass the resolved path (e.g.
+> `.ai/skills/dev-workflow-orchestrator/references/requirement-ledger-template.md`), not the
+> bare `references/` form, which only resolves when the reader is already inside the skill root.
 
 ## Quality bar
 

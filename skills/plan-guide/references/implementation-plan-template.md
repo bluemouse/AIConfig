@@ -66,7 +66,7 @@ Use this structure for a plan that should be executable by a developer, engineer
 
 Collaboration notes: [How Tests Designer aligned with Requirements Mapper, Architecture Planner, Task Decomposer, and Verification Planner.]
 
-## 7. Work breakdown
+## 7. Task breakdown
 
 ### Task pg-001: [Concrete task title]
 - Purpose:
