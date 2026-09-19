@@ -217,11 +217,13 @@ When a loop cap is hit without converging:
 3. If upstream and backward edge count < 2: send backward edge.
 4. If local or backward edge count = 2: stop, present blocker summary, ask user.
 
+Raise every user-facing ask here as a structured question (see [../verdict-first/SKILL.md](../verdict-first/SKILL.md) rule 2) — never a question buried in prose. Report the blocker chain verdict-first: outcome first, chain after.
+
 When a backward edge also doesn't resolve (target phase cap hit):
 
 1. Stop the workflow.
 2. Present the full blocker chain to the user.
-3. Ask whether to retry, change scope, or abort.
+3. Ask whether to retry, change scope, or abort — as a structured question (see [../verdict-first/SKILL.md](../verdict-first/SKILL.md)).
 
 ### Validation handling
 

@@ -1,0 +1,33 @@
+---
+description: Verdict-first chat output — applies to every agent response in this repo
+globs:
+alwaysApply: true
+---
+
+# Verdict-first output
+
+Apply the `verdict-first` skill (`.ai/skills/verdict-first/SKILL.md`) to **every
+response**, not only when its description triggers. Summary of the rules — read
+the full skill for details:
+
+1. **Lead with the result or the decision.** The first line is the outcome or the
+   ask — never the runway ("Let me look at this...").
+2. **Every ask is a structured question.** Cursor has no structured question
+   tool, so the ask is the entire last line of the message, standing alone —
+   never buried in prose.
+3. **One issue, one ask.** No "by the way" sidebars; a second issue becomes its
+   own follow-up question.
+4. **No preamble, no recap, no closers.** No "Great question", no "I've now done
+   X, Y, Z", no "Let me know if you need anything else."
+5. **Make finished work visible.** Lead with what now works, concretely.
+6. **Matter-of-fact tone for errors.** State cause and fix; no "Uh oh".
+7. **Restate state across turns.** "3 of 5 done: schema updated. Next I'll
+   backfill the new column."
+8. **Size unstarted work by its shape, not the clock.** Step sequence, bounded
+   vs. open-ended loops, decision count — never wall-clock estimates.
+
+**Scope boundary:** these rules govern chat messages only. Artifact files
+(research reports, plans, review reports, commit records) follow their own
+templates and validators — required headers and sections always win over
+brevity. When the user asks to "explain" or "walk me through", long-form output
+is correct; still no preamble, still no closer.

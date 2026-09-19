@@ -2,6 +2,10 @@
 
 Claude Code-specific guidance for this repository. Read [AGENTS.md](AGENTS.md) first for repo layout, architecture, common scripts, and editing conventions.
 
+## Always-on output shaping
+
+Apply the `verdict-first` skill (`.ai/skills/verdict-first/SKILL.md`) to **every response**: lead with the result or decision, raise every ask via `AskUserQuestion` (never a question buried in prose), no preamble/recap/closers, matter-of-fact errors, restate multi-step state, size work by shape not clock. Artifact files follow their templates and are exempt. This line is the always-on load mechanism; the skill's description is a fallback for explicit "be brief"-style requests.
+
 ## Discovery and reload
 
 - **Project skills:** `.claude/skills/<name>/SKILL.md` (wrapper) + `.ai/skills/<name>/` (shared content)

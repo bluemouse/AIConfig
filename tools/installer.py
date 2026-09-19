@@ -87,6 +87,12 @@ TOOL_COMMAND_SCAN_REL_DIRS = (
 
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
+# Personal-preference skills excluded from the no-selector default install.
+# They remain installable explicitly (--skills <name>) or via their bundle
+# (--bundles personal-output); only the "install everything" default skips
+# them so personal output-shaping preferences never leak into shared targets.
+DEFAULT_EXCLUDED_SKILLS = frozenset({"verdict-first"})
+
 RELOAD_REMINDER = (
     "Reload Cursor, VS Code (Copilot), and Claude Code so each tool "
     "rediscovers the installed skills, agents, and commands."
@@ -526,9 +532,10 @@ def resolve_cli_selection(
     if bundle_ids or skill_names or agent_names or command_names or script_names:
         selection.dedupe()
         return selection
-    # No explicit selection: default to all discovered items.
+    # No explicit selection: default to all discovered items, minus
+    # personal-preference skills that require explicit opt-in.
     return BundleSelection(
-        skills=discover_skills(),
+        skills=[name for name in discover_skills() if name not in DEFAULT_EXCLUDED_SKILLS],
         agents=discover_agents(),
         commands=discover_commands(),
         scripts=discover_scripts(),

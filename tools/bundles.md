@@ -84,6 +84,23 @@ python tools/installer.py /path/to/project --dev-workflow
 
 The bundle composes with `--skills`, `--agents`, `--commands`, and other `--bundles` in a single invocation. Use `--override` to replace existing harness paths in the target.
 
+## Personal output preferences bundle
+
+The **personal-output** bundle groups chat-output shaping preferences for a single user. It currently contains one skill:
+
+| Skill | Primary role | Use when |
+| --- | --- | --- |
+| [verdict-first](../skills/verdict-first/SKILL.md) | Chat-output shaping | Verdict-first updates, structured questions at escalations, no preamble/recap, and matter-of-fact error reporting should apply to every response |
+
+Unlike the workflow bundles, this one is **excluded from the no-selector default install**. `DEFAULT_EXCLUDED_SKILLS` in [installer.py](installer.py) filters personal-preference skills when `tools/installer.py` is invoked without `--skills`, `--agents`, `--commands`, or `--bundles`, so a single user's output-shaping preferences never leak into shared team targets. Install it explicitly:
+
+```bash
+python tools/installer.py /path/to/project --bundles personal-output
+python tools/installer.py /path/to/project --skills verdict-first
+```
+
+**Always-on loading caveat:** the installer copies the skill and its tool wrappers, but not the always-on load channels — `.cursor/rules/` files and instruction-file lines are repo-local. Target projects that want every-message loading must add their own `.cursor/rules/verdict-first.mdc` (with `alwaysApply: true`) and an instruction-file line (for example in `AGENTS.md` or `CLAUDE.md`) pointing at the skill.
+
 ## Core dev workflow bundle
 
 The core bundle is the minimum workflow set a team should rely on for ordinary feature, bug, and product-spec development. Not every skill fires on every task, but every skill covers a responsibility that appears regularly in healthy delivery work.

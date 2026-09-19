@@ -50,6 +50,8 @@ Install always writes all three tool paths plus the shared file (skill-like). Co
 
 Skills are discovered by frontmatter (`name`, `description`); an agent reads the `description` to decide when to load the full `SKILL.md` body. Description wording is load-bearing — `skill-creator`'s eval tooling (`run_eval.py`) tests whether a description reliably triggers on target phrases.
 
+**Always-on exception:** the `verdict-first` skill (chat-output shaping) must load on every message, which description-based discovery cannot deliver. Apply it to every response in this repo — artifact files are exempt. Its load channels are `.cursor/rules/verdict-first.mdc` (`alwaysApply: true`) and the always-on lines in `AGENTS.md`/`CLAUDE.md`; the skill body remains the canonical, portable source.
+
 ### Skill clusters
 
 Some skills cross-link as companions — install and edit them together when tasks span layers (install order does not matter):
@@ -71,6 +73,7 @@ Some skills cross-link as companions — install and edit them together when tas
 - **Research workflow:** `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor` (interactive discovery and research report → readiness audit → TDD-first implementation plan with Tests Designer → plan audit → execution; defers correctness audit to `implementation-auditor` and diff review to `code-reviewer`)
 - **Implementation quality:** `test-driven-dev-guide`, `debugging-guide`, `implementation-auditor`, `code-reviewer`, `techdoc-reviewer` (TDD-first planning enforced by `plan-guide`/`plan-reviewer`, strict TDD during execution via `test-driven-dev-guide` → systematic root-cause debugging → evidence-based correctness audit → structured diff review → documentation verification and synchronization when behavior or contracts change)
 - **Dev-workflow harness:** `dev-workflow-orchestrator` plus the phase doer/checker skills (`prompt-clarifier`, `research-guide`/`research-reviewer`, `plan-guide`/`plan-reviewer`, `plan-executor`/`implementation-auditor`, `code-review-resolver`/`code-reviewer`, `commit-message-writer`) and the `/dev-workflow` + `/dev-workflow-{research,plan,implement,review}` commands — full pipeline via `/dev-workflow` or individual phase loops via the per-phase commands; installed/uninstalled as a unit via `--dev-workflow` (`dev-workflow-harness` bundle)
+- **Presentation layer:** `verdict-first` (cross-cutting chat-output shaping — verdict-first updates, structured questions at escalations, no preamble/recap, matter-of-fact errors, state restatement; applies to every response via always-on load channels, not description triggering; artifact files are exempt)
 - **Parallel execution:** `agent-runner` (with `code-reviewer`, `git-guide`, `skill-creator`, and `dev-workflow-orchestrator` as near-misses — defers diff review, git mechanics, skill evals, and harness orchestration respectively)
 
 See [README.md](README.md) for the full bootstrap skill table, cluster relationships, and install examples.

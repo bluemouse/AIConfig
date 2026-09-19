@@ -43,6 +43,14 @@
       ]
     },
     {
+      "id": "personal-output",
+      "name": "Personal output preferences",
+      "description": "Chat-output shaping preferences for a single user. Excluded from no-selector default installs; install explicitly via --bundles personal-output or --skills verdict-first.",
+      "skills": [
+        "verdict-first"
+      ]
+    },
+    {
       "id": "dev-workflow-harness",
       "name": "Dev-workflow harness",
       "description": "Complete dev-workflow harness: the orchestrator plus all phase doer/checker skills, the dev-workflow command, and the .ai/tools/dev-workflow/ validation scripts. Installed/uninstalled as a unit.",

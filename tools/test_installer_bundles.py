@@ -192,7 +192,27 @@ class CliSkillResolutionTests(unittest.TestCase):
     def test_resolve_cli_skills_default(self) -> None:
         all_skills = mod.discover_skills()
         resolved = mod.resolve_cli_skills(bundle_ids=None, skill_names=None)
-        self.assertEqual(resolved, all_skills)
+        expected = [name for name in all_skills if name not in mod.DEFAULT_EXCLUDED_SKILLS]
+        self.assertEqual(resolved, expected)
+
+    def test_resolve_cli_skills_default_excludes_personal_skills(self) -> None:
+        resolved = mod.resolve_cli_skills(bundle_ids=None, skill_names=None)
+        self.assertNotIn("verdict-first", resolved)
+        self.assertIn("commit-message-writer", resolved)
+
+    def test_resolve_cli_skills_explicit_personal_skill_installs(self) -> None:
+        resolved = mod.resolve_cli_skills(
+            bundle_ids=None,
+            skill_names=["verdict-first"],
+        )
+        self.assertEqual(resolved, ["verdict-first"])
+
+    def test_resolve_cli_skills_personal_bundle_installs(self) -> None:
+        resolved = mod.resolve_cli_skills(
+            bundle_ids=["personal-output"],
+            skill_names=None,
+        )
+        self.assertEqual(resolved, ["verdict-first"])
 
     def test_resolve_cli_skills_bundle_only(self) -> None:
         resolved = mod.resolve_cli_skills(
