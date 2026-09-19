@@ -82,6 +82,8 @@ python tools/installer.py /path/to/project --dev-workflow
 - **Command (1):** `dev-workflow` — installed via the standard command mechanism (shared + tool wrappers). Four per-phase commands — `dev-workflow-research`, `dev-workflow-plan`, `dev-workflow-implement`, `dev-workflow-review` — are also installed; each runs a single phase's doer/checker loop to acceptance or escalation without driving the full pipeline.
 - **Validation scripts:** the `.ai/tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/.ai/tools/dev-workflow/`.
 
+The orchestrator formats escalations per the `verdict-first` skill, which is **opt-in** (`personal-output` bundle, excluded from default installs). The escalation rules are restated inline in the orchestrator, so the harness works without it; install `--bundles personal-output` alongside when every-message output shaping is wanted in the target.
+
 The bundle composes with `--skills`, `--agents`, `--commands`, and other `--bundles` in a single invocation. Use `--override` to replace existing harness paths in the target.
 
 ## Personal output preferences bundle
@@ -136,6 +138,7 @@ The extended bundle includes the full core bundle plus these additional skills:
 | [minutes-writer](../skills/minutes-writer/SKILL.md) | Meeting and decision record | Engineering discussions need grounded minutes, decisions, and action items |
 | [techdoc-reviewer](../skills/techdoc-reviewer/SKILL.md) | Documentation review and synchronization | Reader-facing docs must be verified against code, tests, and configuration, or updated after a behavior change |
 | [github-guide](../skills/github-guide/SKILL.md) | GitHub delivery | A GitHub PR or review must be created, updated, commented on, or resolved through `gh` / `gh api` |
+| [git-merge-guide](../skills/git-merge-guide/SKILL.md) | Deep local merge/rebase integration | A local merge or rebase needs intent reconstruction, semantic conflict resolution, combined-tree review, or impact-based verification |
 
 ## Choosing Core vs Extended
 

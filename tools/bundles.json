@@ -39,7 +39,8 @@
         "agent-runner",
         "minutes-writer",
         "techdoc-reviewer",
-        "github-guide"
+        "github-guide",
+        "git-merge-guide"
       ]
     },
     {

@@ -41,7 +41,8 @@ class BundleLoadingTests(unittest.TestCase):
         bundles = mod.load_skill_bundles(BUNDLES_JSON_PATH)
         by_id = {bundle.id: bundle for bundle in bundles}
         self.assertEqual(len(by_id["core-dev-workflow"].skills), 12)
-        self.assertEqual(len(by_id["extended-dev-workflow"].skills), 20)
+        self.assertEqual(len(by_id["extended-dev-workflow"].skills), 21)
+        self.assertIn("git-merge-guide", by_id["extended-dev-workflow"].skills)
 
     def test_load_dev_workflow_harness_bundle(self) -> None:
         bundles = mod.load_skill_bundles(BUNDLES_JSON_PATH)
