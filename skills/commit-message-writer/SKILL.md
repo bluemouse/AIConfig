@@ -17,6 +17,16 @@ impact, breaking changes, and test/evidence notes. Never append tool, agent, or 
 attribution (for example `Co-authored-by: Cursor <cursoragent@cursor.com>` or similar
 lines for Claude, Copilot, or other assistants).
 
+Commit messages must be **self-contained**. A message may reference only content a reader
+can reach from the repository — committed code, committed docs, and user-supplied ticket
+ids. Plan documents, research reports, requirement ledgers, reviews, audits, workflow
+manifests, and handoff packets are **temporary by design**: the `.ai/` planning
+directories are gitignored, and even a committed planning artifact is state for the run
+that produced it, not a reference a future reader can interpret. Never name, link,
+summarize, or imply one of them in a commit message — restate the underlying behavior,
+decision, or root cause in the message instead. See
+[message-style-contract.md](references/message-style-contract.md#self-contained-messages).
+
 ## Cross-assistant consistency
 
 Cursor, Claude Code, Copilot, and other hosts must produce the **same message shape and
@@ -32,6 +42,8 @@ Non-negotiable:
 - **Copyable blocks** — Verbose in a `text` fenced block; Suggested command in a `bash`
   fenced block so chat UIs expose copy controls
 - **Prose-first body** — 1–3 paragraphs by default; bullets only when the contract allows
+- **Self-contained** — cite only committed repo content and user-supplied ticket ids;
+  never plan, research, review, audit, manifest, or handoff artifacts
 - **Style precedence** — recent `git log` on the branch, then the style contract, then
   Conventional Commits defaults
 
@@ -49,7 +61,9 @@ same message that invoked this skill.
 - Drafting a commit message for staged, unstaged, or all working-tree changes
 - Writing a Conventional Commit subject and body from a diff or commit SHA
 - Summarizing intent for a commit range (branch vs base, last N commits)
-- Weaving session context, plan docs, Jira tickets, or user notes into a message
+- Weaving session context, plan docs, Jira tickets, or user notes into a message — as
+  **input for wording only**; the output stays self-contained and cites committed content
+  or user-supplied ticket ids, never the plan or research document itself
 - Offering to run `git commit` with the generated message after the user reviews the draft
 
 ## When NOT to Use
@@ -101,6 +115,9 @@ Synthesize intent from git evidence and all context sources:
 4. Align with session context when the diff alone looks mechanical.
 5. Match recent branch history from `git --no-pager log -10` for type, scope, and body
    layout when a clear pattern exists.
+6. **Restate, don't cite** — fold plan, research, and session context into the message as
+   behavior, decisions, and root causes. Never reference the planning document, task
+   number, stage, requirement id, or finding id that carried the context.
 
 Details: [message-style-contract.md](references/message-style-contract.md),
 [conventional-commits.md](references/conventional-commits.md)
@@ -152,8 +169,10 @@ Before returning draft messages:
 5. **Consistency** — output envelope identical across hosts; prose-first body unless repo history uses bullets
 6. **Safety** — no `git commit` until user confirms; unrelated work flagged for split
 7. **Purity** — no AI/tool attribution footers; message content is change-related only
-8. **Commit offer** — included in the same response when scope is staged or working
-9. **Copyable blocks** — Verbose in a `text` fence; Suggested command in a `bash` fence
+8. **Self-contained** — every cited path resolves in the repo; no plan, research, review,
+   audit, manifest, handoff, task, stage, or requirement reference; *why* stated in full
+9. **Commit offer** — included in the same response when scope is staged or working
+10. **Copyable blocks** — Verbose in a `text` fence; Suggested command in a `bash` fence
 
 ## Output standards
 
@@ -165,6 +184,10 @@ Before returning draft messages:
   instead of blending unrelated intent into one message.
 - Never dump a raw file list as the commit message.
 - Never contradict session context or supplied plan/ticket intent when the diff is ambiguous.
+- Never reference a plan, research report, requirement ledger, review, audit, manifest,
+  handoff packet, or any other planning artifact — restate the intent inline instead. The
+  message must stand alone in `git --no-pager log` after those documents are gone; a
+  committed planning artifact is no more citable than an uncommitted one.
 - Never add `Co-authored-by`, `Signed-off-by`, or any other footer attributing an AI client,
   coding assistant, or automation tool — even when the user or environment would normally add one.
 - Omit disclaimers, assistant sign-offs, and meta-commentary about how the message was drafted.
@@ -178,3 +201,5 @@ Before returning draft messages:
 - [output-format.md](references/output-format.md) — Response templates
 - [failure-and-guardrails.md](references/failure-and-guardrails.md) — Errors and guardrails
 - [SOURCES.md](SOURCES.md) — Provenance and external references
+- [eval-queries.json](eval-queries.json) — Description trigger evals
+- [evals/evals.json](evals/evals.json) — Behavior evals asserting the drafted message is self-contained

@@ -126,6 +126,18 @@
     "rationale": "validation positive: scope clarification or empty index handling"
   },
   {
+    "query": "draft the commit message but don't reference the plan or research report — the message must stand alone",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: self-contained message requirement"
+  },
+  {
+    "query": "write a commit message for this stage; we're on stage 2 of the implementation plan",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: staged workflow context; message must restate intent, not cite the plan"
+  },
+  {
     "query": "implement the JWT refresh endpoint in Python with pytest tests",
     "should_trigger": false,
     "split": "validation",

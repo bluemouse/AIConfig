@@ -69,13 +69,21 @@ Collect context from all available sources, in priority order when they conflict
 
 1. **Session history** — design decisions, implementation steps, tradeoffs, test results
    from the current conversation
-2. **`--context`** paths — read attached or referenced files
+2. **`--context`** paths — read attached or referenced files; treat the content as intent
+   input, not as a citation target in the draft
 3. **`--jira`** tickets — load title, description, acceptance criteria via Atlassian MCP
    when the plugin is available
 4. **`--notes`** and remaining user prose after flags
 
 Session context often explains *why* a change was made when the diff alone looks mechanical.
 Prefer session and ticket intent over inferring from filenames alone.
+
+**Context is input, not citable output.** Plan documents, research reports, requirement
+ledgers, reviews, audits, and workflow manifests are temporary — read them to understand
+*why*, then restate that why in the message. Never cite the document, its filename, or a
+label defined only inside it (task, stage, requirement, or finding id). Everything the
+message references must be reachable from the repository. See
+[message-style-contract.md](message-style-contract.md#self-contained-messages).
 
 ## Phase 1 checklist
 

@@ -77,6 +77,14 @@ Use bullet lists only when the style contract allows (parallel deliverables, tes
 evidence, migration steps). Reference ticket ids in the verbose body when provided
 (e.g. `Refs PROJ-456`).
 
+**Restate planning context, never cite it.** Plan, research, and review documents
+are temporary by design — the `.ai/` planning directories are gitignored, and even a
+committed planning artifact is state for the run that produced it. Fold their intent
+into the body as behavior, decisions, and root causes. Do not write "implements task 4",
+"per the plan", "20-implementation-plan.md", "finding cr-003", or any
+stage/requirement label. See
+[message-style-contract.md](message-style-contract.md#self-contained-messages).
+
 Footers follow git trailer convention when needed (`BREAKING CHANGE:`, `Refs:`, etc.) and
 must stay change-related. Never add `Co-authored-by`, `Signed-off-by`, or other attribution
 for an AI client or coding assistant.

@@ -46,6 +46,10 @@ Rules:
   [message-style-contract.md](message-style-contract.md) § When bullets are allowed
 - Message text inside fences is **change-related only** — motivation, approach, impact,
   breaking changes, test/evidence notes, and cited ticket ids
+- Message text inside fences is **self-contained** — every cited path must resolve in the
+  repo; never name a plan, research, review, audit, manifest, or handoff artifact, or a
+  task/stage/requirement/finding label. See
+  [message-style-contract.md](message-style-contract.md#self-contained-messages)
 - Never append `Co-authored-by`, `Signed-off-by`, or any footer attributing an AI client or
   coding assistant (for example `Co-authored-by: Cursor <cursoragent@cursor.com>`)
 
@@ -112,6 +116,8 @@ omit the commit offer (the draft is for review or rewrite, not an immediate comm
   so users can copy with one click
 - **Subject** is a valid Conventional Commit line suitable for `git --no-pager log --oneline`
 - **Body** follows the style contract (prose-first) and explains *why*, not only *what*
+- **Self-contained** — the message reads correctly with no session, plan, or research
+  context available; all cited paths and ids resolve from the repo
 - Message describes one coherent logical change
 - Output shape is the same regardless of host assistant
 - If the diff mixes unrelated work, record a split suggestion in `Context used:` (`note=`)

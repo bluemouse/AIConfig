@@ -68,3 +68,8 @@ Follow the detected pattern when clear, subject to
 [message-style-contract.md](message-style-contract.md). Do not invent scopes or ticket ids
 the user did not supply. Do not import host-specific commit templates when they conflict
 with repo history.
+
+Prior history is the best evidence of what a message may reference: past commit messages
+cite committed paths, symbols, and ticket ids — not the planning documents that produced
+them. Match that convention, and never introduce a plan, research, review, audit, or
+manifest reference that prior history does not have.

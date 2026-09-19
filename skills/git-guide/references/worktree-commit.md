@@ -3,14 +3,14 @@
 ## Guideline
 
 Commit worktree changes using a message drafted via
-[commit-message-writer](../../commit-message-writer/SKILL.md), enhanced by plan context
-when available.
+[commit-message-writer](../../commit-message-writer/SKILL.md), with plan context restated
+as behavior in the message — never cited as a document, task, or stage label.
 
 ## Rationale
 
-Plan-aware commits document not just what changed, but how it aligns with the overall
-feature plan. Message composition belongs to commit-message-writer; this reference covers
-the git mechanics inside a feature worktree.
+Plan-aware commits document not just what changed, but the motivation behind it, stated
+inline in the message itself. Message composition belongs to commit-message-writer; this
+reference covers the git mechanics inside a feature worktree.
 
 ## Example
 

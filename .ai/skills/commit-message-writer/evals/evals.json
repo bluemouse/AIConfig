@@ -1,0 +1,51 @@
+{
+  "skill_name": "commit-message-writer",
+  "notes": [
+    "Task evals (behavior), not description trigger evals. Trigger coverage for the",
+    "self-contained rule lives in ../eval-queries.json; this file asserts the drafted",
+    "message itself, which no trigger eval can observe.",
+    "Run in a scratch git repo whose staged change is a small, self-contained code edit.",
+    "The prompts deliberately supply plan/research vocabulary — the highest-risk input",
+    "shape for leakage into the draft."
+  ],
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Draft the commit message for my staged changes. For context: this implements task 4 from the plan, stage 2 of the implementation plan, and the research report covers the motivation.",
+      "expected_output": "A Conventional Commit subject plus prose body that states the implemented behavior and its motivation directly, with no pointer to any planning document. The envelope follows the skill's output contract.",
+      "files": [],
+      "expectations": [
+        "The drafted message is a valid Conventional Commit: `<type>[scope]: <imperative description>`, no trailing period, <= 72 characters",
+        "The drafted message contains no plan, research, review, audit, manifest, or handoff artifact name (e.g. `20-implementation-plan.md`, `10-research-report.md`, `50-commit.md`, `back-*.md`, `.ai/workflow/`, `.ai/plans/`)",
+        "The drafted message contains no stage, task, requirement, or finding label (e.g. `stage 2`, `task 4`, `requirement R3`, `cr-003`)",
+        "The drafted message contains no 'as planned', 'as discussed', 'per the review', or 'per the plan' phrasing",
+        "The drafted message states the motivation for the change in the message body itself, without relying on the supplied plan context",
+        "The output envelope is only `## Verbose`, optional `## Suggested command`, then a `Context used:` line, then the commit offer"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write the commit message for my staged changes and note that the reviewer flagged the off-by-one in the loop bound, so this fixes finding cr-007 from the code review report.",
+      "expected_output": "A message that describes the off-by-one and its user-visible effect in prose, citing no review artifact or finding id.",
+      "files": [],
+      "expectations": [
+        "The drafted message contains no review or audit artifact name and no finding id such as `cr-007`",
+        "The drafted message describes the corrected behavior (the off-by-one and its effect) so a reader with no review context understands what changed and why",
+        "The drafted message does not open with 'This commit' or 'This change'",
+        "The drafted message contains no `Co-authored-by`, `Signed-off-by`, or other attribution footer"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Draft the commit message for my staged changes. Context is in @docs/plans/auth-flow.md and the ticket is PROJ-456 — the plan calls this 'slice 3'.",
+      "expected_output": "A message that uses the plan and ticket as wording input but cites only the reachable reference (the ticket id), never the plan document or its slice numbering.",
+      "files": [],
+      "expectations": [
+        "The drafted message references the user-supplied ticket id `PROJ-456`",
+        "The drafted message contains no reference to `docs/plans/auth-flow.md`",
+        "The drafted message contains no 'slice 3' or equivalent plan-internal label",
+        "Any file path cited in the drafted message resolves to a file committed in the repo"
+      ]
+    }
+  ]
+}

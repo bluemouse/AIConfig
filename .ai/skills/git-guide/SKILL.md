@@ -75,7 +75,7 @@ verification, or a merge report.
 ## Worktree Operations
 
 - **Create** — `<worktree>-feature-<name>` directory with branch; only from `main`, `master`, or `dev`, and only after user confirmation — see [references/worktree-create.md](references/worktree-create.md)
-- **Commit** — commit in a worktree with plan context for the message body, see [references/worktree-commit.md](references/worktree-commit.md)
+- **Commit** — commit in a worktree with plan context restated in the message, see [references/worktree-commit.md](references/worktree-commit.md)
 - **Validate** — pre-merge validation checkpoint, see [references/worktree-validate.md](references/worktree-validate.md)
 - **Merge** — merge feature back to source branch, see [references/worktree-merge.md](references/worktree-merge.md)
 - **Cleanup** — remove stale and merged worktrees, see [references/worktree-cleanup.md](references/worktree-cleanup.md)

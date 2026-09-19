@@ -28,6 +28,7 @@ Defines the evals for a skill. Located at `evals/evals.json` within the skill di
 
 **Fields:**
 - `skill_name`: Name matching the skill's frontmatter
+- `notes`: Optional list of strings — author-facing setup instructions or rationale kept with the file (e.g. how to run the evals, why they exist alongside trigger evals). Not consumed by tooling.
 - `evals[].id`: Unique integer identifier
 - `evals[].prompt`: The task to execute
 - `evals[].expected_output`: Human-readable description of success

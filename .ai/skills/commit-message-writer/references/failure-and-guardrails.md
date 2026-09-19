@@ -24,6 +24,11 @@
 - Use `--no-verify`, amend, or force-push while drafting
 - Dump a raw file list as the commit message
 - Contradict session context or supplied plan/ticket intent when the diff is ambiguous
+- Reference a planning artifact — plan, research report, requirement ledger,
+  review, audit, manifest, handoff packet — or any label defined only inside one (task,
+  stage, requirement, finding id). Restate the intent in the message instead; see
+  [message-style-contract.md](message-style-contract.md#self-contained-messages)
+- Assume the reader has session context — the message must stand alone in `git log`
 - Auto-commit immediately — always draft first; include the commit offer in the same response when scope is staged or working
 - Add AI or tool attribution footers — no `Co-authored-by`, `Signed-off-by`, or similar lines
   naming Cursor, Claude, Copilot, ChatGPT, or any other assistant or automation client
