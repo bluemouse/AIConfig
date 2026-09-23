@@ -294,8 +294,9 @@ Mode is enforced by the orchestrator's per-phase instructions (prevention) and t
 
 - The orchestrator selects a dispatch mode for checker phases per [references/dispatch-modes.md](references/dispatch-modes.md): **native** (spawn the checker as a subagent with a fresh isolated context), **delegated** (invoke the checker skill as a named pass — current behavior), or **simulated** (same as delegated, labeled honestly).
 - Evaluate the dispatch mode **once per run** at phase 0 (Clarify) and record it in the manifest's `## Dispatch log` section. Host capability does not change mid-run.
-- In **native mode**, the orchestrator constructs a task packet per checker dispatch (objective, input artifact path, output artifact path, read-only scope, verdict format, `root-cause-phase` requirement, prior-round `-r1` review path for rounds > 1) and spawns the checker agent as a subagent. Dispatch is by subagent type, not by agent description.
+- In **native mode**, the orchestrator constructs a task packet per checker dispatch (objective, input artifact path, output artifact path, read-only scope, verdict format, `root-cause-phase` requirement, all prior-round `-r1` … `-r<N>` review paths for rounds > 1) and spawns the checker agent as a subagent. Dispatch is by subagent type, not by agent description.
 - In **delegated/simulated mode**, the orchestrator invokes the checker skill as a named pass with explicit input/output paths — the current behavior before the agent conversion.
+- **Delegated-mode context budget:** named passes receive artifact *paths* plus section pointers, not full artifact contents; the orchestrator re-reads only the manifest and the current phase's artifacts each turn. Superseded round artifacts are read only when a loop round needs them (via their `-r<N>` paths). This keeps multi-round delegated loops from re-loading the whole run history into the orchestrator's context every round.
 - The orchestrator reads the verdict from the **on-disk artifact** (`## Verdict` heading), not from the subagent's return message. The artifact is the source of truth; the return message is a convenience (status + summary).
 - The doer never reads the checker's verdict — only the orchestrator does.
 - The checker owns the loop verdict; the orchestrator owns phase transitions and backward edges.
@@ -313,6 +314,13 @@ The orchestrator reads `00-run-manifest.md` at the start of every turn to know:
 - Validation log
 
 The manifest is the orchestrator's memory across turns. Without it, the orchestrator cannot resume. Always update the manifest after every step.
+
+**Phase-boundary compaction checkpoint:** at each phase boundary (never mid-phase —
+mode enforcement pins the manifest's sha256 against the phase-start snapshot, so a
+mid-phase rewrite breaks validation), mark superseded round artifacts in the
+artifact registry and record a compaction note in the manifest. If context limits
+approach mid-run, end the turn at the next phase boundary and resume from the
+manifest — the run state survives the interruption by design.
 
 ## References
 

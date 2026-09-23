@@ -118,4 +118,9 @@ The run manifest is the orchestrator's state file. It tracks the entire run so t
 - The orchestrator updates `Last updated` and the relevant phase status after every step.
 - `Current phase` is the phase the orchestrator is about to run or is currently running.
 - `Backward edges received` tracks the cap of 2 per phase.
+- **Compaction:** at each phase boundary, the orchestrator may mark superseded round
+  artifacts in the artifact registry and record a compaction note. Never compact
+  mid-phase — mode enforcement pins this file's sha256 against the phase-start
+  snapshot, so a mid-phase rewrite breaks validation. If context limits approach
+  mid-run, end the turn at the next phase boundary and resume from this file.
 - The `Validation log` records every validation decision (stop, continue, override) with justification.

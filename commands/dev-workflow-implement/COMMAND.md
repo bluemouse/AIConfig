@@ -28,9 +28,13 @@ skill's Phase 3 procedure and the `plan-executor` / `implementation-auditor` ski
      feature slug (kebab-case), create `.ai/workflow/<slug>/`, copy the external plan
      to `20-implementation-plan.md`, and write a minimal `00-run-manifest.md` with
      `Run status: in-progress`, `Current phase: implement`, all phases `not-started` except
-     Implement (`in-progress`). Never use `skipped` or `fragment` as status values — they
-     fail `manifest_checks.py`. Structural validation of the plan is delegated to
-     `plan-executor`'s existing input validation.
+     Implement (`in-progress`), and a `## Dispatch log` section recording
+     `Dispatch mode: delegated` (recorded at bootstrap — command-bootstrapped
+     runs skip phase 0; the default is delegated because the command host's
+     subagent capability is unknown at bootstrap time). Never use `skipped` or
+     `fragment` as status values — they fail `manifest_checks.py`. Structural
+     validation of the plan is delegated to `plan-executor`'s existing input
+     validation.
 
 3. **Read or write the manifest**:
    - If the run dir exists, read `00-run-manifest.md`.
@@ -42,12 +46,12 @@ skill's Phase 3 procedure and the `plan-executor` / `implementation-auditor` ski
    - **Record baseline**: `python .ai/tools/dev-workflow/record_baseline.py --phase implement --run-dir .ai/workflow/<slug>`
    - **Pre-flight**: `python .ai/tools/dev-workflow/check_pre_phase.py --phase implement --run-dir .ai/workflow/<slug>`. If it fails, stop and report.
    - **Doer pass**: invoke `plan-executor` as a named pass with input `20-implementation-plan.md` and output `30-implementation-report.md`.
-   - **Checker pass**: invoke `implementation-auditor` as a named pass with input `30-implementation-report.md` and output `31-implementation-audit.md`. The checker must include `root-cause-phase` on every finding.
+   - **Checker pass**: first read the `## Dispatch log` section of `00-run-manifest.md`; if it records `Dispatch mode: native`, dispatch `implementation-auditor` as a subagent per the orchestrator's native-mode task packet; otherwise (delegated/simulated, or the manifest has no dispatch log — default to delegated and say so) invoke `implementation-auditor` as a named pass with input `30-implementation-report.md` and output `31-implementation-audit.md`. The checker must include `root-cause-phase` on every finding.
    - **Post-flight**: `python .ai/tools/dev-workflow/check_post_phase.py --phase implement --run-dir .ai/workflow/<slug>`. If it fails, stop and report.
    - **Read verdict** from the `## Verdict` heading in `31-implementation-audit.md`.
    - **Route**:
      - `pass` or `pass with risks` → run `python .ai/tools/dev-workflow/validate_phase.py --phase implement --run-dir .ai/workflow/<slug>`. If validation passes, update manifest (phase status `accepted`) and stop with a summary. If validation fails, handle per the orchestrator's validation rules.
-     - `fail` with `root-cause-phase: local` → increment round counter. On round > 1, copy `31-implementation-audit.md` to `31-implementation-audit-r1.md` so the fresh-context checker sees prior findings and preserves finding ids. Loop back to the doer pass. Round cap is 3; on cap, escalate.
+     - `fail` with `root-cause-phase: local` → increment round counter. On round > 1, copy `31-implementation-audit.md` to `31-implementation-audit-r<N>.md` where N is the round just completed (round 2 → `-r1`, round 3 → `-r2`) so the fresh-context checker sees prior findings and preserves finding ids, and include all prior `-r1`, `-r2`, … paths in the next round's context. Loop back to the doer pass. Round cap is 3; on cap, escalate.
      - `fail` with `root-cause-phase: upstream` (plan or research) → write a backward handoff packet `back-implement-to-<target>-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.ai/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .ai/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .ai/workflow/<slug>`, update manifest (target phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (instruct the user to run `/dev-workflow-plan <slug>` for plan issues or `/dev-workflow-research <slug>` for research issues), then stop. Backward edge cap is 2 per phase.
      - `blocked` → escalate immediately with a blocker summary and stop.
    - **Update manifest** after every step.
