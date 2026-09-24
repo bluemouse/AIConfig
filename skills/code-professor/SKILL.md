@@ -148,6 +148,13 @@ Build a compact map of:
 
 Prefer targeted listing and search over dumping entire trees. Exclude build artifacts and dependency caches unless they are directly relevant.
 
+**Parallel exploration stance:** investigate in one context by default — a single
+coherent mental model usually outranks parallel throughput. Only for `deep`-depth
+orientation guides on large repositories, dispatch read-only exploration per directory
+via [../agent-runner/SKILL.md](../agent-runner/SKILL.md), then integrate the
+evidence into your own map; keep hypothesis formation and the final mental model in
+the parent context.
+
 ### 4. Form and test hypotheses
 
 Create a preliminary model, then challenge it. For each important question:

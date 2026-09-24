@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
 import sys
 import tempfile
 import unittest
@@ -128,7 +130,74 @@ class CommandInstallTests(unittest.TestCase):
                     uninstall=False,
                     override=False,
                 )
-            self.assertIn("skill, agent, command, or scripts", str(ctx.exception))
+            self.assertIn("skill, agent, command, scripts, or doc", str(ctx.exception))
+
+
+class DocsCliResolutionTests(unittest.TestCase):
+    """--docs CLI selection resolves like the other member kinds (cr-002)."""
+
+    def test_resolve_cli_docs_explicit(self) -> None:
+        selection = mod.resolve_cli_selection(
+            bundle_ids=None,
+            skill_names=None,
+            agent_names=None,
+            command_names=None,
+            script_names=None,
+            doc_names=["dev-workflow"],
+        )
+        self.assertEqual(selection.docs, ["dev-workflow"])
+
+    def test_resolve_cli_docs_default_all_discovered(self) -> None:
+        selection = mod.resolve_cli_selection(
+            bundle_ids=None,
+            skill_names=None,
+            agent_names=None,
+            command_names=None,
+            script_names=None,
+            doc_names=None,
+        )
+        self.assertEqual(selection.docs, mod.discover_docs())
+
+    def test_load_docs_descriptions_first_heading(self) -> None:
+        descriptions = mod.load_docs_descriptions(["dev-workflow"])
+        self.assertIn("dev-workflow", descriptions)
+        self.assertIn("Development Workflow", descriptions["dev-workflow"])
+
+    def test_load_docs_descriptions_missing_doc(self) -> None:
+        descriptions = mod.load_docs_descriptions(["no-such-doc"])
+        self.assertEqual(descriptions, {})
+
+    def test_run_cli_docs_install_uninstall_and_skip_reporting(self) -> None:
+        """End-to-end --docs wiring through run_cli: install, provenance-guarded
+        uninstall skip, and skip visibility in formatted output (cr-001/cr-004)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "target"
+            target.mkdir(parents=True, exist_ok=True)
+
+            install_buf = io.StringIO()
+            with contextlib.redirect_stdout(install_buf):
+                code = mod.run_cli([str(target), "--docs", "dev-workflow"])
+            self.assertEqual(code, 0, install_buf.getvalue())
+            self.assertTrue(
+                (target / "dev-workflow.md").is_file(),
+                "run_cli --docs should install the doc at the target root",
+            )
+
+            # Overwrite with project-authored content so provenance no longer matches.
+            (target / "dev-workflow.md").write_text(
+                "# Project's own doc\n", encoding="utf-8"
+            )
+
+            uninstall_buf = io.StringIO()
+            with contextlib.redirect_stdout(uninstall_buf):
+                code = mod.run_cli([str(target), "--uninstall", "--docs", "dev-workflow"])
+            self.assertEqual(code, 0, uninstall_buf.getvalue())
+            self.assertTrue(
+                (target / "dev-workflow.md").exists(),
+                "Provenance guard must leave the modified doc in place",
+            )
+            self.assertIn("Skipped", uninstall_buf.getvalue())
+            self.assertIn("differs from installer source", uninstall_buf.getvalue())
 
 
 if __name__ == "__main__":

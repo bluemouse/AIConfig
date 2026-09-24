@@ -162,7 +162,7 @@ python skills/command-creator/scripts/quick_validate.py --root . --name my-comma
 python skills/skill-creator/scripts/package_skill.py .ai/skills/my-skill
 ```
 
-**Copy installed skills, agents, and commands to another project** (from this repo root; copies `.ai/` plus tool wrappers — not bootstrap sources):
+**Copy installed skills, agents, commands, scripts, and docs to another project** (from this repo root; copies `.ai/` plus tool wrappers — not bootstrap sources):
 
 ```bash
 python tools/installer.py /path/to/other-project
@@ -170,12 +170,13 @@ python tools/installer.py /path/to/other-project --skills cpp-coding vulkan-dev 
 python tools/installer.py /path/to/other-project --commands git-commit --override
 python tools/installer.py /path/to/other-project --bundles core-dev-workflow
 python tools/installer.py /path/to/other-project --bundles target-bundle
+python tools/installer.py /path/to/other-project --docs dev-workflow
 python tools/installer.py /path/to/other-project --agents my-agent --uninstall
 python tools/installer.py /path/to/other-project --commands git-commit --uninstall
 python tools/installer.py   # GUI when no arguments
 ```
 
-Omit `--skills`, `--agents`, and `--commands` to install or uninstall all names discovered under `.cursor/`, `.claude/`, and `.github/`. Use `--bundles` to install workflow skill sets from [tools/bundles.json](tools/bundles.json) or the dynamic `target-bundle` (skills, agents, commands, and scripts already installed in the target project; documented in [tools/bundles.md](tools/bundles.md)). Without `--override`, existing target paths are skipped. See [README.md](README.md#distribute-to-another-project) for full flag reference.
+Omit `--skills`, `--agents`, and `--commands` to install or uninstall all names discovered under `.cursor/`, `.claude/`, and `.github/`. Use `--bundles` to install workflow skill sets from [tools/bundles.json](tools/bundles.json) or the dynamic `target-bundle` (skills, agents, commands, scripts, and docs already installed in the target project; documented in [tools/bundles.md](tools/bundles.md)). Use `--docs` to install allowlisted shared root documents (`dev-workflow`) to the target project root — they are cited by bare name from portable skills, so targets need them at the root to resolve those citations. Without `--override`, existing target paths are skipped. See [README.md](README.md#distribute-to-another-project) for full flag reference.
 
 **Trigger-eval a skill description:**
 

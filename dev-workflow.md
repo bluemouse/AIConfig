@@ -1,5 +1,10 @@
 # Development Workflow
 
+> **Path note.** This guide originates in the AIConfig repository. File links such as
+> `tools/bundles.md` and `skills/<name>/SKILL.md` are AIConfig-repo-relative; in a
+> target project they resolve to the installed portable layout (`.ai/skills/<name>/`
+> and the tool skill folders) or to this repo's documentation, not to identical paths.
+
 This guide describes how to run a classic software development workflow using the skill bundles defined in [tools/bundles.md](tools/bundles.md):
 
 ```text

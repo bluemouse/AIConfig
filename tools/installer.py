@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Install or uninstall portable skills, agents, and commands from this repo into another project.
+Install or uninstall portable skills, agents, commands, scripts, and docs from this repo
+into another project.
 
 Copies the shared-first layout (.ai/ plus tool wrappers under .cursor/, .claude/,
 .github/) from AIConfig into a target project root.
@@ -23,6 +24,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -61,6 +63,15 @@ TOOL_COMMAND_FILES = {
     "github": ".github/prompts/{name}.prompt.md",
 }
 
+# Shared root documents referenced by portable skills (installed to the target
+# project root so bare-name citations like `dev-workflow.md` resolve there
+# exactly as in this repo). Explicit allowlist — repo-only files
+# (README, AGENTS, CLAUDE) are never installable docs. A doc "name" is the
+# filename stem; the file lives at the repo root as `<name>.md`.
+INSTALLABLE_DOCS = (
+    "dev-workflow",
+)
+
 # Scripts are directory trees under .ai/tools/<name>/ (no tool wrappers).
 TOOL_SCRIPTS_SCAN_REL_DIRS = (".ai/tools",)
 
@@ -95,7 +106,7 @@ DEFAULT_EXCLUDED_SKILLS = frozenset({"verdict-first"})
 
 RELOAD_REMINDER = (
     "Reload Cursor, VS Code (Copilot), and Claude Code so each tool "
-    "rediscovers the installed skills, agents, and commands."
+    "rediscovers the installed skills, agents, commands, scripts, and docs."
 )
 
 BUNDLES_JSON = Path(__file__).resolve().parent / "bundles.json"
@@ -103,7 +114,7 @@ BUNDLES_JSON = Path(__file__).resolve().parent / "bundles.json"
 TARGET_BUNDLE_ID = "target-bundle"
 TARGET_BUNDLE_NAME = "Target bundle"
 TARGET_BUNDLE_DESCRIPTION = (
-    "Skills, agents, commands, and scripts currently installed in the selected "
+    "Skills, agents, commands, scripts, and docs currently installed in the selected "
     "target project (matching this AIConfig catalog)."
 )
 
@@ -155,11 +166,12 @@ class Bundle:
     agents: frozenset[str] = frozenset()
     commands: frozenset[str] = frozenset()
     scripts: frozenset[str] = frozenset()
+    docs: frozenset[str] = frozenset()
 
     @property
     def is_empty(self) -> bool:
         """Return True if the bundle has no members of any kind."""
-        return not (self.skills or self.agents or self.commands or self.scripts)
+        return not (self.skills or self.agents or self.commands or self.scripts or self.docs)
 
 
 # Backward-compatible alias.
@@ -250,9 +262,9 @@ def slugify_name(value: str) -> str:
 def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
     """Load workflow bundles from bundles.json.
 
-    Each bundle may define any combination of skills, agents, commands, and
-    scripts. Bases are reusable member sets keyed by id; a base may also carry
-    any combination of the four member types.
+    Each bundle may define any combination of skills, agents, commands, scripts,
+    and docs. Bases are reusable member sets keyed by id; a base may also carry
+    any combination of the five member types.
     """
     if not path.is_file():
         raise InstallerError(f"Bundle config not found: {path}")
@@ -294,6 +306,7 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
         resolved_agents: set[str] = set()
         resolved_commands: set[str] = set()
         resolved_scripts: set[str] = set()
+        resolved_docs: set[str] = set()
 
         raw_bundle_bases = entry.get("bases", [])
         if raw_bundle_bases is None:
@@ -313,13 +326,21 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
             resolved_agents.update(base.agents)
             resolved_commands.update(base.commands)
             resolved_scripts.update(base.scripts)
+            resolved_docs.update(base.docs)
 
         resolved_skills.update(_parse_member_list(entry, "skills", path, index))
         resolved_agents.update(_parse_member_list(entry, "agents", path, index))
         resolved_commands.update(_parse_member_list(entry, "commands", path, index))
         resolved_scripts.update(_parse_member_list(entry, "scripts", path, index))
+        resolved_docs.update(_parse_member_list(entry, "docs", path, index))
 
-        if not (resolved_skills or resolved_agents or resolved_commands or resolved_scripts):
+        if not (
+            resolved_skills
+            or resolved_agents
+            or resolved_commands
+            or resolved_scripts
+            or resolved_docs
+        ):
             raise InstallerError(
                 f"Invalid bundle config {path}: bundles[{index}] resolved to an empty bundle."
             )
@@ -333,6 +354,7 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
                 agents=frozenset(resolved_agents),
                 commands=frozenset(resolved_commands),
                 scripts=frozenset(resolved_scripts),
+                docs=frozenset(resolved_docs),
             )
         )
 
@@ -345,7 +367,7 @@ def _parse_member_list(
     path: Path,
     index: int,
 ) -> set[str]:
-    """Parse an optional member list (skills/agents/commands/scripts) from a bundle/base entry."""
+    """Parse an optional member list (skills/agents/commands/scripts/docs) from a bundle/base entry."""
     if key not in entry:
         return set()
     raw = entry[key]
@@ -388,11 +410,12 @@ def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, Bundl
         agents = frozenset(_parse_member_list(entry, "agents", path, index))
         commands = frozenset(_parse_member_list(entry, "commands", path, index))
         scripts = frozenset(_parse_member_list(entry, "scripts", path, index))
+        docs = frozenset(_parse_member_list(entry, "docs", path, index))
 
-        if not (skills or agents or commands or scripts):
+        if not (skills or agents or commands or scripts or docs):
             raise InstallerError(
                 f"Invalid bundle config {path}: bases[{index}] must define at least one of "
-                "skills, agents, commands, or scripts."
+                "skills, agents, commands, scripts, or docs."
             )
 
         base_registry[base_id] = Bundle(
@@ -403,6 +426,7 @@ def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, Bundl
             agents=agents,
             commands=commands,
             scripts=scripts,
+            docs=docs,
         )
 
     return base_registry
@@ -432,22 +456,25 @@ class BundleSelection:
     agents: list[str] = field(default_factory=list)
     commands: list[str] = field(default_factory=list)
     scripts: list[str] = field(default_factory=list)
+    docs: list[str] = field(default_factory=list)
 
     def extend(self, other: "BundleSelection") -> None:
         self.skills.extend(other.skills)
         self.agents.extend(other.agents)
         self.commands.extend(other.commands)
         self.scripts.extend(other.scripts)
+        self.docs.extend(other.docs)
 
     def dedupe(self) -> None:
         self.skills = normalize_names(self.skills)
         self.agents = normalize_names(self.agents)
         self.commands = normalize_names(self.commands)
         self.scripts = normalize_names(self.scripts)
+        self.docs = normalize_names(self.docs)
 
     @property
     def is_empty(self) -> bool:
-        return not (self.skills or self.agents or self.commands or self.scripts)
+        return not (self.skills or self.agents or self.commands or self.scripts or self.docs)
 
 
 def resolve_bundle(
@@ -476,6 +503,7 @@ def resolve_bundle(
                 agents=sorted(target_bundle.agents),
                 commands=sorted(target_bundle.commands),
                 scripts=sorted(target_bundle.scripts),
+                docs=sorted(target_bundle.docs),
             ))
             continue
         if bundle_id not in by_id:
@@ -489,6 +517,7 @@ def resolve_bundle(
             agents=sorted(bundle.agents),
             commands=sorted(bundle.commands),
             scripts=sorted(bundle.scripts),
+            docs=sorted(bundle.docs),
         ))
     selection.dedupe()
     return selection
@@ -515,6 +544,7 @@ def resolve_cli_selection(
     agent_names: Sequence[str] | None,
     command_names: Sequence[str] | None,
     script_names: Sequence[str] | None,
+    doc_names: Sequence[str] | None = None,
     target_root: Path | None = None,
 ) -> BundleSelection:
     """Resolve CLI selection from bundles, explicit names, or all discovered items."""
@@ -529,7 +559,16 @@ def resolve_cli_selection(
         selection.commands.extend(normalize_names(command_names))
     if script_names:
         selection.scripts.extend(normalize_names(script_names))
-    if bundle_ids or skill_names or agent_names or command_names or script_names:
+    if doc_names:
+        selection.docs.extend(normalize_names(doc_names))
+    if (
+        bundle_ids
+        or skill_names
+        or agent_names
+        or command_names
+        or script_names
+        or doc_names
+    ):
         selection.dedupe()
         return selection
     # No explicit selection: default to all discovered items, minus
@@ -539,6 +578,7 @@ def resolve_cli_selection(
         agents=discover_agents(),
         commands=discover_commands(),
         scripts=discover_scripts(),
+        docs=discover_docs(),
     )
 
 
@@ -611,6 +651,15 @@ def discover_scripts_in_project(project_root: Path) -> list[str]:
     return sorted(names)
 
 
+def discover_docs_in_project(project_root: Path) -> list[str]:
+    """Return doc names installed at the target project root."""
+    return sorted(
+        name
+        for name in INSTALLABLE_DOCS
+        if (project_root / f"{name}.md").is_file()
+    )
+
+
 def build_target_bundle(
     target_root: Path,
     *,
@@ -618,6 +667,7 @@ def build_target_bundle(
     available_agents: Sequence[str] | None = None,
     available_commands: Sequence[str] | None = None,
     available_scripts: Sequence[str] | None = None,
+    available_docs: Sequence[str] | None = None,
 ) -> Bundle:
     """Build the dynamic target bundle from installed members in the target project.
 
@@ -633,6 +683,8 @@ def build_target_bundle(
         available_commands = discover_commands()
     if available_scripts is None:
         available_scripts = discover_scripts()
+    if available_docs is None:
+        available_docs = discover_docs()
 
     def _intersect(
         installed: Sequence[str], available: Sequence[str]
@@ -648,12 +700,41 @@ def build_target_bundle(
         agents=_intersect(discover_agents_in_project(target_root), available_agents),
         commands=_intersect(discover_commands_in_project(target_root), available_commands),
         scripts=_intersect(discover_scripts_in_project(target_root), available_scripts),
+        docs=_intersect(discover_docs_in_project(target_root), available_docs),
     )
 
 
 def resolve_target_bundle_skills(target_root: Path) -> list[str]:
     """Return sorted skills for the dynamic target bundle."""
     return sorted(build_target_bundle(target_root).skills)
+
+
+def discover_docs() -> list[str]:
+    """Return allowlisted shared root documents that exist at the repo root."""
+    return sorted(
+        name for name in INSTALLABLE_DOCS if (REPO_ROOT / f"{name}.md").is_file()
+    )
+
+
+def load_docs_descriptions(names: Sequence[str]) -> dict[str, str]:
+    """Map doc names to a short description (first heading line of the file)."""
+    descriptions: dict[str, str] = {}
+    for name in names:
+        path = REPO_ROOT / f"{name}.md"
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8").strip()
+        except OSError:
+            continue
+        first_line = ""
+        for line in text.splitlines()[:5]:
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                first_line = stripped.lstrip("# ").strip()
+                break
+        descriptions[name] = first_line or f"Shared document: {name}"
+    return descriptions
 
 
 def discover_skills() -> list[str]:
@@ -903,6 +984,46 @@ def scripts_remove_paths(target_root: Path, name: str) -> list[Path]:
     return [target_root / SHARED_SCRIPTS_DIR.format(name=name)]
 
 
+def doc_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
+    """Return (src, dest) pairs for a shared root document.
+
+    Docs install to the target project root (beside AGENTS.md/CLAUDE.md), so
+    bare-name citations from installed skills resolve unchanged.
+    """
+    src = source_root / f"{name}.md"
+    return [(src, target_root / f"{name}.md")]
+
+
+def doc_remove_paths(target_root: Path, name: str) -> list[Path]:
+    return [target_root / f"{name}.md"]
+
+
+def doc_is_installer_written(source_root: Path, target_root: Path, name: str) -> bool:
+    """Return True only when the installed doc matches the installer's source.
+
+    Docs land at the target project root — a namespace the installer does not
+    own — so removal must never delete a project-authored file that merely
+    shares the name. A byte-identical copy is provenance: the installer wrote it.
+    A stale copy (installer-written, but the source has since changed) also
+    returns False — callers should word skip messages so this case is not
+    mislabeled as project-authored.
+    """
+    src = source_root / f"{name}.md"
+    dest = target_root / f"{name}.md"
+    if not src.is_file() or not dest.is_file():
+        return False
+    return file_sha256(src) == file_sha256(dest)
+
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def remove_path(path: Path) -> None:
     if path.is_dir():
         shutil.rmtree(path)
@@ -928,6 +1049,7 @@ def install_items(
     agents: Sequence[str],
     commands: Sequence[str],
     scripts: Sequence[str] = (),
+    docs: Sequence[str] = (),
     override: bool = False,
 ) -> OperationResult:
     result = OperationResult()
@@ -1025,6 +1147,29 @@ def install_items(
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
 
+    for name in docs:
+        slug = slugify_name(name)
+        pairs = doc_copy_pairs(source_root, target_root, slug)
+        shared_src = pairs[0][0]
+        if not shared_src.is_file():
+            result.errors.append(
+                f"doc {slug}: missing source {format_rel(shared_src, source_root)}"
+            )
+            continue
+
+        for src, dest in pairs:
+            rel_dest = format_rel(dest, target_root)
+            if dest.exists():
+                if not override:
+                    result.skipped.append(rel_dest)
+                    continue
+                remove_path(dest)
+            try:
+                copy_path(src, dest)
+                result.installed.append(rel_dest)
+            except OSError as exc:
+                result.errors.append(f"{rel_dest}: {exc}")
+
     return result
 
 
@@ -1035,6 +1180,7 @@ def uninstall_items(
     agents: Sequence[str],
     commands: Sequence[str],
     scripts: Sequence[str] = (),
+    docs: Sequence[str] = (),
 ) -> OperationResult:
     result = OperationResult()
     target_root = validate_target(REPO_ROOT, target_root, create=False)
@@ -1081,6 +1227,25 @@ def uninstall_items(
                 except OSError as exc:
                     result.errors.append(f"{format_rel(path, target_root)}: {exc}")
 
+    for name in docs:
+        slug = slugify_name(name)
+        for path in doc_remove_paths(target_root, slug):
+            if not path.exists():
+                continue
+            if not doc_is_installer_written(REPO_ROOT, target_root, slug):
+                reason = (
+                    "no installer source in repo"
+                    if not (REPO_ROOT / f"{slug}.md").is_file()
+                    else "differs from installer source"
+                )
+                result.skipped.append(f"{format_rel(path, target_root)} ({reason})")
+                continue
+            try:
+                remove_path(path)
+                result.removed.append(format_rel(path, target_root))
+            except OSError as exc:
+                result.errors.append(f"{format_rel(path, target_root)}: {exc}")
+
     return result
 
 
@@ -1090,7 +1255,10 @@ def format_result(result: OperationResult, *, uninstall: bool) -> str:
         if result.removed:
             lines.append("Removed:")
             lines.extend(f"  - {path}" for path in result.removed)
-        else:
+        if result.skipped:
+            lines.append("Skipped (left in place; remove manually or reinstall with --override):")
+            lines.extend(f"  - {path}" for path in result.skipped)
+        if not result.removed and not result.skipped:
             lines.append("Removed: (nothing matched)")
     else:
         if result.installed:
@@ -1120,11 +1288,12 @@ def run_operation(
     agents: Sequence[str],
     commands: Sequence[str],
     scripts: Sequence[str] = (),
+    docs: Sequence[str] = (),
     uninstall: bool = False,
     override: bool = False,
 ) -> tuple[int, str]:
-    if not skills and not agents and not commands and not scripts:
-        raise InstallerError("Select at least one skill, agent, command, or scripts.")
+    if not skills and not agents and not commands and not scripts and not docs:
+        raise InstallerError("Select at least one skill, agent, command, scripts, or doc.")
 
     if uninstall:
         result = uninstall_items(
@@ -1133,6 +1302,7 @@ def run_operation(
             agents=agents,
             commands=commands,
             scripts=scripts,
+            docs=docs,
         )
     else:
         result = install_items(
@@ -1142,6 +1312,7 @@ def run_operation(
             agents=agents,
             commands=commands,
             scripts=scripts,
+            docs=docs,
             override=override,
         )
 
@@ -1154,8 +1325,8 @@ def run_operation(
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Install or uninstall portable skills, agents, and commands from this AIConfig "
-            "repository into another project."
+            "Install or uninstall portable skills, agents, commands, scripts, and docs "
+            "from this AIConfig repository into another project."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
@@ -1170,8 +1341,10 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
             "  python tools/installer.py /path/to/project --bundles dev-workflow-harness\n"
             "  python tools/installer.py /path/to/project --dev-workflow\n"
             "  python tools/installer.py /path/to/project --scripts dev-workflow\n"
+            "  python tools/installer.py /path/to/project --docs dev-workflow\n"
             "  python tools/installer.py /path/to/project --uninstall --agents my-agent\n"
             "  python tools/installer.py /path/to/project --uninstall --commands git-commit\n"
+            "  python tools/installer.py /path/to/project --uninstall --docs dev-workflow\n"
             "\n"
             "Run without arguments to open the GUI."
         ),
@@ -1187,7 +1360,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         metavar="ID",
         help=(
             "Bundle ids from bundles.json or target-bundle to install or uninstall. "
-            "A bundle may include skills, agents, commands, and scripts."
+            "A bundle may include skills, agents, commands, scripts, and docs."
         ),
     )
     parser.add_argument(
@@ -1215,23 +1388,32 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help="Scripts directory names (under .ai/tools/) to install or uninstall (default: all discovered).",
     )
     parser.add_argument(
+        "--docs",
+        nargs="+",
+        metavar="NAME",
+        help=(
+            "Shared root documents (e.g. dev-workflow) to install or "
+            "uninstall (default: all allowlisted docs). Installed to the target "
+            "project root."
+        ),
+    )
+    parser.add_argument(
         "--dev-workflow",
         action="store_true",
         help=(
             "Alias for --bundles dev-workflow-harness: install or uninstall the complete "
-            "dev-workflow harness (11 skills, 4 checker agents, 5 commands, and the "
-            ".ai/tools/dev-workflow/ scripts)."
+            "dev-workflow harness (see tools/bundles.md for membership) as a unit."
         ),
     )
     parser.add_argument(
         "--uninstall",
         action="store_true",
-        help="Remove the selected skills, agents, commands, and scripts from the target project.",
+        help="Remove the selected skills, agents, commands, scripts, and docs from the target project.",
     )
     parser.add_argument(
         "--override",
         action="store_true",
-        help="Replace existing skills, agents, commands, and scripts in the target project.",
+        help="Replace existing skills, agents, commands, scripts, and docs in the target project.",
     )
     return parser.parse_args(argv)
 
@@ -1255,6 +1437,7 @@ def run_cli(argv: Sequence[str]) -> int:
             agent_names=args.agents,
             command_names=args.commands,
             script_names=args.scripts,
+            doc_names=args.docs,
             target_root=target,
         )
         code, message = run_operation(
@@ -1263,6 +1446,7 @@ def run_cli(argv: Sequence[str]) -> int:
             agents=selection.agents,
             commands=selection.commands,
             scripts=selection.scripts,
+            docs=selection.docs,
             uninstall=args.uninstall,
             override=args.override,
         )
@@ -1348,14 +1532,17 @@ class InstallerApp:
         self.agents = discover_agents()
         self.commands = discover_commands()
         self.scripts = discover_scripts()
+        self.docs = discover_docs()
         self.skill_descriptions = load_skill_descriptions(self.skills)
         self.agent_descriptions = load_agent_descriptions(self.agents)
         self.command_descriptions = load_command_descriptions(self.commands)
         self.scripts_descriptions = load_scripts_descriptions(self.scripts)
+        self.docs_descriptions = load_docs_descriptions(self.docs)
         self.skill_vars: dict[str, tk.BooleanVar] = {}
         self.agent_vars: dict[str, tk.BooleanVar] = {}
         self.command_vars: dict[str, tk.BooleanVar] = {}
         self.scripts_vars: dict[str, tk.BooleanVar] = {}
+        self.docs_vars: dict[str, tk.BooleanVar] = {}
 
         self.target_var = tk.StringVar()
         self.mode_var = tk.StringVar(value="install")
@@ -1422,6 +1609,15 @@ class InstallerApp:
             column=3,
             descriptions=self.scripts_descriptions,
             help_command=self._show_scripts_help,
+        )
+        self._add_checkbox_list(
+            lists,
+            title="Docs",
+            items=self.docs,
+            var_map=self.docs_vars,
+            column=4,
+            descriptions=self.docs_descriptions,
+            help_command=self._show_docs_help,
         )
 
         self._add_bundles_panel(outer)
@@ -1594,6 +1790,8 @@ class InstallerApp:
             pairs.append((bundle.commands, self.command_vars))
         if bundle.scripts:
             pairs.append((bundle.scripts, self.scripts_vars))
+        if bundle.docs:
+            pairs.append((bundle.docs, self.docs_vars))
         return pairs
 
     def _bundle_present_members(self, members: frozenset[str], var_map: dict[str, tk.BooleanVar]) -> list[str]:
@@ -1698,6 +1896,7 @@ class InstallerApp:
             available_agents=self.agents,
             available_commands=self.commands,
             available_scripts=self.scripts,
+            available_docs=self.docs,
         )
         if bundle.is_empty:
             button.state(["disabled"])
@@ -1714,6 +1913,7 @@ class InstallerApp:
             (len(bundle.agents), "agent"),
             (len(bundle.commands), "command"),
             (len(bundle.scripts), "script"),
+            (len(bundle.docs), "doc"),
         ]
         parts = [f"{count} {word}{'s' if count != 1 else ''}" for count, word in counts if count]
         self._update_target_bundle_tooltip(
@@ -1834,6 +2034,12 @@ class InstallerApp:
         content = format_selection_help(entries, empty_message="No scripts selected.")
         self._show_help_window("Scripts — Help", content)
 
+    def _show_docs_help(self) -> None:
+        names = self._selected(self.docs_vars)
+        entries = self._help_entries_for_selection(names, self.docs_descriptions)
+        content = format_selection_help(entries, empty_message="No docs selected.")
+        self._show_help_window("Docs — Help", content)
+
     def _show_bundles_help(self) -> None:
         def present(bundle: Bundle) -> Sequence[str]:
             names: list[str] = []
@@ -1851,7 +2057,13 @@ class InstallerApp:
 
     def _member_is_selected_any(self, name: str) -> bool:
         """Return True if name is checked in any var_map."""
-        for var_map in (self.skill_vars, self.agent_vars, self.command_vars, self.scripts_vars):
+        for var_map in (
+            self.skill_vars,
+            self.agent_vars,
+            self.command_vars,
+            self.scripts_vars,
+            self.docs_vars,
+        ):
             var = var_map.get(name)
             if var is not None and var.get():
                 return True
@@ -1867,10 +2079,11 @@ class InstallerApp:
         agents = self._selected(self.agent_vars)
         commands = self._selected(self.command_vars)
         scripts = self._selected(self.scripts_vars)
-        if not skills and not agents and not commands and not scripts:
+        docs = self._selected(self.docs_vars)
+        if not skills and not agents and not commands and not scripts and not docs:
             messagebox.showerror(
                 "Nothing selected",
-                "Select at least one skill, agent, command, or scripts.",
+                "Select at least one skill, agent, command, scripts, or doc.",
             )
             return
 
@@ -1882,6 +2095,7 @@ class InstallerApp:
                 agents=agents,
                 commands=commands,
                 scripts=scripts,
+                docs=docs,
                 uninstall=self.mode_var.get() == "uninstall",
                 override=self.override_var.get(),
             )

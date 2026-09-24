@@ -15,9 +15,9 @@ repository root. Prefer parallel reads where independent.
 
 ## Commands by scope
 
-Run all `git log` and `git show` commands with `--no-pager` (or `GIT_PAGER=cat`) per
-`coding-behavior-guidelines.md` → Terminal execution — they invoke the default pager
-(`less`) when stdout is a TTY and will block on stdin if paged. `git diff` is also paged
+Run all `git log` and `git show` commands with `--no-pager` (or `GIT_PAGER=cat`) —
+they invoke the default pager (`less`) when stdout is a TTY and will block on stdin if paged.
+`git diff` is also paged
 by default; use `--no-pager` there too, or pipe through `cat`.
 
 | Scope | Primary commands |

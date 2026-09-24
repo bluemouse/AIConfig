@@ -197,6 +197,11 @@ When independent agent or worker tools exist:
 5. Have the chair synthesize; do not ask one voting member to act as the final judge.
 6. Shut down or release resources when the environment requires cleanup.
 
+When only sequential worker calls are available (delegated mode), preserve the same
+independence and fairness guarantees: collect all members' round-N position updates
+before any round-N+1 critique begins, and rotate the per-member call order each
+round so no member is always called last.
+
 Never require a proprietary team API. Adapt to the available agent mechanism while preserving independence, cross-talk, and provenance.
 
 ## 8. Failure Recovery

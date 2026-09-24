@@ -109,7 +109,7 @@ Before modifying anything:
 8. Resolve branch names and target refs locally. If a required ref is absent, report that it is unavailable locally; do not fetch it.
 9. For a requested operation on another local branch, switch to that branch only when the working tree is safe to switch.
 
-Prefer explicit local commands such as `git status`, `git rev-parse`, `git branch`, `git log`, `git show`, `git diff`, `git merge-base`, `git ls-files -u`, `git blame`, and `git reflog`. Run all read-only git commands with `--no-pager` (or `GIT_PAGER=cat`) per `coding-behavior-guidelines.md` → Terminal execution — `git log`, `git show`, `git diff`, `git blame`, and `git reflog` all invoke the default pager (`less`) when stdout is a TTY and will block on stdin if paged.
+Prefer explicit local commands such as `git status`, `git rev-parse`, `git branch`, `git log`, `git show`, `git diff`, `git merge-base`, `git ls-files -u`, `git blame`, and `git reflog`. Run all read-only git commands with `--no-pager` (or `GIT_PAGER=cat`) — `git log`, `git show`, `git diff`, `git blame`, and `git reflog` all invoke the default pager (`less`) when stdout is a TTY and will block on stdin if paged.
 
 ### 2. Initiate or resume the requested operation
 

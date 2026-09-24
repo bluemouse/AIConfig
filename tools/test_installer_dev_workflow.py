@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 TOOLS_DIR = Path(__file__).resolve().parent
 INSTALLER_PATH = TOOLS_DIR / "installer.py"
@@ -632,6 +633,217 @@ class PhaseCommandsInstallTests(unittest.TestCase):
                 stale.read_text(encoding="utf-8"),
                 "stale content",
                 "Override should replace stale content",
+            )
+
+
+class DocsInstallTests(unittest.TestCase):
+    """Docs install to the target project root (cr-002)."""
+
+    def _write_source_doc(self, root: Path, name: str) -> None:
+        root.mkdir(parents=True, exist_ok=True)
+        (root / f"{name}.md").write_text(
+            f"# {name} doc\n\nBody text.\n", encoding="utf-8"
+        )
+
+    def test_install_docs_copies_to_target_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            self._write_source_doc(source, "dev-workflow")
+
+            result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=[],
+                scripts=[],
+                docs=["dev-workflow"],
+                override=False,
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            self.assertTrue((target / "dev-workflow.md").is_file())
+            self.assertIn("dev-workflow.md", result.installed)
+
+    def test_install_docs_skips_existing_without_override(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            self._write_source_doc(source, "dev-workflow")
+            target.mkdir(parents=True, exist_ok=True)
+            (target / "dev-workflow.md").write_text("project-authored", encoding="utf-8")
+
+            result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=[],
+                scripts=[],
+                docs=["dev-workflow"],
+                override=False,
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            self.assertIn("dev-workflow.md", result.skipped)
+            self.assertEqual(
+                (target / "dev-workflow.md").read_text(encoding="utf-8"),
+                "project-authored",
+            )
+
+    def test_install_docs_override_replaces_existing(self) -> None:
+        """--override replaces an existing root doc (--override install path
+        for docs, cr-004)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            self._write_source_doc(source, "dev-workflow")
+            target.mkdir(parents=True, exist_ok=True)
+            (target / "dev-workflow.md").write_text("stale content", encoding="utf-8")
+
+            result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=[],
+                scripts=[],
+                docs=["dev-workflow"],
+                override=True,
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            self.assertIn("dev-workflow.md", result.installed)
+            self.assertEqual(
+                (target / "dev-workflow.md").read_text(encoding="utf-8"),
+                "# dev-workflow doc\n\nBody text.\n",
+                "Override should replace stale doc content",
+            )
+
+    def test_install_docs_missing_source_records_error(self) -> None:
+        """A docs install whose source is absent records an error
+        (missing-source branch, cr-002)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            source.mkdir(parents=True, exist_ok=True)
+
+            result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=[],
+                scripts=[],
+                docs=["dev-workflow"],
+                override=False,
+            )
+
+            self.assertFalse(result.ok)
+            self.assertTrue(
+                any("missing source" in msg for msg in result.errors),
+                result.errors,
+            )
+            self.assertFalse((target / "dev-workflow.md").exists())
+
+    def test_uninstall_docs_removes_installer_written_doc(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            self._write_source_doc(source, "dev-workflow")
+
+            install_result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=[],
+                scripts=[],
+                docs=["dev-workflow"],
+                override=False,
+            )
+            self.assertTrue(install_result.ok, install_result.errors)
+
+            # uninstall_items compares against REPO_ROOT, so the source doc
+            # must exist there under the same name for provenance to match.
+            # Use a mock to point REPO_ROOT at the temp source.
+            with mock.patch.object(mod, "REPO_ROOT", source):
+                result = mod.uninstall_items(
+                    target_root=target,
+                    skills=[],
+                    agents=[],
+                    commands=[],
+                    scripts=[],
+                    docs=["dev-workflow"],
+                )
+
+            self.assertTrue(result.ok, result.errors)
+            self.assertFalse((target / "dev-workflow.md").exists())
+            self.assertIn("dev-workflow.md", result.removed)
+
+    def test_uninstall_docs_skips_project_authored_doc(self) -> None:
+        """The provenance guard: a same-named root doc the installer did not
+        write must be left in place, not deleted (cr-003 regression test)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            self._write_source_doc(source, "dev-workflow")
+            target.mkdir(parents=True, exist_ok=True)
+            (target / "dev-workflow.md").write_text(
+                "# Project's own doc\n\nDifferent content.\n", encoding="utf-8"
+            )
+
+            with mock.patch.object(mod, "REPO_ROOT", source):
+                result = mod.uninstall_items(
+                    target_root=target,
+                    skills=[],
+                    agents=[],
+                    commands=[],
+                    scripts=[],
+                    docs=["dev-workflow"],
+                )
+
+            self.assertTrue(result.ok, result.errors)
+            self.assertTrue(
+                (target / "dev-workflow.md").exists(),
+                "Provenance guard must not delete a project-authored doc",
+            )
+            self.assertEqual(len(result.removed), 0)
+            self.assertTrue(
+                any("differs from installer source" in entry for entry in result.skipped),
+                result.skipped,
+            )
+
+    def test_uninstall_docs_source_missing_skips(self) -> None:
+        """A doc whose source no longer exists in the repo is skipped, not
+        removed (src-missing provenance branch, cr-004)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            source.mkdir(parents=True, exist_ok=True)
+            target.mkdir(parents=True, exist_ok=True)
+            (target / "dev-workflow.md").write_text("# Orphaned copy\n", encoding="utf-8")
+
+            with mock.patch.object(mod, "REPO_ROOT", source):
+                result = mod.uninstall_items(
+                    target_root=target,
+                    skills=[],
+                    agents=[],
+                    commands=[],
+                    scripts=[],
+                    docs=["dev-workflow"],
+                )
+
+            self.assertTrue(result.ok, result.errors)
+            self.assertTrue(
+                (target / "dev-workflow.md").exists(),
+                "Source-missing provenance branch must leave the doc in place",
+            )
+            self.assertEqual(len(result.removed), 0)
+            self.assertTrue(
+                any("no installer source in repo" in entry for entry in result.skipped),
+                result.skipped,
             )
 
 

@@ -269,8 +269,8 @@ Mode is enforced by the orchestrator's per-phase instructions (prevention) and t
 
 - Write source per the implementation plan.
 - Write to `30-*.md` and `31-*.md` artifacts.
-- Run tests and builds — in **sync terminal mode** per `coding-behavior-guidelines.md` →
-  Terminal execution. Never background builds/tests; a missed completion notification
+- Run tests and builds — in **sync terminal mode**. Never background builds/tests; a
+  missed completion notification
   stalls the phase.
 - No committing, pushing, deploying, or destructive commands.
 - The auditor (implementation-auditor) is read-only within this phase.
@@ -300,7 +300,7 @@ Mode is enforced by the orchestrator's per-phase instructions (prevention) and t
 - The orchestrator reads the verdict from the **on-disk artifact** (`## Verdict` heading), not from the subagent's return message. The artifact is the source of truth; the return message is a convenience (status + summary).
 - The doer never reads the checker's verdict — only the orchestrator does.
 - The checker owns the loop verdict; the orchestrator owns phase transitions and backward edges.
-- If a subagent spawn fails (e.g., the pinned model is unavailable on the host), the orchestrator records the failure in the dispatch log and falls back to delegated mode for that checker. Do not silently retry or block the workflow.
+- If a subagent spawn fails, classify the cause per [references/dispatch-modes.md](references/dispatch-modes.md): retry the identical dispatch once on a transient failure (transport error, rate limit, upstream 5xx); otherwise record the failure in the dispatch log and fall back to delegated mode for that checker. Do not block the workflow.
 - Phase 3 (Implement) may use real subagents internally via plan-executor + agent-runner. This is invisible to the orchestrator.
 - Phase 1 (Research) may use advisory-council internally for consequential decisions. This is invisible to the orchestrator.
 

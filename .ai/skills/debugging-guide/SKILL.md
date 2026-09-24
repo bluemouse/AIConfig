@@ -70,7 +70,7 @@ not enough when an automated test or durable reproducer can be created.
 ### 2. Reproduce before changing code
 
 - Run the failing command, test, build, scenario, or minimal manual reproduction before editing.
-- Record exact commands, inputs, relevant logs, stack traces, assertions, screenshots, timestamps, exit codes, dependency versions, and platform details.
+- Record exact commands, inputs, relevant log slices (the failing section, not the full stream), stack traces, assertions, screenshots, timestamps, exit codes, dependency versions, and platform details.
 - For intermittent failures, repeat enough times to estimate frequency and capture at least one failing trace. Record seed, order, clock, thread, device, network, and cache state when relevant.
 - If the failure cannot be reproduced, add diagnostics or request missing reproduction data. Do not guess a fix.
 - Load `references/reproduction-and-bisection.md` when shrinking a slow repro or bisecting history.

@@ -377,6 +377,10 @@ Follow your **tool wrapper** for how to execute runs (parallel vs sequential, ba
 
 Do not stop partway through a planned eval iteration. Do not use unrelated testing skills.
 
+Cap concurrent eval runs at the [../agent-runner/SKILL.md](../agent-runner/SKILL.md)
+defaults — at most 4 with-skill/baseline pairs (8 subagents) in flight; queue
+excess test cases in later batches within the same iteration.
+
 Workspace: `<skill-name>-workspace/` sibling to `.ai/skills/`, organized by `iteration-N/` and per-eval directories. Create directories as you go.
 
 ### Workspace artifacts

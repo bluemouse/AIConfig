@@ -240,6 +240,72 @@ class CliSkillResolutionTests(unittest.TestCase):
         self.assertIn(mod.TARGET_BUNDLE_ID, message)
 
 
+class DocsBundleMembershipTests(unittest.TestCase):
+    """Docs are a first-class bundle member kind (cr-002)."""
+
+    def test_harness_bundle_docs_membership(self) -> None:
+        bundles = mod.load_skill_bundles(BUNDLES_JSON_PATH)
+        by_id = {bundle.id: bundle for bundle in bundles}
+        harness = by_id["dev-workflow-harness"]
+        self.assertEqual(harness.docs, frozenset({"dev-workflow"}))
+
+    def test_bases_compose_docs(self) -> None:
+        config = {
+            "version": 2,
+            "bases": [
+                {
+                    "id": "docs-base",
+                    "docs": ["dev-workflow"],
+                }
+            ],
+            "bundles": [
+                {
+                    "id": "docs-bundle",
+                    "name": "Docs",
+                    "description": "Docs bundle",
+                    "bases": ["docs-base"],
+                },
+                {
+                    "id": "docs-extended",
+                    "name": "Docs Extended",
+                    "description": "Extended docs bundle",
+                    "bases": ["docs-base"],
+                    "docs": ["other-doc"],
+                },
+            ],
+        }
+        path = write_bundle_config(config)
+        try:
+            bundles = mod.load_skill_bundles(path)
+            by_id = {bundle.id: bundle for bundle in bundles}
+            self.assertEqual(by_id["docs-bundle"].docs, frozenset({"dev-workflow"}))
+            self.assertEqual(
+                by_id["docs-extended"].docs,
+                frozenset({"dev-workflow", "other-doc"}),
+            )
+        finally:
+            path.unlink()
+
+    def test_target_bundle_docs_intersection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "target"
+            target.mkdir(parents=True, exist_ok=True)
+            # dev-workflow.md installed at the target root; other-doc.md is not
+            # allowlisted, so it must never appear even if present on disk.
+            (target / "dev-workflow.md").write_text("# Development Workflow\n", encoding="utf-8")
+            (target / "other-doc.md").write_text("# Other\n", encoding="utf-8")
+
+            bundle = mod.build_target_bundle(
+                target,
+                available_docs=["dev-workflow"],
+                available_skills=[],
+                available_agents=[],
+                available_commands=[],
+                available_scripts=[],
+            )
+            self.assertEqual(bundle.docs, frozenset({"dev-workflow"}))
+
+
 class TargetBundleTests(unittest.TestCase):
     def _write_target_skill(self, root: Path, name: str) -> None:
         skill_dir = root / ".ai" / "skills" / name

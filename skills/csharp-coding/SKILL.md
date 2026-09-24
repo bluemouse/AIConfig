@@ -96,6 +96,8 @@ Run the quality bar in
 
 - Build clean at project warning level.
 - Targeted tests first (`dotnet test --filter ...`), then broader scope.
+- Report test outcomes and the failure slice, not raw output streams — quote only the
+  failing test's summary and assertion, never the full run log.
 - Format/analyzer verification when repo policy requires it.
 - Report changed files, commands run, and remaining risks. Never claim code was tested unless
   a tool actually ran.

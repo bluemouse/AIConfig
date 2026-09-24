@@ -96,8 +96,8 @@ Run the git commands for the chosen scope from the repository root. Prefer paral
 where independent. Also collect recent message style (`git --no-pager log`), branch name,
 and status.
 
-Run all git commands in **sync terminal mode** per `coding-behavior-guidelines.md` →
-Terminal execution. `git log` and `git show` invoke the default pager (`less`) and
+Run all git commands in **sync terminal mode**. `git log` and `git show` invoke the
+default pager (`less`) and
 **must** use `--no-pager` (or `GIT_PAGER=cat`) so they do not block on stdin and stall
 the commit-message workflow.
 

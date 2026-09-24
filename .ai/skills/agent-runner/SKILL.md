@@ -74,6 +74,8 @@ Each packet must include:
 - permitted write set or explicit read-only status
 - forbidden changes and non-goals
 - verification command or acceptance criteria
+- an instruction to run verification with output-limiting flags and return
+  summarized results — never full command logs in the return
 - required return format
 
 Prefer small packets that fit one problem domain. Include source excerpts or paths rather than the full parent history.
@@ -131,7 +133,7 @@ never produced. To recover:
 - Call `get_terminal_output` once on the subagent's terminal id (if exposed) to confirm
   the early exit; do not poll or `sleep`.
 - Re-dispatch the packet in a new wave with an explicit instruction to run verification
-  commands in sync terminal mode per `coding-behavior-guidelines.md` → Terminal execution
+  commands in sync terminal mode
   (never background builds/tests; disable pagers; prefer non-interactive flags).
 - If the subagent surface exposes no terminal id and no bounded-idle signal, escalate to
   the user rather than waiting indefinitely.

@@ -31,8 +31,9 @@ Evaluate the dispatch mode **once per run** — at phase 0 (Clarify) for full
 runs, or at bootstrap for command-bootstrapped runs (which skip phase 0; the
 bootstrap commands record `Dispatch mode: delegated` in the manifest, since the
 command host's subagent capability is unknown at bootstrap time). Record the selected
-mode in the manifest's `## Dispatch log` section. Host capability does not change mid-run,
-so per-phase re-evaluation adds complexity for no benefit.
+mode in the manifest's `## Dispatch log` section. The dispatch primitive does not change
+mid-run, so per-phase re-evaluation adds complexity for no benefit; transient
+availability failures are handled by the fallback rules below, not by re-evaluation.
 
 ## Native-mode dispatch
 
@@ -69,9 +70,18 @@ it matters most: checkers, whose value is independence from the author's reasoni
 
 ## Fallback on spawn failure
 
-If a subagent spawn fails (e.g., the pinned model is unavailable on the host), the
-orchestrator records the failure in the dispatch log and falls back to delegated mode for
-that checker. Do not silently retry or block the workflow.
+If a subagent spawn fails, classify the cause before falling back:
+
+- **Transient failure** (transport error, upstream rate limit or 5xx, or the pinned
+  model being momentarily unavailable): retry the identical dispatch once, after a
+  short backoff. If the retry succeeds, continue in native mode and record both
+  attempts in the dispatch log. At most one retry — a second transient failure
+  is treated as non-transient.
+- **Non-transient failure** (the primitive rejects the packet, or the pinned model
+  is unavailable on the host for the run's duration): record the failure in the
+  dispatch log and fall back to delegated mode for that checker.
+
+Do not retry beyond the single transient retry, and do not block the workflow.
 
 ## Fallback on a hung or failed checker
 

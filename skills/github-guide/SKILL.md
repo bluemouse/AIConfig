@@ -49,7 +49,7 @@ When this skill fires:
 1. Confirm the host is GitHub and auth works — `gh auth status` then a real read call (`gh api user`) — before any write. If `gh auth status` reports the host is unauthenticated, **do not** run `gh auth login` inside the agent — it opens an interactive browser/device flow that blocks the terminal. Stop and ask the user to authenticate, then resume.
 2. Reach for `gh api` the moment you need an inline comment or a thread resolve; the high-level `gh pr` verbs cannot do either.
 3. Load the `references/*.md` file matching the task, not everything upfront.
-4. Run all `gh` commands in **sync terminal mode** per `coding-behavior-guidelines.md` → Terminal execution. Always pass `--body-file -` (never let `gh pr create` / `gh pr edit` open `$EDITOR`), and avoid `--web` (it launches a browser and blocks).
+4. Run all `gh` commands in **sync terminal mode**. Always pass `--body-file -` (never let `gh pr create` / `gh pr edit` open `$EDITOR`), and avoid `--web` (it launches a browser and blocks).
 
 ## Requirements
 

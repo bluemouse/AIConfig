@@ -17,7 +17,7 @@ Canonical bundle membership for tooling lives in [bundles.json](bundles.json). E
 - **`bases`** — reusable member sets keyed by id. Shared membership (for example the core workflow skills) is defined once in the top-level `bases` array.
 - **`bundles`** — installable bundles shown in the installer GUI. Each bundle references zero or more base ids through its `bases` field and may add bundle-specific members in its own `skills`, `agents`, `commands`, and `scripts` lists.
 
-A bundle (or base) may include any combination of four member kinds:
+A bundle (or base) may include any combination of five member kinds:
 
 | Field | Description |
 | --- | --- |
@@ -25,12 +25,15 @@ A bundle (or base) may include any combination of four member kinds:
 | `agents` | Agent slugs (installed via the agent mechanism: shared + tool wrappers) |
 | `commands` | Command slugs (installed via the command mechanism: shared + tool wrappers) |
 | `scripts` | Scripts directory names under `.ai/tools/` (copied verbatim as directory trees) |
+| `docs` | Shared root documents (allowlisted in `installer.py`'s `INSTALLABLE_DOCS`; installed to the target project root so bare-name citations from skills resolve) |
 
 Resolved membership for tooling is:
 
 ```text
 resolved = union(base.<kind> for each referenced base id, for each kind) ∪ bundle.<kind>
 ```
+
+The `docs` kind covers shared root documents referenced by portable skills — currently `dev-workflow` (the orchestrator's governance input). They install to the target project root, beside the target's own `AGENTS.md`/`CLAUDE.md`, so bare-name citations like `dev-workflow.md` resolve unchanged. Repo-only files (README, AGENTS, CLAUDE) are never installable docs.
 
 The extended dev workflow bundle references the `core-dev-workflow` base and lists only its additional skills in `skills`.
 
@@ -45,9 +48,9 @@ python tools/installer.py /path/to/project --bundles core-dev-workflow --skills 
 python tools/installer.py /path/to/project --bundles dev-workflow-harness
 ```
 
-- `--bundles <id>` selects all members (skills, agents, commands, scripts) from the resolved bundle for install or uninstall.
-- Combine with `--skills`, `--agents`, `--commands`, or `--scripts` to add individual items beyond the bundle.
-- When no selector is passed, all discovered skills, agents, commands, and scripts are selected.
+- `--bundles <id>` selects all members (skills, agents, commands, scripts, and docs) from the resolved bundle for install or uninstall.
+- Combine with `--skills`, `--agents`, `--commands`, `--scripts`, or `--docs` to add individual items beyond the bundle.
+- When no selector is passed, all discovered skills, agents, commands, scripts, and docs are selected.
 
 ### Target bundle (dynamic)
 
@@ -58,7 +61,7 @@ The **Target bundle** is not stored in `bundles.json`. It is computed at runtime
 
 Membership is the intersection of:
 
-1. Skills, agents, commands, and scripts found under `<target>/.ai/` (`skills/*/SKILL.md`, `agents/*.md`, `commands/*.md`, `tools/*/`)
+1. Skills, agents, commands, scripts, and docs found under `<target>/.ai/` (`skills/*/SKILL.md`, `agents/*.md`, `commands/*.md`, `tools/*/`) plus allowlisted docs at the target root (`dev-workflow.md`)
 2. The same kinds available in this AIConfig repository catalog
 
 ```bash
@@ -81,6 +84,7 @@ python tools/installer.py /path/to/project --dev-workflow
 - **Agents (4):** the four checker agents — `research-reviewer`, `plan-reviewer`, `implementation-auditor`, `code-reviewer` — installed via the agent mechanism (shared `.ai/agents/<name>.md` + tool wrappers). These wrap the checker skills with fresh-context isolation, read-only enforcement, and model pinning for native-mode dispatch.
 - **Command (1):** `dev-workflow` — installed via the standard command mechanism (shared + tool wrappers). Four per-phase commands — `dev-workflow-research`, `dev-workflow-plan`, `dev-workflow-implement`, `dev-workflow-review` — are also installed; each runs a single phase's doer/checker loop to acceptance or escalation without driving the full pipeline.
 - **Validation scripts:** the `.ai/tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/.ai/tools/dev-workflow/`.
+- **Docs (1):** `dev-workflow` — the shared root governance document installed to the target project root; the orchestrator cites it by bare name.
 
 The orchestrator formats escalations per the `verdict-first` skill, which is **opt-in** (`personal-output` bundle, excluded from default installs). The escalation rules are restated inline in the orchestrator, so the harness works without it; install `--bundles personal-output` alongside when every-message output shaping is wanted in the target.
 

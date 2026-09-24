@@ -64,8 +64,8 @@ explicitly wants a guided, interactive setup (see **Interactive Mode** below).
 | 6 | Range of commits | see below |
 | 7 | Branch changes (pre-push) | see below |
 
-**Run all git commands in sync terminal mode** per `coding-behavior-guidelines.md` →
-Terminal execution. `git diff`, `git show`, and `git log` all invoke the default pager
+**Run all git commands in sync terminal mode.** `git diff`, `git show`, and `git log` all
+invoke the default pager
 (`less`) when stdout is a TTY and **must** use `--no-pager` (or `GIT_PAGER=cat`) so they
 do not block on stdin and stall the review.
 

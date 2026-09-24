@@ -1,6 +1,11 @@
 ---
 name: cmake-dev
-description: "Write, review, and refactor modern CMake 3.20+ build files for C/C++ projects using target-based builds. Use when editing CMakeLists.txt or *.cmake files; adding or linking targets; configuring PUBLIC/PRIVATE/INTERFACE visibility; integrating dependencies with find_package or FetchContent; wiring CTest; structuring multi-directory projects; applying generator expressions; or writing install/export rules \u2014 even if the user says \"fix my build\" without naming CMake."
+description: Write, review, and refactor modern CMake 3.20+ build files for C/C++
+  projects using target-based builds. Use when editing CMakeLists.txt or *.cmake files;
+  adding or linking targets; configuring PUBLIC/PRIVATE/INTERFACE visibility; integrating
+  dependencies with find_package or FetchContent; wiring CTest; structuring multi-directory
+  projects; applying generator expressions; or writing install/export rules — even
+  if the user says "fix my build" without naming CMake.
 ---
 
 # cmake-dev wrapper for Cursor

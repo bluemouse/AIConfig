@@ -93,6 +93,10 @@ ctest --test-dir build --output-on-failure
 For install/export work, also run `cmake --install build --prefix /tmp/prefix-check` when
 safe. Report changed files, commands run, and remaining risks.
 
+Report results and the failure slice, not raw output streams — prefer
+`ctest --output-on-failure` and filtered reads (`| tail`, `| grep`) over pasting full
+build logs; quote the first error and its context, never the whole compile output.
+
 ## Common gotchas
 
 Verified against [cmake.org](https://cmake.org/cmake/help/latest/) — see [SOURCES.md](SOURCES.md).

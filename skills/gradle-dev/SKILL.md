@@ -67,6 +67,10 @@ Use the narrowest command that proves the change:
 
 For Windows examples, use `gradlew.bat` instead of `./gradlew`.
 
+Report results and the failure slice, not raw output streams — prefer quiet output
+(`-q`, `--console=plain`) and filtered reads over pasting full Gradle logs; quote
+the first root-cause stack-trace cause, not the whole build output.
+
 ## Tooling helper
 
 This skill includes `scripts/gradle_project_check.sh`. Use it only when a local project is available and the user wants command discovery or checks run. Default mode is `--quick`.

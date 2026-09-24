@@ -48,7 +48,7 @@ Read `references/council-protocol.md` for the full deliberation, evidence, scori
 Select the strongest available mode without blocking the task:
 
 1. **Native council:** When independent worker or agent tools are available, dispatch council members independently, preserve their separate outputs, and run cross-review rounds.
-2. **Delegated council:** When only sequential worker calls are available, call each member separately and keep later members blind to earlier answers during the independent round.
+2. **Delegated council:** When only sequential worker calls are available, call each member separately and keep later members blind to earlier answers during the independent round. In every later round, collect all members' round-N position updates before any round-N+1 critique begins, and rotate the per-member call order each round so no member is always called last.
 3. **Simulated council:** When no independent execution mechanism exists, simulate distinct council members in one context. Explicitly label the result as a simulated council, write all independent Round 1 positions before exposing peer positions, and enforce the same debate and convergence rules.
 
 Use simulated mode by default when the environment does not expose independent execution. Honesty about the mode matters more than the mode itself.
