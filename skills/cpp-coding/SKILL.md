@@ -68,6 +68,9 @@ These themes apply to every C++ change:
 Before writing or reviewing:
 
 - Read `CMakeLists.txt` (or equivalent) — confirm **C++20**, compiler, and warning flags
+- Read the repo's lint configuration (`.clang-tidy`, lint wrapper script, findings
+  baseline) and follow its naming and check conventions — see
+  [build-and-verification.md](references/build-and-verification.md#writing-lint-abiding-code)
 - Note concurrency, real-time, or embedded constraints from context
 - Identify whether the change touches ownership, threading, templates, or public API
 
