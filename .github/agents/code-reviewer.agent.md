@@ -7,7 +7,6 @@ description: Run an isolated, fresh-context review of a code diff as a read-only
   and test coverage is needed after implementation or before a pull request. Produces
   a structured review-report with a verdict. Does not trigger on active local merge/rebase
   integration review (git-merge-guide) or codebase learning guides (code-professor).
-model: gpt-4o
 ---
 
 # code-reviewer wrapper for GitHub Copilot
@@ -22,7 +21,7 @@ Before doing agent work, read that shared file and treat it as the source of tru
 
 - Reload VS Code after adding or editing this agent so Copilot rediscovers it.
 - GitHub Copilot `.agent.md` files do not expose a native `readonly` frontmatter field. Read-only enforcement is **instruction-only** (the shared agent body's Boundaries section) plus detection via the dev-workflow `check_post_phase.py` validation script, which catches forbidden writes in all modes.
-- `model: gpt-4o` pins a strong reasoning model for review quality. Substitute the current strongest available reasoning model if this identifier is unavailable on the host.
+- No `model` frontmatter is set, so the agent runs on the user's currently selected Copilot chat model. Add a `model` field only if this agent must run on a specific model.
 
 ## Wrapper policy
 

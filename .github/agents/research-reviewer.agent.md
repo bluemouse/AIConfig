@@ -8,7 +8,6 @@ description: Run an isolated, fresh-context audit of a research report as a read
   a structured review-report with a verdict. Does not trigger on brainstorming new
   ideas, codebase learning guides (code-professor), implementation plan authoring
   (plan-guide), plan-reviewer audit, or code diff review.
-model: gpt-4o
 ---
 
 # research-reviewer wrapper for GitHub Copilot
@@ -23,7 +22,7 @@ Before doing agent work, read that shared file and treat it as the source of tru
 
 - Reload VS Code after adding or editing this agent so Copilot rediscovers it.
 - GitHub Copilot `.agent.md` files do not expose a native `readonly` frontmatter field. Read-only enforcement is **instruction-only** (the shared agent body's Boundaries section) plus detection via the dev-workflow `check_post_phase.py` validation script, which catches forbidden writes in all modes.
-- `model: gpt-4o` pins a strong reasoning model for review quality. Substitute the current strongest available reasoning model if this identifier is unavailable on the host.
+- No `model` frontmatter is set, so the agent runs on the user's currently selected Copilot chat model. Add a `model` field only if this agent must run on a specific model.
 
 ## Wrapper policy
 

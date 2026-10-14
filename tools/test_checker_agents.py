@@ -5,7 +5,7 @@ Validates that each checker agent:
 - Has a bootstrap AGENT.md and three tool wrappers (FR-1)
 - Points to its corresponding skill (FR-2)
 - Has per-host read-only enforcement (FR-3)
-- Has model pinning per wrapper (FR-4)
+- Has model inheritance per wrapper (FR-4)
 - Has a differentiated description from the skill (FR-12, rr-008)
 
 Also validates orchestrator edits:
@@ -142,22 +142,27 @@ class CheckerAgentContentTests(unittest.TestCase):
                 f"may not be differentiated from the skill description",
             )
 
-    def test_model_pinning_per_wrapper(self):
-        """t-012: Each wrapper has a non-empty model: field in frontmatter (structural proxy for model pinning)."""
+    def test_model_inheritance_per_wrapper(self):
+        """t-012: Claude/Cursor wrappers set model: inherit; GitHub wrappers omit the field (structural proxy for model inheritance)."""
         for name in CHECKER_AGENTS:
             for tool, rel in WRAPPER_REL_PATHS.items():
                 wrapper = REPO_ROOT / "agents" / name / rel
                 content = wrapper.read_text(encoding="utf-8")
                 frontmatter = parse_frontmatter(content)
-                self.assertIn(
-                    "model",
-                    frontmatter,
-                    f"{tool} wrapper for {name} missing 'model:' frontmatter field",
-                )
-                self.assertTrue(
-                    frontmatter["model"],
-                    f"{tool} wrapper for {name} has empty 'model:' field",
-                )
+                if tool in ("cursor", "claude"):
+                    self.assertEqual(
+                        frontmatter.get("model"),
+                        "inherit",
+                        f"{tool} wrapper for {name} must set 'model: inherit' — "
+                        f"got {frontmatter.get('model')!r}",
+                    )
+                else:
+                    self.assertNotIn(
+                        "model",
+                        frontmatter,
+                        f"github wrapper for {name} must omit the 'model:' frontmatter "
+                        f"field so the agent runs on the user's selected Copilot chat model",
+                    )
 
 
 class OrchestratorEditTests(unittest.TestCase):

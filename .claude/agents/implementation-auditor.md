@@ -10,7 +10,7 @@ description: Run an isolated, fresh-context audit of an implementation as a read
   plan authoring (plan-guide), pre-execution plan audit (plan-reviewer), plan execution
   (plan-executor), codebase learning guides (code-professor), or strict TDD coaching
   (test-driven-dev-guide).
-model: claude-3-5-sonnet
+model: inherit
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -26,7 +26,7 @@ Before doing agent work, read that shared file and treat it as the source of tru
 
 - Restart or reload the Claude Code session after adding or editing this agent.
 - `tools: Read, Grep, Glob, Bash` restricts the agent to read-only investigation plus command execution for evidence gathering (builds, tests). Write tools (Edit, Write) are excluded to enforce read-only behavior at the host level.
-- `model: claude-3-5-sonnet` pins a strong reasoning model for audit quality. Substitute the current strongest available reasoning model if this identifier is unavailable on the host.
+- `model: inherit` runs the agent on the main conversation's model (the documented default). Replace with a model alias such as `sonnet`, `opus`, or `haiku`, or a full model name, if this agent should run on a specific model.
 
 ## Wrapper policy
 
