@@ -85,26 +85,19 @@ python tools/installer.py /path/to/project --dev-workflow
 - **Validation scripts:** the `.ai/tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/.ai/tools/dev-workflow/`.
 - **Guide:** the `dev-workflow.md` governance guide travels inside the orchestrator skill as `references/dev-workflow.md` — installing the skill installs the guide.
 
-The orchestrator formats escalations per the `verdict-first` skill, which is **opt-in** (`personal-output` bundle, excluded from default installs). The escalation rules are restated inline in the orchestrator, so the harness works without it; install `--bundles personal-output` alongside when every-message output shaping is wanted in the target.
+The orchestrator formats escalations per the `response-guidelines` guideline, which is **opt-in** (`--guidelines response-guidelines`; guidelines are never bundle-carried). The escalation rules are restated inline in the orchestrator, so the harness works without it; install the guideline alongside when every-message output shaping is wanted in the target — the installer's AGENTS.md citation offer wires the always-on loading automatically.
 
 The bundle composes with `--skills`, `--agents`, `--commands`, and other `--bundles` in a single invocation. Use `--override` to replace existing harness paths in the target.
 
-## Personal output preferences bundle
+## Personal output preferences
 
-The **personal-output** bundle groups chat-output shaping preferences for a single user. It currently contains one skill:
-
-| Skill | Primary role | Use when |
-| --- | --- | --- |
-| [verdict-first](../skills/verdict-first/SKILL.md) | Chat-output shaping | Verdict-first updates, structured questions at escalations, no preamble/recap, and matter-of-fact error reporting should apply to every response |
-
-Unlike the workflow bundles, this one is **excluded from the no-selector default install**. `DEFAULT_EXCLUDED_SKILLS` in [installer.py](installer.py) filters personal-preference skills when `tools/installer.py` is invoked without `--skills`, `--agents`, `--commands`, or `--bundles`, so a single user's output-shaping preferences never leak into shared team targets. Install it explicitly:
+Chat-output shaping is distributed as the **`response-guidelines` guideline**, not a bundle: guidelines are explicit-only and never bundle-carried, because a guideline changes agent behavior in the target and installing one is always a deliberate choice. Install it with:
 
 ```bash
-python tools/installer.py /path/to/project --bundles personal-output
-python tools/installer.py /path/to/project --skills verdict-first
+python tools/installer.py /path/to/project --guidelines response-guidelines
 ```
 
-**Always-on loading caveat:** the installer copies the skill and its tool wrappers, but not the always-on load channels — `.cursor/rules/` files and instruction-file lines are repo-local. Target projects that want every-message loading must add their own `.cursor/rules/verdict-first.mdc` (with `alwaysApply: true`) and an instruction-file line (for example in `AGENTS.md` or `CLAUDE.md`) pointing at the skill.
+The installer then offers to cite the guideline in the target's `AGENTS.md` — the accepted citation is the always-on load channel, so every agent session in the target loads the rules (no hand-built `.cursor/rules` files or instruction-file lines needed).
 
 ## Core dev workflow bundle
 

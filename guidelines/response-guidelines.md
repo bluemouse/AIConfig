@@ -1,8 +1,3 @@
----
-name: verdict-first
-description: "Shape chat responses for a reader who reviews the work but does not do the coding — the agent does. Use when reporting results, verdicts, escalations, phase status, or any update where the reader must absorb the outcome fast: lead with the result or decision, surface anything needing the user's input as a structured question, no preamble or recap, matter-of-fact errors, restate multi-step state, size unstarted work by its shape. Also triggers when the user asks for shorter answers, less prose, or 'just tell me the result'. Not for artifact files, which follow their templates."
----
-
 # Verdict First
 
 The user reads the agent's output; the agent does the work. Chat output is not just
@@ -82,13 +77,27 @@ Good: "Test fails in the foo() function in file.py: expected 200, got 401.
 Cause: missing auth header. Fixing: add `Authorization: Bearer ${token}` to the
 request."
 
-### 7. Restate state across turns
+### 7. Close with the three-part status: done, next, for you
 
-On multi-turn work, name where things stand — don't make the user hold "step 3
-of 5" in their head. You take the next step; you don't hand it to them.
+Every response ends with a status block the user can skim to know where the
+session stands and what happens next:
+
+- **Done** — what was just completed, concretely ("schema updated, 3 of 5").
+- **Next** — what the agent does next, or "nothing pending — waiting on you."
+- **For you** — what the user should do next: verify, decide, approve, or
+  "nothing."
+
+Skip an item only when it is genuinely empty; a pure answer with no pending
+state collapses to just the answer. The block is state, not the recap or
+closer Rule 4 forbids. A "For you" item that is a real decision still follows
+Rule 2: the block names it, the structured question carries the options.
+
+You take the next step yourself — never hand the user work that is yours.
+"For you" is only for what genuinely needs the human.
 
 Bad: "Done. Ready for the next part?"
-Good: "3 of 5 done: schema updated. Next I'll backfill the new column."
+Good: "Done: schema updated (3 of 5). Next: backfill the new column. For you:
+nothing yet — I'll flag when the backfill needs your review."
 
 ### 8. Size unstarted work by its shape, not the clock
 
@@ -135,9 +144,10 @@ question instead.
 4. Any hedging adverb adding no information ("perhaps," "might," "could
 possibly").
 
-Then verify: does anything in this response need the user to act or decide? If
-yes and it's sitting in prose, move it to a structured question. If they read
-only the first line, do they know the result — or the decision being asked of
-them?
+Then verify: does the response end with the three-part status (done, next,
+for you), skipping only genuinely empty items? Does anything in this response
+need the user to act or decide? If yes and it's sitting in prose, move it to
+a structured question. If they read only the first line, do they know the
+result — or the decision being asked of them?
 
 If yes, send.

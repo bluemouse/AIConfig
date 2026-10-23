@@ -136,7 +136,6 @@ Bootstrap skills live under `skills/`. Installing one copies content to `.ai/ski
 | `techdoc-reviewer` | `skills/techdoc-reviewer/` | Review and synchronize technical documentation against code, tests, and configuration |
 | `code-professor` | `skills/code-professor/` | Evidence-based guides for learning, tracing, and documenting existing codebases |
 | `commit-message-writer` | `skills/commit-message-writer/` | Draft Conventional Commit messages from staged/working diffs, commits, or ranges |
-| `verdict-first` | `skills/verdict-first/` | Chat-output shaping: verdict-first updates, structured questions, no preamble/recap; always-on via `.cursor/rules/` + instruction-file lines; artifacts exempt |
 | `minutes-writer` | `skills/minutes-writer/` | Draft source-grounded meeting minutes and recaps from transcripts, notes, and supporting materials |
 | `git-guide` | `skills/git-guide/` | Git mechanics: commit, push, rebase, conflicts, worktrees |
 | `git-merge-guide` | `skills/git-merge-guide/` | Local merge/rebase integration: semantic conflicts, integration review, verification |
@@ -644,5 +643,6 @@ Reload each tool after install so custom agents are rediscovered.
 - `AGENTS.md` — architecture, common commands, and editing conventions for all coding agents
 - `CLAUDE.md` — Claude Code-specific discovery, evals, and wrapper workflow
 - `guidelines/coding-behavior-guidelines.md` — Karpathy-inspired behavioral guidelines for coding agents
+- `guidelines/response-guidelines.md` — chat-output shaping rules for agent responses (result-first updates, structured questions, no preamble/recap)
 - `skills/skill-creator/references/` — portable skill layout, JSON schemas, workflow and output patterns
 - `skills/agent-creator/references/` — portable agent layout and wrapper templates

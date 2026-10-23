@@ -33,14 +33,30 @@ class RepoGuidelineLayoutTests(unittest.TestCase):
     """The behavioral guideline lives in guidelines/ at the repo root."""
 
     def test_repo_guideline_lives_in_guidelines_folder(self) -> None:
-        self.assertTrue(
-            (REPO_ROOT / "guidelines" / "coding-behavior-guidelines.md").is_file(),
-            "Guideline must live at guidelines/coding-behavior-guidelines.md",
-        )
+        for name in ("coding-behavior-guidelines", "response-guidelines"):
+            self.assertTrue(
+                (REPO_ROOT / "guidelines" / f"{name}.md").is_file(),
+                f"Guideline must live at guidelines/{name}.md",
+            )
         self.assertFalse(
             (REPO_ROOT / "coding-behavior-guidelines.md").exists(),
             "Guideline must no longer sit at the repo root",
         )
+
+    def test_verdict_first_skill_machinery_removed(self) -> None:
+        """fr-2: the converted skill's machinery is fully gone (t-106)."""
+        for rel in (
+            "skills/verdict-first",
+            ".ai/skills/verdict-first",
+            ".cursor/skills/verdict-first",
+            ".claude/skills/verdict-first",
+            ".github/skills/verdict-first",
+            ".cursor/rules/verdict-first.mdc",
+        ):
+            self.assertFalse(
+                (REPO_ROOT / rel).exists(),
+                f"{rel} must not exist after the guideline conversion",
+            )
 
 
 def write_source_guideline(root: Path, name: str, text: str = "# Guideline\n") -> None:
@@ -136,12 +152,41 @@ class GuidelineMemberKindTests(unittest.TestCase):
             mod.REPO_ROOT = root
             try:
                 write_source_guideline(root, "coding-behavior-guidelines")
+                write_source_guideline(root, "response-guidelines")
                 write_source_guideline(root, "not-allowlisted")
                 discovered = mod.discover_guidelines()
             finally:
                 mod.REPO_ROOT = original_root
 
-            self.assertEqual(discovered, ["coding-behavior-guidelines"])
+            self.assertEqual(
+                discovered, ["coding-behavior-guidelines", "response-guidelines"]
+            )
+
+    def test_install_response_guideline_places_file(self) -> None:
+        """fr-3: response-guidelines installs from the real repo (t-105).
+
+        Installs from the REAL REPO_ROOT — the missing source file is the red
+        signal (a temp-source fixture would be vacuous: install_items never
+        consults the allowlist).
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+
+            result = mod.install_items(
+                source_root=REPO_ROOT,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=[],
+                scripts=[],
+                guidelines=["response-guidelines"],
+                override=False,
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            installed = target / ".ai" / "guidelines" / "response-guidelines.md"
+            self.assertTrue(installed.is_file())
+            self.assertIn("# Verdict First", installed.read_text(encoding="utf-8"))
 
 
 class AgentsMdIntegrationTests(unittest.TestCase):
@@ -153,8 +198,56 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             line,
             "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
             "(.ai/guidelines/coding-behavior-guidelines.md) "
-            "when generating or editing any code in this repo.",
+            "in this repo.",
         )
+
+    def test_remove_matches_legacy_citation_wording(self) -> None:
+        """fr-5: uninstall also removes citations written with the pre-generalization wording."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            agents_md = target / "AGENTS.md"
+            legacy = (
+                "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
+                "(.ai/guidelines/coding-behavior-guidelines.md) "
+                "when generating or editing any code in this repo."
+            )
+            agents_md.write_text(f"# Project\n{legacy}\nTail.\n", encoding="utf-8")
+
+            removed, kept = mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"]
+            )
+
+            self.assertEqual(removed, ["coding-behavior-guidelines"])
+            self.assertEqual(kept, [])
+            self.assertEqual(
+                agents_md.read_text(encoding="utf-8"), "# Project\nTail.\n"
+            )
+
+    def test_remove_matches_legacy_citation_wording_with_crlf(self) -> None:
+        """cr-001: legacy-wording removal also works on CRLF files.
+
+        The dual-match set and the CRLF-preserving rewrite are independent
+        code paths; this pins their intersection.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            legacy = (
+                "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
+                "(.ai/guidelines/coding-behavior-guidelines.md) "
+                "when generating or editing any code in this repo."
+            )
+            (target / "AGENTS.md").write_bytes(
+                f"# Project\r\n\r\n{legacy}\r\n\r\nTail.\r\n".encode("utf-8")
+            )
+
+            removed, kept = mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"]
+            )
+
+            self.assertEqual(removed, ["coding-behavior-guidelines"])
+            self.assertEqual(kept, [])
+            raw = (target / "AGENTS.md").read_bytes()
+            self.assertEqual(raw, b"# Project\r\n\r\n\r\nTail.\r\n")
 
     def test_append_lines_to_existing_agents_md(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

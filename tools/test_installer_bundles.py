@@ -193,27 +193,48 @@ class CliSkillResolutionTests(unittest.TestCase):
     def test_resolve_cli_skills_default(self) -> None:
         all_skills = mod.discover_skills()
         resolved = mod.resolve_cli_skills(bundle_ids=None, skill_names=None)
-        expected = [name for name in all_skills if name not in mod.DEFAULT_EXCLUDED_SKILLS]
-        self.assertEqual(resolved, expected)
+        self.assertEqual(resolved, all_skills)
 
-    def test_resolve_cli_skills_default_excludes_personal_skills(self) -> None:
-        resolved = mod.resolve_cli_skills(bundle_ids=None, skill_names=None)
-        self.assertNotIn("verdict-first", resolved)
-        self.assertIn("commit-message-writer", resolved)
+    def test_resolve_cli_skills_default_is_unfiltered(self) -> None:
+        """fr-7 (t-109): no exclusion mechanism — every discovered skill is selected.
 
-    def test_resolve_cli_skills_explicit_personal_skill_installs(self) -> None:
-        resolved = mod.resolve_cli_skills(
-            bundle_ids=None,
-            skill_names=["verdict-first"],
-        )
-        self.assertEqual(resolved, ["verdict-first"])
+        A fixture skill named verdict-first under a temp REPO_ROOT makes the
+        red phase genuine: the pre-removal filter excludes it.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for rel in (
+                ".ai/skills/verdict-first/SKILL.md",
+                ".cursor/skills/verdict-first/SKILL.md",
+            ):
+                path = root / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(
+                    "---\nname: verdict-first\ndescription: probe\n---\n",
+                    encoding="utf-8",
+                )
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = root
+            try:
+                resolved = mod.resolve_cli_skills(bundle_ids=None, skill_names=None)
+            finally:
+                mod.REPO_ROOT = original_root
 
-    def test_resolve_cli_skills_personal_bundle_installs(self) -> None:
-        resolved = mod.resolve_cli_skills(
-            bundle_ids=["personal-output"],
-            skill_names=None,
-        )
-        self.assertEqual(resolved, ["verdict-first"])
+            self.assertIn("verdict-first", resolved)
+
+    def test_no_default_exclusion_mechanism_remains(self) -> None:
+        """fr-7 (t-108): the personal-preference exclusion mechanism is gone."""
+        self.assertFalse(hasattr(mod, "DEFAULT_EXCLUDED_SKILLS"))
+
+    def test_personal_output_bundle_removed(self) -> None:
+        """fr-6 (t-107): the personal-output bundle no longer exists."""
+        with self.assertRaisesRegex(
+            mod.InstallerError, r"Unknown bundle 'personal-output'"
+        ):
+            mod.resolve_cli_skills(
+                bundle_ids=["personal-output"],
+                skill_names=None,
+            )
 
     def test_resolve_cli_skills_bundle_only(self) -> None:
         resolved = mod.resolve_cli_skills(

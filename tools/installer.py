@@ -76,6 +76,7 @@ SHARED_GUIDELINE_FILE = ".ai/guidelines/{name}.md"
 # the target (installer-owned namespace, not the target root).
 INSTALLABLE_GUIDELINES = (
     "coding-behavior-guidelines",
+    "response-guidelines",
 )
 
 # Scripts are directory trees under .ai/tools/<name>/ (no tool wrappers).
@@ -103,12 +104,6 @@ TOOL_COMMAND_SCAN_REL_DIRS = (
 # A scripts "name" is the directory name under tools/.
 
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
-
-# Personal-preference skills excluded from the no-selector default install.
-# They remain installable explicitly (--skills <name>) or via their bundle
-# (--bundles personal-output); only the "install everything" default skips
-# them so personal output-shaping preferences never leak into shared targets.
-DEFAULT_EXCLUDED_SKILLS = frozenset({"verdict-first"})
 
 RELOAD_REMINDER = (
     "Reload Cursor, VS Code (Copilot), and Claude Code so each tool "
@@ -567,12 +562,11 @@ def resolve_cli_selection(
     ):
         selection.dedupe()
         return selection
-    # No explicit selection: default to all discovered items, minus
-    # personal-preference skills that require explicit opt-in. Guidelines are
+    # No explicit selection: default to all discovered items. Guidelines are
     # explicit-only — they change agent behavior in the target, so they are
     # never part of the default install.
     return BundleSelection(
-        skills=[name for name in discover_skills() if name not in DEFAULT_EXCLUDED_SKILLS],
+        skills=discover_skills(),
         agents=discover_agents(),
         commands=discover_commands(),
         scripts=discover_scripts(),
@@ -995,7 +989,18 @@ AGENTS_MD_FILENAME = "AGENTS.md"
 def build_guideline_citation_line(name: str) -> str:
     """Return the AGENTS.md citation line for an installed guideline."""
     rel = SHARED_GUIDELINE_FILE.format(name=name)
+    return f"- Follow [{rel}]({rel}) in this repo."
+
+
+def _legacy_guideline_citation_line(name: str) -> str:
+    """Return the pre-generalization citation wording the installer once wrote."""
+    rel = SHARED_GUIDELINE_FILE.format(name=name)
     return f"- Follow [{rel}]({rel}) when generating or editing any code in this repo."
+
+
+def guideline_citation_variants(name: str) -> set[str]:
+    """Return every citation-line wording the installer has written for a guideline."""
+    return {build_guideline_citation_line(name), _legacy_guideline_citation_line(name)}
 
 
 def guideline_is_cited(text: str, name: str) -> bool:
@@ -1065,9 +1070,10 @@ def agents_md_remove_lines(
 ) -> tuple[list[str], list[str]]:
     """Remove installer-written citation lines from the target's AGENTS.md.
 
-    Returns (removed, kept) name lists. Only the exact citation line is
-    removed — a user-edited variant is kept. Line endings and all other
-    content are preserved byte-for-byte.
+    Returns (removed, kept) name lists. Only lines the installer itself
+    wrote are removed — the current template wording and the legacy
+    pre-generalization wording; a user-edited variant is kept. Line endings
+    and all other content are preserved byte-for-byte.
     """
     path = target_root / AGENTS_MD_FILENAME
     if not path.is_file():
@@ -1075,10 +1081,11 @@ def agents_md_remove_lines(
     text = _read_agents_md_raw(path)
     lines = text.splitlines(keepends=True)
     stripped = {line.rstrip("\r\n") for line in lines}
-    removed = [name for name in names if build_guideline_citation_line(name) in stripped]
-    kept = [name for name in names if build_guideline_citation_line(name) not in stripped]
+    variants = {name: guideline_citation_variants(name) for name in names}
+    removed = [name for name in names if variants[name] & stripped]
+    kept = [name for name in names if not (variants[name] & stripped)]
     if removed:
-        remove_set = {build_guideline_citation_line(name) for name in names}
+        remove_set = set().union(*variants.values())
         kept_lines = [line for line in lines if line.rstrip("\r\n") not in remove_set]
         _write_agents_md_raw(path, "".join(kept_lines))
     return (removed, kept)
