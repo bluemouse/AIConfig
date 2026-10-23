@@ -170,6 +170,7 @@ python tools/installer.py /path/to/other-project --skills cpp-coding vulkan-dev 
 python tools/installer.py /path/to/other-project --commands git-commit --override
 python tools/installer.py /path/to/other-project --bundles core-dev-workflow
 python tools/installer.py /path/to/other-project --bundles target-bundle
+python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines --update-agents-md
 python tools/installer.py /path/to/other-project --agents my-agent --uninstall
 python tools/installer.py /path/to/other-project --commands git-commit --uninstall
 python tools/installer.py   # GUI when no arguments
@@ -195,4 +196,4 @@ See [README.md](README.md) for install examples and meta-skill usage.
 - Resolve `<SKILL_ROOT>` / `<SKILL_CREATOR_ROOT>` / `<AGENT_CREATOR_ROOT>` / `<COMMAND_CREATOR_ROOT>` as "the directory containing this skill's SKILL.md" — used throughout skill/agent/command-creator bodies to reference bundled `references/`, `scripts/`, `assets/` without hardcoding paths.
 - Cross-link sibling skills with relative paths from the shared layer (e.g. `../cpp-testing/SKILL.md`), since links only need to resolve after install.
 - `.cursor/rules/` (`.mdc` files, frontmatter controls `globs`/`alwaysApply`) is for small always-on or path-scoped rules — keep them composable, not full skills.
-- Follow [coding-behavior-guidelines.md](coding-behavior-guidelines.md) when generating or editing any code in this repo or in skill/agent output.
+- Follow [guidelines/coding-behavior-guidelines.md](guidelines/coding-behavior-guidelines.md) when generating or editing any code in this repo or in skill/agent output.

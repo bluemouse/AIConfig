@@ -26,6 +26,8 @@ A bundle (or base) may include any combination of four member kinds:
 | `commands` | Command slugs (installed via the command mechanism: shared + tool wrappers) |
 | `scripts` | Scripts directory names under `.ai/tools/` (copied verbatim as directory trees) |
 
+Guidelines are a fifth installer member kind but are **never bundle-carried**: they are selected explicitly via `--guidelines` (CLI) or the Guidelines panel (GUI) only. A guideline changes agent behavior in the target, so installing one is always a deliberate choice, and the installer offers a consent-driven `AGENTS.md` citation append to activate it.
+
 Resolved membership for tooling is:
 
 ```text

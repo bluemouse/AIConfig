@@ -130,7 +130,7 @@ class CommandInstallTests(unittest.TestCase):
                     uninstall=False,
                     override=False,
                 )
-            self.assertIn("skill, agent, command, or scripts", str(ctx.exception))
+            self.assertIn("skill, agent, command, scripts, or guideline", str(ctx.exception))
 
 
 class DocsCliRemovedTests(unittest.TestCase):

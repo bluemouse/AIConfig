@@ -38,7 +38,7 @@ Install a bootstrap command with `install_portable_command.py`. Re-run after edi
 repo/
 ├── AGENTS.md                          # Tool-neutral agent guidance (architecture, commands)
 ├── CLAUDE.md                          # Claude Code-specific guidance
-├── coding-behavior-guidelines.md      # LLM coding behavioral guidelines
+├── guidelines/                        # Behavioral guidelines for coding agents (installable)
 ├── tools/
 │   ├── installer.py                   # Copy installed skills/agents/commands to another project
 │   ├── bundles.json                   # Machine-readable workflow bundle definitions
@@ -119,7 +119,7 @@ repo/
 | `.ai/commands/` | **Shared commands** — tool-neutral slash prompt install output. |
 | `.ai/skills/` | **Shared skills** — tool-neutral packages with full content (`scripts/`, `references/`, `assets/`). |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | **Tool skills** — one wrapper per tool (`SKILL.md` only) that directs the agent to the shared skill. |
-| `coding-behavior-guidelines.md` | Project-wide behavioral guidelines for coding agents (think first, simplicity, surgical changes). |
+| `guidelines/` | **Behavioral guidelines** — markdown documents installable to target projects via `tools/installer.py --guidelines`. |
 | `tools/installer.py` | Copy installed portable skills, agents, commands, and scripts from this repo into another project (CLI or GUI). |
 
 ## Bootstrap skills
@@ -485,7 +485,7 @@ Reload VS Code after changes so Copilot picks up new files.
 
 ## Distribute to another project
 
-Use **`tools/installer.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.ai/skills/<name>/`, `.ai/agents/<name>.md`, `.ai/commands/<name>.md`, any tool wrappers that exist under `.cursor/`, `.claude/`, and `.github/`, and scripts trees under `.ai/tools/` to the target project root. It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
+Use **`tools/installer.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.ai/skills/<name>/`, `.ai/agents/<name>.md`, `.ai/commands/<name>.md`, any tool wrappers that exist under `.cursor/`, `.claude/`, and `.github/`, and scripts trees under `.ai/tools/` to the target project root. It also installs behavioral guidelines from `guidelines/` to `.ai/guidelines/<name>.md` when explicitly selected — guidelines are inert until the target loads them, so the installer prints integration instructions and offers to cite them in the target's `AGENTS.md`. It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
 
 **CLI** (from this repository root):
 
@@ -507,6 +507,10 @@ python tools/installer.py /path/to/other-project --dev-workflow
 python tools/installer.py /path/to/other-project --bundles dev-workflow-harness
 python tools/installer.py /path/to/other-project --scripts dev-workflow --uninstall
 
+# Install behavioral guidelines (explicit-only; lands in .ai/guidelines/)
+python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines
+python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines --update-agents-md
+
 # Replace existing installs in the target
 python tools/installer.py /path/to/other-project --skills cpp-coding --override
 
@@ -514,6 +518,7 @@ python tools/installer.py /path/to/other-project --skills cpp-coding --override
 python tools/installer.py /path/to/other-project --skills cpp-coding --uninstall
 python tools/installer.py /path/to/other-project --agents my-agent --uninstall
 python tools/installer.py /path/to/other-project --commands git-commit --uninstall
+python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines --uninstall
 ```
 
 | Flag | Behavior |
@@ -524,9 +529,12 @@ python tools/installer.py /path/to/other-project --commands git-commit --uninsta
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
 | `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered) |
 | `--scripts NAME ...` | Scripts directory names (under `.ai/tools/`) to install or uninstall (default: all discovered) |
+| `--guidelines NAME ...` | Behavioral guideline names (under `guidelines/`) to install or uninstall. Explicit-only — never part of the default install or bundles. Installed to `.ai/guidelines/<name>.md` in the target |
+| `--update-agents-md` | Update the target's `AGENTS.md` to cite newly installed guidelines (or remove installer-written citations on uninstall) without asking |
+| `--no-update-agents-md` | Never modify the target's `AGENTS.md` during guidelines install/uninstall |
 | `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (orchestrator, phase skills, commands, and validation scripts — see [tools/bundles.md](tools/bundles.md) for full membership) as a unit |
 | `--override` | Replace existing paths in the target; without it, skip and report |
-| `--uninstall` | Remove the selected skills, agents, commands, and scripts from the target project |
+| `--uninstall` | Remove the selected skills, agents, commands, scripts, and guidelines from the target project |
 | *(no arguments)* | Open a tkinter GUI with skill/agent/command/scripts checkboxes and a **Bundles** panel for workflow batch selection |
 
 Without `--override`, existing paths in the target are skipped. The script refuses to install into this AIConfig repo itself. Reload each tool in the target project after install. Bundle definitions live in [tools/bundles.md](tools/bundles.md) (human-readable) and [tools/bundles.json](tools/bundles.json) (machine-readable).
@@ -635,6 +643,6 @@ Reload each tool after install so custom agents are rediscovered.
 
 - `AGENTS.md` — architecture, common commands, and editing conventions for all coding agents
 - `CLAUDE.md` — Claude Code-specific discovery, evals, and wrapper workflow
-- `coding-behavior-guidelines.md` — Karpathy-inspired behavioral guidelines for coding agents
+- `guidelines/coding-behavior-guidelines.md` — Karpathy-inspired behavioral guidelines for coding agents
 - `skills/skill-creator/references/` — portable skill layout, JSON schemas, workflow and output patterns
 - `skills/agent-creator/references/` — portable agent layout and wrapper templates

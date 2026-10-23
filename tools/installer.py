@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Install or uninstall portable skills, agents, commands, and scripts from this repo
-into another project.
+Install or uninstall portable skills, agents, commands, scripts, and guidelines
+from this repo into another project.
 
 Copies the shared-first layout (.ai/ plus tool wrappers under .cursor/, .claude/,
-.github/) from AIConfig into a target project root.
+.github/) from AIConfig into a target project root. Behavioral guidelines
+install to .ai/guidelines/ with a consent-driven AGENTS.md citation offer.
 
 Examples:
     python tools/installer.py /path/to/other-project
@@ -14,6 +15,8 @@ Examples:
     python tools/installer.py /path/to/other-project --bundles extended-dev-workflow --override
     python tools/installer.py /path/to/other-project --bundles core-dev-workflow --skills cpp-coding
     python tools/installer.py /path/to/other-project --bundles target-bundle
+    python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines
+    python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines --update-agents-md
     python tools/installer.py /path/to/other-project --dev-workflow
     python tools/installer.py /path/to/other-project --dev-workflow --uninstall
     python tools/installer.py /path/to/other-project --agents my-agent --uninstall
@@ -62,6 +65,18 @@ TOOL_COMMAND_FILES = {
     "claude": ".claude/commands/{name}.md",
     "github": ".github/prompts/{name}.prompt.md",
 }
+
+SHARED_GUIDELINE_FILE = ".ai/guidelines/{name}.md"
+
+# Behavioral guidelines installable to target projects (explicit selection only —
+# never part of the no-selector default or bundles). A guideline is inert until
+# the target project loads it: cited from its AGENTS.md or included manually in
+# a prompt. A guideline "name" is the filename stem; the file lives at
+# guidelines/<name>.md in this repo and installs to .ai/guidelines/<name>.md in
+# the target (installer-owned namespace, not the target root).
+INSTALLABLE_GUIDELINES = (
+    "coding-behavior-guidelines",
+)
 
 # Scripts are directory trees under .ai/tools/<name>/ (no tool wrappers).
 TOOL_SCRIPTS_SCAN_REL_DIRS = (".ai/tools",)
@@ -439,22 +454,25 @@ class BundleSelection:
     agents: list[str] = field(default_factory=list)
     commands: list[str] = field(default_factory=list)
     scripts: list[str] = field(default_factory=list)
+    guidelines: list[str] = field(default_factory=list)
 
     def extend(self, other: "BundleSelection") -> None:
         self.skills.extend(other.skills)
         self.agents.extend(other.agents)
         self.commands.extend(other.commands)
         self.scripts.extend(other.scripts)
+        self.guidelines.extend(other.guidelines)
 
     def dedupe(self) -> None:
         self.skills = normalize_names(self.skills)
         self.agents = normalize_names(self.agents)
         self.commands = normalize_names(self.commands)
         self.scripts = normalize_names(self.scripts)
+        self.guidelines = normalize_names(self.guidelines)
 
     @property
     def is_empty(self) -> bool:
-        return not (self.skills or self.agents or self.commands or self.scripts)
+        return not (self.skills or self.agents or self.commands or self.scripts or self.guidelines)
 
 
 def resolve_bundle(
@@ -522,6 +540,7 @@ def resolve_cli_selection(
     agent_names: Sequence[str] | None,
     command_names: Sequence[str] | None,
     script_names: Sequence[str] | None,
+    guideline_names: Sequence[str] | None = None,
     target_root: Path | None = None,
 ) -> BundleSelection:
     """Resolve CLI selection from bundles, explicit names, or all discovered items."""
@@ -536,17 +555,22 @@ def resolve_cli_selection(
         selection.commands.extend(normalize_names(command_names))
     if script_names:
         selection.scripts.extend(normalize_names(script_names))
+    if guideline_names:
+        selection.guidelines.extend(normalize_names(guideline_names))
     if (
         bundle_ids
         or skill_names
         or agent_names
         or command_names
         or script_names
+        or guideline_names
     ):
         selection.dedupe()
         return selection
     # No explicit selection: default to all discovered items, minus
-    # personal-preference skills that require explicit opt-in.
+    # personal-preference skills that require explicit opt-in. Guidelines are
+    # explicit-only — they change agent behavior in the target, so they are
+    # never part of the default install.
     return BundleSelection(
         skills=[name for name in discover_skills() if name not in DEFAULT_EXCLUDED_SKILLS],
         agents=discover_agents(),
@@ -622,6 +646,30 @@ def discover_scripts_in_project(project_root: Path) -> list[str]:
         if child.is_dir() and not child.name.startswith(".") and not child.name.startswith("__"):
             names.add(child.name)
     return sorted(names)
+
+
+def discover_guidelines() -> list[str]:
+    """Return allowlisted behavioral guidelines that exist in this repo."""
+    return sorted(
+        name
+        for name in INSTALLABLE_GUIDELINES
+        if (REPO_ROOT / "guidelines" / f"{name}.md").is_file()
+    )
+
+
+def load_guidelines_descriptions(names: Sequence[str]) -> dict[str, str]:
+    """Return the first markdown heading of each named guideline, keyed by name."""
+    descriptions: dict[str, str] = {}
+    for name in names:
+        path = REPO_ROOT / "guidelines" / f"{name}.md"
+        if not path.is_file():
+            continue
+        for line in path.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                descriptions[name] = stripped.lstrip("#").strip()
+                break
+    return descriptions
 
 
 def build_target_bundle(
@@ -916,6 +964,258 @@ def scripts_remove_paths(target_root: Path, name: str) -> list[Path]:
     return [target_root / SHARED_SCRIPTS_DIR.format(name=name)]
 
 
+def guideline_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
+    """Return (src, dest) pairs for a behavioral guideline."""
+    src = source_root / "guidelines" / f"{name}.md"
+    dest = target_root / SHARED_GUIDELINE_FILE.format(name=name)
+    return [(src, dest)]
+
+
+def guideline_remove_paths(target_root: Path, name: str) -> list[Path]:
+    return [target_root / SHARED_GUIDELINE_FILE.format(name=name)]
+
+
+def guideline_is_installer_written(source_root: Path, target_root: Path, name: str) -> bool:
+    """Return True only when the installed guideline matches the installer's source.
+
+    A user-modified or stale copy must never be silently deleted on uninstall —
+    removal requires a byte-identical match, mirroring the provenance rule the
+    docs kind used before its removal.
+    """
+    src = source_root / "guidelines" / f"{name}.md"
+    dest = target_root / SHARED_GUIDELINE_FILE.format(name=name)
+    if not src.is_file() or not dest.is_file():
+        return False
+    return file_sha256(src) == file_sha256(dest)
+
+
+AGENTS_MD_FILENAME = "AGENTS.md"
+
+
+def build_guideline_citation_line(name: str) -> str:
+    """Return the AGENTS.md citation line for an installed guideline."""
+    rel = SHARED_GUIDELINE_FILE.format(name=name)
+    return f"- Follow [{rel}]({rel}) when generating or editing any code in this repo."
+
+
+def guideline_is_cited(text: str, name: str) -> bool:
+    """Return True when any line of an AGENTS.md body already cites the guideline.
+
+    Looser than an exact citation-line match: any line referencing the
+    guideline's installed path counts, so a hand-written citation is
+    recognized and never duplicated by a later append.
+    """
+    rel = SHARED_GUIDELINE_FILE.format(name=name)
+    return any(rel in line for line in text.splitlines())
+
+
+def _read_agents_md_raw(path: Path) -> str:
+    """Read AGENTS.md without newline translation, preserving CRLF/LF as-is."""
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return handle.read()
+
+
+def _write_agents_md_raw(path: Path, text: str) -> None:
+    """Write AGENTS.md without newline translation."""
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        handle.write(text)
+
+
+def _agents_md_newline(text: str) -> str:
+    """Return the dominant line ending of an AGENTS.md body."""
+    return "\r\n" if "\r\n" in text else "\n"
+
+
+def agents_md_append_lines(
+    target_root: Path, names: Sequence[str]
+) -> tuple[list[str], list[str]]:
+    """Append citation lines for each guideline to the target's AGENTS.md.
+
+    Returns (appended, already_present) name lists. Idempotent: a guideline
+    that is already cited — via the installer's exact citation line or any
+    hand-written line referencing the installed path — is reported as
+    already_present and not duplicated. Never creates AGENTS.md — a missing
+    file is a no-op. Line endings are preserved: a CRLF file stays CRLF, and
+    only the new lines are added.
+    """
+    path = target_root / AGENTS_MD_FILENAME
+    if not path.is_file():
+        return ([], [])
+    text = _read_agents_md_raw(path)
+    appended: list[str] = []
+    already: list[str] = []
+    new_lines: list[str] = []
+    for name in names:
+        if guideline_is_cited(text, name):
+            already.append(name)
+            continue
+        appended.append(name)
+        new_lines.append(build_guideline_citation_line(name))
+    if new_lines:
+        newline = _agents_md_newline(text)
+        if text and not text.endswith(("\n", "\r\n")):
+            text += newline
+        text += newline.join(new_lines) + newline
+        _write_agents_md_raw(path, text)
+    return (appended, already)
+
+
+def agents_md_remove_lines(
+    target_root: Path, names: Sequence[str]
+) -> tuple[list[str], list[str]]:
+    """Remove installer-written citation lines from the target's AGENTS.md.
+
+    Returns (removed, kept) name lists. Only the exact citation line is
+    removed — a user-edited variant is kept. Line endings and all other
+    content are preserved byte-for-byte.
+    """
+    path = target_root / AGENTS_MD_FILENAME
+    if not path.is_file():
+        return ([], [])
+    text = _read_agents_md_raw(path)
+    lines = text.splitlines(keepends=True)
+    stripped = {line.rstrip("\r\n") for line in lines}
+    removed = [name for name in names if build_guideline_citation_line(name) in stripped]
+    kept = [name for name in names if build_guideline_citation_line(name) not in stripped]
+    if removed:
+        remove_set = {build_guideline_citation_line(name) for name in names}
+        kept_lines = [line for line in lines if line.rstrip("\r\n") not in remove_set]
+        _write_agents_md_raw(path, "".join(kept_lines))
+    return (removed, kept)
+
+
+def resolve_agents_md_action(
+    *,
+    update_flag: bool,
+    no_update_flag: bool,
+    is_tty: bool,
+) -> Literal["ask", "append", "skip"]:
+    """Decide whether the AGENTS.md offer asks, appends, or skips.
+
+    Non-interactive runs (stdin not a TTY) never block on a prompt: they skip
+    unless a flag forces the decision.
+    """
+    if update_flag and no_update_flag:
+        raise InstallerError(
+            "--update-agents-md and --no-update-agents-md are mutually exclusive."
+        )
+    if update_flag:
+        return "append"
+    if no_update_flag:
+        return "skip"
+    if is_tty:
+        return "ask"
+    return "skip"
+
+
+def format_guidelines_integration_message(names: Sequence[str]) -> str:
+    """Return the post-install message explaining how to activate guidelines."""
+    lines = [
+        "Guidelines installed:",
+        *(f"  - {SHARED_GUIDELINE_FILE.format(name=name)}" for name in names),
+        "",
+        "Guidelines are inert until loaded. To activate them:",
+        "  - Automatic: cite them in the target's AGENTS.md so every agent session",
+        "    loads them (the installer can do this for you).",
+        "  - Manual: include the guideline content in a prompt when needed.",
+    ]
+    return "\n".join(lines)
+
+
+def _default_cli_prompt(question: str) -> bool:
+    answer = input(f"{question} [y/N]: ").strip().lower()
+    return answer in ("y", "yes")
+
+
+def run_agents_md_append_offer(
+    target_root: Path,
+    guideline_names: Sequence[str],
+    *,
+    update_flag: bool = False,
+    no_update_flag: bool = False,
+    is_tty: bool = False,
+    prompt: Callable[[str], bool] | None = None,
+) -> str:
+    """Offer to append guideline citation lines to the target's AGENTS.md.
+
+    Consent-gated: appends only when the user accepts the interactive offer or
+    when the update flag forces it. Never creates AGENTS.md — a missing file
+    yields creation instructions instead.
+    """
+    action = resolve_agents_md_action(
+        update_flag=update_flag, no_update_flag=no_update_flag, is_tty=is_tty
+    )
+    agents_md = target_root / AGENTS_MD_FILENAME
+    if not agents_md.is_file():
+        return (
+            f"No {AGENTS_MD_FILENAME} found in the target project. To load the "
+            f"guidelines automatically, create an {AGENTS_MD_FILENAME} that cites "
+            "the installed guideline paths; to load them ad hoc, include the "
+            "guideline content in a prompt."
+        )
+    if action == "skip":
+        return (
+            f"Left {AGENTS_MD_FILENAME} unchanged. To load the guidelines "
+            f"automatically, cite the installed guideline paths in {AGENTS_MD_FILENAME}; "
+            "to load them ad hoc, include the guideline content in a prompt."
+        )
+    if action == "ask":
+        if prompt is None:
+            prompt = _default_cli_prompt
+        if not prompt(f"Update {agents_md} to cite the installed guidelines?"):
+            return f"Declined — {AGENTS_MD_FILENAME} left unchanged."
+    appended, already = agents_md_append_lines(target_root, guideline_names)
+    if appended and already:
+        return (
+            f"Updated {AGENTS_MD_FILENAME}: cited {', '.join(appended)} "
+            f"(already cited: {', '.join(already)})."
+        )
+    if appended:
+        return f"Updated {AGENTS_MD_FILENAME}: cited {', '.join(appended)}."
+    return f"All guidelines were already cited in {AGENTS_MD_FILENAME}."
+
+
+def run_agents_md_removal_offer(
+    target_root: Path,
+    guideline_names: Sequence[str],
+    *,
+    update_flag: bool = False,
+    no_update_flag: bool = False,
+    is_tty: bool = False,
+    prompt: Callable[[str], bool] | None = None,
+) -> str:
+    """Offer to remove installer-written citation lines from the target's AGENTS.md.
+
+    Provenance-safe: only the exact citation line is removed; user-edited
+    variants are kept.
+    """
+    action = resolve_agents_md_action(
+        update_flag=update_flag, no_update_flag=no_update_flag, is_tty=is_tty
+    )
+    agents_md = target_root / AGENTS_MD_FILENAME
+    if not agents_md.is_file():
+        return f"No {AGENTS_MD_FILENAME} found in the target project — nothing to remove."
+    if action == "skip":
+        return (
+            f"Left {AGENTS_MD_FILENAME} unchanged. Remove the guideline citation "
+            "lines manually if you no longer want them."
+        )
+    if action == "ask":
+        if prompt is None:
+            prompt = _default_cli_prompt
+        if not prompt(f"Remove the guideline citations the installer added to {agents_md}?"):
+            return f"Declined — {AGENTS_MD_FILENAME} left unchanged."
+    removed, kept = agents_md_remove_lines(target_root, guideline_names)
+    if removed and kept:
+        return (
+            f"Updated {AGENTS_MD_FILENAME}: removed citations for {', '.join(removed)} "
+            f"(kept user-edited citations for: {', '.join(kept)})."
+        )
+    if removed:
+        return f"Updated {AGENTS_MD_FILENAME}: removed citations for {', '.join(removed)}."
+    return f"No installer-written guideline citations found in {AGENTS_MD_FILENAME}."
+
+
 def file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -949,6 +1249,7 @@ def install_items(
     agents: Sequence[str],
     commands: Sequence[str],
     scripts: Sequence[str] = (),
+    guidelines: Sequence[str] = (),
     override: bool = False,
 ) -> OperationResult:
     result = OperationResult()
@@ -1046,6 +1347,35 @@ def install_items(
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
 
+    for name in guidelines:
+        slug = slugify_name(name)
+        pairs = guideline_copy_pairs(source_root, target_root, slug)
+        shared_src = pairs[0][0]
+        if not shared_src.is_file():
+            available = sorted(
+                guideline_name
+                for guideline_name in INSTALLABLE_GUIDELINES
+                if (source_root / "guidelines" / f"{guideline_name}.md").is_file()
+            )
+            result.errors.append(
+                f"guideline {slug}: missing source {format_rel(shared_src, source_root)} "
+                f"(available guidelines: {', '.join(available) or 'none'})"
+            )
+            continue
+
+        for src, dest in pairs:
+            rel_dest = format_rel(dest, target_root)
+            if dest.exists():
+                if not override:
+                    result.skipped.append(rel_dest)
+                    continue
+                remove_path(dest)
+            try:
+                copy_path(src, dest)
+                result.installed.append(rel_dest)
+            except OSError as exc:
+                result.errors.append(f"{rel_dest}: {exc}")
+
     return result
 
 
@@ -1056,6 +1386,7 @@ def uninstall_items(
     agents: Sequence[str],
     commands: Sequence[str],
     scripts: Sequence[str] = (),
+    guidelines: Sequence[str] = (),
 ) -> OperationResult:
     result = OperationResult()
     target_root = validate_target(REPO_ROOT, target_root, create=False)
@@ -1102,6 +1433,21 @@ def uninstall_items(
                 except OSError as exc:
                     result.errors.append(f"{format_rel(path, target_root)}: {exc}")
 
+    for name in guidelines:
+        slug = slugify_name(name)
+        for path in guideline_remove_paths(target_root, slug):
+            if not path.exists():
+                continue
+            if not guideline_is_installer_written(REPO_ROOT, target_root, slug):
+                # Provenance-safe: a user-modified or stale copy is left in place.
+                result.skipped.append(format_rel(path, target_root))
+                continue
+            try:
+                remove_path(path)
+                result.removed.append(format_rel(path, target_root))
+            except OSError as exc:
+                result.errors.append(f"{format_rel(path, target_root)}: {exc}")
+
     return result
 
 
@@ -1144,11 +1490,12 @@ def run_operation(
     agents: Sequence[str],
     commands: Sequence[str],
     scripts: Sequence[str] = (),
+    guidelines: Sequence[str] = (),
     uninstall: bool = False,
     override: bool = False,
 ) -> tuple[int, str]:
-    if not skills and not agents and not commands and not scripts:
-        raise InstallerError("Select at least one skill, agent, command, or scripts.")
+    if not skills and not agents and not commands and not scripts and not guidelines:
+        raise InstallerError("Select at least one skill, agent, command, scripts, or guideline.")
 
     if uninstall:
         result = uninstall_items(
@@ -1157,6 +1504,7 @@ def run_operation(
             agents=agents,
             commands=commands,
             scripts=scripts,
+            guidelines=guidelines,
         )
     else:
         result = install_items(
@@ -1166,6 +1514,7 @@ def run_operation(
             agents=agents,
             commands=commands,
             scripts=scripts,
+            guidelines=guidelines,
             override=override,
         )
 
@@ -1178,8 +1527,8 @@ def run_operation(
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Install or uninstall portable skills, agents, commands, and scripts "
-            "from this AIConfig repository into another project."
+            "Install or uninstall portable skills, agents, commands, scripts, and "
+            "guidelines from this AIConfig repository into another project."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
@@ -1239,6 +1588,30 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help="Scripts directory names (under .ai/tools/) to install or uninstall (default: all discovered).",
     )
     parser.add_argument(
+        "--guidelines",
+        nargs="+",
+        metavar="NAME",
+        help=(
+            "Behavioral guideline names (under guidelines/) to install or uninstall. "
+            "Explicit-only: guidelines are never part of the default install or bundles. "
+            "Installed to .ai/guidelines/<name>.md in the target."
+        ),
+    )
+    agents_md_group = parser.add_mutually_exclusive_group()
+    agents_md_group.add_argument(
+        "--update-agents-md",
+        action="store_true",
+        help=(
+            "Update the target's AGENTS.md to cite newly installed guidelines "
+            "(or remove installer-written citations on uninstall) without asking."
+        ),
+    )
+    agents_md_group.add_argument(
+        "--no-update-agents-md",
+        action="store_true",
+        help="Never modify the target's AGENTS.md during guidelines install/uninstall.",
+    )
+    parser.add_argument(
         "--dev-workflow",
         action="store_true",
         help=(
@@ -1249,12 +1622,12 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser.add_argument(
         "--uninstall",
         action="store_true",
-        help="Remove the selected skills, agents, commands, and scripts from the target project.",
+        help="Remove the selected skills, agents, commands, scripts, and guidelines from the target project.",
     )
     parser.add_argument(
         "--override",
         action="store_true",
-        help="Replace existing skills, agents, commands, and scripts in the target project.",
+        help="Replace existing skills, agents, commands, scripts, and guidelines in the target project.",
     )
     return parser.parse_args(argv)
 
@@ -1278,6 +1651,7 @@ def run_cli(argv: Sequence[str]) -> int:
             agent_names=args.agents,
             command_names=args.commands,
             script_names=args.scripts,
+            guideline_names=args.guidelines,
             target_root=target,
         )
         code, message = run_operation(
@@ -1286,6 +1660,7 @@ def run_cli(argv: Sequence[str]) -> int:
             agents=selection.agents,
             commands=selection.commands,
             scripts=selection.scripts,
+            guidelines=selection.guidelines,
             uninstall=args.uninstall,
             override=args.override,
         )
@@ -1294,6 +1669,33 @@ def run_cli(argv: Sequence[str]) -> int:
         return 2
 
     print(message)
+    if selection.guidelines and code == 0:
+        print()
+        try:
+            if args.uninstall:
+                print(
+                    run_agents_md_removal_offer(
+                        target,
+                        selection.guidelines,
+                        update_flag=args.update_agents_md,
+                        no_update_flag=args.no_update_agents_md,
+                        is_tty=sys.stdin.isatty(),
+                    )
+                )
+            else:
+                print(format_guidelines_integration_message(selection.guidelines))
+                print()
+                print(
+                    run_agents_md_append_offer(
+                        target,
+                        selection.guidelines,
+                        update_flag=args.update_agents_md,
+                        no_update_flag=args.no_update_agents_md,
+                        is_tty=sys.stdin.isatty(),
+                    )
+                )
+        except OSError as exc:
+            print(f"warning: could not update {AGENTS_MD_FILENAME}: {exc}", file=sys.stderr)
     return code
 
 
@@ -1371,14 +1773,17 @@ class InstallerApp:
         self.agents = discover_agents()
         self.commands = discover_commands()
         self.scripts = discover_scripts()
+        self.guidelines = discover_guidelines()
         self.skill_descriptions = load_skill_descriptions(self.skills)
         self.agent_descriptions = load_agent_descriptions(self.agents)
         self.command_descriptions = load_command_descriptions(self.commands)
         self.scripts_descriptions = load_scripts_descriptions(self.scripts)
+        self.guideline_descriptions = load_guidelines_descriptions(self.guidelines)
         self.skill_vars: dict[str, tk.BooleanVar] = {}
         self.agent_vars: dict[str, tk.BooleanVar] = {}
         self.command_vars: dict[str, tk.BooleanVar] = {}
         self.scripts_vars: dict[str, tk.BooleanVar] = {}
+        self.guideline_vars: dict[str, tk.BooleanVar] = {}
 
         self.target_var = tk.StringVar()
         self.mode_var = tk.StringVar(value="install")
@@ -1445,6 +1850,15 @@ class InstallerApp:
             column=3,
             descriptions=self.scripts_descriptions,
             help_command=self._show_scripts_help,
+        )
+        self._add_checkbox_list(
+            lists,
+            title="Guidelines",
+            items=self.guidelines,
+            var_map=self.guideline_vars,
+            column=4,
+            descriptions=self.guideline_descriptions,
+            help_command=self._show_guidelines_help,
         )
 
         self._add_bundles_panel(outer)
@@ -1857,6 +2271,12 @@ class InstallerApp:
         content = format_selection_help(entries, empty_message="No scripts selected.")
         self._show_help_window("Scripts — Help", content)
 
+    def _show_guidelines_help(self) -> None:
+        names = self._selected(self.guideline_vars)
+        entries = self._help_entries_for_selection(names, self.guideline_descriptions)
+        content = format_selection_help(entries, empty_message="No guidelines selected.")
+        self._show_help_window("Guidelines — Help", content)
+
     def _show_bundles_help(self) -> None:
         def present(bundle: Bundle) -> Sequence[str]:
             names: list[str] = []
@@ -1895,13 +2315,15 @@ class InstallerApp:
         agents = self._selected(self.agent_vars)
         commands = self._selected(self.command_vars)
         scripts = self._selected(self.scripts_vars)
-        if not skills and not agents and not commands and not scripts:
+        guidelines = self._selected(self.guideline_vars)
+        if not skills and not agents and not commands and not scripts and not guidelines:
             messagebox.showerror(
                 "Nothing selected",
-                "Select at least one skill, agent, command, or scripts.",
+                "Select at least one skill, agent, command, scripts, or guideline.",
             )
             return
 
+        uninstall = self.mode_var.get() == "uninstall"
         try:
             target = Path(target_text).expanduser().resolve()
             code, message = run_operation(
@@ -1910,7 +2332,8 @@ class InstallerApp:
                 agents=agents,
                 commands=commands,
                 scripts=scripts,
-                uninstall=self.mode_var.get() == "uninstall",
+                guidelines=guidelines,
+                uninstall=uninstall,
                 override=self.override_var.get(),
             )
         except InstallerError as exc:
@@ -1920,6 +2343,26 @@ class InstallerApp:
         self._append_log(message)
         if code != 0:
             messagebox.showwarning("Completed with errors", "See output for details.")
+            return
+
+        if guidelines:
+            # The GUI is interactive: route the consent-gated offer through the
+            # same helpers the CLI uses, with a dialog-based prompt.
+            prompt = lambda question: messagebox.askyesno("Guidelines", question)  # noqa: E731
+            try:
+                if uninstall:
+                    offer = run_agents_md_removal_offer(
+                        target, guidelines, is_tty=True, prompt=prompt
+                    )
+                else:
+                    self._append_log(format_guidelines_integration_message(guidelines))
+                    offer = run_agents_md_append_offer(
+                        target, guidelines, is_tty=True, prompt=prompt
+                    )
+            except OSError as exc:
+                offer = f"warning: could not update {AGENTS_MD_FILENAME}: {exc}"
+            self._append_log("")
+            self._append_log(offer)
 
 
 def run_gui() -> int:
