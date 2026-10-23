@@ -38,7 +38,7 @@ You are the brain; the skills are the producers.
 
 ## Relationship to the dev-workflow guide
 
-This skill automates the pipeline described in the `dev-workflow.md` guide at the repository root. That guide defines the intake classification (which phase to start from based on input type) and the governance tables (Mandatory vs Optional Gates by change class). The orchestrator relies on those decisions; this skill enforces them with artifact contracts and validation scripts. When the harness is not active, the guide's prose describes the same workflow for manual skill-by-skill use.
+This skill automates the pipeline described in the [references/dev-workflow.md](references/dev-workflow.md) guide. That guide defines the intake classification (which phase to start from based on input type) and the governance tables (Mandatory vs Optional Gates by change class). The orchestrator relies on those decisions; this skill enforces them with artifact contracts and validation scripts. When the harness is not active, the guide's prose describes the same workflow for manual skill-by-skill use.
 
 ## Companion Skills
 
@@ -328,6 +328,7 @@ Read each reference before the step that uses it. All paths are relative to `<SK
 
 | Reference | Read before |
 | --- | --- |
+| [references/dev-workflow.md](references/dev-workflow.md) | Starting a run — the intake classification (which phase to start from per input type) and the governance tables (Mandatory vs Optional Gates by change class) this skill enforces |
 | [references/artifact-contract.md](references/artifact-contract.md) | Writing or consuming any phase artifact — the full artifact registry, naming scheme, stage-indexed variants, and boundary rules |
 | [references/loop-contracts.md](references/loop-contracts.md) | Running any phase loop — doer/checker pairs, round caps, accept/revise/blocked verdicts, loop 0 (clarify), and the two staged-only loops |
 | [references/backward-handoff-format.md](references/backward-handoff-format.md) | Creating a backward handoff packet (Backward edge procedure) |

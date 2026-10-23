@@ -16,9 +16,6 @@
         "commit-message-writer",
         "git-guide",
         "pull-request-guide"
-      ],
-      "docs": [
-        "dev-workflow"
       ]
     }
   ],
@@ -86,9 +83,6 @@
         "plan-reviewer",
         "implementation-auditor",
         "code-reviewer"
-      ],
-      "docs": [
-        "dev-workflow"
       ]
     }
   ]

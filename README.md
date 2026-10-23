@@ -120,7 +120,7 @@ repo/
 | `.ai/skills/` | **Shared skills** — tool-neutral packages with full content (`scripts/`, `references/`, `assets/`). |
 | `.cursor/skills/`, `.claude/skills/`, `.github/skills/` | **Tool skills** — one wrapper per tool (`SKILL.md` only) that directs the agent to the shared skill. |
 | `coding-behavior-guidelines.md` | Project-wide behavioral guidelines for coding agents (think first, simplicity, surgical changes). |
-| `tools/installer.py` | Copy installed portable skills, agents, commands, scripts, and docs from this repo into another project (CLI or GUI). |
+| `tools/installer.py` | Copy installed portable skills, agents, commands, and scripts from this repo into another project (CLI or GUI). |
 
 ## Bootstrap skills
 
@@ -197,7 +197,7 @@ Several installed skills cross-link as companions — install related skills tog
 | Dev-workflow harness | `dev-workflow-orchestrator`, `prompt-clarifier`, `research-guide`/`research-reviewer`, `plan-guide`/`plan-reviewer`, `plan-executor`/`implementation-auditor`, `code-review-resolver`/`code-reviewer`, `commit-message-writer` | Full pipeline via `/dev-workflow` or individual phase loops via `/dev-workflow-{research,plan,implement,review}`; installed/uninstalled as a unit via `--dev-workflow` |
 | Parallel execution | `agent-runner` | Dispatch independent workstreams to isolated subagents; defers diff review to `code-reviewer`, git mechanics to `git-guide`, skill evals to `skill-creator`, harness orchestration to `dev-workflow-orchestrator` |
 
-Per-skill deferrals, companion links, and boundary rules live in each installed skill's body and in the cluster tables above. For step-by-step workflow sequencing and intake routing, see [dev-workflow.md](dev-workflow.md).
+Per-skill deferrals, companion links, and boundary rules live in each installed skill's body and in the cluster tables above. For step-by-step workflow sequencing and intake routing, see [dev-workflow.md](skills/dev-workflow-orchestrator/references/dev-workflow.md) (it travels inside the `dev-workflow-orchestrator skill).
 
 ### skill-creator
 
@@ -485,7 +485,7 @@ Reload VS Code after changes so Copilot picks up new files.
 
 ## Distribute to another project
 
-Use **`tools/installer.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.ai/skills/<name>/`, `.ai/agents/<name>.md`, `.ai/commands/<name>.md`, any tool wrappers that exist under `.cursor/`, `.claude/`, and `.github/`, and allowlisted shared root documents (see `--docs`) to the target project root. It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
+Use **`tools/installer.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.ai/skills/<name>/`, `.ai/agents/<name>.md`, `.ai/commands/<name>.md`, any tool wrappers that exist under `.cursor/`, `.claude/`, and `.github/`, and scripts trees under `.ai/tools/` to the target project root. It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
 
 **CLI** (from this repository root):
 
@@ -497,9 +497,6 @@ python tools/installer.py /path/to/other-project
 python tools/installer.py /path/to/other-project --skills cpp-coding vulkan-dev
 python tools/installer.py /path/to/other-project --agents my-agent
 python tools/installer.py /path/to/other-project --commands git-commit
-
-# Install shared root documents (cited by portable skills; land at the target root)
-python tools/installer.py /path/to/other-project --docs dev-workflow
 
 # Install workflow bundles (see tools/bundles.md and tools/bundles.json)
 python tools/installer.py /path/to/other-project --bundles core-dev-workflow
@@ -522,16 +519,15 @@ python tools/installer.py /path/to/other-project --commands git-commit --uninsta
 | Flag | Behavior |
 | --- | --- |
 | `TARGET` | Destination project root (required in CLI mode) |
-| `--bundles ID ...` | Bundle ids from [tools/bundles.json](tools/bundles.json) or `target-bundle`; a bundle may include skills, agents, commands, scripts, and docs (see [tools/bundles.md](tools/bundles.md)) |
+| `--bundles ID ...` | Bundle ids from [tools/bundles.json](tools/bundles.json) or `target-bundle`; a bundle may include skills, agents, commands, and scripts (see [tools/bundles.md](tools/bundles.md)) |
 | `--skills NAME ...` | Skill slugs to install or uninstall (default: all discovered unless `--bundles` is set) |
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
 | `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered) |
 | `--scripts NAME ...` | Scripts directory names (under `.ai/tools/`) to install or uninstall (default: all discovered) |
-| `--docs NAME ...` | Shared root documents (allowlisted: `dev-workflow`) to install or uninstall (default: all allowlisted); installed to the target project root so bare-name citations from skills resolve |
-| `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (orchestrator, phase skills, commands, validation scripts, and the `dev-workflow` doc — see [tools/bundles.md](tools/bundles.md) for full membership) as a unit |
+| `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (orchestrator, phase skills, commands, and validation scripts — see [tools/bundles.md](tools/bundles.md) for full membership) as a unit |
 | `--override` | Replace existing paths in the target; without it, skip and report |
-| `--uninstall` | Remove the selected skills, agents, commands, scripts, and docs from the target project |
-| *(no arguments)* | Open a tkinter GUI with skill/agent/command/scripts/docs checkboxes and a **Bundles** panel for workflow batch selection |
+| `--uninstall` | Remove the selected skills, agents, commands, and scripts from the target project |
+| *(no arguments)* | Open a tkinter GUI with skill/agent/command/scripts checkboxes and a **Bundles** panel for workflow batch selection |
 
 Without `--override`, existing paths in the target are skipped. The script refuses to install into this AIConfig repo itself. Reload each tool in the target project after install. Bundle definitions live in [tools/bundles.md](tools/bundles.md) (human-readable) and [tools/bundles.json](tools/bundles.json) (machine-readable).
 
@@ -542,7 +538,7 @@ python tools/installer.py
 ```
 
 - Checkboxes start **unchecked**
-- **Bundles** panel: batch toggles plus Select all/none; **Target bundle** appears after a valid target project path is set and selects skills, agents, commands, scripts, and docs already installed in that project
+- **Bundles** panel: batch toggles plus Select all/none; **Target bundle** appears after a valid target project path is set and selects skills, agents, commands, and scripts already installed in that project
 - **Help** (right side of each panel): descriptions for current selections; partial bundles labeled `(partial)`
 - **Hover tooltips** on individual checkboxes
 
@@ -560,7 +556,7 @@ Skills are folders with a `SKILL.md` (YAML frontmatter: `name`, `description`) p
 python skills/skill-creator/scripts/package_skill.py .ai/skills/my-skill
 ```
 
-**Copy installed skills, agents, commands, scripts, and docs to another project** (shared + tool wrappers; see [Distribute to another project](#distribute-to-another-project)):
+**Copy installed skills, agents, commands, and scripts to another project** (shared + tool wrappers; see [Distribute to another project](#distribute-to-another-project)):
 
 ```bash
 python tools/installer.py /path/to/other-project

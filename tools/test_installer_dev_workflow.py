@@ -636,215 +636,102 @@ class PhaseCommandsInstallTests(unittest.TestCase):
             )
 
 
-class DocsInstallTests(unittest.TestCase):
-    """Docs install to the target project root (cr-002)."""
+class GuideTravelsWithOrchestratorTests(unittest.TestCase):
+    """The dev-workflow guide ships inside the orchestrator skill's references/.
 
-    def _write_source_doc(self, root: Path, name: str) -> None:
-        root.mkdir(parents=True, exist_ok=True)
-        (root / f"{name}.md").write_text(
-            f"# {name} doc\n\nBody text.\n", encoding="utf-8"
-        )
+    The guide moved from the repo root into
+    `skills/dev-workflow-orchestrator/references/dev-workflow.md`, so installing
+    the skill installs the guide — no separate docs install kind exists.
+    """
 
-    def test_install_docs_copies_to_target_root(self) -> None:
+    def test_install_orchestrator_installs_guide_reference(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
-            self._write_source_doc(source, "dev-workflow")
+            write_source_skill(source, "dev-workflow-orchestrator")
+            guide = source / ".ai" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
+            guide.parent.mkdir(parents=True, exist_ok=True)
+            guide.write_text("# Development Workflow\n", encoding="utf-8")
 
             result = mod.install_items(
                 source_root=source,
                 target_root=target,
-                skills=[],
+                skills=["dev-workflow-orchestrator"],
                 agents=[],
                 commands=[],
                 scripts=[],
-                docs=["dev-workflow"],
                 override=False,
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertTrue((target / "dev-workflow.md").is_file())
-            self.assertIn("dev-workflow.md", result.installed)
-
-    def test_install_docs_skips_existing_without_override(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            self._write_source_doc(source, "dev-workflow")
-            target.mkdir(parents=True, exist_ok=True)
-            (target / "dev-workflow.md").write_text("project-authored", encoding="utf-8")
-
-            result = mod.install_items(
-                source_root=source,
-                target_root=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=[],
-                docs=["dev-workflow"],
-                override=False,
+            installed_guide = (
+                target / ".ai" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
             )
-
-            self.assertTrue(result.ok, result.errors)
-            self.assertIn("dev-workflow.md", result.skipped)
+            self.assertTrue(installed_guide.is_file())
             self.assertEqual(
-                (target / "dev-workflow.md").read_text(encoding="utf-8"),
-                "project-authored",
+                installed_guide.read_text(encoding="utf-8"),
+                "# Development Workflow\n",
             )
 
-    def test_install_docs_override_replaces_existing(self) -> None:
-        """--override replaces an existing root doc (--override install path
-        for docs, cr-004)."""
+    def test_uninstall_orchestrator_removes_guide_reference(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
-            self._write_source_doc(source, "dev-workflow")
-            target.mkdir(parents=True, exist_ok=True)
-            (target / "dev-workflow.md").write_text("stale content", encoding="utf-8")
-
-            result = mod.install_items(
-                source_root=source,
-                target_root=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=[],
-                docs=["dev-workflow"],
-                override=True,
-            )
-
-            self.assertTrue(result.ok, result.errors)
-            self.assertIn("dev-workflow.md", result.installed)
-            self.assertEqual(
-                (target / "dev-workflow.md").read_text(encoding="utf-8"),
-                "# dev-workflow doc\n\nBody text.\n",
-                "Override should replace stale doc content",
-            )
-
-    def test_install_docs_missing_source_records_error(self) -> None:
-        """A docs install whose source is absent records an error
-        (missing-source branch, cr-002)."""
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            source.mkdir(parents=True, exist_ok=True)
-
-            result = mod.install_items(
-                source_root=source,
-                target_root=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=[],
-                docs=["dev-workflow"],
-                override=False,
-            )
-
-            self.assertFalse(result.ok)
-            self.assertTrue(
-                any("missing source" in msg for msg in result.errors),
-                result.errors,
-            )
-            self.assertFalse((target / "dev-workflow.md").exists())
-
-    def test_uninstall_docs_removes_installer_written_doc(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            self._write_source_doc(source, "dev-workflow")
+            write_source_skill(source, "dev-workflow-orchestrator")
+            guide = source / ".ai" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
+            guide.parent.mkdir(parents=True, exist_ok=True)
+            guide.write_text("# Development Workflow\n", encoding="utf-8")
 
             install_result = mod.install_items(
                 source_root=source,
                 target_root=target,
-                skills=[],
+                skills=["dev-workflow-orchestrator"],
                 agents=[],
                 commands=[],
                 scripts=[],
-                docs=["dev-workflow"],
                 override=False,
             )
             self.assertTrue(install_result.ok, install_result.errors)
 
-            # uninstall_items compares against REPO_ROOT, so the source doc
-            # must exist there under the same name for provenance to match.
-            # Use a mock to point REPO_ROOT at the temp source.
-            with mock.patch.object(mod, "REPO_ROOT", source):
-                result = mod.uninstall_items(
-                    target_root=target,
-                    skills=[],
-                    agents=[],
-                    commands=[],
-                    scripts=[],
-                    docs=["dev-workflow"],
-                )
-
-            self.assertTrue(result.ok, result.errors)
-            self.assertFalse((target / "dev-workflow.md").exists())
-            self.assertIn("dev-workflow.md", result.removed)
-
-    def test_uninstall_docs_skips_project_authored_doc(self) -> None:
-        """The provenance guard: a same-named root doc the installer did not
-        write must be left in place, not deleted (cr-003 regression test)."""
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            self._write_source_doc(source, "dev-workflow")
-            target.mkdir(parents=True, exist_ok=True)
-            (target / "dev-workflow.md").write_text(
-                "# Project's own doc\n\nDifferent content.\n", encoding="utf-8"
+            uninstall_result = mod.uninstall_items(
+                target_root=target,
+                skills=["dev-workflow-orchestrator"],
+                agents=[],
+                commands=[],
+                scripts=[],
             )
 
-            with mock.patch.object(mod, "REPO_ROOT", source):
-                result = mod.uninstall_items(
-                    target_root=target,
-                    skills=[],
-                    agents=[],
-                    commands=[],
-                    scripts=[],
-                    docs=["dev-workflow"],
-                )
-
-            self.assertTrue(result.ok, result.errors)
-            self.assertTrue(
-                (target / "dev-workflow.md").exists(),
-                "Provenance guard must not delete a project-authored doc",
+            self.assertTrue(uninstall_result.ok, uninstall_result.errors)
+            installed_guide = (
+                target / ".ai" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
             )
-            self.assertEqual(len(result.removed), 0)
-            self.assertTrue(
-                any("differs from installer source" in entry for entry in result.skipped),
-                result.skipped,
-            )
+            self.assertFalse(installed_guide.exists())
 
-    def test_uninstall_docs_source_missing_skips(self) -> None:
-        """A doc whose source no longer exists in the repo is skipped, not
-        removed (src-missing provenance branch, cr-004)."""
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            source.mkdir(parents=True, exist_ok=True)
-            target.mkdir(parents=True, exist_ok=True)
-            (target / "dev-workflow.md").write_text("# Orphaned copy\n", encoding="utf-8")
+    def test_repo_guide_lives_in_orchestrator_references(self) -> None:
+        """The real repo layout keeps the guide inside the skill, not at the root."""
+        repo_root = TOOLS_DIR.parent
+        self.assertTrue(
+            (repo_root / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md").is_file(),
+            "Guide must live at skills/dev-workflow-orchestrator/references/dev-workflow.md",
+        )
+        self.assertFalse(
+            (repo_root / "dev-workflow.md").exists(),
+            "Guide must no longer sit at the repo root",
+        )
+        self.assertTrue(
+            (repo_root / ".ai" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md").is_file(),
+            "Shared layer must carry the guide after install_portable_skill.py",
+        )
 
-            with mock.patch.object(mod, "REPO_ROOT", source):
-                result = mod.uninstall_items(
-                    target_root=target,
-                    skills=[],
-                    agents=[],
-                    commands=[],
-                    scripts=[],
-                    docs=["dev-workflow"],
-                )
-
-            self.assertTrue(result.ok, result.errors)
-            self.assertTrue(
-                (target / "dev-workflow.md").exists(),
-                "Source-missing provenance branch must leave the doc in place",
-            )
-            self.assertEqual(len(result.removed), 0)
-            self.assertTrue(
-                any("no installer source in repo" in entry for entry in result.skipped),
-                result.skipped,
-            )
+    def test_no_docs_member_kind_remains(self) -> None:
+        """The docs install kind is fully removed from the installer."""
+        self.assertFalse(hasattr(mod, "INSTALLABLE_DOCS"))
+        self.assertFalse(hasattr(mod, "doc_copy_pairs"))
+        self.assertFalse(hasattr(mod, "doc_remove_paths"))
+        self.assertFalse(hasattr(mod, "doc_is_installer_written"))
+        self.assertFalse(hasattr(mod, "discover_docs"))
+        self.assertFalse(hasattr(mod, "load_docs_descriptions"))
+        self.assertFalse(hasattr(mod, "discover_docs_in_project"))
 
 
 if __name__ == "__main__":
