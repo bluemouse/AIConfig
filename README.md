@@ -484,7 +484,7 @@ Reload VS Code after changes so Copilot picks up new files.
 
 ## Distribute to another project
 
-Use **`tools/installer.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.ai/skills/<name>/`, `.ai/agents/<name>.md`, `.ai/commands/<name>.md`, any tool wrappers that exist under `.cursor/`, `.claude/`, and `.github/`, and scripts trees under `.ai/tools/` to the target project root. It also installs behavioral guidelines from `guidelines/` to `.ai/guidelines/<name>.md` when explicitly selected — guidelines are inert until the target loads them, so the installer prints integration instructions and offers to cite them in the target's `AGENTS.md`. It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
+Use **`tools/installer.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.ai/skills/<name>/`, `.ai/agents/<name>.md`, `.ai/commands/<name>.md`, any tool wrappers that exist under `.cursor/`, `.claude/`, and `.github/`, and scripts trees under `.ai/tools/` to the target project root. It also installs behavioral guidelines from `guidelines/` to `.ai/guidelines/<name>.md` when explicitly selected — guidelines are inert until the target loads them, so the installer prints integration instructions and offers to cite them under a `## AI guidelines` section in the target's `AGENTS.md` (the section is created when missing, and an installer-appended section is dropped again on uninstall once its citations are gone). It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
 
 **CLI** (from this repository root):
 
@@ -529,7 +529,7 @@ python tools/installer.py /path/to/other-project --guidelines coding-behavior-gu
 | `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered) |
 | `--scripts NAME ...` | Scripts directory names (under `.ai/tools/`) to install or uninstall (default: all discovered) |
 | `--guidelines NAME ...` | Behavioral guideline names (under `guidelines/`) to install or uninstall. Explicit-only — never part of the default install or bundles. Installed to `.ai/guidelines/<name>.md` in the target |
-| `--update-agents-md` | Update the target's `AGENTS.md` to cite newly installed guidelines (or remove installer-written citations on uninstall) without asking |
+| `--update-agents-md` | Update the target's `AGENTS.md` to cite newly installed guidelines under a `## AI guidelines` section (or remove installer-written citations on uninstall) without asking |
 | `--no-update-agents-md` | Never modify the target's `AGENTS.md` during guidelines install/uninstall |
 | `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (orchestrator, phase skills, commands, and validation scripts — see [tools/bundles.md](tools/bundles.md) for full membership) as a unit |
 | `--override` | Replace existing paths in the target; without it, skip and report |

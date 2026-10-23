@@ -190,7 +190,12 @@ class GuidelineMemberKindTests(unittest.TestCase):
 
 
 class AgentsMdIntegrationTests(unittest.TestCase):
-    """The consent-gated AGENTS.md citation append/remove machinery."""
+    """The consent-gated AGENTS.md citation insert/remove machinery.
+
+    Citations land under a '## AI guidelines' section — created at the end of
+    the file when missing — and uninstall drops the section again once the
+    installer-written citations inside it are gone.
+    """
 
     def test_citation_line_format(self) -> None:
         line = mod.build_guideline_citation_line("coding-behavior-guidelines")
@@ -262,16 +267,13 @@ class AgentsMdIntegrationTests(unittest.TestCase):
 
             self.assertEqual(appended, ["coding-behavior-guidelines"])
             self.assertEqual(already, [])
-            text = agents_md.read_text(encoding="utf-8")
-            self.assertIn("# Project\n\nSome existing guidance.", text)
-            self.assertIn(
-                mod.build_guideline_citation_line("coding-behavior-guidelines"),
-                text,
+            citation = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines"
             )
-            lines = text.splitlines()
             self.assertEqual(
-                lines[-1],
-                mod.build_guideline_citation_line("coding-behavior-guidelines"),
+                agents_md.read_text(encoding="utf-8"),
+                "# Project\n\nSome existing guidance.\n\n"
+                "## AI guidelines\n\n" + citation + "\n",
             )
 
     def test_append_is_idempotent(self) -> None:
@@ -348,6 +350,178 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             text = agents_md.read_text(encoding="utf-8")
             self.assertIn(mod.build_guideline_citation_line("second-guideline"), text)
             self.assertNotIn(mod.build_guideline_citation_line("first-guideline"), text)
+
+    def test_append_inserts_under_existing_guidelines_section(self) -> None:
+        """Citations join the section's content instead of the file end."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            agents_md = target / "AGENTS.md"
+            agents_md.write_text(
+                "# Project\n\n## AI guidelines\n\n- Keep it simple.\n\n"
+                "## Other\n\nTail.\n",
+                encoding="utf-8",
+            )
+
+            appended, already = mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"]
+            )
+
+            self.assertEqual(appended, ["coding-behavior-guidelines"])
+            self.assertEqual(already, [])
+            citation = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines"
+            )
+            self.assertEqual(
+                agents_md.read_text(encoding="utf-8"),
+                "# Project\n\n## AI guidelines\n\n- Keep it simple.\n"
+                + citation
+                + "\n\n## Other\n\nTail.\n",
+            )
+
+    def test_append_into_empty_guidelines_section(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            agents_md = target / "AGENTS.md"
+            agents_md.write_text(
+                "# Project\n\n## AI guidelines\n\n## Other\n\nTail.\n",
+                encoding="utf-8",
+            )
+
+            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+
+            citation = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines"
+            )
+            self.assertEqual(
+                agents_md.read_text(encoding="utf-8"),
+                "# Project\n\n## AI guidelines\n\n"
+                + citation
+                + "\n\n## Other\n\nTail.\n",
+            )
+
+    def test_append_creates_section_when_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            agents_md = target / "AGENTS.md"
+            agents_md.write_text(
+                "# Project\n\nSome guidance.\n", encoding="utf-8"
+            )
+
+            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+
+            citation = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines"
+            )
+            self.assertEqual(
+                agents_md.read_text(encoding="utf-8"),
+                "# Project\n\nSome guidance.\n\n## AI guidelines\n\n"
+                + citation
+                + "\n",
+            )
+
+    def test_append_separates_citations_from_next_heading(self) -> None:
+        """Section content glued to the next heading gains a blank line."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            agents_md = target / "AGENTS.md"
+            agents_md.write_text(
+                "## AI guidelines\n- old\n## Other\n", encoding="utf-8"
+            )
+
+            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+
+            citation = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines"
+            )
+            self.assertEqual(
+                agents_md.read_text(encoding="utf-8"),
+                "## AI guidelines\n- old\n" + citation + "\n\n## Other\n",
+            )
+
+    def test_append_treats_deeper_headings_as_section_content(self) -> None:
+        """h3+ headings live inside the section; citations go after them."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            agents_md = target / "AGENTS.md"
+            agents_md.write_text(
+                "## AI guidelines\n### Notes\nnote\n", encoding="utf-8"
+            )
+
+            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+
+            citation = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines"
+            )
+            self.assertEqual(
+                agents_md.read_text(encoding="utf-8"),
+                "## AI guidelines\n### Notes\nnote\n" + citation + "\n",
+            )
+
+    def test_append_into_section_preserves_crlf_line_endings(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            (target / "AGENTS.md").write_bytes(
+                b"# Project\r\n## AI guidelines\r\n- old\r\n## Other\r\n"
+            )
+
+            appended, _ = mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"]
+            )
+
+            self.assertEqual(appended, ["coding-behavior-guidelines"])
+            citation = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines"
+            ).encode("utf-8")
+            self.assertEqual(
+                (target / "AGENTS.md").read_bytes(),
+                b"# Project\r\n## AI guidelines\r\n- old\r\n"
+                + citation
+                + b"\r\n\r\n## Other\r\n",
+            )
+
+    def test_append_ignores_fenced_guidelines_heading(self) -> None:
+        """A fenced '## AI guidelines' example is content, not a section."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            (target / "AGENTS.md").write_text(
+                "# Project\n\n```\n## AI guidelines\n```\n",
+                encoding="utf-8",
+            )
+
+            appended, _ = mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"]
+            )
+
+            self.assertEqual(appended, ["coding-behavior-guidelines"])
+            citation = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines"
+            )
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                "# Project\n\n```\n## AI guidelines\n```\n\n"
+                "## AI guidelines\n\n" + citation + "\n",
+            )
+
+    def test_section_scan_ignores_fenced_boundary_heading(self) -> None:
+        """A fenced '##' line does not end the section."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            (target / "AGENTS.md").write_text(
+                "## AI guidelines\n\n- rule\n\n```\n## Other\n```\n",
+                encoding="utf-8",
+            )
+
+            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+
+            citation = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines"
+            )
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                "## AI guidelines\n\n- rule\n\n```\n## Other\n```\n"
+                + citation
+                + "\n",
+            )
 
     def test_no_agents_md_skips_and_instructs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -514,13 +688,166 @@ class AgentsMdIntegrationTests(unittest.TestCase):
 
             self.assertEqual(appended, ["coding-behavior-guidelines"])
             raw = (target / "AGENTS.md").read_bytes()
-            # 3 original CRLF line endings + 1 for the appended line.
-            self.assertEqual(raw.count(b"\r\n"), 4)
+            # 3 original CRLF line endings + separator blank + section
+            # heading + blank + the appended citation line.
+            self.assertEqual(raw.count(b"\r\n"), 7)
             self.assertNotIn(b"\r\n\r\n\n", raw)
+            self.assertNotIn(b"\n", raw.replace(b"\r\n", b""))
             self.assertIn(
-                mod.build_guideline_citation_line("coding-behavior-guidelines").encode("utf-8")
+                b"## AI guidelines\r\n\r\n"
+                + mod.build_guideline_citation_line(
+                    "coding-behavior-guidelines"
+                ).encode("utf-8")
                 + b"\r\n",
                 raw,
+            )
+
+    def test_remove_drops_appended_section_at_eof(self) -> None:
+        """Uninstall reverses an installer-appended EOF section exactly."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            line = mod.build_guideline_citation_line("coding-behavior-guidelines")
+            (target / "AGENTS.md").write_text(
+                f"# Project\n\n## AI guidelines\n\n{line}\n",
+                encoding="utf-8",
+            )
+
+            removed, kept = mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"]
+            )
+
+            self.assertEqual(removed, ["coding-behavior-guidelines"])
+            self.assertEqual(kept, [])
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                "# Project\n",
+            )
+
+    def test_remove_drops_appended_section_at_eof_crlf(self) -> None:
+        """The EOF drop preserves CRLF endings and the separator blank."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            line = mod.build_guideline_citation_line("coding-behavior-guidelines")
+            (target / "AGENTS.md").write_bytes(
+                f"# Project\r\n\r\n## AI guidelines\r\n\r\n{line}\r\n".encode(
+                    "utf-8"
+                )
+            )
+
+            removed, _ = mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"]
+            )
+
+            self.assertEqual(removed, ["coding-behavior-guidelines"])
+            self.assertEqual(
+                (target / "AGENTS.md").read_bytes(), b"# Project\r\n"
+            )
+
+    def test_remove_keeps_midfile_emptied_section(self) -> None:
+        """A mid-file section is always user-created; its heading stays."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            line = mod.build_guideline_citation_line("coding-behavior-guidelines")
+            (target / "AGENTS.md").write_text(
+                f"# Project\n\n## AI guidelines\n\n{line}\n\n## Other\n\nTail.\n",
+                encoding="utf-8",
+            )
+
+            removed, kept = mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"]
+            )
+
+            self.assertEqual(removed, ["coding-behavior-guidelines"])
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                "# Project\n\n## AI guidelines\n\n\n## Other\n\nTail.\n",
+            )
+
+    def test_append_remove_round_trip_is_byte_exact(self) -> None:
+        """Install then uninstall restores the original AGENTS.md exactly."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            original = "# Project\n\nSome guidance.\n"
+            (target / "AGENTS.md").write_text(original, encoding="utf-8")
+
+            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+            mod.agents_md_remove_lines(target, ["coding-behavior-guidelines"])
+
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"), original
+            )
+
+    def test_remove_drops_user_created_empty_eof_section(self) -> None:
+        """Documented edge: an empty EOF section with a separator blank is
+        byte-identical to an installer append and is dropped (no content)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            (target / "AGENTS.md").write_text(
+                "# Project\n\n## AI guidelines\n\n", encoding="utf-8"
+            )
+
+            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+            removed, _ = mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"]
+            )
+
+            self.assertEqual(removed, ["coding-behavior-guidelines"])
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                "# Project\n",
+            )
+
+    def test_remove_keeps_eof_section_without_separator_blank(self) -> None:
+        """No blank before the heading → not the installer's append shape."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            original = "# Project\n## AI guidelines\n\n"
+            (target / "AGENTS.md").write_text(original, encoding="utf-8")
+
+            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+            mod.agents_md_remove_lines(target, ["coding-behavior-guidelines"])
+
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"), original
+            )
+
+    def test_remove_keeps_guidelines_section_with_user_content(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            line = mod.build_guideline_citation_line("coding-behavior-guidelines")
+            (target / "AGENTS.md").write_text(
+                f"# Project\n\n## AI guidelines\n\n- My own rule.\n{line}\n",
+                encoding="utf-8",
+            )
+
+            removed, kept = mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"]
+            )
+
+            self.assertEqual(removed, ["coding-behavior-guidelines"])
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                "# Project\n\n## AI guidelines\n\n- My own rule.\n",
+            )
+
+    def test_remove_keeps_user_created_empty_guidelines_section(self) -> None:
+        """A section the installer never wrote into is left alone (provenance)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            line = mod.build_guideline_citation_line("coding-behavior-guidelines")
+            (target / "AGENTS.md").write_text(
+                f"# Project\n\n## AI guidelines\n\n## Other\n\n{line}\n",
+                encoding="utf-8",
+            )
+
+            removed, kept = mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"]
+            )
+
+            self.assertEqual(removed, ["coding-behavior-guidelines"])
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                "# Project\n\n## AI guidelines\n\n## Other\n\n",
             )
 
     def test_remove_preserves_crlf_line_endings(self) -> None:
@@ -581,6 +908,7 @@ class RunCliCompositionTests(unittest.TestCase):
 
             self.assertEqual(code, 0)
             text = (target / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("## AI guidelines", text)
             self.assertIn(
                 mod.build_guideline_citation_line("coding-behavior-guidelines"), text
             )
@@ -701,8 +1029,10 @@ class RunCliCompositionTests(unittest.TestCase):
             self.assertFalse(
                 (target / ".ai" / "guidelines" / "coding-behavior-guidelines.md").exists()
             )
-            text = (target / "AGENTS.md").read_text(encoding="utf-8")
-            self.assertNotIn("coding-behavior-guidelines", text)
+            # Byte-exact round trip: install + uninstall restores the file.
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"), "# Project\n"
+            )
 
 
 def _tk_available() -> bool:

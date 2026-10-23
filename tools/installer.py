@@ -5,7 +5,8 @@ from this repo into another project.
 
 Copies the shared-first layout (.ai/ plus tool wrappers under .cursor/, .claude/,
 .github/) from AIConfig into a target project root. Behavioral guidelines
-install to .ai/guidelines/ with a consent-driven AGENTS.md citation offer.
+install to .ai/guidelines/ with a consent-driven AGENTS.md citation offer —
+citations land under a '## AI guidelines' section.
 
 Examples:
     python tools/installer.py /path/to/other-project
@@ -1031,17 +1032,157 @@ def _agents_md_newline(text: str) -> str:
     return "\r\n" if "\r\n" in text else "\n"
 
 
+AGENTS_MD_GUIDELINES_HEADING = "## AI guidelines"
+
+_SECTION_BOUNDARY_RE = re.compile(r"^#{1,2}(?:\s|$)")
+_FENCE_OPEN_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})")
+_FENCE_CLOSE_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})[ \t]*$")
+
+
+def _is_guidelines_heading(line: str) -> bool:
+    """Return True when a line is the '## AI guidelines' section heading."""
+    return (
+        line.rstrip("\r\n").strip().lower() == AGENTS_MD_GUIDELINES_HEADING.lower()
+    )
+
+
+def _is_section_boundary(line: str) -> bool:
+    """Return True for h1/h2 heading lines that terminate a '##' section.
+
+    Deeper headings (h3+) belong to the section and do not end it.
+    """
+    return bool(_SECTION_BOUNDARY_RE.match(line.rstrip("\r\n")))
+
+
+def _find_guidelines_section(lines: Sequence[str]) -> tuple[int | None, int]:
+    """Return (heading_index, section_end_index) for '## AI guidelines'.
+
+    section_end is the index of the first h1/h2 heading after the section
+    heading, or len(lines) when the section runs to end-of-file. The heading
+    index is None (and section_end is 0) when the file has no such section.
+    Fenced code blocks are transparent to the scan: a '## AI guidelines'
+    or other '##' line inside a ``` or ~~~ fence is content, not a heading
+    or section boundary.
+    """
+    heading_idx: int | None = None
+    fence_char: str | None = None
+    fence_len = 0
+    for idx, line in enumerate(lines):
+        body = line.rstrip("\r\n")
+        if fence_char is not None:
+            close = _FENCE_CLOSE_RE.match(body)
+            if (
+                close is not None
+                and close.group(1)[0] == fence_char
+                and len(close.group(1)) >= fence_len
+            ):
+                fence_char = None
+            continue
+        if heading_idx is None:
+            if _is_guidelines_heading(body):
+                heading_idx = idx
+                continue
+        elif _is_section_boundary(body):
+            return (heading_idx, idx)
+        open_match = _FENCE_OPEN_RE.match(body)
+        if open_match is not None:
+            fence_char = open_match.group(1)[0]
+            fence_len = len(open_match.group(1))
+    if heading_idx is None:
+        return (None, 0)
+    return (heading_idx, len(lines))
+
+
+def _append_guidelines_section(
+    text: str, citation_lines: Sequence[str], newline: str
+) -> str:
+    """Append a new '## AI guidelines' section holding the citation lines."""
+    section = (
+        AGENTS_MD_GUIDELINES_HEADING
+        + newline
+        + newline
+        + newline.join(citation_lines)
+        + newline
+    )
+    if not text:
+        return section
+    if not text.endswith(("\n", "\r\n")):
+        text += newline
+    return text + newline + section
+
+
+def _insert_citations_into_agents_md(
+    text: str, citation_lines: Sequence[str], newline: str
+) -> str:
+    """Insert citation lines under the target's '## AI guidelines' section.
+
+    The section is created at the end of the file when missing. Existing
+    lines keep their original endings byte-for-byte; inserted lines use the
+    file's dominant line ending.
+    """
+    lines = text.splitlines(keepends=True)
+    heading_idx, section_end = _find_guidelines_section(lines)
+    if heading_idx is None:
+        return _append_guidelines_section(text, citation_lines, newline)
+    block = [line + newline for line in citation_lines]
+    last_content = None
+    for idx in range(heading_idx + 1, section_end):
+        if lines[idx].strip():
+            last_content = idx
+    if last_content is None:
+        # Empty section: normalize to heading + blank line + citations.
+        block.insert(0, newline)
+        if section_end < len(lines):
+            block.append(newline)
+        lines[heading_idx + 1 : section_end] = block
+    else:
+        insert_at = last_content + 1
+        if insert_at == section_end and section_end < len(lines):
+            # Citations land directly before the next heading — keep the
+            # heading separated by a blank line.
+            block.append(newline)
+        lines[insert_at:insert_at] = block
+    return "".join(lines)
+
+
+def _drop_appended_guidelines_section(lines: list[str]) -> list[str]:
+    """Drop an end-of-file '## AI guidelines' section the installer appended.
+
+    The installer only ever creates the section at end of file, preceded by a
+    single blank separator line (or at the start of an empty file), so the
+    drop is gated on that exact shape: a mid-file section, a section that
+    still holds content, or a heading with no blank line before it is
+    user-created and kept. One edge is unavoidable without state: a
+    user-created empty section at end of file with a separator blank is
+    byte-identical to an installer append and is dropped too — it carries no
+    content.
+    """
+    heading_idx, section_end = _find_guidelines_section(lines)
+    if heading_idx is None or section_end != len(lines):
+        return lines
+    if any(line.strip() for line in lines[heading_idx + 1 : section_end]):
+        return lines
+    start = heading_idx
+    if heading_idx > 0:
+        if lines[heading_idx - 1].strip():
+            return lines
+        start = heading_idx - 1
+    return lines[:start] + lines[section_end:]
+
+
 def agents_md_append_lines(
     target_root: Path, names: Sequence[str]
 ) -> tuple[list[str], list[str]]:
-    """Append citation lines for each guideline to the target's AGENTS.md.
+    """Insert citation lines for each guideline under the target's AGENTS.md
+    '## AI guidelines' section.
 
     Returns (appended, already_present) name lists. Idempotent: a guideline
     that is already cited — via the installer's exact citation line or any
     hand-written line referencing the installed path — is reported as
-    already_present and not duplicated. Never creates AGENTS.md — a missing
-    file is a no-op. Line endings are preserved: a CRLF file stays CRLF, and
-    only the new lines are added.
+    already_present and not duplicated. The section is created at the end of
+    the file when missing. Never creates AGENTS.md — a missing file is a
+    no-op. Line endings are preserved: a CRLF file stays CRLF, and only the
+    new lines are added.
     """
     path = target_root / AGENTS_MD_FILENAME
     if not path.is_file():
@@ -1058,9 +1199,7 @@ def agents_md_append_lines(
         new_lines.append(build_guideline_citation_line(name))
     if new_lines:
         newline = _agents_md_newline(text)
-        if text and not text.endswith(("\n", "\r\n")):
-            text += newline
-        text += newline.join(new_lines) + newline
+        text = _insert_citations_into_agents_md(text, new_lines, newline)
         _write_agents_md_raw(path, text)
     return (appended, already)
 
@@ -1072,8 +1211,11 @@ def agents_md_remove_lines(
 
     Returns (removed, kept) name lists. Only lines the installer itself
     wrote are removed — the current template wording and the legacy
-    pre-generalization wording; a user-edited variant is kept. Line endings
-    and all other content are preserved byte-for-byte.
+    pre-generalization wording; a user-edited variant is kept. An
+    end-of-file '## AI guidelines' section the installer appended is
+    dropped again — heading and separator blank — once its installer-written
+    citations are gone; mid-file or content-bearing sections are kept. Line
+    endings and all other content are preserved byte-for-byte.
     """
     path = target_root / AGENTS_MD_FILENAME
     if not path.is_file():
@@ -1086,7 +1228,14 @@ def agents_md_remove_lines(
     kept = [name for name in names if not (variants[name] & stripped)]
     if removed:
         remove_set = set().union(*variants.values())
+        heading_idx, section_end = _find_guidelines_section(lines)
+        removed_in_section = heading_idx is not None and any(
+            line.rstrip("\r\n") in remove_set
+            for line in lines[heading_idx + 1 : section_end]
+        )
         kept_lines = [line for line in lines if line.rstrip("\r\n") not in remove_set]
+        if removed_in_section:
+            kept_lines = _drop_appended_guidelines_section(kept_lines)
         _write_agents_md_raw(path, "".join(kept_lines))
     return (removed, kept)
 
@@ -1122,8 +1271,9 @@ def format_guidelines_integration_message(names: Sequence[str]) -> str:
         *(f"  - {SHARED_GUIDELINE_FILE.format(name=name)}" for name in names),
         "",
         "Guidelines are inert until loaded. To activate them:",
-        "  - Automatic: cite them in the target's AGENTS.md so every agent session",
-        "    loads them (the installer can do this for you).",
+        "  - Automatic: cite them under a '## AI guidelines' section in the target's",
+        "    AGENTS.md so every agent session loads them (the installer can do",
+        "    this for you).",
         "  - Manual: include the guideline content in a prompt when needed.",
     ]
     return "\n".join(lines)
@@ -1156,29 +1306,36 @@ def run_agents_md_append_offer(
     if not agents_md.is_file():
         return (
             f"No {AGENTS_MD_FILENAME} found in the target project. To load the "
-            f"guidelines automatically, create an {AGENTS_MD_FILENAME} that cites "
-            "the installed guideline paths; to load them ad hoc, include the "
-            "guideline content in a prompt."
+            f"guidelines automatically, create an {AGENTS_MD_FILENAME} and cite the "
+            "installed guideline paths under a '## AI guidelines' section; to load "
+            "them ad hoc, include the guideline content in a prompt."
         )
     if action == "skip":
         return (
             f"Left {AGENTS_MD_FILENAME} unchanged. To load the guidelines "
-            f"automatically, cite the installed guideline paths in {AGENTS_MD_FILENAME}; "
+            f"automatically, cite the installed guideline paths under a "
+            f"'{AGENTS_MD_GUIDELINES_HEADING}' section in {AGENTS_MD_FILENAME}; "
             "to load them ad hoc, include the guideline content in a prompt."
         )
     if action == "ask":
         if prompt is None:
             prompt = _default_cli_prompt
-        if not prompt(f"Update {agents_md} to cite the installed guidelines?"):
+        if not prompt(
+            f"Update {agents_md} to cite the installed guidelines under "
+            f"'{AGENTS_MD_GUIDELINES_HEADING}'?"
+        ):
             return f"Declined — {AGENTS_MD_FILENAME} left unchanged."
     appended, already = agents_md_append_lines(target_root, guideline_names)
     if appended and already:
         return (
-            f"Updated {AGENTS_MD_FILENAME}: cited {', '.join(appended)} "
-            f"(already cited: {', '.join(already)})."
+            f"Updated {AGENTS_MD_FILENAME}: cited {', '.join(appended)} under "
+            f"'{AGENTS_MD_GUIDELINES_HEADING}' (already cited: {', '.join(already)})."
         )
     if appended:
-        return f"Updated {AGENTS_MD_FILENAME}: cited {', '.join(appended)}."
+        return (
+            f"Updated {AGENTS_MD_FILENAME}: cited {', '.join(appended)} under "
+            f"'{AGENTS_MD_GUIDELINES_HEADING}'."
+        )
     return f"All guidelines were already cited in {AGENTS_MD_FILENAME}."
 
 
@@ -1610,7 +1767,8 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         action="store_true",
         help=(
             "Update the target's AGENTS.md to cite newly installed guidelines "
-            "(or remove installer-written citations on uninstall) without asking."
+            "under a '## AI guidelines' section (or remove installer-written "
+            "citations on uninstall) without asking."
         ),
     )
     agents_md_group.add_argument(
