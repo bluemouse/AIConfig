@@ -78,6 +78,7 @@ SHARED_GUIDELINE_FILE = ".ai/guidelines/{name}.md"
 INSTALLABLE_GUIDELINES = (
     "coding-behavior-guidelines",
     "response-guidelines",
+    "code-comment-guidelines",
 )
 
 # Scripts are directory trees under .ai/tools/<name>/ (no tool wrappers).

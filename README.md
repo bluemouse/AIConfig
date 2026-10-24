@@ -644,5 +644,6 @@ Reload each tool after install so custom agents are rediscovered.
 - `CLAUDE.md` — Claude Code-specific discovery, evals, and wrapper workflow
 - `guidelines/coding-behavior-guidelines.md` — Karpathy-inspired behavioral guidelines for coding agents
 - `guidelines/response-guidelines.md` — chat-output shaping rules for agent responses (result-first updates, structured questions, no preamble/recap)
+- `guidelines/code-comment-guidelines.md` — code comment rules for coding agents (why-not-what, contract docs, staleness, no session narration)
 - `skills/skill-creator/references/` — portable skill layout, JSON schemas, workflow and output patterns
 - `skills/agent-creator/references/` — portable agent layout and wrapper templates

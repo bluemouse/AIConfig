@@ -195,4 +195,5 @@ See [README.md](README.md) for install examples and meta-skill usage.
 - Cross-link sibling skills with relative paths from the shared layer (e.g. `../cpp-testing/SKILL.md`), since links only need to resolve after install.
 - `.cursor/rules/` (`.mdc` files, frontmatter controls `globs`/`alwaysApply`) is for small always-on or path-scoped rules — keep them composable, not full skills.
 - Follow [guidelines/coding-behavior-guidelines.md](guidelines/coding-behavior-guidelines.md) when generating or editing any code in this repo or in skill/agent output.
+- Follow [guidelines/code-comment-guidelines.md](guidelines/code-comment-guidelines.md) when writing or updating code comments in this repo or in skill/agent output.
 - Follow [guidelines/response-guidelines.md](guidelines/response-guidelines.md) in this repo.

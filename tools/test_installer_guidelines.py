@@ -33,7 +33,11 @@ class RepoGuidelineLayoutTests(unittest.TestCase):
     """The behavioral guideline lives in guidelines/ at the repo root."""
 
     def test_repo_guideline_lives_in_guidelines_folder(self) -> None:
-        for name in ("coding-behavior-guidelines", "response-guidelines"):
+        for name in (
+            "coding-behavior-guidelines",
+            "response-guidelines",
+            "code-comment-guidelines",
+        ):
             self.assertTrue(
                 (REPO_ROOT / "guidelines" / f"{name}.md").is_file(),
                 f"Guideline must live at guidelines/{name}.md",
@@ -153,13 +157,19 @@ class GuidelineMemberKindTests(unittest.TestCase):
             try:
                 write_source_guideline(root, "coding-behavior-guidelines")
                 write_source_guideline(root, "response-guidelines")
+                write_source_guideline(root, "code-comment-guidelines")
                 write_source_guideline(root, "not-allowlisted")
                 discovered = mod.discover_guidelines()
             finally:
                 mod.REPO_ROOT = original_root
 
             self.assertEqual(
-                discovered, ["coding-behavior-guidelines", "response-guidelines"]
+                discovered,
+                [
+                    "code-comment-guidelines",
+                    "coding-behavior-guidelines",
+                    "response-guidelines",
+                ],
             )
 
     def test_install_response_guideline_places_file(self) -> None:
