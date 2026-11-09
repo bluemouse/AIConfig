@@ -47,9 +47,9 @@ Mode is enforced by two layers:
 
 1. **Orchestrator skill instructions (host-neutral):** The orchestrator skill contains per-phase mode instructions that tell the agent what it's allowed to do. This is the prevention layer.
 
-2. **Validation scripts (deterministic):** `check_post_phase.py` runs after each phase step to verify only allowed artifacts were written and no forbidden files were touched. This is the detection layer.
+2. **Validation scripts (deterministic):** `check_post_phase.py` runs after each phase step to verify only allowed artifacts were written and no forbidden files were touched, and — in the implement, code-review, and commit phases — that commits made during the phase satisfy the commit-message self-containment contract (no ephemeral run-artifact ids or narration, Conventional Commits subject within 72 characters, no attribution footers; see `checks/message_checks.py`). This is the detection layer.
 
-Together: the skill prevents most violations, the scripts catch the rest. This is defense in depth.
+Together: the skill prevents most violations, the scripts catch the rest. This is defense in depth. A flagged-but-legit token is a false positive: disposition it with justification in the manifest validation log, re-record the baseline mid-phase, and re-run — never silently ignore it.
 
 ## Forbidden actions (all phases unless explicitly allowed)
 

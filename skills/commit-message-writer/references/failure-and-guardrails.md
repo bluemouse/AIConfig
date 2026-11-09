@@ -58,9 +58,19 @@ rewrite, not an immediate commit.
 
 **After the user confirms** (or they explicitly asked to commit in the invoking message):
 
-1. Stage only when needed and only files in scope
-2. Use HEREDOC for multi-line messages
-3. Never `--no-verify` unless explicitly requested
-4. Follow the user's git commit rules (hooks, signing, etc.)
+1. Run the mechanical lint on the final message:
+   `python <SKILL_ROOT>/scripts/lint_message.py <message-file>` (or `-` for
+   stdin). It flags banned run-artifact ids and narration, non-Conventional or
+   over-length subjects, and attribution footers. Fix every flagged pattern
+   before committing — drafting from plan/review context is the known leak
+   path, and the check costs seconds at draft time versus a history rewrite
+   after the fact. When the dev-workflow harness is installed, its
+   implement/code-review/commit phase gates enforce the same rules on history
+   (`.ai/tools/dev-workflow/checks/message_checks.py`); a flagged-but-legit
+   token there is dispositioned in the run manifest, never silently ignored.
+2. Stage only when needed and only files in scope
+3. Use HEREDOC for multi-line messages
+4. Never `--no-verify` unless explicitly requested
+5. Follow the user's git commit rules (hooks, signing, etc.)
 
 This skill does not push. Suggest push only when the user asks.

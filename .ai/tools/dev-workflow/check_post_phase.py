@@ -24,8 +24,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from checks import Finding
-from checks import mode_checks
 from checks import manifest_checks
+from checks import message_checks
+from checks import mode_checks
 
 
 def run_post_flight(run_dir: Path, phase: str, repo_root: Path | None = None) -> list[Finding]:
@@ -43,6 +44,9 @@ def run_post_flight(run_dir: Path, phase: str, repo_root: Path | None = None) ->
     findings: list[Finding] = []
     # Mode enforcement: only allowed artifacts written, no forbidden source edits.
     findings.extend(mode_checks.run_all(run_dir, phase, repo_root))
+    # Commit-message contract: lint commits made during this phase
+    # (staged-mode per-stage and fix-loop commits included).
+    findings.extend(message_checks.check_commit_messages(run_dir, phase, repo_root))
     # Manifest still exists and is structurally valid.
     findings.extend(manifest_checks.check_manifest_exists(run_dir))
     findings.extend(manifest_checks.check_manifest_sections(run_dir))

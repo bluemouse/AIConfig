@@ -25,10 +25,11 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from checks import Finding
 from checks import artifact_checks
-from checks import manifest_checks
-from checks import loop_checks
-from checks import mode_checks
 from checks import handoff_checks
+from checks import manifest_checks
+from checks import message_checks
+from checks import mode_checks
+from checks import loop_checks
 
 
 def run_phase_validation(run_dir: Path, phase: str, repo_root: Path | None = None) -> list[Finding]:
@@ -38,6 +39,7 @@ def run_phase_validation(run_dir: Path, phase: str, repo_root: Path | None = Non
     findings.extend(manifest_checks.run_all(run_dir, phase))
     findings.extend(loop_checks.run_all(run_dir, phase))
     findings.extend(mode_checks.run_all(run_dir, phase, repo_root))
+    findings.extend(message_checks.check_commit_messages(run_dir, phase, repo_root))
     findings.extend(handoff_checks.run_all(run_dir, phase))
     return findings
 

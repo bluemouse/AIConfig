@@ -141,6 +141,13 @@ Details: [output-format.md](references/output-format.md),
 When the user confirms the commit offer (or explicitly asked to commit in the invoking
 message):
 
+- Run the mechanical lint on the final message first:
+  `python <SKILL_ROOT>/scripts/lint_message.py <message-file>` — it checks the
+  vocabulary half of the contract (banned ids/narration, subject prefix and
+  length, attribution footers). Fix every flagged pattern before committing;
+  drafting from plan/review context is the known leak path. (When the
+  dev-workflow harness is installed, its commit-phase gate enforces the same
+  rules on history — `.ai/tools/dev-workflow/checks/message_checks.py`.)
 - Stage only when needed and only files in scope
 - Use HEREDOC for multi-line messages
 - Never `--no-verify` unless explicitly requested
@@ -171,8 +178,11 @@ Before returning draft messages:
 7. **Purity** — no AI/tool attribution footers; message content is change-related only
 8. **Self-contained** — every cited path resolves in the repo; no plan, research, review,
    audit, manifest, handoff, task, stage, or requirement reference; *why* stated in full
-9. **Commit offer** — included in the same response when scope is staged or working
-10. **Copyable blocks** — Verbose in a `text` fence; Suggested command in a `bash` fence
+9. **Mechanical lint** — the drafted message passes
+   `<SKILL_ROOT>/scripts/lint_message.py` (no banned ids or narration, subject
+   ≤ 72 with a Conventional Commits prefix, no attribution footers)
+10. **Commit offer** — included in the same response when scope is staged or working
+11. **Copyable blocks** — Verbose in a `text` fence; Suggested command in a `bash` fence
 
 ## Output standards
 
