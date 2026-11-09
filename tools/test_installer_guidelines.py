@@ -199,6 +199,197 @@ class GuidelineMemberKindTests(unittest.TestCase):
             self.assertIn("# Verdict First", installed.read_text(encoding="utf-8"))
 
 
+class GuidelineCitationDescriptionParsingTests(unittest.TestCase):
+    """The frontmatter description parser feeding citation lines (pg-001).
+
+    A guideline's load-trigger description lives in its YAML frontmatter
+    (`description:` key); the parser must never raise — every unreadable
+    shape degrades to None so the citation falls back to the bare wording.
+    """
+
+    def test_parser_returns_description_from_frontmatter(self) -> None:
+        """t-101: frontmatter'd source yields the stripped description."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                "description: Load before writing or editing code.\n"
+                "---\n"
+                "# LLM Coding Behavioral Guidelines\n",
+            )
+
+            description = mod.parse_guideline_citation_description(
+                source, "coding-behavior-guidelines"
+            )
+
+            self.assertEqual(description, "Load before writing or editing code.")
+
+    def test_parser_returns_none_without_frontmatter(self) -> None:
+        """t-102: a plain markdown file has no description."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp)
+            write_source_guideline(source, "coding-behavior-guidelines")
+
+            self.assertIsNone(
+                mod.parse_guideline_citation_description(
+                    source, "coding-behavior-guidelines"
+                )
+            )
+
+    def test_parser_returns_none_on_malformed_yaml(self) -> None:
+        """t-103: malformed frontmatter degrades to None, never raises."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                "description: [unclosed\n"
+                "---\n"
+                "# Guideline\n",
+            )
+
+            self.assertIsNone(
+                mod.parse_guideline_citation_description(
+                    source, "coding-behavior-guidelines"
+                )
+            )
+
+    def test_parser_returns_none_on_unclosed_frontmatter(self) -> None:
+        """pr-005: an opening --- with no closing delimiter yields None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\ndescription: never closed\n# Guideline\n",
+            )
+
+            self.assertIsNone(
+                mod.parse_guideline_citation_description(
+                    source, "coding-behavior-guidelines"
+                )
+            )
+
+    def test_parser_returns_none_on_missing_or_empty_description(self) -> None:
+        """t-104: a frontmatter block without a usable description yields None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\nname: something\n---\n# Guideline\n",
+            )
+            self.assertIsNone(
+                mod.parse_guideline_citation_description(
+                    source, "coding-behavior-guidelines"
+                )
+            )
+
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\ndescription: \"\"\n---\n# Guideline\n",
+            )
+            self.assertIsNone(
+                mod.parse_guideline_citation_description(
+                    source, "coding-behavior-guidelines"
+                )
+            )
+
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\ndescription:\n  - multi\n  - line\n---\n# Guideline\n",
+            )
+            self.assertIsNone(
+                mod.parse_guideline_citation_description(
+                    source, "coding-behavior-guidelines"
+                )
+            )
+
+    def test_parser_returns_none_for_missing_file(self) -> None:
+        """t-105: a guideline that does not exist yields None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp)
+
+            self.assertIsNone(
+                mod.parse_guideline_citation_description(
+                    source, "coding-behavior-guidelines"
+                )
+            )
+
+    def test_parser_returns_none_for_multiline_description(self) -> None:
+        """cr-001/cr2-001: a line-break-bearing description (any Unicode line
+        break, e.g. \\u2028) would corrupt the citation line (and make it
+        unremovable) — degrade to None instead."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                "description: |\n"
+                "  first line\n"
+                "  second line\n"
+                "---\n"
+                "# Guideline\n",
+            )
+
+            self.assertIsNone(
+                mod.parse_guideline_citation_description(
+                    source, "coding-behavior-guidelines"
+                )
+            )
+
+            # Unicode line separator: splitlines() treats it as a break even
+            # though it contains no \n or \r.
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                "description: \"line one\\u2028line two\"\n"
+                "---\n"
+                "# Guideline\n",
+            )
+
+            self.assertIsNone(
+                mod.parse_guideline_citation_description(
+                    source, "coding-behavior-guidelines"
+                )
+            )
+
+    def test_parser_returns_none_for_unreadable_file(self) -> None:
+        """cr-002: an unreadable or non-UTF-8 file degrades to None, no raise."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            (source / "guidelines").mkdir(parents=True)
+            path = source / "guidelines" / "coding-behavior-guidelines.md"
+            path.write_bytes(
+                b"---\ndescription: \xff\xfe broken utf-8\n---\n# Guideline\n"
+            )
+
+            self.assertIsNone(
+                mod.parse_guideline_citation_description(
+                    source, "coding-behavior-guidelines"
+                )
+            )
+
+    def test_real_repo_guidelines_carry_descriptions(self) -> None:
+        """t-211: every installable guideline ships a frontmatter description."""
+        for name in mod.INSTALLABLE_GUIDELINES:
+            description = mod.parse_guideline_citation_description(
+                REPO_ROOT, name
+            )
+            self.assertTrue(
+                description,
+                f"guidelines/{name}.md must carry a non-empty 'description:' "
+                "frontmatter value",
+            )
+
+
 class AgentsMdIntegrationTests(unittest.TestCase):
     """The consent-gated AGENTS.md citation insert/remove machinery.
 
@@ -216,6 +407,298 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             "in this repo.",
         )
 
+    def test_citation_line_with_description(self) -> None:
+        """t-201: a described citation uses the em-dash form (fr-2)."""
+        line = mod.build_guideline_citation_line(
+            "coding-behavior-guidelines",
+            "Load before writing or editing code.",
+        )
+        self.assertEqual(
+            line,
+            "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
+            "(.ai/guidelines/coding-behavior-guidelines.md) "
+            "— Load before writing or editing code.",
+        )
+
+    def test_citation_line_empty_description_falls_back_to_bare(self) -> None:
+        """t-202: None/empty descriptions keep the bare wording (fr-3)."""
+        for description in (None, ""):
+            self.assertEqual(
+                mod.build_guideline_citation_line(
+                    "coding-behavior-guidelines", description
+                ),
+                mod.build_guideline_citation_line("coding-behavior-guidelines"),
+            )
+
+    def test_citation_variants_include_described_form(self) -> None:
+        """t-203: removal matches described, bare, and legacy wordings (fr-5)."""
+        variants = mod.guideline_citation_variants(
+            "coding-behavior-guidelines",
+            "Load before writing or editing code.",
+        )
+        self.assertEqual(
+            variants,
+            {
+                mod.build_guideline_citation_line(
+                    "coding-behavior-guidelines",
+                    "Load before writing or editing code.",
+                ),
+                mod.build_guideline_citation_line("coding-behavior-guidelines"),
+                mod._legacy_guideline_citation_line("coding-behavior-guidelines"),
+            },
+        )
+
+    def test_append_writes_described_line_for_frontmatter_source(self) -> None:
+        """t-204: append surfaces the frontmatter description (fr-2, fr-4)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            target.mkdir(parents=True)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                "description: Load before writing or editing code.\n"
+                "---\n"
+                "# Be careful\n",
+            )
+            (target / "AGENTS.md").write_text("# Project\n", encoding="utf-8")
+
+            appended, already = mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+
+            self.assertEqual(appended, ["coding-behavior-guidelines"])
+            self.assertEqual(already, [])
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                "# Project\n\n## AI guidelines\n\n"
+                "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
+                "(.ai/guidelines/coding-behavior-guidelines.md)"
+                " — Load before writing or editing code.\n",
+            )
+
+    def test_append_bare_line_for_frontmatterless_source(self) -> None:
+        """t-205 (described-path twin): no frontmatter → bare wording (fr-3)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            target.mkdir(parents=True)
+            write_source_guideline(source, "coding-behavior-guidelines")
+            (target / "AGENTS.md").write_text("# Project\n", encoding="utf-8")
+
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                "# Project\n\n## AI guidelines\n\n"
+                + mod.build_guideline_citation_line("coding-behavior-guidelines")
+                + "\n",
+            )
+
+    def test_remove_drops_installer_written_described_line(self) -> None:
+        """t-206: uninstall removes the described wording (fr-5)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            target.mkdir(parents=True)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                "description: Load before writing or editing code.\n"
+                "---\n"
+                "# Be careful\n",
+            )
+            described = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines",
+                "Load before writing or editing code.",
+            )
+            (target / "AGENTS.md").write_text(
+                f"# Project\n\n{described}\nTail.\n", encoding="utf-8"
+            )
+
+            removed, kept = mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+
+            self.assertEqual(removed, ["coding-behavior-guidelines"])
+            self.assertEqual(kept, [])
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                "# Project\n\nTail.\n",
+            )
+
+    def test_remove_keeps_user_edited_described_line(self) -> None:
+        """t-207: a hand-reworded description is user content, kept (fr-6)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            target.mkdir(parents=True)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                "description: Load before writing or editing code.\n"
+                "---\n"
+                "# Be careful\n",
+            )
+            edited = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines",
+                "Load before writing or editing code. (edited by user)",
+            )
+            (target / "AGENTS.md").write_text(
+                f"# Project\n\n{edited}\nTail.\n", encoding="utf-8"
+            )
+
+            removed, kept = mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+
+            self.assertEqual(removed, [])
+            self.assertEqual(kept, ["coding-behavior-guidelines"])
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                f"# Project\n\n{edited}\nTail.\n",
+            )
+
+    def test_append_described_line_is_idempotent(self) -> None:
+        """t-209: a described citation is not duplicated on re-append (fr-7)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            target.mkdir(parents=True)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                "description: Load before writing or editing code.\n"
+                "---\n"
+                "# Be careful\n",
+            )
+            (target / "AGENTS.md").write_text("# Project\n", encoding="utf-8")
+
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+            appended, already = mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+
+            self.assertEqual(appended, [])
+            self.assertEqual(already, ["coding-behavior-guidelines"])
+            text = (target / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertEqual(text.count("## AI guidelines"), 1)
+            self.assertEqual(
+                text.count(
+                    "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
+                ),
+                1,
+            )
+
+    def test_described_append_remove_round_trip_is_byte_exact(self) -> None:
+        """t-210: described citations round-trip byte-exactly (nfr-2)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            target.mkdir(parents=True)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                "description: Load before writing or editing code.\n"
+                "---\n"
+                "# Be careful\n",
+            )
+            original = "# Project\n\nSome existing guidance.\n"
+            (target / "AGENTS.md").write_text(original, encoding="utf-8")
+
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+            mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"), original
+            )
+
+    def test_described_crlf_append_remove_round_trip_is_byte_exact(self) -> None:
+        """cr-003: the described em-dash line round-trips on CRLF files too."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            target.mkdir(parents=True)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                "description: Load before writing or editing code.\n"
+                "---\n"
+                "# Be careful\n",
+            )
+            original = b"# Project\r\n\r\nSome guidance.\r\n"
+            (target / "AGENTS.md").write_bytes(original)
+
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+            raw = (target / "AGENTS.md").read_bytes()
+            # The described line landed with CRLF endings and no stray LF.
+            self.assertIn(b" \xe2\x80\x94 Load before writing or editing code.\r\n", raw)
+            self.assertNotIn(b"\n", raw.replace(b"\r\n", b""))
+
+            mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+            self.assertEqual((target / "AGENTS.md").read_bytes(), original)
+
+    def test_uninstall_removes_frontmatterd_guideline_file(self) -> None:
+        """t-212: sha256 provenance holds for frontmatter'd sources (AC-5)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            target.mkdir(parents=True)
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                "description: Load before writing or editing code.\n"
+                "---\n"
+                "# Be careful\n",
+            )
+            mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=[],
+                scripts=[],
+                guidelines=["coding-behavior-guidelines"],
+            )
+
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = source
+            try:
+                result = mod.uninstall_items(
+                    target_root=target,
+                    skills=[],
+                    agents=[],
+                    commands=[],
+                    scripts=[],
+                    guidelines=["coding-behavior-guidelines"],
+                )
+            finally:
+                mod.REPO_ROOT = original_root
+
+            self.assertTrue(result.ok, result.errors)
+            self.assertFalse(
+                (target / ".ai" / "guidelines" / "coding-behavior-guidelines.md").exists()
+            )
+
     def test_remove_matches_legacy_citation_wording(self) -> None:
         """fr-5: uninstall also removes citations written with the pre-generalization wording."""
         with tempfile.TemporaryDirectory() as tmp:
@@ -228,8 +711,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             )
             agents_md.write_text(f"# Project\n{legacy}\nTail.\n", encoding="utf-8")
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             removed, kept = mod.agents_md_remove_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(removed, ["coding-behavior-guidelines"])
@@ -255,8 +740,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 f"# Project\r\n\r\n{legacy}\r\n\r\nTail.\r\n".encode("utf-8")
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             removed, kept = mod.agents_md_remove_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(removed, ["coding-behavior-guidelines"])
@@ -271,8 +758,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             # No trailing newline: pins the newline-safety mitigation.
             agents_md.write_text("# Project\n\nSome existing guidance.", encoding="utf-8")
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             appended, already = mod.agents_md_append_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(appended, ["coding-behavior-guidelines"])
@@ -291,9 +780,13 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             target = Path(tmp)
             (target / "AGENTS.md").write_text("# Project\n", encoding="utf-8")
 
-            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
             appended, already = mod.agents_md_append_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(appended, [])
@@ -316,8 +809,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             agents_md.write_text(f"# Project\n{hand_worded}\n", encoding="utf-8")
             before = agents_md.read_bytes()
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             appended, already = mod.agents_md_append_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(appended, [])
@@ -351,8 +846,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "second-guideline")
             appended, already = mod.agents_md_append_lines(
-                target, ["first-guideline", "second-guideline"]
+                target, ["first-guideline", "second-guideline"], source_root=source
             )
 
             self.assertEqual(appended, ["second-guideline"])
@@ -372,8 +869,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             appended, already = mod.agents_md_append_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(appended, ["coding-behavior-guidelines"])
@@ -397,7 +896,11 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
 
             citation = mod.build_guideline_citation_line(
                 "coding-behavior-guidelines"
@@ -417,7 +920,11 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 "# Project\n\nSome guidance.\n", encoding="utf-8"
             )
 
-            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
 
             citation = mod.build_guideline_citation_line(
                 "coding-behavior-guidelines"
@@ -438,7 +945,11 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 "## AI guidelines\n- old\n## Other\n", encoding="utf-8"
             )
 
-            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
 
             citation = mod.build_guideline_citation_line(
                 "coding-behavior-guidelines"
@@ -457,7 +968,11 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 "## AI guidelines\n### Notes\nnote\n", encoding="utf-8"
             )
 
-            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
 
             citation = mod.build_guideline_citation_line(
                 "coding-behavior-guidelines"
@@ -474,8 +989,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 b"# Project\r\n## AI guidelines\r\n- old\r\n## Other\r\n"
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             appended, _ = mod.agents_md_append_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(appended, ["coding-behavior-guidelines"])
@@ -498,8 +1015,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             appended, _ = mod.agents_md_append_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(appended, ["coding-behavior-guidelines"])
@@ -521,7 +1040,11 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
 
             citation = mod.build_guideline_citation_line(
                 "coding-behavior-guidelines"
@@ -650,13 +1173,15 @@ class AgentsMdIntegrationTests(unittest.TestCase):
     def test_uninstall_removes_identical_line(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             line = mod.build_guideline_citation_line("coding-behavior-guidelines")
             (target / "AGENTS.md").write_text(
                 f"# Project\n\n{line}\n", encoding="utf-8"
             )
 
             removed, kept = mod.agents_md_remove_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(removed, ["coding-behavior-guidelines"])
@@ -675,8 +1200,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 f"# Project\n\n{edited}\n", encoding="utf-8"
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             removed, kept = mod.agents_md_remove_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(removed, [])
@@ -692,8 +1219,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 b"# Project\r\n\r\nSome guidance.\r\n"
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             appended, _ = mod.agents_md_append_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(appended, ["coding-behavior-guidelines"])
@@ -722,8 +1251,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             removed, kept = mod.agents_md_remove_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(removed, ["coding-behavior-guidelines"])
@@ -744,8 +1275,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 )
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             removed, _ = mod.agents_md_remove_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(removed, ["coding-behavior-guidelines"])
@@ -763,8 +1296,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             removed, kept = mod.agents_md_remove_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(removed, ["coding-behavior-guidelines"])
@@ -780,8 +1315,14 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             original = "# Project\n\nSome guidance.\n"
             (target / "AGENTS.md").write_text(original, encoding="utf-8")
 
-            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
-            mod.agents_md_remove_lines(target, ["coding-behavior-guidelines"])
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+            mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
 
             self.assertEqual(
                 (target / "AGENTS.md").read_text(encoding="utf-8"), original
@@ -796,9 +1337,13 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 "# Project\n\n## AI guidelines\n\n", encoding="utf-8"
             )
 
-            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
             removed, _ = mod.agents_md_remove_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(removed, ["coding-behavior-guidelines"])
@@ -814,8 +1359,14 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             original = "# Project\n## AI guidelines\n\n"
             (target / "AGENTS.md").write_text(original, encoding="utf-8")
 
-            mod.agents_md_append_lines(target, ["coding-behavior-guidelines"])
-            mod.agents_md_remove_lines(target, ["coding-behavior-guidelines"])
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+            mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
 
             self.assertEqual(
                 (target / "AGENTS.md").read_text(encoding="utf-8"), original
@@ -830,8 +1381,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             removed, kept = mod.agents_md_remove_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(removed, ["coding-behavior-guidelines"])
@@ -850,8 +1403,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             removed, kept = mod.agents_md_remove_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(removed, ["coding-behavior-guidelines"])
@@ -868,8 +1423,10 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 f"# Project\r\n\r\n{line}\r\n\r\nTail.\r\n".encode("utf-8")
             )
 
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
             removed, kept = mod.agents_md_remove_lines(
-                target, ["coding-behavior-guidelines"]
+                target, ["coding-behavior-guidelines"], source_root=source
             )
 
             self.assertEqual(removed, ["coding-behavior-guidelines"])

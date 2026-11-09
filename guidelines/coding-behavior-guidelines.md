@@ -1,3 +1,7 @@
+---
+description: "Load before writing or editing code, adding tests, or running build and test commands — covers think-first assumptions, minimal scope, surgical diffs, verifiable goals, and safe terminal execution."
+---
+
 # LLM Coding Behavioral Guidelines
 
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.

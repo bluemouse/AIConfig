@@ -976,7 +976,10 @@ def guideline_is_installer_written(source_root: Path, target_root: Path, name: s
 
     A user-modified or stale copy must never be silently deleted on uninstall —
     removal requires a byte-identical match, mirroring the provenance rule the
-    docs kind used before its removal.
+    docs kind used before its removal. Note: editing a guideline source (e.g.
+    adding frontmatter) after a target installed it makes the older installed
+    copy read as user-modified; uninstall then keeps it (reported under
+    `skipped`) until a `--override` reinstall or manual delete.
     """
     src = source_root / "guidelines" / f"{name}.md"
     dest = target_root / SHARED_GUIDELINE_FILE.format(name=name)
@@ -985,12 +988,66 @@ def guideline_is_installer_written(source_root: Path, target_root: Path, name: s
     return file_sha256(src) == file_sha256(dest)
 
 
+def parse_guideline_citation_description(source_root: Path, name: str) -> str | None:
+    """Return the guideline's frontmatter load-trigger description, or None.
+
+    Reads ``<source_root>/guidelines/<name>.md`` and parses a leading YAML
+    frontmatter block (``---`` delimited) for a scalar string ``description``.
+    Every unreadable shape — missing file, unreadable or non-UTF-8 file,
+    missing frontmatter, unclosed block, malformed YAML, non-string, empty,
+    or multi-line value (a newline would corrupt the single-line citation) —
+    degrades to None so the citation line falls back to the bare wording;
+    this never raises.
+
+    Distinct from ``load_guidelines_descriptions`` (GUI labels taken from the
+    first markdown heading); this helper feeds AGENTS.md citation lines.
+    """
+    path = source_root / "guidelines" / f"{name}.md"
+    if not path.is_file():
+        return None
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        return None
+    if not lines or lines[0].strip() != "---":
+        return None
+    end = None
+    for idx in range(1, len(lines)):
+        if lines[idx].strip() == "---":
+            end = idx
+            break
+    if end is None:
+        return None
+    try:
+        data = yaml.safe_load("\n".join(lines[1:end]))
+    except yaml.YAMLError:
+        return None
+    if not isinstance(data, dict):
+        return None
+    description = data.get("description")
+    if not isinstance(description, str):
+        return None
+    description = description.strip()
+    # Any line break — not just \n/\r — would corrupt the single-line citation
+    # (and make it unremovable), so require exactly one line.
+    if not description or len(description.splitlines()) != 1:
+        return None
+    return description
+
+
 AGENTS_MD_FILENAME = "AGENTS.md"
 
 
-def build_guideline_citation_line(name: str) -> str:
-    """Return the AGENTS.md citation line for an installed guideline."""
+def build_guideline_citation_line(name: str, description: str | None = None) -> str:
+    """Return the AGENTS.md citation line for an installed guideline.
+
+    With a load-trigger description (from the guideline's frontmatter), the
+    line carries it after an em dash so an agent can decide when to load the
+    guideline without opening it; without one, the bare wording is used.
+    """
     rel = SHARED_GUIDELINE_FILE.format(name=name)
+    if description:
+        return f"- Follow [{rel}]({rel}) — {description}"
     return f"- Follow [{rel}]({rel}) in this repo."
 
 
@@ -1000,9 +1057,20 @@ def _legacy_guideline_citation_line(name: str) -> str:
     return f"- Follow [{rel}]({rel}) when generating or editing any code in this repo."
 
 
-def guideline_citation_variants(name: str) -> set[str]:
-    """Return every citation-line wording the installer has written for a guideline."""
-    return {build_guideline_citation_line(name), _legacy_guideline_citation_line(name)}
+def guideline_citation_variants(
+    name: str, description: str | None = None
+) -> set[str]:
+    """Return every citation-line wording the installer has written for a guideline.
+
+    Exact-match set only (no prefix matching): removal stays provenance-safe —
+    a user-edited variant is kept. A described line whose source description
+    later drifted is kept too (safe direction).
+    """
+    return {
+        build_guideline_citation_line(name, description),
+        build_guideline_citation_line(name),
+        _legacy_guideline_citation_line(name),
+    }
 
 
 def guideline_is_cited(text: str, name: str) -> bool:
@@ -1172,10 +1240,17 @@ def _drop_appended_guidelines_section(lines: list[str]) -> list[str]:
 
 
 def agents_md_append_lines(
-    target_root: Path, names: Sequence[str]
+    target_root: Path,
+    names: Sequence[str],
+    source_root: Path | None = None,
 ) -> tuple[list[str], list[str]]:
     """Insert citation lines for each guideline under the target's AGENTS.md
     '## AI guidelines' section.
+
+    Each citation carries the guideline's frontmatter load-trigger description
+    when the source provides one (bare wording otherwise). `source_root`
+    defaults to this repo at call time — resolved inside the body, never as a
+    def-time default, so tests can patch the module's REPO_ROOT.
 
     Returns (appended, already_present) name lists. Idempotent: a guideline
     that is already cited — via the installer's exact citation line or any
@@ -1185,6 +1260,8 @@ def agents_md_append_lines(
     no-op. Line endings are preserved: a CRLF file stays CRLF, and only the
     new lines are added.
     """
+    if source_root is None:
+        source_root = REPO_ROOT
     path = target_root / AGENTS_MD_FILENAME
     if not path.is_file():
         return ([], [])
@@ -1197,7 +1274,8 @@ def agents_md_append_lines(
             already.append(name)
             continue
         appended.append(name)
-        new_lines.append(build_guideline_citation_line(name))
+        description = parse_guideline_citation_description(source_root, name)
+        new_lines.append(build_guideline_citation_line(name, description))
     if new_lines:
         newline = _agents_md_newline(text)
         text = _insert_citations_into_agents_md(text, new_lines, newline)
@@ -1206,25 +1284,39 @@ def agents_md_append_lines(
 
 
 def agents_md_remove_lines(
-    target_root: Path, names: Sequence[str]
+    target_root: Path,
+    names: Sequence[str],
+    source_root: Path | None = None,
 ) -> tuple[list[str], list[str]]:
     """Remove installer-written citation lines from the target's AGENTS.md.
 
+    `source_root` defaults to this repo at call time (see
+    `agents_md_append_lines`); the current source description seeds the
+    described-wording variant, so a line whose description drifted after
+    install is kept rather than matched away.
+
     Returns (removed, kept) name lists. Only lines the installer itself
-    wrote are removed — the current template wording and the legacy
-    pre-generalization wording; a user-edited variant is kept. An
+    wrote are removed — the current template wordings (bare and described)
+    and the legacy pre-generalization wording; a user-edited variant is kept. An
     end-of-file '## AI guidelines' section the installer appended is
     dropped again — heading and separator blank — once its installer-written
     citations are gone; mid-file or content-bearing sections are kept. Line
     endings and all other content are preserved byte-for-byte.
     """
+    if source_root is None:
+        source_root = REPO_ROOT
     path = target_root / AGENTS_MD_FILENAME
     if not path.is_file():
         return ([], [])
     text = _read_agents_md_raw(path)
     lines = text.splitlines(keepends=True)
     stripped = {line.rstrip("\r\n") for line in lines}
-    variants = {name: guideline_citation_variants(name) for name in names}
+    variants = {
+        name: guideline_citation_variants(
+            name, parse_guideline_citation_description(source_root, name)
+        )
+        for name in names
+    }
     removed = [name for name in names if variants[name] & stripped]
     kept = [name for name in names if not (variants[name] & stripped)]
     if removed:
@@ -1293,12 +1385,14 @@ def run_agents_md_append_offer(
     no_update_flag: bool = False,
     is_tty: bool = False,
     prompt: Callable[[str], bool] | None = None,
+    source_root: Path | None = None,
 ) -> str:
     """Offer to append guideline citation lines to the target's AGENTS.md.
 
     Consent-gated: appends only when the user accepts the interactive offer or
     when the update flag forces it. Never creates AGENTS.md — a missing file
-    yields creation instructions instead.
+    yields creation instructions instead. `source_root` defaults to this repo
+    at call time (where the guidelines' frontmatter descriptions are read).
     """
     action = resolve_agents_md_action(
         update_flag=update_flag, no_update_flag=no_update_flag, is_tty=is_tty
@@ -1326,7 +1420,9 @@ def run_agents_md_append_offer(
             f"'{AGENTS_MD_GUIDELINES_HEADING}'?"
         ):
             return f"Declined — {AGENTS_MD_FILENAME} left unchanged."
-    appended, already = agents_md_append_lines(target_root, guideline_names)
+    appended, already = agents_md_append_lines(
+        target_root, guideline_names, source_root=source_root
+    )
     if appended and already:
         return (
             f"Updated {AGENTS_MD_FILENAME}: cited {', '.join(appended)} under "
@@ -1348,11 +1444,13 @@ def run_agents_md_removal_offer(
     no_update_flag: bool = False,
     is_tty: bool = False,
     prompt: Callable[[str], bool] | None = None,
+    source_root: Path | None = None,
 ) -> str:
     """Offer to remove installer-written citation lines from the target's AGENTS.md.
 
     Provenance-safe: only the exact citation line is removed; user-edited
-    variants are kept.
+    variants are kept. `source_root` defaults to this repo at call time (where
+    the current guideline descriptions seed the described-wording variant).
     """
     action = resolve_agents_md_action(
         update_flag=update_flag, no_update_flag=no_update_flag, is_tty=is_tty
@@ -1370,7 +1468,9 @@ def run_agents_md_removal_offer(
             prompt = _default_cli_prompt
         if not prompt(f"Remove the guideline citations the installer added to {agents_md}?"):
             return f"Declined — {AGENTS_MD_FILENAME} left unchanged."
-    removed, kept = agents_md_remove_lines(target_root, guideline_names)
+    removed, kept = agents_md_remove_lines(
+        target_root, guideline_names, source_root=source_root
+    )
     if removed and kept:
         return (
             f"Updated {AGENTS_MD_FILENAME}: removed citations for {', '.join(removed)} "

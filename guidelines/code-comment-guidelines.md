@@ -1,8 +1,13 @@
+---
+description: "Load when writing or updating code comments or commit messages — explain why not what, fix code before commenting, keep comments true, document API contracts, and justify TODO/FIXME markers."
+---
+
 # Code Comment Guidelines
 
-Rules for writing and maintaining code comments. A comment is a maintenance
-tool, not decoration: it carries the information code cannot express — intent,
-constraints, context — and nothing else.
+Rules for writing and maintaining code comments — and commit messages, which
+are comments about the change and follow the same principles. A comment is a
+maintenance tool, not decoration: it carries the information code cannot
+express — intent, constraints, context — and nothing else.
 
 **Tradeoff:** These rules bias toward fewer, higher-value comments. When in
 doubt, delete the comment rather than write one that restates the code.
@@ -86,9 +91,21 @@ signature cannot say.
   commit messages carry that.
 - Never commit commented-out code; version control keeps history.
 
+## 8. Commit messages follow the same rules
+
+**The diff says what changed. The commit message says why.**
+
+- The subject states the why in one line; the body explains intent,
+  constraints, and trade-offs — never a section-by-section narration of the
+  diff.
+- Self-contained: no chat context, session references, or "as discussed" —
+  a reader with only the repository must understand it.
+- Keep it true: never claim behavior the commit does not deliver.
+- Match the project's commit convention — subject limits, format, tone.
+
 ---
 
 **These guidelines are working if:** new comments answer why-questions the code
 cannot, public contracts have doc comments, no stale comment survives the edit
-that invalidated it, and diffs contain no commented-out code or session
-narration.
+that invalidated it, diffs contain no commented-out code or session
+narration, and commit messages explain why without restating the diff.

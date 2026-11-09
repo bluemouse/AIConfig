@@ -1,3 +1,7 @@
+---
+description: "Load for every chat response — verdict-first output, structured questions for every ask, no preamble, recap, or closers, and matter-of-fact error reporting."
+---
+
 # Verdict First
 
 The user reads the agent's output; the agent does the work. Chat output is not just
