@@ -144,7 +144,7 @@ repo/
 
 **Progressive disclosure:** metadata (frontmatter) → `SKILL.md` body → bundled resources on demand.
 
-Keep behavior that applies everywhere in the skill body above `## Tool notes` (`skills/<name>/SKILL.md` at bootstrap, `.agents/skills/<name>/` after install). Put tool-native integration only in `## Tool notes` sections (see below). Repo-root `skills-ref/` holds reference templates; bootstrapped portable skills belong in `skills/<name>/`.
+Keep behavior that applies everywhere in the skill body above `## Tool notes` (`skills/<name>/SKILL.md` at bootstrap, `.agents/skills/<name>/` after install). Put tool-native integration only in `## Tool notes` sections (see below).
 
 ### Bootstrap a new skill
 

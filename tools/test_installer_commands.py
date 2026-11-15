@@ -397,6 +397,115 @@ class CommandInstallTests(unittest.TestCase):
             self.assertIn("skill, agent, command, scripts, or guideline", str(ctx.exception))
 
 
+class BridgeCreationTests(unittest.TestCase):
+    """fd-002/fd-003/fd-019 regression coverage for bridge + default uninstall."""
+
+    def test_commands_only_install_creates_bridge(self) -> None:
+        """fd-002: a commands-only install (no skills pass) still bridges.
+
+        Command-skills install only into .agents/skills/; without this the
+        commands loop's ensure_bridge_symlink call, Claude Code cannot
+        discover them on a commands-only install.
+        """
+        import os
+
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            write_command_skill(source, "demo-command")
+
+            result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=["demo-command"],
+                override=False,
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            bridge = target / ".claude" / "skills"
+            self.assertTrue(bridge.is_symlink(), "commands-only install must bridge")
+            self.assertEqual(os.readlink(bridge), "../.agents/skills")
+            self.assertTrue(
+                (bridge / "demo-command" / "SKILL.md").is_file(),
+                "the command-skill must be reachable through the bridge",
+            )
+
+    def test_bridge_refusal_degrades_installs_not_abort(self) -> None:
+        """fd-003: a real .claude/skills dir (legacy target) warns + continues.
+
+        The wrapper catches the helper's refusal; a bulk install against a
+        legacy target must not abort mid-run — both skills copy, the real
+        dir is untouched, and a warning reaches stderr.
+        """
+        import contextlib
+        import io
+
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            write_plain_skill(source, "skill-a")
+            write_plain_skill(source, "skill-b")
+            legacy = target / ".claude" / "skills"
+            legacy.mkdir(parents=True)
+            (legacy / "stale-skill").mkdir()
+            marker = legacy / "stale-skill" / "SKILL.md"
+            marker.write_text("---\nname: stale-skill\ndescription: old\n---\n", encoding="utf-8")
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                result = mod.install_items(
+                    source_root=source,
+                    target_root=target,
+                    skills=["skill-a", "skill-b"],
+                    agents=[],
+                    commands=[],
+                    override=False,
+                )
+
+            self.assertTrue(
+                result.ok,
+                f"legacy real-dir bridge must degrade, not abort: {result.errors}",
+            )
+            self.assertIn(".agents/skills/skill-a", result.installed)
+            self.assertIn(".agents/skills/skill-b", result.installed)
+            self.assertTrue(marker.is_file(), "the real dir must not be clobbered")
+            self.assertIn("warning", stderr.getvalue().lower())
+
+    def test_default_uninstall_of_command_skill_exits_zero(self) -> None:
+        """fd-019: default no-selector uninstall dedupes like explicit paths.
+
+        discover_skills() returns command-skill names too; without the
+        default-branch dedupe the skills pass hits the cr-004 cross-kind
+        guard for each command-skill and a clean teardown false-fails.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            write_plain_skill(source, "plain-skill")
+            write_command_skill(source, "demo-command")
+            mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=["plain-skill"],
+                agents=[],
+                commands=["demo-command"],
+                override=False,
+            )
+
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = source
+            try:
+                code = mod.run_cli([str(target), "--uninstall"])
+            finally:
+                mod.REPO_ROOT = original_root
+
+            self.assertEqual(code, 0, "default uninstall of a clean target must exit 0")
+            self.assertFalse((target / ".agents" / "skills" / "demo-command").exists())
+            self.assertFalse((target / ".agents" / "skills" / "plain-skill").exists())
+
+
 class PurgeLegacyTests(unittest.TestCase):
     """--purge-legacy: remove a target's pre-single-root install leftovers."""
 

@@ -66,12 +66,35 @@ def read_command_metadata(command_md: Path) -> tuple[str, str, str, object | Non
     return description.strip(), source_name.strip(), body, allowed_tools
 
 
+LEGACY_COMMAND_OUTPUTS = (
+    # Pre-single-root outputs this installer (or its predecessor) wrote for
+    # this command; removed on overwrite so a target upgraded by reinstalling
+    # does not keep stale slash-commands a host still reads. Mirrors
+    # agent-creator's remove_legacy_outputs (twin-site rule: change both).
+    (".ai", "commands", "{name}.md"),
+    (".cursor", "commands", "{name}.md"),
+    (".claude", "commands", "{name}.md"),
+    (".github", "prompts", "{name}.prompt.md"),
+)
+
+
+def remove_legacy_outputs(root: Path, command_name: str) -> list[Path]:
+    """Delete legacy shared-layer and wrapper outputs left by older installs."""
+    removed: list[Path] = []
+    for parts in LEGACY_COMMAND_OUTPUTS:
+        stale_path = root.joinpath(*(part.format(name=command_name) for part in parts))
+        if stale_path.is_file():
+            stale_path.unlink()
+            removed.append(stale_path)
+    return removed
+
+
 def install_portable_command(
     root: Path,
     source: Path,
     command_name: str,
     overwrite: bool,
-) -> list[Path]:
+) -> tuple[list[Path], list[Path]]:
     root = root.resolve()
     source = source.resolve()
     command_name = slugify_name(command_name)
@@ -99,7 +122,11 @@ def install_portable_command(
     )
     write_file(skill_path, content, overwrite)
 
-    return [skill_path]
+    removed: list[Path] = []
+    if overwrite:
+        removed = remove_legacy_outputs(root, command_name)
+
+    return [skill_path], removed
 
 
 def validate_bootstrap(source: Path, validator_script: Path) -> None:
@@ -159,7 +186,7 @@ def main(argv: list[str]) -> int:
 
     try:
         validate_bootstrap(source, validator)
-        written = install_portable_command(
+        written, removed = install_portable_command(
             root=Path(args.root),
             source=source,
             command_name=args.name,
@@ -179,6 +206,8 @@ def main(argv: list[str]) -> int:
     print(f"installed {slugify_name(args.name)}:")
     for path in written:
         print(f"- {path}")
+    for path in removed:
+        print(f"- removed legacy output: {path}")
 
     print(
         "\nRestart or reload the coding agent session so /"

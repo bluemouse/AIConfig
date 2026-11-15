@@ -86,7 +86,6 @@ repo/
 ├── .agents/
 │   ├── skills/                        # Installed skills and command-skills (single root)
 │   ├── tools/                         # Installed script trees (e.g. dev-workflow)
-│   ├── guidelines/                    # Guidelines installed into target projects
 │   ├── workflow/                      # Dev-workflow run state (untracked)
 │   ├── plans/                         # Dev-workflow plans (untracked)
 │   └── researches/                    # Dev-workflow research reports (untracked)

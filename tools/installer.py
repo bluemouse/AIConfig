@@ -98,7 +98,11 @@ def _load_ensure_bridge_symlink() -> Callable[[Path], bool]:
         for name in sibling_names:
             sys.modules.pop(name, None)
         sys.modules.update(stashed)
-    helper = getattr(bridge_module, "ensure_bridge_symlink")
+    # getattr with a None default: a missing attribute raises plain
+    # AttributeError, which the (ImportError, OSError) except-tuple at the
+    # call site does not catch (fd-020) — degrade to the callable() guard
+    # so a missing helper reports as ImportError, not a raw traceback.
+    helper = getattr(bridge_module, "ensure_bridge_symlink", None)
     if not callable(helper):
         raise ImportError(
             f"ensure_bridge_symlink not found in {_BRIDGE_HELPER_PATH}"
@@ -201,10 +205,10 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # read .agents/ natively — so only Claude Code needs a reload (through the
 # .claude/skills bridge).
 RELOAD_REMINDER = (
-    "Restart or reload Claude Code so it rediscovers the installed skills, "
-    "agents, commands, scripts, and guidelines through the .claude/skills "
-    "bridge; Cursor and VS Code (Copilot) pick up .agents/ natively on "
-    "their next session."
+    "Restart or reload Claude Code so it rediscovers installed skills and "
+    "command-skills through the .claude/skills bridge (and picks up the "
+    "agent files under .claude/agents); Cursor and VS Code (Copilot) "
+    "discover .agents/ and .github/agents/ natively on their next session."
 )
 
 BUNDLES_JSON = Path(__file__).resolve().parent / "bundles.json"
@@ -672,13 +676,19 @@ def resolve_cli_selection(
         return selection
     # No explicit selection: default to all discovered items. Guidelines are
     # explicit-only — they change agent behavior in the target, so they are
-    # never part of the default install.
-    return BundleSelection(
+    # never part of the default install. discover_skills() has no
+    # command-skill filter, so a command-skill name lands in BOTH lists and
+    # must run through the same dedupe as the explicit-selection path (fd-019)
+    # — without it, the default uninstall hits the cr-004 cross-kind guard for
+    # every command-skill and false-fails with exit 1 on a clean teardown.
+    default_selection = BundleSelection(
         skills=discover_skills(),
         agents=discover_agents(),
         commands=discover_commands(),
         scripts=discover_scripts(),
     )
+    default_selection.dedupe()
+    return default_selection
 
 
 def resolve_cli_skills(
@@ -1449,7 +1459,21 @@ def agents_md_append_lines(
     if stale_names:
         # Reuse the removal machinery: exact-match installer wordings plus
         # empty-section cleanup, provenance-safe for user-edited lines.
-        agents_md_remove_lines(target_root, stale_names, source_root=source_root)
+        _, kept_stale = agents_md_remove_lines(
+            target_root, stale_names, source_root=source_root
+        )
+        if kept_stale:
+            # fd-021: a drifted legacy citation did not exact-match any
+            # installer wording, so it survives as a stray .ai/ line — the
+            # new .agents/ citation is appended alongside it. Surface the
+            # names so the caller's report does not read as a fully clean
+            # upgrade.
+            print(
+                "warning: legacy .ai/guidelines/ citation(s) left in place "
+                f"(not installer-written wordings, kept as user content): "
+                f"{', '.join(kept_stale)}",
+                file=sys.stderr,
+            )
         text = _read_agents_md_raw(path)
     if new_lines:
         newline = _agents_md_newline(text)
@@ -1678,7 +1702,11 @@ def remove_path(path: Path) -> None:
 def copy_path(src: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     if src.is_dir():
-        shutil.copytree(src, dest)
+        # fd-010: never ship interpreter caches — stale .pyc bytecode in a
+        # target shadows the freshly installed .py until the mtime/hash
+        # revalidation happens to run. The bootstrap skill installer filters
+        # the same names (make_copy_ignore); keep the sets in sync.
+        shutil.copytree(src, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     elif src.is_file():
         shutil.copy2(src, dest)
     else:

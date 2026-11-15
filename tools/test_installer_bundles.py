@@ -191,9 +191,44 @@ class BundleLoadingTests(unittest.TestCase):
 
 class CliSkillResolutionTests(unittest.TestCase):
     def test_resolve_cli_skills_default(self) -> None:
-        all_skills = mod.discover_skills()
-        resolved = mod.resolve_cli_skills(bundle_ids=None, skill_names=None)
-        self.assertEqual(resolved, all_skills)
+        """Default skill resolution lists every discovered skill, but a
+        command-skill name is deduped out of the SKILLS list (fd-019: the
+        default branch dedupes like the explicit-selection path — the
+        command keeps the name; the skills list drops the duplicate so the
+        default uninstall/install never processes one name as both kinds)."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            original_root = mod.REPO_ROOT
+            root = Path(tmp)
+            # A command-skill and a plain skill sharing the discovered tree.
+            skill_dir = root / ".agents" / "skills" / "demo"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                "---\nname: demo\ndescription: d\ndisable-model-invocation: true\n---\n\n# demo\n",
+                encoding="utf-8",
+            )
+            plain_dir = root / ".agents" / "skills" / "plain"
+            plain_dir.mkdir(parents=True)
+            (plain_dir / "SKILL.md").write_text(
+                "---\nname: plain\ndescription: d\n---\n\n# plain\n",
+                encoding="utf-8",
+            )
+            mod.REPO_ROOT = root
+            try:
+                resolved = mod.resolve_cli_skills(bundle_ids=None, skill_names=None)
+                commands = mod.resolve_cli_selection(
+                    bundle_ids=None,
+                    skill_names=None,
+                    agent_names=None,
+                    command_names=None,
+                    script_names=None,
+                ).commands
+            finally:
+                mod.REPO_ROOT = original_root
+
+            self.assertEqual(resolved, ["plain"])
+            self.assertEqual(commands, ["demo"])
 
     def test_resolve_cli_skills_default_is_unfiltered(self) -> None:
         """fr-7 (t-109): no exclusion mechanism — every discovered skill is selected.

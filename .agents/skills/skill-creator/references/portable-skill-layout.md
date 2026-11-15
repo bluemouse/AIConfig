@@ -161,7 +161,6 @@ python skills/skill-creator/scripts/package_skill.py .agents/skills/code-reviewe
 ## Notes on portability
 
 - If the user needs a standalone copy outside the single-root layout, use `init_skill.py --path <skills-root>` to create a full copy in one location.
-- Repo-root `skills-ref/` can hold reference templates. Bootstrapped portable skills belong in `skills/<name>/`.
 - Tool-specific frontmatter such as `disable-model-invocation` marks a **command-skill** (slash-invoked only); see command-creator for that flow.
 
 ## Quality checklist

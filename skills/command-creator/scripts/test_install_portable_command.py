@@ -101,10 +101,11 @@ class InstallCommandSkillTests(unittest.TestCase):
             source = root / "commands" / COMMAND_NAME
             write_bootstrap(source)
 
-            written = install_portable_command(root, source, COMMAND_NAME, overwrite=True)
+            written, removed = install_portable_command(root, source, COMMAND_NAME, overwrite=True)
 
             skill_path = root / ".agents" / "skills" / COMMAND_NAME / "SKILL.md"
             self.assertEqual(written, [skill_path])
+            self.assertEqual(removed, [])
             self.assertTrue(skill_path.is_file())
 
             frontmatter, error = parse_frontmatter(skill_path.read_text(encoding="utf-8"))
@@ -155,9 +156,10 @@ class InstallCommandSkillTests(unittest.TestCase):
             install_portable_command(root, source, COMMAND_NAME, overwrite=True)
 
             write_bootstrap(source, command_md(body="# Test Command\n\nUpdated body.\n"))
-            written = install_portable_command(root, source, COMMAND_NAME, overwrite=True)
+            written, removed = install_portable_command(root, source, COMMAND_NAME, overwrite=True)
 
             self.assertIn("Updated body.", written[0].read_text(encoding="utf-8"))
+            self.assertEqual(removed, [], "no legacy outputs exist to remove")
 
     def test_no_overwrite_refuses_existing_command_skill(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -166,7 +168,7 @@ class InstallCommandSkillTests(unittest.TestCase):
             write_bootstrap(source)
             skill_path = install_portable_command(
                 root, source, COMMAND_NAME, overwrite=True
-            )[0]
+            )[0][0]
             original = skill_path.read_text(encoding="utf-8")
 
             with self.assertRaises(CommandCreatorError) as ctx:
@@ -174,6 +176,63 @@ class InstallCommandSkillTests(unittest.TestCase):
 
             self.assertIn(str(skill_path), str(ctx.exception))
             self.assertEqual(skill_path.read_text(encoding="utf-8"), original)
+
+    def test_reinstall_removes_legacy_command_outputs(self) -> None:
+        """fd-015: overwrite removes pre-single-root command outputs.
+
+        Older installs wrote .ai/commands/, .cursor/commands/,
+        .claude/commands/, and .github/prompts/; a target upgraded by
+        reinstalling must not keep a stale slash-command a host still reads.
+        Mirrors agent-creator's remove_legacy_outputs.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "commands" / COMMAND_NAME
+            write_bootstrap(source)
+            install_portable_command(root, source, COMMAND_NAME, overwrite=True)
+
+            legacy = [
+                root / ".ai" / "commands" / f"{COMMAND_NAME}.md",
+                root / ".cursor" / "commands" / f"{COMMAND_NAME}.md",
+                root / ".claude" / "commands" / f"{COMMAND_NAME}.md",
+                root / ".github" / "prompts" / f"{COMMAND_NAME}.prompt.md",
+            ]
+            for path in legacy:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("stale legacy output", encoding="utf-8")
+
+            written, removed = install_portable_command(
+                root, source, COMMAND_NAME, overwrite=True
+            )
+
+            self.assertTrue(
+                written, "the command-skill must still install"
+            )
+            self.assertEqual(
+                sorted(str(p) for p in removed),
+                sorted(str(p) for p in legacy),
+                "all four legacy outputs must be removed on overwrite",
+            )
+            for path in legacy:
+                self.assertFalse(path.exists(), f"stale output left behind: {path}")
+
+    def test_no_overwrite_keeps_legacy_outputs(self) -> None:
+        """fd-015 scope check: legacy cleanup runs only on overwrite."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "commands" / COMMAND_NAME
+            write_bootstrap(source)
+            install_portable_command(root, source, COMMAND_NAME, overwrite=True)
+
+            stale = root / ".claude" / "commands" / f"{COMMAND_NAME}.md"
+            stale.parent.mkdir(parents=True, exist_ok=True)
+            stale.write_text("stale legacy output", encoding="utf-8")
+
+            with self.assertRaises(CommandCreatorError):
+                install_portable_command(
+                    root, source, COMMAND_NAME, overwrite=False
+                )
+            self.assertTrue(stale.exists(), "refused install must not clean up")
 
     def test_allowed_tools_transfers(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

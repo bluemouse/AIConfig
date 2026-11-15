@@ -229,6 +229,35 @@ class ScriptsInstallTests(unittest.TestCase):
             )
 
 
+    def test_install_scripts_filters_pycache(self) -> None:
+        """fd-010: scripts installs never ship __pycache__/.pyc — stale
+        bytecode in a target can shadow freshly installed sources."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            write_source_scripts(source)
+            cache = (
+                source / ".agents" / "tools" / "dev-workflow" / "checks" / "__pycache__"
+            )
+            cache.mkdir()
+            (cache / "mode_checks.cpython-312.pyc").write_bytes(b"\x80\x04stale")
+
+            result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=[],
+                scripts=["dev-workflow"],
+                override=False,
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            installed = target / ".agents" / "tools" / "dev-workflow" / "checks"
+            self.assertTrue((installed / "mode_checks.py").is_file())
+            self.assertFalse((installed / "__pycache__").exists())
+
+
 class ScriptsUninstallTests(unittest.TestCase):
     def test_uninstall_scripts_removes_directory(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

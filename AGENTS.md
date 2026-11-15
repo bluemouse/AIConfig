@@ -8,7 +8,7 @@ A **portable, single-root layout** for AI-assisted development configuration sha
 
 ## Core architecture
 
-Understanding paths under `skills/`, `.agents/`, `.cursor/`, `.claude/`, and `.github/` is required before editing anything.
+Understanding paths under `skills/`, `.agents/`, `.claude/`, and `.github/` is required before editing anything.
 
 ### Skills: bootstrap → installed
 
