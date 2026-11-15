@@ -80,12 +80,12 @@ that uses it.
 
 1. Accept the requirement from the user.
 2. Create a feature slug (kebab-case, descriptive).
-3. Create the run directory: `.ai/workflow/<slug>/`.
+3. Create the run directory: `.agents/workflow/<slug>/`.
 4. Write `00-run-manifest.md` with initial state (current phase: clarify, all phases not-started). Use the template in [references/manifest-format.md](references/manifest-format.md) — it defines the required section headers (`# Run Manifest`, `## Run metadata`, `## Phase status`, `## Artifact registry`).
 5. Write `01-feature-brief.md` with the requirement summary.
 6. Activate clarify mode (see Mode enforcement below).
-7. Record baseline: `python .ai/tools/dev-workflow/record_baseline.py --phase clarify --run-dir .ai/workflow/<slug>`. This captures the git HEAD and dirty paths at phase start so mode-enforcement checks can distinguish pre-existing changes from changes made during the phase.
-8. Run pre-flight check: `python .ai/tools/dev-workflow/check_pre_phase.py --phase clarify --run-dir .ai/workflow/<slug>`.
+7. Record baseline: `python .agents/tools/dev-workflow/record_baseline.py --phase clarify --run-dir .agents/workflow/<slug>`. This captures the git HEAD and dirty paths at phase start so mode-enforcement checks can distinguish pre-existing changes from changes made during the phase.
+8. Run pre-flight check: `python .agents/tools/dev-workflow/check_pre_phase.py --phase clarify --run-dir .agents/workflow/<slug>`.
 9. Start Phase 0 (Clarify).
 
 ### Resuming a run
@@ -198,7 +198,7 @@ When a checker finding has `root-cause-phase` set to an earlier phase:
 
 1. Check the backward edge count for the target phase in the manifest (< 2?).
 2. Create a backward handoff packet at `back-<from>-to-<to>-<n>.md` (e.g. `back-code-review-to-plan-1.md`) using the format in [references/backward-handoff-format.md](references/backward-handoff-format.md).
-3. Validate the packet: `python .ai/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir <path>`.
+3. Validate the packet: `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir <path>`.
 4. Update manifest: target phase status = `backward-edge-received`, increment backward edge count.
 5. Route to the target phase. The target phase:
    - Reads the backward handoff packet.
@@ -340,7 +340,7 @@ Read each reference before the step that uses it. All paths are relative to `<SK
 > **Installation note.** `tools/installer.py` copies the whole skill directory, so these files ship
 > as `<skill-root>/references/*.md` in the target project. When passing a template path to a phase
 > skill, pass the resolved path (e.g.
-> `.ai/skills/dev-workflow-orchestrator/references/requirement-ledger-template.md`), not the
+> `.agents/skills/dev-workflow-orchestrator/references/requirement-ledger-template.md`), not the
 > bare `references/` form, which only resolves when the reader is already inside the skill root.
 
 ## Quality bar

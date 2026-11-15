@@ -16,7 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Import verdicts module
 import sys
-sys.path.insert(0, str(REPO_ROOT / ".ai" / "tools" / "dev-workflow" / "checks"))
+sys.path.insert(0, str(REPO_ROOT / ".agents" / "tools" / "dev-workflow" / "checks"))
 import verdicts  # type: ignore[import-not-found]
 
 

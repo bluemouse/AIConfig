@@ -17,7 +17,7 @@ Covers:
   orchestrator's Code Review exception)
 
 Template paths are the bootstrap sources under skills/ (source of truth);
-the installed .ai/skills copies are refreshed from them by the install
+the installed .agents/skills copies are refreshed from them by the install
 scripts and are asserted in-sync here as a guard.
 """
 
@@ -30,7 +30,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / ".ai" / "tools" / "dev-workflow"))
+sys.path.insert(0, str(REPO_ROOT / ".agents" / "tools" / "dev-workflow"))
 
 from checks import artifact_checks  # type: ignore[import-not-found]
 from checks import handoff_checks  # type: ignore[import-not-found]
@@ -64,7 +64,7 @@ class TemplateSyncTests(unittest.TestCase):
     def test_bootstrap_and_installed_templates_in_sync(self) -> None:
         for filename, bootstrap in TEMPLATES.items():
             skill = bootstrap.relative_to(REPO_ROOT / "skills").parts[0]
-            installed = REPO_ROOT / ".ai" / "skills" / skill / "references" / bootstrap.name
+            installed = REPO_ROOT / ".agents" / "skills" / skill / "references" / bootstrap.name
             if not installed.exists():
                 continue  # Not every skill is installed in this checkout
             self.assertEqual(

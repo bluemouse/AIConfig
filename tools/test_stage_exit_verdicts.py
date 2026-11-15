@@ -11,7 +11,11 @@ from __future__ import annotations
 import unittest
 
 import sys
-sys.path.insert(0, ".ai/tools/dev-workflow/checks")
+from pathlib import Path
+
+# verdicts.py is a module inside the checks/ package — add the checks dir
+# itself (sibling pattern: resolve from this file, never the cwd)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / ".agents" / "tools" / "dev-workflow" / "checks"))
 import verdicts  # type: ignore[import-not-found]
 
 

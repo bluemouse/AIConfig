@@ -54,7 +54,7 @@ repo/
 │   ├── code-professor/                # Evidence-based codebase learning and documentation guides
 │   ├── commit-message-writer/         # Conventional Commit message drafting from git diffs
 │   ├── github-guide/                  # GitHub PR/review delivery via gh CLI and gh api
-│   ├── minutes-writer/                 # Source-grounded meeting minutes for engineering meetings
+│   ├── minutes-writer/                # Source-grounded meeting minutes for engineering meetings
 │   ├── prompt-clarifier/              # Iterative clarification of ambiguous requests before acting
 │   ├── advisory-council/              # Multi-perspective council deliberation on complex decisions
 │   ├── devil-advocate/                # Adversarial stress-test of proposals with verdicts
@@ -85,16 +85,14 @@ repo/
 ├── commands/                          # Optional bootstrap commands (author here, then install)
 ├── .agents/
 │   ├── skills/                        # Installed skills and command-skills (single root)
-│   ├── tools/                          # Installed script trees (e.g. dev-workflow)
+│   ├── tools/                         # Installed script trees (e.g. dev-workflow)
 │   ├── guidelines/                    # Guidelines installed into target projects
-│   ├── workflow/                       # Dev-workflow run state (untracked)
+│   ├── workflow/                      # Dev-workflow run state (untracked)
 │   ├── plans/                         # Dev-workflow plans (untracked)
 │   └── researches/                    # Dev-workflow research reports (untracked)
-├── .cursor/
-│   └── rules/                         # Cursor rules (.mdc)
-└── .claude/
-    ├── agents/                        # Claude Code custom agents (one dual-target copy)
-    └── skills -> ../.agents/skills    # Claude Code bridge symlink (auto-created)
+├── .claude/
+│   ├── agents/                        # Claude Code custom agents (one dual-target copy)
+│   └── skills -> ../.agents/skills    # Claude Code bridge symlink (auto-created)
 └── .github/
     └── agents/                        # GitHub Copilot custom agents (*.agent.md)
 ```
@@ -382,7 +380,7 @@ For a standalone skill in one location (personal install or single-tool copy):
 python skills/skill-creator/scripts/init_skill.py my-skill --path ~/.cursor/skills
 ```
 
-The path must be a skills root (a directory named `skills`) with the skill created directly inside it — category subfolders are rejected.
+The path must be a skills root (a directory named `skills`) with the skill created directly inside it — category subfolders (`skills/<category>/<name>/`) are rejected by `quick_validate.py`'s flat-root check (and by `install_portable_skill.py`'s source check), not by `init_skill` itself.
 
 See `skills/skill-creator/references/portable-skill-layout.md` for path conventions and the `## Tool notes` format.
 
@@ -423,8 +421,6 @@ When adding assets to this repo or another project, use these locations:
 - `.agents/guidelines/<name>.md` — guidelines installed into target projects
 
 ### Cursor
-
-- `.cursor/rules/` — persistent rules (`.mdc`)
 
 Cursor reads `.agents/skills/` directly; reload Cursor after adding or changing skills, rules, or commands.
 

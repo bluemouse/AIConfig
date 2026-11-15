@@ -47,14 +47,14 @@ Write the review report to the output artifact path with:
 
 ### Claude Code
 
-- `tools: Read, Grep, Glob, Bash` in the installed `.claude/agents/<name>.md` frontmatter restricts the agent to read-only investigation plus command execution for evidence gathering. Write tools (Edit, Write) are excluded to enforce read-only behavior at the host level.
-- `model: inherit` runs the agent on the main conversation's model (the documented default). Replace with a model alias such as `sonnet`, `opus`, or `haiku`, or a full model name, if this agent should run on a specific model.
+- The installed `.claude/agents/<name>.md` is a verbatim copy of this AGENT.md (name and description frontmatter only) — it carries no `tools:` or `model:` keys. Read-only behavior is enforced by the agent body's Boundaries section, not by host frontmatter. Add `tools: Read, Grep, Glob, Bash` to the installed file's frontmatter only if you want Claude Code to restrict this agent's tools at the host level.
+- With no `model:` key, Claude Code runs the agent on the main conversation's model. Add `model: inherit` or a model alias such as `sonnet`, `opus`, or `haiku` only if this agent should run on a specific model.
 - Restart or reload the Claude Code session after installing or editing this agent.
 
 ### Cursor
 
-- `readonly: true` in the installed `.claude/agents/<name>.md` frontmatter (which Cursor compat-reads) enforces read-only behavior at the host level — the agent cannot write files outside its allowed artifact path.
-- `model: inherit` runs the agent on the parent agent's model (the documented default). Replace with a specific model ID if this agent should run on a specific model.
+- The installed `.claude/agents/<name>.md` is a verbatim copy of this AGENT.md and carries no `readonly:` key; Cursor's compat-reading of it provides no host-level write guard. Read-only behavior is enforced by the agent body's Boundaries section. Add `readonly: true` to the installed file's frontmatter only if your Cursor setup honors it.
+- With no `model:` key, the agent runs on the parent agent's model. Add a specific model ID only if this agent should run on a specific model.
 - Reload the Cursor window after installing or editing this agent so the agent rediscovers it.
 
 ### GitHub Copilot

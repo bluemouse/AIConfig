@@ -49,7 +49,7 @@ import unittest
 from pathlib import Path
 
 # Allow importing checks/ whether run as a script or module.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / ".ai" / "tools" / "dev-workflow"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / ".agents" / "tools" / "dev-workflow"))
 
 from checks import artifact_checks  # type: ignore[import-not-found]
 from checks import handoff_checks  # type: ignore[import-not-found]
@@ -425,7 +425,7 @@ class StagedModeCommitPermissionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir) / "repo"
             self._make_git_repo(repo_root)
-            run_dir = repo_root / ".ai" / "workflow" / "run"
+            run_dir = repo_root / ".agents" / "workflow" / "run"
             run_dir.mkdir(parents=True, exist_ok=True)
             (run_dir / "00-run-manifest.md").write_text(
                 "# Run Manifest\n\n## Run metadata\n- Run mode: linear\n", encoding="utf-8",
@@ -450,7 +450,7 @@ class StagedModeCommitPermissionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir) / "repo"
             self._make_git_repo(repo_root)
-            run_dir = repo_root / ".ai" / "workflow" / "run"
+            run_dir = repo_root / ".agents" / "workflow" / "run"
             run_dir.mkdir(parents=True, exist_ok=True)
             (run_dir / "00-run-manifest.md").write_text(
                 "# Run Manifest\n\n## Run metadata\n- Run mode: staged\n", encoding="utf-8",
@@ -474,7 +474,7 @@ class StagedModeCommitPermissionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir) / "repo"
             self._make_git_repo(repo_root)
-            run_dir = repo_root / ".ai" / "workflow" / "run"
+            run_dir = repo_root / ".agents" / "workflow" / "run"
             run_dir.mkdir(parents=True, exist_ok=True)
             (run_dir / "00-run-manifest.md").write_text(
                 "# Run Manifest\n\n## Run metadata\n- Run mode: staged\n", encoding="utf-8",

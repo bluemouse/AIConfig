@@ -13,7 +13,7 @@ from pathlib import Path
 
 import sys
 # Add the checks package parent so we can import as a package
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / ".ai" / "tools" / "dev-workflow"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / ".agents" / "tools" / "dev-workflow"))
 from checks import artifact_checks  # type: ignore[import-not-found]
 from checks import Finding  # type: ignore[import-not-found]
 

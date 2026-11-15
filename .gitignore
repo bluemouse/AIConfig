@@ -51,13 +51,8 @@ timing.json
 # Claude Code runtime
 .claude/scheduled_tasks.lock
 
-# AI temp artifacts (installed content under .ai/ is committed)
-.ai/workflow/
-.ai/plans/
-.ai/researches/
-
 # Dev-workflow run history under the single-root .agents/ tree (run state,
-# never tracked; the .ai/ patterns above stay until the tree itself moves)
+# never tracked)
 .agents/workflow/
 .agents/plans/
 .agents/researches/

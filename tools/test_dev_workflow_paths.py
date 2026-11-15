@@ -13,7 +13,7 @@ Covers the pg-013 single-root redesign changes to the harness:
   linear-mode implement keeps the {30, 31, 32, 33} set. Mirrored in
   loop_checks (loop-cap round counting uses the same prefix sets).
 - test_dry_run.py locates the validation scripts next to itself rather
-  than via a cwd-relative `.ai/` path, so the dry-run harness passes from
+  than via a cwd-relative `.agents/` path, so the dry-run harness passes from
   any working directory (pre- and post-tree-move).
 
 Scratch-fixture based throughout: nothing asserts the repository's own tree.
@@ -28,7 +28,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HARNESS_DIR = REPO_ROOT / ".ai" / "tools" / "dev-workflow"
+HARNESS_DIR = REPO_ROOT / ".agents" / "tools" / "dev-workflow"
 
 sys.path.insert(0, str(HARNESS_DIR))
 
@@ -162,6 +162,26 @@ class StagedImplementPrefixTests(unittest.TestCase):
             any("Loop cap exceeded" in f.message for f in findings),
             [f.message for f in findings],
         )
+
+    def test_staged_implement_rejects_out_of_set_prefixes(self) -> None:
+        """cr-401: staged implement still REJECTS prefixes outside its set.
+
+        The accept-direction tests above pin that 40/41 are admitted in
+        staged mode; this negative guard proves a helper regression that
+        broadened the guard (e.g. allowing every prefix in staged mode)
+        cannot keep them green.
+        """
+        run_dir = self._make_run_dir(STAGED_MANIFEST)
+        (run_dir / "50-commit.md").write_text("# Commit\n", encoding="utf-8")
+        findings = mode_checks.check_only_allowed_artifacts(run_dir, "implement")
+        self.assertEqual(
+            len(findings),
+            1,
+            "Staged implement must still reject out-of-set prefixes "
+            "(50-commit.md belongs to the commit phase); findings: "
+            + str([f.message for f in findings]),
+        )
+        self.assertIn("50-commit.md", findings[0].message)
 
     def test_linear_loop_cap_ignores_review_rounds(self) -> None:
         """Linear implement round counting ignores 40-* artifacts."""

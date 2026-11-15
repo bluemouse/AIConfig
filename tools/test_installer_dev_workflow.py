@@ -720,7 +720,7 @@ class GuideTravelsWithOrchestratorTests(unittest.TestCase):
             "Guide must no longer sit at the repo root",
         )
         self.assertTrue(
-            (repo_root / ".ai" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md").is_file(),
+            (repo_root / ".agents" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md").is_file(),
             "Shared layer must carry the guide after install_portable_skill.py",
         )
 

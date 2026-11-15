@@ -1,6 +1,6 @@
 # Artifact Contract
 
-All workflow artifacts live under `.ai/workflow/<feature-slug>/`. The directory is gitignored.
+All workflow artifacts live under `.agents/workflow/<feature-slug>/`. The directory is gitignored.
 
 ## Naming scheme
 

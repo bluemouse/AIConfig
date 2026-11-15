@@ -16,7 +16,7 @@ Also validates orchestrator edits:
 - prior-round -r1 copy documented (FR-11)
 
 Bootstrap-side (post Tool-notes merge). Installed-path tests live in
-InstalledPathTests and stay on the pre-migration layout until the stage-5 move.
+InstalledPathTests and assert the post-migration dual-target layout.
 """
 
 from __future__ import annotations
@@ -35,13 +35,6 @@ CHECKER_AGENTS = (
     "implementation-auditor",
     "code-reviewer",
 )
-
-INSTALLED_WRAPPER_PATHS = {
-    "cursor": ".cursor/agents/{name}.md",
-    "claude": ".claude/agents/{name}.md",
-    "github": ".github/agents/{name}.agent.md",
-}
-
 
 def parse_frontmatter(content: str) -> dict:
     """Parse YAML frontmatter from a markdown file.
@@ -96,7 +89,9 @@ class CheckerAgentContentTests(unittest.TestCase):
             )
 
     def test_readonly_enforcement_documented_per_host(self):
-        """t-004 (post-merge): Tool notes document Cursor readonly, Claude tools restriction, Copilot instruction-only."""
+        """t-004 (cr-205/ia-002): Tool notes document the verbatim-copy reality —
+        Claude and Cursor hosts carry no readonly/tools frontmatter keys (the
+        installer copies AGENT.md verbatim), Copilot is instruction-only."""
         for name in CHECKER_AGENTS:
             agent_md = REPO_ROOT / "agents" / name / "AGENT.md"
             content = agent_md.read_text(encoding="utf-8")
@@ -108,14 +103,19 @@ class CheckerAgentContentTests(unittest.TestCase):
             )
             notes = tool_notes[1]
             self.assertIn(
-                "`readonly: true`",
+                "verbatim copy of this AGENT.md",
                 notes,
-                f"{agent_md} Tool notes missing Cursor `readonly: true` documentation",
+                f"{agent_md} Tool notes missing verbatim-copy (no host frontmatter keys) documentation",
             )
             self.assertIn(
-                "`tools: Read, Grep, Glob, Bash`",
+                "no `tools:` or `model:` keys",
                 notes,
-                f"{agent_md} Tool notes missing Claude `tools` restriction documentation",
+                f"{agent_md} Tool notes missing Claude no-host-frontmatter-keys documentation",
+            )
+            self.assertIn(
+                "no `readonly:` key",
+                notes,
+                f"{agent_md} Tool notes missing Cursor no-readonly-key documentation",
             )
             self.assertIn(
                 "instruction-only",
@@ -137,19 +137,27 @@ class CheckerAgentContentTests(unittest.TestCase):
             )
 
     def test_model_inheritance_documented_per_host(self):
-        """t-012 (post-merge): Tool notes document model:inherit for Claude/Cursor and Copilot's user-selected model."""
+        """t-012 (cr-205/ia-002): Tool notes document the default-model reality —
+        installed copies carry no `model:` key, so Claude/Cursor run on the
+        conversation/parent model and Copilot on the user's selected chat model."""
         for name in CHECKER_AGENTS:
             agent_md = REPO_ROOT / "agents" / name / "AGENT.md"
             content = agent_md.read_text(encoding="utf-8")
-            tool_notes = content.split("## Tool notes", 1)[1]
+            tool_notes = content.split("## Tool notes", 1)
+            self.assertEqual(
+                len(tool_notes),
+                2,
+                f"{agent_md} missing '## Tool notes' section for model checks",
+            )
+            notes = tool_notes[1]
             self.assertIn(
-                "`model: inherit`",
-                tool_notes,
-                f"{agent_md} Tool notes missing 'model: inherit' documentation",
+                "With no `model:` key",
+                notes,
+                f"{agent_md} Tool notes missing no-model-key default-model documentation",
             )
             self.assertIn(
                 "user's currently selected Copilot chat model",
-                tool_notes,
+                notes,
                 f"{agent_md} Tool notes missing Copilot selected-model documentation",
             )
 
@@ -204,23 +212,36 @@ class OrchestratorEditTests(unittest.TestCase):
 
 
 class InstalledPathTests(unittest.TestCase):
-    """Verify installed agent paths exist and are valid."""
+    """Verify installed agent paths exist and are valid (post-migration layout).
 
-    def test_all_installed_shared_agents_exist(self):
-        """Each checker has .ai/agents/<name>.md installed."""
-        for name in CHECKER_AGENTS:
-            path = REPO_ROOT / ".ai" / "agents" / f"{name}.md"
-            self.assertTrue(path.is_file(), f"Missing installed shared agent: {path}")
+    The single-root migration removed the old installed shared-agent tree and
+    the Cursor agent wrappers: agents are now dual-target
+    (Claude Code + GitHub Copilot) as verbatim AGENT.md copies at
+    `.claude/agents/<name>.md` and `.github/agents/<name>.agent.md`.
+    """
 
-    def test_all_installed_tool_wrappers_exist(self):
-        """Each checker has tool wrappers installed in .cursor/, .claude/, .github/."""
+    def test_all_installed_claude_agent_copies_exist(self):
+        """Each checker has a .claude/agents/<name>.md installed copy."""
         for name in CHECKER_AGENTS:
-            for tool, rel_template in INSTALLED_WRAPPER_PATHS.items():
-                path = REPO_ROOT / rel_template.format(name=name)
-                self.assertTrue(
-                    path.is_file(),
-                    f"Missing installed {tool} wrapper for {name}: {path}",
-                )
+            path = REPO_ROOT / ".claude" / "agents" / f"{name}.md"
+            self.assertTrue(path.is_file(), f"Missing installed Claude agent: {path}")
+
+    def test_all_installed_github_agent_copies_exist(self):
+        """Each checker has a .github/agents/<name>.agent.md installed copy."""
+        for name in CHECKER_AGENTS:
+            path = REPO_ROOT / ".github" / "agents" / f"{name}.agent.md"
+            self.assertTrue(path.is_file(), f"Missing installed GitHub agent: {path}")
+
+    def test_installed_copies_are_verbatim_of_bootstrap(self):
+        """Installed .claude/agents/<name>.md matches bootstrap AGENT.md verbatim."""
+        for name in CHECKER_AGENTS:
+            bootstrap = (REPO_ROOT / "agents" / name / "AGENT.md").read_text(encoding="utf-8")
+            installed = (REPO_ROOT / ".claude" / "agents" / f"{name}.md").read_text(encoding="utf-8")
+            self.assertEqual(
+                installed,
+                bootstrap,
+                f"Installed .claude/agents/{name}.md is not a verbatim copy of the bootstrap AGENT.md",
+            )
 
 
 if __name__ == "__main__":
