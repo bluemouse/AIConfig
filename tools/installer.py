@@ -11,9 +11,10 @@ Code bridge symlink .claude/skills -> ../.agents/skills. Agents distribute as
 two real copies (.claude/agents/<name>.md and .github/agents/<name>.agent.md).
 Behavioral guidelines install to .agents/guidelines/ with a consent-driven
 AGENTS.md citation offer — citations land under a '## AI guidelines' section.
---purge-legacy removes a target's pre-single-root leftovers (.ai/, .cursor
-wrapper dirs, .github/prompts/, .claude/commands/, and .claude/skills/ when it
-is a real directory) before installing.
+--purge-legacy removes a target's pre-single-root leftovers (.ai/, the
+.cursor/ skills/commands/agents wrapper dirs, .github/prompts/, .github/skills/,
+.claude/commands/, and .claude/skills/ when it is a real directory) before
+installing.
 
 Examples:
     python tools/installer.py /path/to/other-project
@@ -1911,7 +1912,8 @@ def purge_legacy_paths(target_root: Path) -> OperationResult:
 
     Purges the legacy shared layer (.ai/ — the whole directory), the Cursor
     wrapper dirs (.cursor/skills, .cursor/commands, .cursor/agents),
-    .github/prompts/, and .claude/commands/. Also removes .claude/skills/ but
+    .github/prompts/, .github/skills/ (the old Copilot skill-wrapper dir),
+    and .claude/commands/. Also removes .claude/skills/ but
     ONLY when it is a real directory: if it is already the Claude Code bridge
     symlink (.claude/skills -> ../.agents/skills) it is left alone. The
     current-layout paths (.agents/, .claude/agents/, .github/agents/) are
@@ -2226,9 +2228,10 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help=(
             "Remove the target's pre-single-root install leftovers: .ai/, "
             ".cursor/skills|commands|agents/, .github/prompts/, "
-            ".claude/commands/, and .claude/skills/ only when it is a real "
-            "directory (the bridge symlink is left alone). Composes with the "
-            "kind selectors or runs standalone; requires TARGET."
+            ".github/skills/, .claude/commands/, and .claude/skills/ only "
+            "when it is a real directory (the bridge symlink is left alone). "
+            "Composes with the kind selectors or runs standalone; requires "
+            "TARGET."
         ),
     )
     parser.add_argument(

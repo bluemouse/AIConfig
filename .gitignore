@@ -55,3 +55,9 @@ timing.json
 .ai/workflow/
 .ai/plans/
 .ai/researches/
+
+# Dev-workflow run history under the single-root .agents/ tree (run state,
+# never tracked; the .ai/ patterns above stay until the tree itself moves)
+.agents/workflow/
+.agents/plans/
+.agents/researches/

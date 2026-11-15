@@ -4,49 +4,45 @@ Guidance for coding agents working in this repository. Tool-specific notes live 
 
 ## What this repo is
 
-A **portable, shared-first layout** for AI-assisted development configuration shared across Cursor, GitHub Copilot, and Claude Code. It contains no application code — only **skills**, **agents**, **commands** (slash prompts), and the tooling that installs them into each tool's config format. Everything here is Markdown (SKILL.md / agent .md / command files with YAML frontmatter where supported) plus small Python scripts that copy/validate that content.
+A **portable, single-root layout** for AI-assisted development configuration shared across Cursor, GitHub Copilot, and Claude Code. It contains no application code — only **skills**, **agents**, **commands** (slash prompts), and the tooling that installs them into each tool's config format. Everything here is Markdown (SKILL.md / agent .md / command files with YAML frontmatter where supported) plus small Python scripts that copy/validate that content.
 
 ## Core architecture
 
-Understanding paths under `skills/`, `.ai/`, `.cursor/`, `.claude/`, and `.github/` is required before editing anything.
+Understanding paths under `skills/`, `.agents/`, `.cursor/`, `.claude/`, and `.github/` is required before editing anything.
 
-### Skills: bootstrap → shared → tool
+### Skills: bootstrap → installed
 
-1. **Bootstrap** (`skills/<name>/`, source-of-truth) — author here. Contains `SKILL.md`, optional `references/`, `scripts/`, `assets/`, and optional `wrappers/{cursor,claude,github}/SKILL.md` (custom per-tool wrapper templates; not copied to `.ai/`).
-2. **Shared** (`.ai/skills/<name>/`, generated) — tool-neutral install output produced by `install_portable_skill.py`. Full content lives here; cross-skill links (e.g. `../cpp-testing/SKILL.md`) resolve at this layer.
-3. **Tool** (`.cursor/skills/<name>/`, `.claude/skills/<name>/`, `.github/skills/<name>/`, generated) — thin per-tool wrapper pointing at the shared skill, or a custom wrapper from `skills/<name>/wrappers/` if one exists.
+1. **Bootstrap** (`skills/<name>/`, source-of-truth) — author here. Contains `SKILL.md`, optional `references/`, `scripts/`, `assets/`. Tool-specific mechanics live in a `## Tool notes` section of the body (H3 subsections per tool as needed), not in separate per-tool files.
+2. **Installed** (`.agents/skills/<name>/`, generated) — verbatim copy of the bootstrap package produced by `install_portable_skill.py`. This is the single real copy; cross-skill links (e.g. `../cpp-testing/SKILL.md`) resolve here. Cursor and GitHub Copilot read it directly; Claude Code discovers it through the `.claude/skills -> ../.agents/skills` bridge symlink the installer creates.
 
-**Never hand-edit `.ai/skills/` or tool skill folders.** They are generated output. Edit the bootstrap skill under `skills/<name>/` and re-run the install script — otherwise edits are lost on the next install.
+**Never hand-edit `.agents/skills/` for bootstrapped skills.** It is generated output. Edit the bootstrap skill under `skills/<name>/` and re-run the install script — otherwise edits are lost on the next install. The skill directory must be a direct child of a skills root; category subfolders (`skills/<category>/<name>/`) are rejected by the validator.
 
-### Custom agents: bootstrap → shared → tool
+### Custom agents: bootstrap → dual-target
 
-Agents that ship bootstrap source use the same three-layer pattern as skills. Other agents may still be scaffolded directly into `.ai/agents/` with `create_agent.py`.
+Agents that ship bootstrap source use the same two-phase pattern as skills. Other agents may still be scaffolded directly with `create_agent.py`.
 
-1. **Bootstrap** (`agents/<name>/`, source-of-truth when present) — author `AGENT.md` and optional custom tool wrapper templates in `wrappers/{cursor,claude,github}/AGENT.md`.
-2. **Shared** (`.ai/agents/<name>.md`, generated) — tool-neutral install output produced by `install_portable_agent.py`.
-3. **Tool** (`.cursor/agents/<name>.md`, `.claude/agents/<name>.md`, `.github/agents/<name>.agent.md`, generated) — thin per-tool wrapper pointing at the shared agent, or a custom wrapper from `agents/<name>/wrappers/` when one exists.
+1. **Bootstrap** (`agents/<name>/`, source-of-truth when present) — author `AGENT.md` here. Tool-specific mechanics live in a `## Tool notes` section of the body.
+2. **Installed** (`.claude/agents/<name>.md` + `.github/agents/<name>.agent.md`, generated) — two real copies produced by `install_portable_agent.py`: the Claude/Cursor file is AGENT.md verbatim; the `.agent.md` file is the Copilot transform.
 
-**Never hand-edit `.ai/agents/` or tool agent folders for bootstrapped agents.** Edit `agents/<name>/` and re-run `install_portable_agent.py`. For agents without bootstrap source, edit `.ai/agents/<name>.md` directly or regenerate with `create_agent.py`.
+**Never hand-edit the installed agent files for bootstrapped agents.** Edit `agents/<name>/` and re-run `install_portable_agent.py`. For agents without bootstrap source, edit the installed files directly or regenerate with `create_agent.py`.
 
-Not every agent requires all three tool wrappers. For a partial set (e.g. Cursor only), bootstrap under `agents/<name>/wrappers/` with only the tools you need, install, then validate each installed path individually.
+### Commands: bootstrap → command-skill
 
-### Commands: bootstrap → shared → tool
+1. **Bootstrap** (`commands/<name>/`, source-of-truth) — author `COMMAND.md` here.
+2. **Installed** (`.agents/skills/<name>/SKILL.md`, generated) — a **command-skill**: the command body with `disable-model-invocation: true` in frontmatter, produced by `install_portable_command.py`.
 
-1. **Bootstrap** (`commands/<name>/`, source-of-truth) — author `COMMAND.md` and optional custom tool wrapper templates in `wrappers/{cursor,claude,github}/COMMAND.md`.
-2. **Shared** (`.ai/commands/<name>.md`, generated) — tool-neutral install output produced by `install_portable_command.py`.
-3. **Tool** — format-transformed install outputs: `.cursor/commands/<name>.md` (plain Markdown), `.claude/commands/<name>.md` (frontmatter + body), `.github/prompts/<name>.prompt.md` (Copilot prompt).
+**Never hand-edit installed command-skills for bootstrapped commands.** Edit `commands/<name>/` and re-run `install_portable_command.py`.
 
-**Never hand-edit `.ai/commands/` or tool command paths for bootstrapped commands.** Edit `commands/<name>/` and re-run `install_portable_command.py`.
-
-Install always writes all three tool paths plus the shared file (skill-like). Commands are **explicitly invoked** with `/command-name`, unlike skills and agents which load from description.
+Commands are **explicitly invoked** with `/command-name`, unlike skills and agents which load from description; the flag keeps the model from ever self-invoking one. Commands and skills share the `.agents/skills/` namespace — a command name colliding with an existing skill (or a skill install over an existing command-skill) is rejected by the installers.
 
 | | Skills | Custom agents (bootstrap) | Custom agents (direct) | Commands |
 | --- | --- | --- | --- | --- |
-| Authoritative source | `skills/<name>/` | `agents/<name>/` | `.ai/agents/<name>.md` | `commands/<name>/` |
+| Authoritative source | `skills/<name>/` | `agents/<name>/` | `.claude/agents/<name>.md` | `commands/<name>/` |
 | Install / scaffold | `install_portable_skill.py` | `install_portable_agent.py` | `create_agent.py` | `install_portable_command.py` |
 | Direct scaffold | `create_skill.py` | — | `create_agent.py` | `create_command.py` |
-| Distribute to another project | `tools/installer.py` (copies installed shared + wrappers) | same | same | same |
-| Hand-edit shared layer? | No (regenerated from bootstrap) | No (regenerated from bootstrap) | Yes (canonical) | No (regenerated from bootstrap) |
+| Install output | `.agents/skills/<name>/` | `.claude/agents/` + `.github/agents/` | same | `.agents/skills/<name>/SKILL.md` (flagged) |
+| Distribute to another project | `tools/installer.py` (copies the installed single-root/dual-target files) | same | same | same |
+| Hand-edit install output? | No (regenerated from bootstrap) | No (regenerated from bootstrap) | Yes (canonical) | No (regenerated from bootstrap) |
 
 Skills are discovered by frontmatter (`name`, `description`); an agent reads the `description` to decide when to load the full `SKILL.md` body. Description wording is load-bearing — `skill-creator`'s eval tooling (`run_eval.py`) tests whether a description reliably triggers on target phrases.
 
@@ -80,30 +76,30 @@ See [README.md](README.md) for the full bootstrap skill table, cluster relations
 
 All scripts run from the repository root. There is no package manifest; scripts use only the `yaml` package (must be available in the active Python environment) plus stdlib.
 
-**Install/refresh a bootstrap skill → shared + tool skills:**
+**Install/refresh a bootstrap skill → single-root copy:**
 
 ```bash
 python skills/skill-creator/scripts/install_portable_skill.py \
   --root . --name <skill-name> --source skills/<skill-name> --overwrite
 ```
 
-Re-run after every bootstrap edit — copies bootstrap → `.ai/skills/<name>/` (excluding `wrappers/`), regenerates the three tool skills, and validates all four paths.
+Re-run after every bootstrap edit — copies bootstrap → `.agents/skills/<name>/`, ensures the `.claude/skills` bridge symlink exists, and validates the install.
 
-**Validate a single skill path (shared or tool):**
+**Validate a single skill path (bootstrap or installed):**
 
 ```bash
 python skills/skill-creator/scripts/quick_validate.py <path-to-skill-dir>
 ```
 
-Run against `.ai/skills/<name>` and each tool skill path after inspection or before considering a skill done.
+Run against `.agents/skills/<name>` after inspection or before considering a skill done.
 
-**Scaffold a skill without bootstrap** (writes directly to `.ai/` + tool skills — prefer bootstrap under `skills/<name>/` and the **skill-creator** skill for new skills in this repo):
+**Scaffold a skill without bootstrap** (writes directly to `.agents/skills/` — prefer bootstrap under `skills/<name>/` and the **skill-creator** skill for new skills in this repo):
 
 ```bash
 python skills/skill-creator/scripts/create_skill.py --root . --name my-skill
 ```
 
-**Install/refresh a bootstrap agent → shared + tool wrappers:**
+**Install/refresh a bootstrap agent → dual-target copies:**
 
 ```bash
 python skills/agent-creator/scripts/install_portable_agent.py \
@@ -124,14 +120,14 @@ python skills/agent-creator/scripts/create_agent.py --root . --name my-agent \
 python skills/agent-creator/scripts/quick_validate.py --root . --name my-agent
 ```
 
-For agents with only some tool wrappers (e.g. Cursor-only), validate each existing file:
+**Validate installed agent files:**
 
 ```bash
-python skills/agent-creator/scripts/quick_validate.py .ai/agents/<name>.md
-python skills/agent-creator/scripts/quick_validate.py .cursor/agents/<name>.md
+python skills/agent-creator/scripts/quick_validate.py .claude/agents/<name>.md
+python skills/agent-creator/scripts/quick_validate.py .github/agents/<name>.agent.md
 ```
 
-**Install/refresh a bootstrap command → shared + tool outputs:**
+**Install/refresh a bootstrap command → command-skill:**
 
 ```bash
 python skills/command-creator/scripts/install_portable_command.py \
@@ -152,15 +148,15 @@ python skills/command-creator/scripts/create_command.py --root . --name my-comma
 python skills/command-creator/scripts/quick_validate.py --root . --name my-command
 ```
 
-**Bootstrap and install skills, agents, or commands:** use the **skill-creator**, **agent-creator**, and **command-creator** installed skills. For skills, author under `skills/<name>/` (often from `skills-ref/<name>/` templates), validate, then run `install_portable_skill.py`. For agents, author under `agents/<name>/` or use `create_agent.py` for a direct scaffold, validate, then run `install_portable_agent.py` when using bootstrap source. For commands, author under `commands/<name>/`, validate, then run `install_portable_command.py`. See [README.md](README.md) for examples.
+**Bootstrap and install skills, agents, or commands:** use the **skill-creator**, **agent-creator**, and **command-creator** installed skills. For skills, author under `skills/<name>/`, validate, then run `install_portable_skill.py`. For agents, author under `agents/<name>/` or use `create_agent.py` for a direct scaffold, validate, then run `install_portable_agent.py` when using bootstrap source. For commands, author under `commands/<name>/`, validate, then run `install_portable_command.py`. See [README.md](README.md) for examples.
 
-**Package a shared skill for distribution:**
+**Package an installed skill for distribution:**
 
 ```bash
-python skills/skill-creator/scripts/package_skill.py .ai/skills/my-skill
+python skills/skill-creator/scripts/package_skill.py .agents/skills/my-skill
 ```
 
-**Copy installed skills, agents, commands, and scripts to another project** (from this repo root; copies `.ai/` plus tool wrappers — not bootstrap sources):
+**Copy installed skills, agents, commands, and scripts to another project** (from this repo root; copies the installed `.agents/` + dual-target agent files — not bootstrap sources):
 
 ```bash
 python tools/installer.py /path/to/other-project
@@ -169,30 +165,31 @@ python tools/installer.py /path/to/other-project --commands git-commit --overrid
 python tools/installer.py /path/to/other-project --bundles core-dev-workflow
 python tools/installer.py /path/to/other-project --bundles target-bundle
 python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines --update-agents-md
+python tools/installer.py /path/to/other-project --purge-legacy
 python tools/installer.py /path/to/other-project --agents my-agent --uninstall
 python tools/installer.py /path/to/other-project --commands git-commit --uninstall
 python tools/installer.py   # GUI when no arguments
 ```
 
-Omit `--skills`, `--agents`, and `--commands` to install or uninstall all names discovered under `.cursor/`, `.claude/`, and `.github/`. Use `--bundles` to install workflow skill sets from [tools/bundles.json](tools/bundles.json) or the dynamic `target-bundle` (skills, agents, commands, and scripts already installed in the target project; documented in [tools/bundles.md](tools/bundles.md)). Without `--override`, existing target paths are skipped. See [README.md](README.md#distribute-to-another-project) for full flag reference.
+Omit `--skills`, `--agents`, and `--commands` to install or uninstall all names discovered under `.agents/skills/` (skills and command-skills) and the dual-target agent paths. Use `--bundles` to install workflow skill sets from [tools/bundles.json](tools/bundles.json) or the dynamic `target-bundle` (skills, agents, commands, and scripts already installed in the target project; documented in [tools/bundles.md](tools/bundles.md)). Without `--override`, existing target paths are skipped. `--purge-legacy` removes a target's pre-single-root leftovers (`.ai/`, `.cursor/{skills,commands,agents}/`, `.github/prompts/`, `.github/skills/`, `.claude/commands/`, and `.claude/skills/` when it is a real directory) and composes with the kind selectors. See [README.md](README.md#distribute-to-another-project) for full flag reference.
 
 **Trigger-eval a skill description:**
 
 ```bash
 cd skills/skill-creator && python -m scripts.run_eval \
-  --skill-path ../../.ai/skills/<name> \
+  --skill-path ../../.agents/skills/<name> \
   --eval-set ../../skills/<name>/eval-queries.json
 ```
 
-Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer`, `commit-message-writer`, `code-reviewer`, `techdoc-reviewer`, `github-guide`, `command-creator`, `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor`, `implementation-auditor`, `test-driven-dev-guide`, `debugging-guide`, `cpp-coding`, `cpp-performance-guide`, `agent-runner`, `prompt-clarifier`, `advisory-council`, `devil-advocate`, `qt-ui-guide`, and `tutorial-writer` ship `eval-queries.json` for description trigger testing. Kotlin/Gradle skills in `skills-ref/` also ship `eval-queries.json` for description trigger testing.
+Example for painting-engine skills: `mypaint-engine-dev` and `krita-engine-dev` ship `eval-queries.json` under their bootstrap paths. `minutes-writer`, `commit-message-writer`, `code-reviewer`, `techdoc-reviewer`, `github-guide`, `command-creator`, `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor`, `implementation-auditor`, `test-driven-dev-guide`, `debugging-guide`, `cpp-coding`, `cpp-performance-guide`, `agent-runner`, `prompt-clarifier`, `advisory-council`, `devil-advocate`, `qt-ui-guide`, and `tutorial-writer` ship `eval-queries.json` for description trigger testing.
 
 See [README.md](README.md) for install examples and meta-skill usage.
 
 ## Editing conventions
 
-- Bootstrap `SKILL.md` bodies must stay **tool-neutral** — no Cursor/Claude/Copilot-specific mechanics in the shared body. Tool-specific mechanics belong in that tool's wrapper under `skills/<name>/wrappers/` or the generated tool skill folder.
+- Bootstrap `SKILL.md` and `AGENT.md` bodies must stay **tool-neutral** in the main body — tool-specific mechanics belong in a `## Tool notes` section (H2, with `### Claude Code` / `### Cursor` / `### GitHub Copilot` H3 subsections as needed) of the bootstrap body.
 - Resolve `<SKILL_ROOT>` / `<SKILL_CREATOR_ROOT>` / `<AGENT_CREATOR_ROOT>` / `<COMMAND_CREATOR_ROOT>` as "the directory containing this skill's SKILL.md" — used throughout skill/agent/command-creator bodies to reference bundled `references/`, `scripts/`, `assets/` without hardcoding paths.
-- Cross-link sibling skills with relative paths from the shared layer (e.g. `../cpp-testing/SKILL.md`), since links only need to resolve after install.
+- Cross-link sibling skills with relative paths (e.g. `../cpp-testing/SKILL.md`) — they resolve after install because bootstrap and installed copies sit at the same depth.
 - `.cursor/rules/` (`.mdc` files, frontmatter controls `globs`/`alwaysApply`) is for small always-on or path-scoped rules — keep them composable, not full skills.
 - Follow [guidelines/coding-behavior-guidelines.md](guidelines/coding-behavior-guidelines.md) when generating or editing any code in this repo or in skill/agent output.
 - Follow [guidelines/code-comment-guidelines.md](guidelines/code-comment-guidelines.md) when writing or updating code comments or commit messages in this repo or in skill/agent output.

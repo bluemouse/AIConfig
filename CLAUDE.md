@@ -8,38 +8,34 @@ Apply the `response-guidelines` guideline (`guidelines/response-guidelines.md`) 
 
 ## Discovery and reload
 
-- **Project skills:** `.claude/skills/<name>/SKILL.md` (wrapper) + `.ai/skills/<name>/` (shared content)
-- **Custom agents:** `.claude/agents/<name>.md` (wrapper) + `.ai/agents/<name>.md` (shared content)
-- **Slash commands:** `.claude/commands/<name>.md` (installed from `commands/<name>/` bootstrap via command-creator). Available commands include `/dev-workflow` (full pipeline) and `/dev-workflow-{research,plan,implement,review}` (individual phase loops), plus `/git-commit`
+- **Project skills:** `.agents/skills/<name>/SKILL.md` — discovered through the `.claude/skills` bridge symlink (`.claude/skills -> ../.agents/skills`, auto-created on install)
+- **Custom agents:** `.claude/agents/<name>.md` (one dual-target copy; the twin lives at `.github/agents/<name>.agent.md`)
+- **Slash commands:** installed as command-skills at `.agents/skills/<name>/SKILL.md` with `disable-model-invocation: true` (installed from `commands/<name>/` bootstrap via command-creator). Available commands include `/dev-workflow` (full pipeline) and `/dev-workflow-{research,plan,implement,review}` (individual phase loops), plus `/git-commit`
 - **Restart or reload** the Claude Code session after installing or editing skills, agents, or commands
-
-When a tool skill wrapper says to read the shared skill first, resolve paths from `.ai/skills/<name>/` — not from `.claude/skills/<name>/`.
 
 ## Skill and agent workflow
 
-**Skills:** edit bootstrap under `skills/<name>/`, then install with `install_portable_skill.py`. Do not hand-edit `.ai/skills/` or `.claude/skills/` — reinstall from bootstrap instead.
+**Skills:** edit bootstrap under `skills/<name>/`, then install with `install_portable_skill.py`. Do not hand-edit `.agents/skills/` for bootstrapped skills — reinstall from bootstrap instead.
 
-**Custom agents:** edit bootstrap under `agents/<name>/` when bootstrap source exists, then install with `install_portable_agent.py`. Do not hand-edit `.ai/agents/` or `.claude/agents/` for bootstrapped agents — reinstall from bootstrap instead. For agents without bootstrap source, edit `.ai/agents/<name>.md` directly or regenerate with `create_agent.py`.
+**Custom agents:** edit bootstrap under `agents/<name>/` when bootstrap source exists, then install with `install_portable_agent.py`. Do not hand-edit `.claude/agents/` or `.github/agents/` for bootstrapped agents — reinstall from bootstrap instead. For agents without bootstrap source, edit `.claude/agents/<name>.md` directly or regenerate with `create_agent.py`.
 
-**Commands:** edit bootstrap under `commands/<name>/`, then install with `install_portable_command.py`. Do not hand-edit `.ai/commands/` or `.claude/commands/` for bootstrapped commands — reinstall from bootstrap instead.
+**Commands:** edit bootstrap under `commands/<name>/`, then install with `install_portable_command.py`. Do not hand-edit installed command-skills for bootstrapped commands — reinstall from bootstrap instead.
 
-**Claude-only wrapper mechanics** (subagents, reload, Cowork): edit `skills/<name>/wrappers/claude/SKILL.md`, then re-install from bootstrap. Edits under `.claude/skills/<name>/` alone are overwritten on the next install — copy durable changes back to the bootstrap wrapper first.
-
-When a wrapper and the shared skill disagree on mechanics, follow the **Claude wrapper** for Claude Code execution.
+**Claude-specific mechanics** (subagents, reload, Cowork): edit the `### Claude Code` subsection under `## Tool notes` in the bootstrap `SKILL.md` / `AGENT.md`, then re-install from bootstrap. Edits under the installed copy alone are overwritten on the next install — copy durable changes back to the bootstrap body first.
 
 ## Running evals in Claude Code
 
-Claude Code supports **subagents** — use the full benchmark loop in `.ai/skills/skill-creator/SKILL.md` and `.claude/skills/skill-creator/SKILL.md`.
+Claude Code supports **subagents** — use the full benchmark loop in `.agents/skills/skill-creator/SKILL.md`.
 
 Key rules:
 
 - Spawn with-skill and baseline subagents in the **same turn** per test case
 - Write `eval_metadata.json` and `timing.json` when completion data is available
-- Grade with `.ai/skills/skill-creator/agents/grader.md`
+- Grade with `.agents/skills/skill-creator/agents/grader.md`
 - **Always** launch the eval viewer (`skills/skill-creator/eval-viewer/generate_review.py`) and show results to the human before revising the skill
 - Read `feedback.json` when the user finishes review
 
-For description optimization after content is stable, use `run_loop.py` from `skills/skill-creator/scripts/` (see the Claude skill-creator wrapper).
+For description optimization after content is stable, use `run_loop.py` from `skills/skill-creator/scripts/` (see the skill-creator skill's Claude Code Tool notes).
 
 ## Cowork / headless Claude Code
 
