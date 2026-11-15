@@ -73,7 +73,7 @@ def write_source_guideline(root: Path, name: str, text: str = "# Guideline\n") -
 class GuidelineMemberKindTests(unittest.TestCase):
     """The guidelines member kind: discovery, install, and selection."""
 
-    def test_install_guideline_places_file_in_ai_guidelines(self) -> None:
+    def test_install_guideline_places_file_in_agents_guidelines(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
@@ -91,7 +91,7 @@ class GuidelineMemberKindTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            installed = target / ".ai" / "guidelines" / "coding-behavior-guidelines.md"
+            installed = target / ".agents" / "guidelines" / "coding-behavior-guidelines.md"
             self.assertTrue(installed.is_file())
             self.assertEqual(installed.read_text(encoding="utf-8"), "# Be careful\n")
 
@@ -123,8 +123,8 @@ class GuidelineMemberKindTests(unittest.TestCase):
             # A discoverable skill in the source: proves --guidelines-only does
             # not leak into the no-selector default (cr-004).
             for rel in (
-                ".ai/skills/leak-skill/SKILL.md",
-                ".cursor/skills/leak-skill/SKILL.md",
+                ".agents/skills/leak-skill/SKILL.md",
+                ".agents/skills/leak-skill/EXTRA.md",
             ):
                 path = source / rel
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -142,10 +142,10 @@ class GuidelineMemberKindTests(unittest.TestCase):
                 mod.REPO_ROOT = original_root
 
             self.assertEqual(code, 0)
-            installed = target / ".ai" / "guidelines" / "coding-behavior-guidelines.md"
+            installed = target / ".agents" / "guidelines" / "coding-behavior-guidelines.md"
             self.assertTrue(installed.is_file())
             self.assertFalse(
-                (target / ".ai" / "skills" / "leak-skill").exists(),
+                (target / ".agents" / "skills" / "leak-skill").exists(),
                 "--guidelines-only must not trigger the default skill install",
             )
 
@@ -194,7 +194,7 @@ class GuidelineMemberKindTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            installed = target / ".ai" / "guidelines" / "response-guidelines.md"
+            installed = target / ".agents" / "guidelines" / "response-guidelines.md"
             self.assertTrue(installed.is_file())
             self.assertIn("# Verdict First", installed.read_text(encoding="utf-8"))
 
@@ -402,8 +402,8 @@ class AgentsMdIntegrationTests(unittest.TestCase):
         line = mod.build_guideline_citation_line("coding-behavior-guidelines")
         self.assertEqual(
             line,
-            "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
-            "(.ai/guidelines/coding-behavior-guidelines.md) "
+            "- Follow [.agents/guidelines/coding-behavior-guidelines.md]"
+            "(.agents/guidelines/coding-behavior-guidelines.md) "
             "in this repo.",
         )
 
@@ -415,8 +415,8 @@ class AgentsMdIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(
             line,
-            "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
-            "(.ai/guidelines/coding-behavior-guidelines.md) "
+            "- Follow [.agents/guidelines/coding-behavior-guidelines.md]"
+            "(.agents/guidelines/coding-behavior-guidelines.md) "
             "— Load before writing or editing code.",
         )
 
@@ -431,7 +431,8 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             )
 
     def test_citation_variants_include_described_form(self) -> None:
-        """t-203: removal matches described, bare, and legacy wordings (fr-5)."""
+        """t-203 (cr-002 update): removal matches every wording the installer
+        wrote — current described/bare and all three legacy `.ai/` forms."""
         variants = mod.guideline_citation_variants(
             "coding-behavior-guidelines",
             "Load before writing or editing code.",
@@ -445,7 +446,211 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 ),
                 mod.build_guideline_citation_line("coding-behavior-guidelines"),
                 mod._legacy_guideline_citation_line("coding-behavior-guidelines"),
+                mod._legacy_guideline_citation_line(
+                    "coding-behavior-guidelines",
+                    "Load before writing or editing code.",
+                ),
+                mod._legacy_guideline_citation_line(
+                    "coding-behavior-guidelines", ""
+                ),
             },
+        )
+
+    def test_citation_variants_include_legacy_ai_path(self) -> None:
+        """t-012: variants carry the pre-single-root `.ai/guidelines/` wordings.
+
+        Upgrade removal must match citations written by the pre-.agents/
+        installer, so a target upgraded from the old layout can be re-cited
+        cleanly.
+        """
+        variants = mod.guideline_citation_variants("coding-behavior-guidelines")
+        self.assertIn(
+            "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
+            "(.ai/guidelines/coding-behavior-guidelines.md) "
+            "when generating or editing any code in this repo.",
+            variants,
+        )
+
+    def test_citation_variants_include_legacy_bare_and_described_wordings(self) -> None:
+        """cr-002: the pre-upgrade installer wrote all three `.ai/` wordings.
+
+        HEAD-era installers (b91f932..893f6f3) wrote the pre-generalization,
+        bare ("in this repo."), and described ("— <description>") forms with
+        `.ai/guidelines/` paths; removal must match all of them.
+        """
+        name = "coding-behavior-guidelines"
+        description = "Load before writing or editing code."
+        variants = mod.guideline_citation_variants(name, description)
+        legacy_rel = mod.LEGACY_GUIDELINE_FILE.format(name=name)
+        self.assertIn(
+            f"- Follow [{legacy_rel}]({legacy_rel}) in this repo.",
+            variants,
+            "legacy bare wording must be in the variants set",
+        )
+        self.assertIn(
+            f"- Follow [{legacy_rel}]({legacy_rel}) — {description}",
+            variants,
+            "legacy described wording must be in the variants set",
+        )
+        self.assertEqual(len(variants), 5)
+
+    def test_append_recites_legacy_only_citation(self) -> None:
+        """cr-002: a legacy-path-only citation is stale, not "already cited".
+
+        A target carrying a current-era `.ai/guidelines/` citation, upgraded
+        via --purge-legacy, ends with the `.ai/` file purged — the stale
+        citation line must be removed and a new `.agents/` line written, with
+        the name reported as appended.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            legacy_rel = mod.LEGACY_GUIDELINE_FILE.format(
+                name="coding-behavior-guidelines"
+            )
+            legacy = f"- Follow [{legacy_rel}]({legacy_rel}) in this repo."
+            (target / "AGENTS.md").write_text(
+                f"# Project\n{legacy}\n", encoding="utf-8"
+            )
+
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            appended, already = mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+
+            self.assertEqual(appended, ["coding-behavior-guidelines"])
+            self.assertEqual(already, [])
+            text = (target / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn(
+                mod.build_guideline_citation_line("coding-behavior-guidelines"),
+                text,
+            )
+            self.assertNotIn(".ai/guidelines/", text)
+
+    def test_append_recites_legacy_described_citation(self) -> None:
+        """cr-002 described variant: the same rewrite for a legacy `.ai/`
+        line that carried a load-trigger description.
+
+        The described wording only matches when the description still equals
+        the current source's (same provenance rule as removal: a drifted
+        description reads as user-edited and is kept).
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            legacy_rel = mod.LEGACY_GUIDELINE_FILE.format(
+                name="coding-behavior-guidelines"
+            )
+            description = "Load before writing or editing code."
+            legacy = f"- Follow [{legacy_rel}]({legacy_rel}) — {description}"
+            (target / "AGENTS.md").write_text(
+                f"# Project\n{legacy}\n", encoding="utf-8"
+            )
+
+            source = Path(tmp) / "source"
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                f"description: {description}\n"
+                "---\n"
+                "# Be careful\n",
+            )
+            appended, already = mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+
+            self.assertEqual(appended, ["coding-behavior-guidelines"])
+            self.assertEqual(already, [])
+            text = (target / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertNotIn(".ai/guidelines/", text)
+            self.assertEqual(
+                text.count("- Follow [.agents/guidelines/"), 1,
+            )
+
+    def test_append_keeps_new_path_citation_as_already_cited(self) -> None:
+        """cr-002 guard rail: a current `.agents/` citation stays "already".
+
+        Only the legacy-path-only shape is treated as stale; a citation under
+        the current path is never rewritten.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            current = mod.build_guideline_citation_line(
+                "coding-behavior-guidelines"
+            )
+            (target / "AGENTS.md").write_text(
+                f"# Project\n{current}\n", encoding="utf-8"
+            )
+
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            appended, already = mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+
+            self.assertEqual(appended, [])
+            self.assertEqual(already, ["coding-behavior-guidelines"])
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                f"# Project\n{current}\n",
+            )
+
+    def test_remove_matches_legacy_bare_and_described_wordings(self) -> None:
+        """cr-002: uninstall removal matches the bare and described legacy
+        `.ai/guidelines/` wordings, not just the pre-generalization one.
+
+        The described wording matches only while the description still
+        equals the current source's (a drifted one reads as user-edited and
+        is kept — same rule as test_remove_keeps_user_edited_described_line).
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            legacy_rel = mod.LEGACY_GUIDELINE_FILE.format(
+                name="coding-behavior-guidelines"
+            )
+            bare = f"- Follow [{legacy_rel}]({legacy_rel}) in this repo."
+            source = Path(tmp) / "source"
+            description = "Load before writing or editing code."
+            write_source_guideline(
+                source,
+                "coding-behavior-guidelines",
+                "---\n"
+                f"description: {description}\n"
+                "---\n"
+                "# Be careful\n",
+            )
+            described = f"- Follow [{legacy_rel}]({legacy_rel}) — {description}"
+            (target / "AGENTS.md").write_text(
+                f"# Project\n{bare}\n{described}\nTail.\n", encoding="utf-8"
+            )
+
+            removed, kept = mod.agents_md_remove_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+
+            self.assertEqual(removed, ["coding-behavior-guidelines"])
+            self.assertEqual(kept, [])
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+                "# Project\nTail.\n",
+            )
+
+    def test_is_cited_matches_new_and_legacy_paths(self) -> None:
+        """t-012: `guideline_is_cited` matches ANY path variant, new or legacy."""
+        for line in (
+            "- See .agents/guidelines/coding-behavior-guidelines.md for rules.",
+            "- See .ai/guidelines/coding-behavior-guidelines.md for rules.",
+        ):
+            self.assertTrue(
+                mod.guideline_is_cited(
+                    f"# Project\n{line}\n", "coding-behavior-guidelines"
+                ),
+                f"guideline_is_cited must match: {line}",
+            )
+        self.assertFalse(
+            mod.guideline_is_cited(
+                "# Project\nUnrelated text.\n", "coding-behavior-guidelines"
+            )
         )
 
     def test_append_writes_described_line_for_frontmatter_source(self) -> None:
@@ -473,8 +678,8 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             self.assertEqual(
                 (target / "AGENTS.md").read_text(encoding="utf-8"),
                 "# Project\n\n## AI guidelines\n\n"
-                "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
-                "(.ai/guidelines/coding-behavior-guidelines.md)"
+                "- Follow [.agents/guidelines/coding-behavior-guidelines.md]"
+                "(.agents/guidelines/coding-behavior-guidelines.md)"
                 " — Load before writing or editing code.\n",
             )
 
@@ -593,7 +798,7 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             self.assertEqual(text.count("## AI guidelines"), 1)
             self.assertEqual(
                 text.count(
-                    "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
+                    "- Follow [.agents/guidelines/coding-behavior-guidelines.md]"
                 ),
                 1,
             )
@@ -696,7 +901,7 @@ class AgentsMdIntegrationTests(unittest.TestCase):
 
             self.assertTrue(result.ok, result.errors)
             self.assertFalse(
-                (target / ".ai" / "guidelines" / "coding-behavior-guidelines.md").exists()
+                (target / ".agents" / "guidelines" / "coding-behavior-guidelines.md").exists()
             )
 
     def test_remove_matches_legacy_citation_wording(self) -> None:
@@ -751,6 +956,41 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             raw = (target / "AGENTS.md").read_bytes()
             self.assertEqual(raw, b"# Project\r\n\r\n\r\nTail.\r\n")
 
+    def test_legacy_only_citation_is_rewritten_on_append(self) -> None:
+        """t-012 (cr-002 supersede, cr-104 rename): a legacy-path-ONLY
+        `.ai/guidelines/` citation is stale, not already-cited.
+
+        The pre-single-root citation points at a file that no longer exists
+        after a --purge-legacy upgrade; append now removes the dead line and
+        writes the current `.agents/guidelines/` citation instead of
+        reporting "already cited" and leaving the target with nothing.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            legacy = (
+                "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
+                "(.ai/guidelines/coding-behavior-guidelines.md) "
+                "when generating or editing any code in this repo."
+            )
+            (target / "AGENTS.md").write_text(
+                f"# Project\n{legacy}\n", encoding="utf-8"
+            )
+
+            source = Path(tmp) / "source"
+            write_source_guideline(source, "coding-behavior-guidelines")
+            appended, already = mod.agents_md_append_lines(
+                target, ["coding-behavior-guidelines"], source_root=source
+            )
+
+            self.assertEqual(appended, ["coding-behavior-guidelines"])
+            self.assertEqual(already, [])
+            text = (target / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertNotIn(".ai/guidelines/", text)
+            self.assertIn(
+                mod.build_guideline_citation_line("coding-behavior-guidelines"),
+                text,
+            )
+
     def test_append_lines_to_existing_agents_md(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
@@ -804,7 +1044,7 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             target = Path(tmp)
             agents_md = target / "AGENTS.md"
             hand_worded = (
-                "- See .ai/guidelines/coding-behavior-guidelines.md for coding rules."
+                "- See .agents/guidelines/coding-behavior-guidelines.md for coding rules."
             )
             agents_md.write_text(f"# Project\n{hand_worded}\n", encoding="utf-8")
             before = agents_md.read_bytes()
@@ -825,7 +1065,7 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             agents_md = target / "AGENTS.md"
             agents_md.write_text(
                 "# Project\n"
-                "- See .ai/guidelines/coding-behavior-guidelines.md for rules.\n",
+                "- See .agents/guidelines/coding-behavior-guidelines.md for rules.\n",
                 encoding="utf-8",
             )
             before = agents_md.read_bytes()
@@ -842,7 +1082,7 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             target = Path(tmp)
             agents_md = target / "AGENTS.md"
             agents_md.write_text(
-                "# Project\n- See .ai/guidelines/first-guideline.md for rules.\n",
+                "# Project\n- See .agents/guidelines/first-guideline.md for rules.\n",
                 encoding="utf-8",
             )
 
@@ -1130,7 +1370,7 @@ class AgentsMdIntegrationTests(unittest.TestCase):
 
             self.assertTrue(result.ok, result.errors)
             self.assertFalse(
-                (target / ".ai" / "guidelines" / "coding-behavior-guidelines.md").exists()
+                (target / ".agents" / "guidelines" / "coding-behavior-guidelines.md").exists()
             )
 
     def test_uninstall_skips_modified_file(self) -> None:
@@ -1147,7 +1387,7 @@ class AgentsMdIntegrationTests(unittest.TestCase):
                 scripts=[],
                 guidelines=["coding-behavior-guidelines"],
             )
-            installed = target / ".ai" / "guidelines" / "coding-behavior-guidelines.md"
+            installed = target / ".agents" / "guidelines" / "coding-behavior-guidelines.md"
             installed.write_text("# User-customized guideline\n", encoding="utf-8")
 
             original_root = mod.REPO_ROOT
@@ -1167,7 +1407,7 @@ class AgentsMdIntegrationTests(unittest.TestCase):
             self.assertTrue(result.ok, result.errors)
             self.assertTrue(installed.exists())
             self.assertIn(
-                ".ai/guidelines/coding-behavior-guidelines.md", result.skipped
+                ".agents/guidelines/coding-behavior-guidelines.md", result.skipped
             )
 
     def test_uninstall_removes_identical_line(self) -> None:
@@ -1192,8 +1432,8 @@ class AgentsMdIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
             edited = (
-                "- Follow [.ai/guidelines/coding-behavior-guidelines.md]"
-                "(.ai/guidelines/coding-behavior-guidelines.md) "
+                "- Follow [.agents/guidelines/coding-behavior-guidelines.md]"
+                "(.agents/guidelines/coding-behavior-guidelines.md) "
                 "but only on weekdays (user edit)."
             )
             (target / "AGENTS.md").write_text(
@@ -1440,7 +1680,7 @@ class AgentsMdIntegrationTests(unittest.TestCase):
         message = mod.format_guidelines_integration_message(
             ["coding-behavior-guidelines"]
         )
-        self.assertIn(".ai/guidelines/coding-behavior-guidelines.md", message)
+        self.assertIn(".agents/guidelines/coding-behavior-guidelines.md", message)
         self.assertIn("AGENTS.md", message)
         self.assertIn("prompt", message.lower())
 
@@ -1594,7 +1834,7 @@ class RunCliCompositionTests(unittest.TestCase):
 
             self.assertEqual(code, 0)
             self.assertFalse(
-                (target / ".ai" / "guidelines" / "coding-behavior-guidelines.md").exists()
+                (target / ".agents" / "guidelines" / "coding-behavior-guidelines.md").exists()
             )
             # Byte-exact round trip: install + uninstall restores the file.
             self.assertEqual(

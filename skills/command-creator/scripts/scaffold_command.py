@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Shared scaffolding helpers for portable slash commands and Copilot prompts.
+Shared scaffolding helpers for portable command-skills.
+
+Commands install as command-skills: a single .agents/skills/<name>/SKILL.md
+with `disable-model-invocation: true`, so every coding agent exposes them as
+/<name> and the model never self-invokes them.
 """
 
 from __future__ import annotations
@@ -10,19 +14,7 @@ from pathlib import Path
 
 import yaml
 
-from quick_validate import body_after_frontmatter, parse_frontmatter
-
-TOOL_PATHS = {
-    "cursor": ".cursor/commands/{name}.md",
-    "claude": ".claude/commands/{name}.md",
-    "github": ".github/prompts/{name}.prompt.md",
-}
-
-SHARED_COMMAND_FILENAME = "COMMAND.md"
-
-DEFAULT_TOOL_FRONTMATTER = {
-    "github": {"agent": "agent"},
-}
+from quick_validate import parse_frontmatter
 
 
 class CommandCreatorError(Exception):
@@ -51,13 +43,6 @@ def rebuild_frontmatter(frontmatter: dict) -> str:
     return f"---\n{yaml_block}\n---\n"
 
 
-def frontmatter_block(name: str, description: str, extra: dict | None = None) -> str:
-    data = {"name": name, "description": description}
-    if extra:
-        data.update(extra)
-    return rebuild_frontmatter(data)
-
-
 def normalize_markdown_body(body: str) -> str:
     body = body.strip()
     if not body:
@@ -65,84 +50,74 @@ def normalize_markdown_body(body: str) -> str:
     return body + "\n"
 
 
-def shared_command_content(name: str, description: str, body: str) -> str:
-    return frontmatter_block(name, description) + "\n" + normalize_markdown_body(body)
-
-
-def merge_frontmatter(
-    base: dict,
-    overrides: dict | None,
-    *,
-    locked_keys: tuple[str, ...] = ("name", "description"),
-) -> dict:
-    merged = dict(base)
-    if overrides:
-        for key, value in overrides.items():
-            if key not in locked_keys:
-                merged[key] = value
-    for key in locked_keys:
-        if key in base:
-            merged[key] = base[key]
-    return merged
-
-
-def append_bodies(*parts: str) -> str:
-    cleaned = [part.strip() for part in parts if part and part.strip()]
-    if not cleaned:
-        raise CommandCreatorError("Command body cannot be empty.")
-    return "\n\n".join(cleaned) + "\n"
-
-
-def build_cursor_content(shared_body: str, wrapper_body: str = "") -> str:
-    if wrapper_body.strip().startswith("---"):
-        raise CommandCreatorError("Cursor command output must not contain YAML frontmatter.")
-    return append_bodies(shared_body, wrapper_body)
-
-
-def build_claude_content(
+def command_skill_content(
     name: str,
     description: str,
-    shared_body: str,
-    wrapper_content: str = "",
-    wrapper_frontmatter: dict | None = None,
+    body: str,
+    allowed_tools: object | None = None,
 ) -> str:
-    base = {"name": name, "description": description}
-    merged = merge_frontmatter(base, wrapper_frontmatter)
-    wrapper_body = body_after_frontmatter(wrapper_content) if wrapper_content.strip() else ""
-    body = append_bodies(shared_body, wrapper_body)
-    return rebuild_frontmatter(merged) + "\n" + body
+    """Build the command-skill SKILL.md content.
+
+    Frontmatter carries `disable-model-invocation: true` so the skill is
+    slash-invoked only; `allowed-tools` transfers verbatim when declared.
+    """
+    frontmatter: dict = {
+        "name": name,
+        "description": description,
+        "disable-model-invocation": True,
+    }
+    if allowed_tools is not None:
+        frontmatter["allowed-tools"] = allowed_tools
+    return rebuild_frontmatter(frontmatter) + "\n" + normalize_markdown_body(body)
 
 
-def build_github_content(
-    name: str,
-    description: str,
-    shared_body: str,
-    wrapper_content: str = "",
-    wrapper_frontmatter: dict | None = None,
-) -> str:
-    base = {"name": name, "description": description, **DEFAULT_TOOL_FRONTMATTER["github"]}
-    merged = merge_frontmatter(base, wrapper_frontmatter)
-    wrapper_body = body_after_frontmatter(wrapper_content) if wrapper_content.strip() else ""
-    body = append_bodies(shared_body, wrapper_body)
-    return rebuild_frontmatter(merged) + "\n" + body
+def is_command_skill(skill_md: Path) -> bool:
+    """True when the SKILL.md at this path was installed as a command-skill.
+
+    Twin sites (cr-010 — bootstrap layout mandates independent script dirs,
+    so this is re-implemented locally; keep the flag semantics identical):
+    tools/installer.py:is_command_skill and skills/skill-creator/scripts/
+    install_portable_skill.py:is_command_skill.
+    """
+    if not skill_md.is_file():
+        return False
+    try:
+        content = skill_md.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        # cr-102: unreadable reads as a plain skill, never a traceback —
+        # same semantics as the tools twin (installer.py:is_command_skill).
+        return False
+    frontmatter, error = parse_frontmatter(content)
+    if error or not frontmatter:
+        return False
+    return frontmatter.get("disable-model-invocation") is True
 
 
-def parse_wrapper_file(path: Path, *, allow_frontmatter: bool) -> tuple[dict | None, str]:
-    if not path.is_file():
-        return None, ""
-    content = path.read_text(encoding="utf-8")
-    if not content.strip():
-        return None, ""
-    if allow_frontmatter:
-        frontmatter, error = parse_frontmatter(content)
-        if error:
-            raise CommandCreatorError(f"Invalid wrapper frontmatter in {path}: {error}")
-        return frontmatter, body_after_frontmatter(content)
-    if content.strip().startswith("---"):
-        raise CommandCreatorError(
-            f"Cursor wrapper must not contain YAML frontmatter: {path}"
-        )
-    return None, content.strip()
+def assert_command_skill_target_available(
+    skill_dir: Path,
+    skill_md: Path,
+    overwrite: bool,
+) -> None:
+    """Guard the .agents/skills/<name>/ target before any write.
+
+    Commands and skills share one namespace. An existing directory that is
+    not a prior command-skill install is a collision and is rejected
+    unconditionally (even with --overwrite). A prior command-skill install
+    follows normal overwrite semantics so bootstrap edits can be reinstalled.
+    """
+    if not skill_dir.exists():
+        return
+    if is_command_skill(skill_md):
+        if not overwrite:
+            raise CommandCreatorError(
+                f"Refusing to overwrite existing command skill: {skill_md}"
+            )
+        return
+    raise CommandCreatorError(
+        f"Name collision: skill '{skill_dir.name}' already exists at {skill_dir}. "
+        "Commands and skills share the .agents/skills/ namespace; choose a "
+        "different command name or remove the existing skill."
+    )
 
 
 def write_file(path: Path, content: str, overwrite: bool) -> None:

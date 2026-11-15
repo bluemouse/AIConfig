@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-Install a bootstrap skill package into the portable shared-first layout.
+Install a bootstrap skill package into the single-root portable layout.
 
-Copies a source skill directory to .ai/skills/<name>/ and generates
-tool wrappers for Claude Code, Cursor, and GitHub Copilot.
+Copies a source skill directory to .agents/skills/<name>/ and creates the
+Claude Code bridge symlink .claude/skills -> ../.agents/skills so Claude
+Code discovers the installed skill. Other tools read .agents/skills/
+directly.
 
 Example:
     python install_portable_skill.py \\
@@ -17,36 +19,23 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-import yaml
+from quick_validate import parse_frontmatter, validate_skill
+from scaffold_skill import SkillScaffoldError, slugify_name
 
-from quick_validate import body_after_frontmatter, parse_frontmatter, validate_skill
-from scaffold_skill import (
-    TOOL_SKILL_PATHS,
-    SkillScaffoldError,
-    slugify_name,
-    wrapper_skill_content,
-    write_file,
-)
-
-DEFAULT_TOOL_NOTES = {
-    "cursor": (
-        "Reload the Cursor window after adding or editing this skill "
-        "so the agent rediscovers it."
-    ),
-    "claude": (
-        "Restart or reload the Claude Code session after adding or editing "
-        "this skill so the agent rediscovers it."
-    ),
-    "github": (
-        "Reload VS Code after adding or editing this skill so Copilot "
-        "rediscovers it."
-    ),
-}
+# cr-010: this path constant is re-declared by sibling modules (bootstrap
+# layout mandates independent script dirs) — tools/installer.py
+# (SHARED_SKILL_DIR) and skills/command-creator/scripts/quick_validate.py
+# (COMMAND_SKILL_DIR_PARTS) declare the same .agents/skills/ root; change
+# them together.
+SHARED_SKILL_DIR = ".agents/skills/{name}"
+BRIDGE_LINK = ".claude/skills"
+BRIDGE_TARGET = "../.agents/skills"
 
 IGNORE_DIR_NAMES = {"__pycache__"}
 IGNORE_FILE_GLOBS = ("*.pyc", "*.skill")
@@ -82,7 +71,63 @@ def copy_skill_source(source: Path, dest: Path, overwrite: bool) -> None:
     shutil.copytree(source, dest, ignore=make_copy_ignore(source))
 
 
-def read_skill_description(skill_md: Path) -> tuple[str, str]:
+def ensure_bridge_symlink(root: Path) -> bool:
+    """Bridge ``<root>/.claude/skills`` to ``../.agents/skills`` for Claude Code.
+
+    Returns True when the bridge exists (pre-existing or newly created).
+    Raises SkillScaffoldError when ``.claude/skills`` is a real directory;
+    warns and returns False when the bridge cannot be created (symlink
+    failure, or ``.claude`` exists as something other than a directory —
+    e.g. a regular file, cr-007).
+    """
+    bridge = root / BRIDGE_LINK
+
+    if bridge.is_symlink():
+        if os.readlink(bridge) == BRIDGE_TARGET:
+            return True
+        print(
+            f"warning: {bridge} is a symlink to {os.readlink(bridge)}, "
+            f"expected {BRIDGE_TARGET}; leaving it as-is",
+            file=sys.stderr,
+        )
+        return False
+
+    if bridge.exists():
+        raise SkillScaffoldError(
+            f"Refusing to replace existing real directory {bridge} with the "
+            f"bridge symlink ({BRIDGE_TARGET}). Purge the legacy install "
+            f"first (remove {bridge}), then re-run the install."
+        )
+
+    try:
+        # cr-007: a regular file at <root>/.claude makes this mkdir raise
+        # FileExistsError (an OSError) — handled with the same warning +
+        # return False as a symlink-creation failure, never a raw traceback.
+        bridge.parent.mkdir(parents=True, exist_ok=True)
+        os.symlink(BRIDGE_TARGET, bridge)
+    except OSError as exc:
+        print(
+            f"warning: could not create Claude Code bridge symlink {bridge} "
+            f"({exc}); skipping — Claude Code will not discover .agents/skills/ "
+            "until the bridge exists",
+            file=sys.stderr,
+        )
+        return False
+    return True
+
+
+def verify_source_skill(source: Path, skill_name: str) -> None:
+    # Flat-root rule (matches quick_validate): the source skill directory must
+    # be a direct child of a directory named "skills" — category subfolders
+    # (e.g. skills/category/<name>) are rejected.
+    if source.parent.name != "skills":
+        raise SkillScaffoldError(
+            f"Skill source '{source}' must be a direct child of a skills root "
+            f"(a directory named 'skills'), not nested in a category folder. "
+            f"Move the skill to '<skills-root>/{skill_name}/'."
+        )
+
+    skill_md = source / "SKILL.md"
     if not skill_md.is_file():
         raise SkillScaffoldError(f"SKILL.md not found in source: {skill_md}")
 
@@ -95,52 +140,54 @@ def read_skill_description(skill_md: Path) -> tuple[str, str]:
         raise SkillScaffoldError("Source SKILL.md is missing a description in frontmatter.")
 
     source_name = frontmatter.get("name", "").strip()
-    return description, source_name
-
-
-def sync_description(content: str, description: str) -> str:
-    fm, error = parse_frontmatter(content)
-    if error or not fm:
+    if source_name and source_name != skill_name:
         raise SkillScaffoldError(
-            f"Cannot sync description: {error or 'missing frontmatter'}"
+            f"Skill name '{skill_name}' does not match source frontmatter name '{source_name}'."
         )
 
-    name = fm.get("name", "").strip()
-    if not name:
-        raise SkillScaffoldError("Wrapper is missing name in frontmatter")
 
-    updated = dict(fm)
-    updated["description"] = description
-    body = body_after_frontmatter(content)
-    yaml_block = yaml.dump(
-        updated,
-        default_flow_style=False,
-        allow_unicode=True,
-        sort_keys=False,
-    ).strip()
-    rebuilt = f"---\n{yaml_block}\n---\n"
-    if body:
-        rebuilt += "\n" + body + "\n"
-    else:
-        rebuilt += "\n"
-    return rebuilt
+def is_command_skill(skill_md: Path) -> bool:
+    """True when the SKILL.md at this path was installed as a command-skill.
 
-
-def wrapper_with_description(
-    tool: str,
-    skill_name: str,
-    note: str,
-    description: str,
-) -> str:
-    content = wrapper_skill_content(tool, skill_name, note)
-    return sync_description(content, description)
+    Twin sites (cr-010 — bootstrap layout mandates independent script dirs,
+    so this is re-implemented locally; keep the flag semantics identical):
+    skills/command-creator/scripts/scaffold_command.py:is_command_skill and
+    tools/installer.py:is_command_skill.
+    """
+    if not skill_md.is_file():
+        return False
+    try:
+        content = skill_md.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        # cr-102: unreadable reads as a plain skill, never a traceback —
+        # same semantics as the tools twin (installer.py:is_command_skill).
+        return False
+    frontmatter, error = parse_frontmatter(content)
+    if error or not frontmatter:
+        return False
+    return frontmatter.get("disable-model-invocation") is True
 
 
-def load_custom_wrapper(source: Path, tool: str, description: str) -> str | None:
-    wrapper_path = source / "wrappers" / tool / "SKILL.md"
-    if not wrapper_path.is_file():
-        return None
-    return sync_description(wrapper_path.read_text(encoding="utf-8"), description)
+def assert_not_replacing_command_skill(source: Path, dest: Path) -> None:
+    """Refuse a plain-skill install over an existing command-skill (cr-004).
+
+    Commands and skills share .agents/skills/; overwriting a command-skill
+    with a plain skill would silently drop ``disable-model-invocation: true``
+    and convert a slash-command into a model-invocable skill. Refused even
+    under --overwrite, before any bridge/copy write. The reverse direction
+    (command over plain skill) is guarded by
+    scaffold_command.assert_command_skill_target_available.
+    """
+    dest_skill_md = dest / "SKILL.md"
+    source_skill_md = source / "SKILL.md"
+    if is_command_skill(dest_skill_md) and not is_command_skill(source_skill_md):
+        raise SkillScaffoldError(
+            f"Refusing to overwrite command-skill {dest_skill_md} with a "
+            "plain skill: commands and skills share .agents/skills/, and the "
+            "copy would drop disable-model-invocation: true (converting a "
+            "slash-command into a model-invocable skill). Remove it with the "
+            "command installer's uninstall, or pick a different skill name."
+        )
 
 
 def install_portable_skill(
@@ -148,10 +195,14 @@ def install_portable_skill(
     source: Path,
     skill_name: str,
     overwrite: bool,
-    claude_note: str | None = None,
-    cursor_note: str | None = None,
-    github_note: str | None = None,
 ) -> list[Path]:
+    """Copy a source skill into .agents/skills/ and bridge Claude Code to it.
+
+    Ordering note (cr-013, documented-not-reordered): the bridge is created
+    before the overwrite check, so a refused --no-overwrite install may still
+    leave the bridge behind. Benign — the bridge points at the existing
+    install and is what a later successful install would create anyway.
+    """
     root = root.resolve()
     source = source.resolve()
     skill_name = slugify_name(skill_name)
@@ -159,77 +210,49 @@ def install_portable_skill(
     if not source.is_dir():
         raise SkillScaffoldError(f"Source directory not found: {source}")
 
-    description, source_name = read_skill_description(source / "SKILL.md")
-    if source_name and source_name != skill_name:
-        raise SkillScaffoldError(
-            f"Skill name '{skill_name}' does not match source frontmatter name '{source_name}'."
-        )
+    verify_source_skill(source, skill_name)
 
-    shared_dir = root / ".ai" / "skills" / skill_name
-    copy_skill_source(source, shared_dir, overwrite)
+    skill_dir = root / SHARED_SKILL_DIR.format(name=skill_name)
+    assert_not_replacing_command_skill(source, skill_dir)
+    ensure_bridge_symlink(root)
+    copy_skill_source(source, skill_dir, overwrite)
 
-    notes = {
-        "claude": claude_note or DEFAULT_TOOL_NOTES["claude"],
-        "cursor": cursor_note or DEFAULT_TOOL_NOTES["cursor"],
-        "github": github_note or DEFAULT_TOOL_NOTES["github"],
-    }
-
-    written: list[Path] = [shared_dir]
-    for tool, pattern in TOOL_SKILL_PATHS.items():
-        wrapper_dir = root / pattern.format(name=skill_name)
-        content = load_custom_wrapper(source, tool, description)
-        if content is None:
-            content = wrapper_with_description(
-                tool,
-                skill_name,
-                notes[tool],
-                description,
-            )
-        write_file(wrapper_dir / "SKILL.md", content, overwrite=True)
-        written.append(wrapper_dir)
-
-    return written
+    return [skill_dir]
 
 
 def validate_install(root: Path, skill_name: str, validator_script: Path) -> None:
-    paths = [
-        root / ".ai" / "skills" / skill_name,
-        root / ".cursor" / "skills" / skill_name,
-        root / ".claude" / "skills" / skill_name,
-        root / ".github" / "skills" / skill_name,
-    ]
-    for path in paths:
-        valid, message = validate_skill(path)
-        if not valid:
-            raise SkillScaffoldError(f"Validation failed for {path}: {message}")
+    path = root / SHARED_SKILL_DIR.format(name=skill_name)
+    valid, message = validate_skill(path)
+    if not valid:
+        raise SkillScaffoldError(f"Validation failed for {path}: {message}")
 
-        result = subprocess.run(
-            [sys.executable, str(validator_script), str(path)],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode != 0:
-            detail = (result.stdout + result.stderr).strip() or "unknown error"
-            raise SkillScaffoldError(f"Validation failed for {path}: {detail}")
+    result = subprocess.run(
+        [sys.executable, str(validator_script), str(path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        detail = (result.stdout + result.stderr).strip() or "unknown error"
+        raise SkillScaffoldError(f"Validation failed for {path}: {detail}")
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Install a bootstrap skill into the portable shared-first layout."
+        description="Install a bootstrap skill into the single-root portable layout."
     )
     parser.add_argument("--root", required=True, help="Repository root directory.")
     parser.add_argument("--name", required=True, help="Skill name; normalized to hyphen-case.")
     parser.add_argument(
         "--source",
         required=True,
-        help="Path to the bootstrap skill directory to copy into .ai/skills/.",
+        help="Path to the bootstrap skill directory to copy into .agents/skills/.",
     )
     parser.add_argument(
         "--overwrite",
         action="store_true",
         default=True,
-        help="Overwrite existing shared skill and wrappers (default: true).",
+        help="Overwrite an existing shared skill install (default: true).",
     )
     parser.add_argument(
         "--no-overwrite",
@@ -237,9 +260,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         dest="overwrite",
         help="Refuse to overwrite existing install targets.",
     )
-    parser.add_argument("--claude-note", help="Extra Claude Code-specific wrapper note.")
-    parser.add_argument("--cursor-note", help="Extra Cursor-specific wrapper note.")
-    parser.add_argument("--github-note", help="Extra GitHub Copilot-specific wrapper note.")
     parser.add_argument(
         "--skip-validate",
         action="store_true",
@@ -256,9 +276,6 @@ def main(argv: list[str]) -> int:
             source=Path(args.source),
             skill_name=args.name,
             overwrite=args.overwrite,
-            claude_note=args.claude_note,
-            cursor_note=args.cursor_note,
-            github_note=args.github_note,
         )
     except SkillScaffoldError as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -280,8 +297,8 @@ def main(argv: list[str]) -> int:
             print(f"- {path}")
 
     print(
-        "\nReload Cursor, VS Code (Copilot), and Claude Code so each tool "
-        "rediscovers the installed skill."
+        "\nRestart or reload Claude Code so it rediscovers the installed skill "
+        "through the .claude/skills bridge."
     )
     return 0
 

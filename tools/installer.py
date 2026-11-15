@@ -3,10 +3,17 @@
 Install or uninstall portable skills, agents, commands, scripts, and guidelines
 from this repo into another project.
 
-Copies the shared-first layout (.ai/ plus tool wrappers under .cursor/, .claude/,
-.github/) from AIConfig into a target project root. Behavioral guidelines
-install to .ai/guidelines/ with a consent-driven AGENTS.md citation offer —
-citations land under a '## AI guidelines' section.
+Copies the single-root layout from AIConfig into a target project root:
+skills, command-skills, and scripts live under .agents/ (skills and commands
+share the .agents/skills/ namespace; commands carry
+disable-model-invocation: true), and each skill install creates the Claude
+Code bridge symlink .claude/skills -> ../.agents/skills. Agents distribute as
+two real copies (.claude/agents/<name>.md and .github/agents/<name>.agent.md).
+Behavioral guidelines install to .agents/guidelines/ with a consent-driven
+AGENTS.md citation offer — citations land under a '## AI guidelines' section.
+--purge-legacy removes a target's pre-single-root leftovers (.ai/, .cursor
+wrapper dirs, .github/prompts/, .claude/commands/, and .claude/skills/ when it
+is a real directory) before installing.
 
 Examples:
     python tools/installer.py /path/to/other-project
@@ -22,6 +29,7 @@ Examples:
     python tools/installer.py /path/to/other-project --dev-workflow --uninstall
     python tools/installer.py /path/to/other-project --agents my-agent --uninstall
     python tools/installer.py /path/to/other-project --commands git-commit --uninstall
+    python tools/installer.py /path/to/other-project --purge-legacy
     python tools/installer.py   # GUI when no arguments
 """
 
@@ -29,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -44,62 +53,142 @@ from typing import Literal
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-SHARED_SKILL_DIR = ".ai/skills/{name}"
-SHARED_AGENT_FILE = ".ai/agents/{name}.md"
-SHARED_COMMAND_FILE = ".ai/commands/{name}.md"
-SHARED_SCRIPTS_DIR = ".ai/tools/{name}"
+# The wave-1 skill installer owns the Claude Code bridge semantics
+# (.claude/skills -> ../.agents/skills; purge-error on a real dir, warn+skip on
+# OSError). Import it rather than reimplementing, so the distribution
+# installer and the bootstrap installer can never drift. _MODULE_REPO_ROOT is
+# resolved from this file's own location at import time (never the patchable
+# REPO_ROOT global) so tests that rebind mod.REPO_ROOT still find the helper.
+_MODULE_REPO_ROOT = Path(__file__).resolve().parent.parent
+_BRIDGE_HELPER_PATH = (
+    _MODULE_REPO_ROOT / "skills" / "skill-creator" / "scripts" / "install_portable_skill.py"
+)
 
-TOOL_SKILL_DIRS = {
-    "cursor": ".cursor/skills/{name}",
-    "claude": ".claude/skills/{name}",
-    "github": ".github/skills/{name}",
-}
 
-TOOL_AGENT_FILES = {
-    "cursor": ".cursor/agents/{name}.md",
-    "claude": ".claude/agents/{name}.md",
-    "github": ".github/agents/{name}.agent.md",
-}
+def _load_ensure_bridge_symlink() -> Callable[[Path], bool]:
+    """Return the wave-1 ensure_bridge_symlink helper.
 
-TOOL_COMMAND_FILES = {
-    "cursor": ".cursor/commands/{name}.md",
-    "claude": ".claude/commands/{name}.md",
-    "github": ".github/prompts/{name}.prompt.md",
-}
+    Loads install_portable_skill.py under an isolated module name. Its
+    sibling imports (quick_validate, scaffold_skill) resolve from the
+    skill-creator scripts dir: pre-existing sys.modules entries of the same
+    name (test harnesses may register a different directory's module) are
+    stashed and restored, and the ones this load creates are removed, so the
+    import cannot leak or clobber global state.
+    """
+    scripts_dir = _BRIDGE_HELPER_PATH.parent
+    sibling_names = ("quick_validate", "scaffold_skill")
+    stashed = {
+        name: sys.modules.pop(name)
+        for name in sibling_names
+        if name in sys.modules
+    }
+    old_path = list(sys.path)
+    try:
+        sys.path.insert(0, str(scripts_dir))
+        spec = importlib.util.spec_from_file_location(
+            "installer_bridge_install_portable_skill", _BRIDGE_HELPER_PATH
+        )
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Could not load module from {_BRIDGE_HELPER_PATH}")
+        bridge_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bridge_module)
+    finally:
+        sys.path[:] = old_path
+        for name in sibling_names:
+            sys.modules.pop(name, None)
+        sys.modules.update(stashed)
+    helper = getattr(bridge_module, "ensure_bridge_symlink")
+    if not callable(helper):
+        raise ImportError(
+            f"ensure_bridge_symlink not found in {_BRIDGE_HELPER_PATH}"
+        )
+    return helper
 
-SHARED_GUIDELINE_FILE = ".ai/guidelines/{name}.md"
+
+try:
+    _ensure_bridge_symlink_impl = _load_ensure_bridge_symlink()
+except (ImportError, OSError) as _bridge_exc:  # pragma: no cover - defensive
+    _ensure_bridge_symlink_impl = None
+    print(
+        f"warning: could not load the Claude Code bridge helper "
+        f"({_bridge_exc}); skill installs will skip the bridge symlink",
+        file=sys.stderr,
+    )
+
+
+def ensure_bridge_symlink(root: Path) -> bool:
+    """Create the .claude/skills -> ../.agents/skills bridge in a target root.
+
+    Thin pass-through to the wave-1 helper so both installers share one
+    implementation. Returns True when the bridge exists; when the helper is
+    unavailable (or refuses a real .claude/skills dir) the install continues
+    without the bridge and the helper's own message reports why.
+    """
+    if _ensure_bridge_symlink_impl is None:
+        return False
+    try:
+        return _ensure_bridge_symlink_impl(root)
+    except Exception as exc:  # SkillScaffoldError or any helper refusal
+        print(f"warning: {exc}", file=sys.stderr)
+        return False
+
+# cr-010: this path constant is re-declared by sibling installers (bootstrap
+# layout mandates independent script dirs) — skills/skill-creator/scripts/
+# install_portable_skill.py (SHARED_SKILL_DIR) and skills/command-creator/
+# scripts/quick_validate.py (COMMAND_SKILL_DIR_PARTS) declare the same
+# .agents/skills/ root; change them together.
+SHARED_SKILL_DIR = ".agents/skills/{name}"
+
+# Agents distribute from two real copies (dual-target layout): the verbatim
+# Claude/Cursor copy and the Copilot .agent.md transform.
+CLAUDE_AGENT_FILE = ".claude/agents/{name}.md"
+GITHUB_AGENT_FILE = ".github/agents/{name}.agent.md"
+
+SHARED_SCRIPTS_DIR = ".agents/tools/{name}"
+
+SHARED_GUIDELINE_FILE = ".agents/guidelines/{name}.md"
+
+# The pre-single-root guideline path: citation variants still match lines the
+# old installer wrote so an upgraded target re-cites/removes cleanly.
+LEGACY_GUIDELINE_FILE = ".ai/guidelines/{name}.md"
 
 # Behavioral guidelines installable to target projects (explicit selection only —
 # never part of the no-selector default or bundles). A guideline is inert until
 # the target project loads it: cited from its AGENTS.md or included manually in
 # a prompt. A guideline "name" is the filename stem; the file lives at
-# guidelines/<name>.md in this repo and installs to .ai/guidelines/<name>.md in
-# the target (installer-owned namespace, not the target root).
+# guidelines/<name>.md in this repo and installs to .agents/guidelines/<name>.md
+# in the target (installer-owned namespace, not the target root).
 INSTALLABLE_GUIDELINES = (
     "coding-behavior-guidelines",
     "response-guidelines",
     "code-comment-guidelines",
 )
 
-# Scripts are directory trees under .ai/tools/<name>/ (no tool wrappers).
-TOOL_SCRIPTS_SCAN_REL_DIRS = (".ai/tools",)
+# Scripts are directory trees under .agents/tools/<name>/.
+TOOL_SCRIPTS_SCAN_REL_DIRS = (".agents/tools",)
 
-TOOL_SKILL_SCAN_REL_DIRS = (
-    ".cursor/skills",
-    ".claude/skills",
-    ".github/skills",
-)
+# Skills (including command-skills) are discovered under .agents/skills/.
+TOOL_SKILL_SCAN_REL_DIRS = (".agents/skills",)
 
+# Agents are discovered from both dual-target files.
 TOOL_AGENT_SCAN_REL_DIRS = (
-    (".cursor/agents", ".md"),
     (".claude/agents", ".md"),
     (".github/agents", ".agent.md"),
 )
 
-TOOL_COMMAND_SCAN_REL_DIRS = (
-    (".cursor/commands", ".md"),
-    (".claude/commands", ".md"),
-    (".github/prompts", ".prompt.md"),
+# Legacy paths a pre-single-root installer may have left in a target project.
+# --purge-legacy removes these; .claude/skills is only purged when it is a
+# real directory (the bridge symlink is left alone). .github/skills was the
+# old installer's Copilot skill-wrapper dir (removed TOOL_SKILL_DIRS layout);
+# .github/agents is current-layout and stays (exact-dir entries, no overlap).
+LEGACY_PURGE_REL_PATHS = (
+    ".ai",
+    ".cursor/skills",
+    ".cursor/commands",
+    ".cursor/agents",
+    ".github/prompts",
+    ".github/skills",
+    ".claude/commands",
 )
 
 # Scripts are discovered as subdirectories of tools/ in the repo root.
@@ -107,9 +196,14 @@ TOOL_COMMAND_SCAN_REL_DIRS = (
 
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
+# cr-008: the single-root layout writes no Cursor/Copilot outputs — they
+# read .agents/ natively — so only Claude Code needs a reload (through the
+# .claude/skills bridge).
 RELOAD_REMINDER = (
-    "Reload Cursor, VS Code (Copilot), and Claude Code so each tool "
-    "rediscovers the installed skills, agents, commands, and scripts."
+    "Restart or reload Claude Code so it rediscovers the installed skills, "
+    "agents, commands, scripts, and guidelines through the .claude/skills "
+    "bridge; Cursor and VS Code (Copilot) pick up .agents/ natively on "
+    "their next session."
 )
 
 BUNDLES_JSON = Path(__file__).resolve().parent / "bundles.json"
@@ -466,6 +560,17 @@ class BundleSelection:
         self.commands = normalize_names(self.commands)
         self.scripts = normalize_names(self.scripts)
         self.guidelines = normalize_names(self.guidelines)
+        # Skills and command-skills share the .agents/skills/ namespace. A
+        # name reached through both kinds (e.g. a bundle lists it as a skill
+        # while it is also a discovered command) must install once — keep the
+        # explicit command selection and drop the skill duplicate.
+        # Twin rule (cr-010): install_items re-applies the same drop in its
+        # prologue for names that reach it without this dedupe — change both.
+        if self.commands:
+            command_names = set(self.commands)
+            self.skills = [
+                name for name in self.skills if name not in command_names
+            ]
 
     @property
     def is_empty(self) -> bool:
@@ -596,10 +701,40 @@ def resolve_cli_skills(
     ).skills
 
 
+COMMAND_SKILL_FLAG = "disable-model-invocation"
+COMMAND_SKILL_SKILL_MD = "SKILL.md"
+
+
+def is_command_skill(skill_md: Path) -> bool:
+    """Return True when the SKILL.md at this path is a command-skill.
+
+    Commands are skills whose frontmatter carries
+    ``disable-model-invocation: true`` — they share the .agents/skills/
+    namespace with plain skills, so the flag is the only discriminator.
+    Every unreadable shape (missing file, malformed frontmatter) reads as a
+    plain skill; this never raises.
+
+    Twin sites (cr-010 — bootstrap layout mandates independent script dirs,
+    so this is re-implemented locally; keep the flag semantics identical):
+    skills/command-creator/scripts/scaffold_command.py:is_command_skill and
+    skills/skill-creator/scripts/install_portable_skill.py:is_command_skill.
+    """
+    if not skill_md.is_file():
+        return False
+    try:
+        content = skill_md.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return False
+    frontmatter = parse_frontmatter(content)
+    if frontmatter is None:
+        return False
+    return frontmatter.get(COMMAND_SKILL_FLAG) is True
+
+
 def discover_skills_in_project(project_root: Path) -> list[str]:
-    """Return skill slugs installed under project_root/.ai/skills/."""
+    """Return skill slugs installed under project_root/.agents/skills/."""
     names: set[str] = set()
-    shared_root = project_root / ".ai" / "skills"
+    shared_root = project_root / ".agents" / "skills"
     if not shared_root.is_dir():
         return []
     for child in shared_root.iterdir():
@@ -609,9 +744,9 @@ def discover_skills_in_project(project_root: Path) -> list[str]:
 
 
 def discover_agents_in_project(project_root: Path) -> list[str]:
-    """Return agent slugs installed under project_root/.ai/agents/."""
+    """Return agent slugs installed under project_root/.claude/agents/."""
     names: set[str] = set()
-    shared_root = project_root / ".ai" / "agents"
+    shared_root = project_root / ".claude" / "agents"
     if not shared_root.is_dir():
         return []
     for child in shared_root.iterdir():
@@ -621,21 +756,25 @@ def discover_agents_in_project(project_root: Path) -> list[str]:
 
 
 def discover_commands_in_project(project_root: Path) -> list[str]:
-    """Return command slugs installed under project_root/.ai/commands/."""
+    """Return command-skill slugs installed in the target.
+
+    Commands share the .agents/skills/ namespace with skills; only
+    flag-bearing (disable-model-invocation: true) entries are commands.
+    """
     names: set[str] = set()
-    shared_root = project_root / ".ai" / "commands"
+    shared_root = project_root / ".agents" / "skills"
     if not shared_root.is_dir():
         return []
     for child in shared_root.iterdir():
-        if child.is_file() and child.suffix == ".md" and not child.name.startswith("."):
-            names.add(child.stem)
+        if child.is_dir() and is_command_skill(child / COMMAND_SKILL_SKILL_MD):
+            names.add(child.name)
     return sorted(names)
 
 
 def discover_scripts_in_project(project_root: Path) -> list[str]:
-    """Return scripts directory names installed under project_root/.ai/tools/."""
+    """Return scripts directory names installed under project_root/.agents/tools/."""
     names: set[str] = set()
-    shared_root = project_root / ".ai" / "tools"
+    shared_root = project_root / ".agents" / "tools"
     if not shared_root.is_dir():
         return []
     for child in shared_root.iterdir():
@@ -679,7 +818,7 @@ def build_target_bundle(
     """Build the dynamic target bundle from installed members in the target project.
 
     Membership for each kind is the intersection of what is installed in the
-    target project's shared ``.ai/`` layer and what is available in this
+    target project's shared ``.agents/`` layer and what is available in this
     AIConfig repository catalog.
     """
     if available_skills is None:
@@ -742,18 +881,19 @@ def discover_agents() -> list[str]:
 
 
 def discover_commands() -> list[str]:
+    """Return command-skill slugs in this repo's .agents/skills/ catalog.
+
+    Commands are skills whose SKILL.md frontmatter carries
+    disable-model-invocation: true (see is_command_skill).
+    """
     names: set[str] = set()
-    for rel_dir, suffix in TOOL_COMMAND_SCAN_REL_DIRS:
+    for rel_dir in TOOL_SKILL_SCAN_REL_DIRS:
         scan_root = REPO_ROOT / rel_dir
         if not scan_root.is_dir():
             continue
         for child in scan_root.iterdir():
-            if not child.is_file() or child.name.startswith("."):
-                continue
-            if suffix == ".prompt.md" and child.name.endswith(".prompt.md"):
-                names.add(child.name[: -len(".prompt.md")])
-            elif suffix == ".md" and child.suffix == ".md" and not child.name.endswith(".prompt.md"):
-                names.add(child.stem)
+            if child.is_dir() and is_command_skill(child / COMMAND_SKILL_SKILL_MD):
+                names.add(child.name)
     return sorted(names)
 
 
@@ -800,10 +940,10 @@ def read_description_from_markdown(path: Path) -> str | None:
 
 
 def load_skill_descriptions(names: Sequence[str]) -> dict[str, str]:
-    """Map skill slugs to descriptions from shared SKILL.md frontmatter."""
+    """Map skill slugs to descriptions from .agents/skills SKILL.md frontmatter."""
     descriptions: dict[str, str] = {}
     for name in names:
-        path = REPO_ROOT / ".ai/skills" / name / "SKILL.md"
+        path = REPO_ROOT / ".agents" / "skills" / name / "SKILL.md"
         description = read_description_from_markdown(path)
         if description is not None:
             descriptions[name] = description
@@ -811,10 +951,10 @@ def load_skill_descriptions(names: Sequence[str]) -> dict[str, str]:
 
 
 def load_agent_descriptions(names: Sequence[str]) -> dict[str, str]:
-    """Map agent slugs to descriptions from shared agent markdown frontmatter."""
+    """Map agent slugs to descriptions from the Claude agent copy's frontmatter."""
     descriptions: dict[str, str] = {}
     for name in names:
-        path = REPO_ROOT / ".ai/agents" / f"{name}.md"
+        path = REPO_ROOT / ".claude" / "agents" / f"{name}.md"
         description = read_description_from_markdown(path)
         if description is not None:
             descriptions[name] = description
@@ -822,10 +962,10 @@ def load_agent_descriptions(names: Sequence[str]) -> dict[str, str]:
 
 
 def load_command_descriptions(names: Sequence[str]) -> dict[str, str]:
-    """Map command slugs to descriptions from shared command markdown frontmatter."""
+    """Map command-skill slugs to descriptions from their SKILL.md frontmatter."""
     descriptions: dict[str, str] = {}
     for name in names:
-        path = REPO_ROOT / ".ai/commands" / f"{name}.md"
+        path = REPO_ROOT / ".agents" / "skills" / name / "SKILL.md"
         description = read_description_from_markdown(path)
         if description is not None:
             descriptions[name] = description
@@ -833,7 +973,7 @@ def load_command_descriptions(names: Sequence[str]) -> dict[str, str]:
 
 
 def discover_scripts() -> list[str]:
-    """Return scripts directory names discovered under REPO_ROOT/.ai/tools/."""
+    """Return scripts directory names discovered under REPO_ROOT/.agents/tools/."""
     names: set[str] = set()
     for rel_dir in TOOL_SCRIPTS_SCAN_REL_DIRS:
         scan_root = REPO_ROOT / rel_dir
@@ -853,7 +993,7 @@ def load_scripts_descriptions(names: Sequence[str]) -> dict[str, str]:
     """
     descriptions: dict[str, str] = {}
     for name in names:
-        readme = REPO_ROOT / ".ai" / "tools" / name / "README.md"
+        readme = REPO_ROOT / ".agents" / "tools" / name / "README.md"
         if readme.is_file():
             try:
                 text = readme.read_text(encoding="utf-8").strip()
@@ -893,60 +1033,45 @@ def format_rel(path: Path, base: Path) -> str:
 
 
 def skill_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
-    pairs: list[tuple[Path, Path]] = []
+    """Return (src, dest) pairs for a skill directory tree.
+
+    Skills and command-skills share .agents/skills/, so the same copy pair
+    serves both kinds.
+    """
     shared_src = source_root / SHARED_SKILL_DIR.format(name=name)
     shared_dest = target_root / SHARED_SKILL_DIR.format(name=name)
-    pairs.append((shared_src, shared_dest))
-    for rel_template in TOOL_SKILL_DIRS.values():
-        src = source_root / rel_template.format(name=name)
-        if src.exists():
-            pairs.append((src, target_root / rel_template.format(name=name)))
-    return pairs
+    return [(shared_src, shared_dest)]
 
 
 def agent_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
-    pairs: list[tuple[Path, Path]] = []
-    shared_src = source_root / SHARED_AGENT_FILE.format(name=name)
-    shared_dest = target_root / SHARED_AGENT_FILE.format(name=name)
-    pairs.append((shared_src, shared_dest))
-    for rel_template in TOOL_AGENT_FILES.values():
-        src = source_root / rel_template.format(name=name)
-        if src.exists():
-            pairs.append((src, target_root / rel_template.format(name=name)))
-    return pairs
+    """Return (src, dest) pairs for an agent's dual-target copies."""
+    return [
+        (
+            source_root / CLAUDE_AGENT_FILE.format(name=name),
+            target_root / CLAUDE_AGENT_FILE.format(name=name),
+        ),
+        (
+            source_root / GITHUB_AGENT_FILE.format(name=name),
+            target_root / GITHUB_AGENT_FILE.format(name=name),
+        ),
+    ]
 
 
 def skill_remove_paths(target_root: Path, name: str) -> list[Path]:
-    paths = [target_root / SHARED_SKILL_DIR.format(name=name)]
-    for rel_template in TOOL_SKILL_DIRS.values():
-        paths.append(target_root / rel_template.format(name=name))
-    return paths
+    return [target_root / SHARED_SKILL_DIR.format(name=name)]
 
 
 def agent_remove_paths(target_root: Path, name: str) -> list[Path]:
-    paths = [target_root / SHARED_AGENT_FILE.format(name=name)]
-    for rel_template in TOOL_AGENT_FILES.values():
-        paths.append(target_root / rel_template.format(name=name))
-    return paths
+    return [
+        target_root / CLAUDE_AGENT_FILE.format(name=name),
+        target_root / GITHUB_AGENT_FILE.format(name=name),
+    ]
 
 
-def command_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
-    pairs: list[tuple[Path, Path]] = []
-    shared_src = source_root / SHARED_COMMAND_FILE.format(name=name)
-    shared_dest = target_root / SHARED_COMMAND_FILE.format(name=name)
-    pairs.append((shared_src, shared_dest))
-    for rel_template in TOOL_COMMAND_FILES.values():
-        src = source_root / rel_template.format(name=name)
-        if src.exists():
-            pairs.append((src, target_root / rel_template.format(name=name)))
-    return pairs
-
-
-def command_remove_paths(target_root: Path, name: str) -> list[Path]:
-    paths = [target_root / SHARED_COMMAND_FILE.format(name=name)]
-    for rel_template in TOOL_COMMAND_FILES.values():
-        paths.append(target_root / rel_template.format(name=name))
-    return paths
+# Commands are command-skills under .agents/skills/ — they share the skill
+# copy/remove paths; no separate tool files exist.
+command_copy_pairs = skill_copy_pairs
+command_remove_paths = skill_remove_paths
 
 
 def scripts_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
@@ -1051,10 +1176,21 @@ def build_guideline_citation_line(name: str, description: str | None = None) -> 
     return f"- Follow [{rel}]({rel}) in this repo."
 
 
-def _legacy_guideline_citation_line(name: str) -> str:
-    """Return the pre-generalization citation wording the installer once wrote."""
-    rel = SHARED_GUIDELINE_FILE.format(name=name)
-    return f"- Follow [{rel}]({rel}) when generating or editing any code in this repo."
+def _legacy_guideline_citation_line(name: str, description: str | None = None) -> str:
+    """Return a citation wording the pre-upgrade installer once wrote.
+
+    These are the OLD `.ai/guidelines/` path forms: a target upgraded from the
+    pre-single-root layout may still carry these lines, so removal keeps
+    matching them. The pre-upgrade installer (b91f932..893f6f3) wrote all
+    three wordings — pre-generalization, bare, and described — with the
+    legacy path, mirroring build_guideline_citation_line's templates.
+    """
+    rel = LEGACY_GUIDELINE_FILE.format(name=name)
+    if description:
+        return f"- Follow [{rel}]({rel}) — {description}"
+    if description is None:
+        return f"- Follow [{rel}]({rel}) when generating or editing any code in this repo."
+    return f"- Follow [{rel}]({rel}) in this repo."
 
 
 def guideline_citation_variants(
@@ -1062,26 +1198,39 @@ def guideline_citation_variants(
 ) -> set[str]:
     """Return every citation-line wording the installer has written for a guideline.
 
-    Exact-match set only (no prefix matching): removal stays provenance-safe —
-    a user-edited variant is kept. A described line whose source description
-    later drifted is kept too (safe direction).
+    Covers both layouts: the current `.agents/guidelines/` wordings (described
+    and bare) and all three legacy `.ai/guidelines/` wordings
+    (pre-generalization, bare, and described), so an upgraded target's old
+    citations are still recognized. Exact-match set only (no prefix
+    matching): removal stays provenance-safe — a user-edited variant is kept.
+    A described line whose source description later drifted is kept too
+    (safe direction).
     """
     return {
         build_guideline_citation_line(name, description),
         build_guideline_citation_line(name),
         _legacy_guideline_citation_line(name),
+        _legacy_guideline_citation_line(name, description),
+        _legacy_guideline_citation_line(name, ""),
     }
 
 
 def guideline_is_cited(text: str, name: str) -> bool:
-    """Return True when any line of an AGENTS.md body already cites the guideline.
+    """Return True when any line of an AGENTS.md body references the guideline.
 
-    Looser than an exact citation-line match: any line referencing the
-    guideline's installed path counts, so a hand-written citation is
-    recognized and never duplicated by a later append.
+    Loose path-based citedness check, kept as a documented helper for callers
+    and tests (cr-103): any line referencing the guideline's installed path
+    counts — under the current `.agents/guidelines/` path or the legacy
+    `.ai/guidelines/` path. NOT the append gate: agents_md_append_lines
+    computes path-aware citedness inline (current path → already cited;
+    legacy-only → stale rewrite), so this helper's loose both-path match is
+    not consulted by the append flow.
     """
-    rel = SHARED_GUIDELINE_FILE.format(name=name)
-    return any(rel in line for line in text.splitlines())
+    rels = (
+        SHARED_GUIDELINE_FILE.format(name=name),
+        LEGACY_GUIDELINE_FILE.format(name=name),
+    )
+    return any(rel in line for rel in rels for line in text.splitlines())
 
 
 def _read_agents_md_raw(path: Path) -> str:
@@ -1252,13 +1401,18 @@ def agents_md_append_lines(
     defaults to this repo at call time — resolved inside the body, never as a
     def-time default, so tests can patch the module's REPO_ROOT.
 
-    Returns (appended, already_present) name lists. Idempotent: a guideline
-    that is already cited — via the installer's exact citation line or any
-    hand-written line referencing the installed path — is reported as
-    already_present and not duplicated. The section is created at the end of
-    the file when missing. Never creates AGENTS.md — a missing file is a
-    no-op. Line endings are preserved: a CRLF file stays CRLF, and only the
-    new lines are added.
+    Returns (appended, already_present) name lists. Idempotent for a
+    guideline cited under the CURRENT `.agents/guidelines/` path — via the
+    installer's exact citation line or any hand-written line referencing it —
+    reported as already_present and not duplicated. A citation under the
+    legacy `.ai/guidelines/` path ONLY (no current-path reference) is stale,
+    not already-cited (cr-002): the legacy file is gone after a
+    `--purge-legacy` upgrade, so the old citation line is removed
+    (exact-match provenance, via the removal machinery) and the new
+    `.agents/` line is appended, with the name reported as appended. The
+    section is created at the end of the file when missing. Never creates
+    AGENTS.md — a missing file is a no-op. Line endings are preserved: a
+    CRLF file stays CRLF, and only the new lines are added.
     """
     if source_root is None:
         source_root = REPO_ROOT
@@ -1269,13 +1423,33 @@ def agents_md_append_lines(
     appended: list[str] = []
     already: list[str] = []
     new_lines: list[str] = []
+    stale_names: list[str] = []
     for name in names:
-        if guideline_is_cited(text, name):
+        lines = text.splitlines()
+        cites_current = any(
+            SHARED_GUIDELINE_FILE.format(name=name) in line for line in lines
+        )
+        cites_legacy = any(
+            LEGACY_GUIDELINE_FILE.format(name=name) in line for line in lines
+        )
+        if cites_current:
             already.append(name)
             continue
+        # Not cited under the current path. A legacy-path-only citation is
+        # stale, not already-cited (cr-002): the .ai/ tree is gone after a
+        # --purge-legacy upgrade, so the dead citation line is removed
+        # (exact-match provenance, via the removal machinery) and the new
+        # .agents/ line appended, with the name reported as appended.
+        if cites_legacy:
+            stale_names.append(name)
         appended.append(name)
         description = parse_guideline_citation_description(source_root, name)
         new_lines.append(build_guideline_citation_line(name, description))
+    if stale_names:
+        # Reuse the removal machinery: exact-match installer wordings plus
+        # empty-section cleanup, provenance-safe for user-edited lines.
+        agents_md_remove_lines(target_root, stale_names, source_root=source_root)
+        text = _read_agents_md_raw(path)
     if new_lines:
         newline = _agents_md_newline(text)
         text = _insert_citations_into_agents_md(text, new_lines, newline)
@@ -1490,7 +1664,11 @@ def file_sha256(path: Path) -> str:
 
 
 def remove_path(path: Path) -> None:
-    if path.is_dir():
+    # A symlink is unlinked itself, never followed (rmtree on a symlink
+    # raises, and following one would delete the link target's contents).
+    if path.is_symlink():
+        path.unlink()
+    elif path.is_dir():
         shutil.rmtree(path)
     elif path.is_file():
         path.unlink()
@@ -1520,6 +1698,14 @@ def install_items(
     result = OperationResult()
     target_root = validate_target(source_root, target_root, create=True)
 
+    # Skills and command-skills share .agents/skills/: a name passed as both
+    # installs once (the command pass would otherwise see the skill pass's
+    # fresh copy as an existing dest and skip/error).
+    # Twin rule (cr-010): BundleSelection.dedupe applies the same drop at
+    # selection time — change both.
+    command_names = {slugify_name(name) for name in commands}
+    skills = [name for name in skills if slugify_name(name) not in command_names]
+
     for name in skills:
         slug = slugify_name(name)
         pairs = skill_copy_pairs(source_root, target_root, slug)
@@ -1527,6 +1713,22 @@ def install_items(
         if not shared_src.is_dir():
             result.errors.append(
                 f"skill {slug}: missing shared source {format_rel(shared_src, source_root)}"
+            )
+            continue
+
+        # Symmetric collision guard (cr-004): the destination SKILL.md is a
+        # command-skill (disable-model-invocation: true) and the incoming
+        # source is not — the copy would silently convert a slash-command
+        # into a model-invocable skill. Refused even under --override.
+        dest_skill_md = pairs[0][1] / COMMAND_SKILL_SKILL_MD
+        if is_command_skill(dest_skill_md) and not is_command_skill(
+            shared_src / COMMAND_SKILL_SKILL_MD
+        ):
+            result.errors.append(
+                f"skill {slug}: refusing to replace command-skill "
+                f"{format_rel(dest_skill_md, target_root)} with a plain skill "
+                "(commands and skills share .agents/skills/; remove it via "
+                "--uninstall --commands or pick a different name)"
             )
             continue
 
@@ -1542,14 +1744,24 @@ def install_items(
                 result.installed.append(rel_dest)
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
+        # Skills install into .agents/skills/ — bridge Claude Code to it so
+        # the installed skills are discovered (shared with the wave-1
+        # installer's semantics; a refusal is reported, never fatal).
+        ensure_bridge_symlink(target_root)
 
     for name in agents:
         slug = slugify_name(name)
         pairs = agent_copy_pairs(source_root, target_root, slug)
-        shared_src = pairs[0][0]
-        if not shared_src.is_file():
+        # Pre-check BOTH dual-target sources before writing any pair
+        # (cr-005): a missing copy would otherwise raise InstallerError from
+        # copy_path mid-run (uncaught by the per-pair except OSError),
+        # aborting the bulk install with no per-name error entry.
+        missing_sources = [
+            format_rel(src, source_root) for src, _ in pairs if not src.is_file()
+        ]
+        if missing_sources:
             result.errors.append(
-                f"agent {slug}: missing shared source {format_rel(shared_src, source_root)}"
+                f"agent {slug}: missing source(s) {', '.join(missing_sources)}"
             )
             continue
 
@@ -1570,9 +1782,56 @@ def install_items(
         slug = slugify_name(name)
         pairs = command_copy_pairs(source_root, target_root, slug)
         shared_src = pairs[0][0]
-        if not shared_src.is_file():
+        if not shared_src.is_dir():
             result.errors.append(
-                f"command {slug}: missing shared source {format_rel(shared_src, source_root)}"
+                f"command {slug}: missing source {format_rel(shared_src, source_root)}"
+            )
+            continue
+        # Commands and skills share .agents/skills/ and the same copy pairs,
+        # so the source alone cannot prove the kind (cr-006): without this
+        # check --commands <plain-skill-name> would silently install the
+        # plain skill.
+        if not is_command_skill(shared_src / COMMAND_SKILL_SKILL_MD):
+            result.errors.append(
+                f"command {slug}: not a command-skill (missing "
+                "disable-model-invocation: true in "
+                f"{format_rel(shared_src / COMMAND_SKILL_SKILL_MD, source_root)})"
+            )
+            continue
+
+        # Reverse collision guard (cr-105): the destination exists as a
+        # well-formed plain skill (valid frontmatter, no
+        # disable-model-invocation: true) — a command install would rmtree
+        # user-authored skill files and convert the name into a command-skill.
+        # Refused even under --override, matching the bootstrap command
+        # installer's refusal for a real prior skill (scaffold_command.py
+        # assert_command_skill_target_available) and mirroring the skills
+        # pass's cr-004 guard. A dest SKILL.md without valid frontmatter
+        # (corrupted or stale content) is not a skill — --override replaces it
+        # per the stale-replacement contract; without --override the skip
+        # below still applies (no destruction either way).
+        dest_skill_md = pairs[0][1] / COMMAND_SKILL_SKILL_MD
+        dest_frontmatter = None
+        if dest_skill_md.is_file():
+            try:
+                dest_frontmatter = parse_frontmatter(
+                    dest_skill_md.read_text(encoding="utf-8")
+                )
+            except (OSError, UnicodeDecodeError):
+                # Undecodable/unreadable dest content is stale, not a skill —
+                # parity with is_command_skill's twins (cr-102): degrade,
+                # never raise. --override replaces it below.
+                dest_frontmatter = None
+        if (
+            dest_skill_md.exists()
+            and dest_frontmatter is not None
+            and not is_command_skill(dest_skill_md)
+        ):
+            result.errors.append(
+                f"command {slug}: refusing to replace existing plain skill "
+                f"{format_rel(dest_skill_md, target_root)} with a command-skill "
+                "(commands and skills share .agents/skills/; remove it via "
+                "--uninstall --skills or pick a different name)"
             )
             continue
 
@@ -1588,6 +1847,9 @@ def install_items(
                 result.installed.append(rel_dest)
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
+        # Commands are command-skills under .agents/skills/ — they need the
+        # same Claude Code bridge as skills.
+        ensure_bridge_symlink(target_root)
 
     for name in scripts:
         slug = slugify_name(name)
@@ -1644,6 +1906,56 @@ def install_items(
     return result
 
 
+def purge_legacy_paths(target_root: Path) -> OperationResult:
+    """Remove a target project's pre-single-root install leftovers.
+
+    Purges the legacy shared layer (.ai/ — the whole directory), the Cursor
+    wrapper dirs (.cursor/skills, .cursor/commands, .cursor/agents),
+    .github/prompts/, and .claude/commands/. Also removes .claude/skills/ but
+    ONLY when it is a real directory: if it is already the Claude Code bridge
+    symlink (.claude/skills -> ../.agents/skills) it is left alone. The
+    current-layout paths (.agents/, .claude/agents/, .github/agents/) are
+    never touched.
+    """
+    result = OperationResult()
+    # Same refusal every mutating path applies (cr-001): purging this repo
+    # itself would rmtree the gitignored .ai/ workflow state (unrecoverable)
+    # plus the real .claude/skills/ and .claude/commands/. REPO_ROOT is read
+    # at call time so tests (and alternate checkouts) can rebind it.
+    validate_target(REPO_ROOT, target_root, create=False)
+    if not target_root.is_dir():
+        raise InstallerError(f"Target project not found: {target_root}")
+
+    legacy_paths = [target_root / rel for rel in LEGACY_PURGE_REL_PATHS]
+    claude_skills = target_root / ".claude" / "skills"
+    # The bridge symlink IS the new layout — only a real directory is legacy.
+    if not claude_skills.is_symlink():
+        legacy_paths.append(claude_skills)
+
+    for path in legacy_paths:
+        if not path.exists() and not path.is_symlink():
+            continue
+        try:
+            remove_path(path)
+            result.removed.append(format_rel(path, target_root))
+        except OSError as exc:
+            result.errors.append(f"{format_rel(path, target_root)}: {exc}")
+    return result
+
+
+def format_purge_result(result: OperationResult) -> str:
+    lines: list[str] = []
+    if result.removed:
+        lines.append("Purged legacy paths:")
+        lines.extend(f"  - {path}" for path in result.removed)
+    else:
+        lines.append("Purged legacy paths: (none found)")
+    if result.errors:
+        lines.append("Errors:")
+        lines.extend(f"  - {msg}" for msg in result.errors)
+    return "\n".join(lines)
+
+
 def uninstall_items(
     *,
     target_root: Path,
@@ -1660,7 +1972,21 @@ def uninstall_items(
 
     for name in skills:
         slug = slugify_name(name)
+        # cr-004: a name reached through --skills whose install is a
+        # command-skill is refused — removing it here would delete a
+        # slash-command install. --uninstall --commands remains the removal
+        # path for command-skills (command_remove_paths is unchanged).
         for path in skill_remove_paths(target_root, slug):
+            if path.exists() and is_command_skill(path / COMMAND_SKILL_SKILL_MD):
+                result.errors.append(
+                    f"skill {slug}: refusing to uninstall command-skill "
+                    f"{format_rel(path, target_root)} via --skills "
+                    "(use --uninstall --commands instead)"
+                )
+                break
+        for path in skill_remove_paths(target_root, slug):
+            if path.exists() and is_command_skill(path / COMMAND_SKILL_SKILL_MD):
+                continue
             if path.exists():
                 try:
                     remove_path(path)
@@ -1844,13 +2170,17 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         "--commands",
         nargs="+",
         metavar="NAME",
-        help="Command names to install or uninstall (default: all discovered commands).",
+        help=(
+            "Command names to install or uninstall (default: all discovered "
+            "commands). Commands install as command-skills under "
+            ".agents/skills/<name>/ with disable-model-invocation: true."
+        ),
     )
     parser.add_argument(
         "--scripts",
         nargs="+",
         metavar="NAME",
-        help="Scripts directory names (under .ai/tools/) to install or uninstall (default: all discovered).",
+        help="Scripts directory names (under .agents/tools/) to install or uninstall (default: all discovered).",
     )
     parser.add_argument(
         "--guidelines",
@@ -1859,7 +2189,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help=(
             "Behavioral guideline names (under guidelines/) to install or uninstall. "
             "Explicit-only: guidelines are never part of the default install or bundles. "
-            "Installed to .ai/guidelines/<name>.md in the target."
+            "Installed to .agents/guidelines/<name>.md in the target."
         ),
     )
     agents_md_group = parser.add_mutually_exclusive_group()
@@ -1891,6 +2221,17 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help="Remove the selected skills, agents, commands, scripts, and guidelines from the target project.",
     )
     parser.add_argument(
+        "--purge-legacy",
+        action="store_true",
+        help=(
+            "Remove the target's pre-single-root install leftovers: .ai/, "
+            ".cursor/skills|commands|agents/, .github/prompts/, "
+            ".claude/commands/, and .claude/skills/ only when it is a real "
+            "directory (the bridge symlink is left alone). Composes with the "
+            "kind selectors or runs standalone; requires TARGET."
+        ),
+    )
+    parser.add_argument(
         "--override",
         action="store_true",
         help="Replace existing skills, agents, commands, scripts, and guidelines in the target project.",
@@ -1905,12 +2246,39 @@ def run_cli(argv: Sequence[str]) -> int:
         print("Run without arguments to open the GUI.", file=sys.stderr)
         return 2
 
+    purge_messages: list[str] = []
+    # cr-101: the purge's own errors must reach the exit code on every
+    # purge-involving path, not only the printed report — same
+    # errors-recorded-exits-1 convention as run_operation's install and
+    # uninstall errors.
+    purge_failed = False
     try:
         target = Path(args.target).expanduser().resolve()
+        # --purge-legacy composes with the kind selectors or runs standalone:
+        # legacy leftovers go first so a fresh install lands clean.
+        if args.purge_legacy:
+            purge_result = purge_legacy_paths(target)
+            purge_messages.append(format_purge_result(purge_result))
+            purge_failed = not purge_result.ok
         # --dev-workflow is an alias for --bundles dev-workflow-harness.
         bundle_ids = list(args.bundles or [])
         if args.dev_workflow and "dev-workflow-harness" not in bundle_ids:
             bundle_ids.append("dev-workflow-harness")
+        has_kind_selectors = bool(
+            bundle_ids
+            or args.dev_workflow
+            or args.skills
+            or args.agents
+            or args.commands
+            or args.scripts
+            or args.guidelines
+        )
+        if args.purge_legacy and not has_kind_selectors:
+            # --purge-legacy standalone: purge only, no install/uninstall
+            # operation (the no-selector default must not kick in).
+            for purge_message in purge_messages:
+                print(purge_message)
+            return 1 if purge_failed else 0
         selection = resolve_cli_selection(
             bundle_ids=bundle_ids or None,
             skill_names=args.skills,
@@ -1920,6 +2288,15 @@ def run_cli(argv: Sequence[str]) -> int:
             guideline_names=args.guidelines,
             target_root=target,
         )
+        if selection.is_empty:
+            if not args.purge_legacy:
+                raise InstallerError(
+                    "Select at least one skill, agent, command, scripts, or guideline."
+                )
+            # --purge-legacy composed with selectors that resolved empty.
+            for purge_message in purge_messages:
+                print(purge_message)
+            return 1 if purge_failed else 0
         code, message = run_operation(
             target=target,
             skills=selection.skills,
@@ -1931,8 +2308,17 @@ def run_cli(argv: Sequence[str]) -> int:
             override=args.override,
         )
     except InstallerError as exc:
+        # cr-009: a purge already happened irreversibly before this error —
+        # its report must reach the user, not vanish with the exception.
+        for purge_message in purge_messages:
+            print(purge_message)
+            print()
         print(f"error: {exc}", file=sys.stderr)
         return 2
+
+    for purge_message in purge_messages:
+        print(purge_message)
+        print()
 
     print(message)
     if selection.guidelines and code == 0:
@@ -1962,6 +2348,11 @@ def run_cli(argv: Sequence[str]) -> int:
                 )
         except OSError as exc:
             print(f"warning: could not update {AGENTS_MD_FILENAME}: {exc}", file=sys.stderr)
+    # cr-101: a purge composed with an install/uninstall must not let a
+    # successful operation mask purge errors — the exit code reports the
+    # whole run (1 when either recorded errors).
+    if purge_failed:
+        return 1
     return code
 
 

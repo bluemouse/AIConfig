@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Create a shared skill plus tool-specific wrappers for Claude Code,
-Cursor, and GitHub Copilot.
+Create a skill in the single-root .agents/skills/ layout.
 
 Example:
     python create_skill.py --root /path/to/repo --name my-skill --overwrite
@@ -18,13 +17,10 @@ from scaffold_skill import SkillScaffoldError, scaffold_portable_skill, slugify_
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Create a portable shared skill with tool-specific wrappers."
+        description="Create a skill scaffold in the single-root .agents/skills/ layout."
     )
     parser.add_argument("--root", required=True, help="Repository or output root directory.")
     parser.add_argument("--name", required=True, help="Skill name; normalized to hyphen-case.")
-    parser.add_argument("--claude-note", help="Extra Claude Code-specific wrapper note.")
-    parser.add_argument("--cursor-note", help="Extra Cursor-specific wrapper note.")
-    parser.add_argument("--github-note", help="Extra GitHub Copilot-specific wrapper note.")
     parser.add_argument(
         "--overwrite",
         action="store_true",
@@ -41,9 +37,6 @@ def main(argv: list[str]) -> int:
             root=Path(args.root),
             skill_name=skill_name,
             overwrite=args.overwrite,
-            claude_note=args.claude_note,
-            cursor_note=args.cursor_note,
-            github_note=args.github_note,
         )
     except SkillScaffoldError as exc:
         print(f"error: {exc}", file=sys.stderr)

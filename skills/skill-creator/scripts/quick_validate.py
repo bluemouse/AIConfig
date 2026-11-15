@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 """
-Quick validation script for skills - shared packages and tool wrappers.
+Quick validation for portable skills — bootstrap sources and shared installs.
+
+Bootstrap sources live at skills/<name>/. Installing copies the source
+verbatim to the single root .agents/skills/<name>/ (flat layout, no category
+subfolders) and bridges Claude Code via the .claude/skills symlink.
+Tool-specific guidance lives in `## Tool notes` sections of the SKILL.md body.
 """
+
+from __future__ import annotations
 
 import argparse
 import re
 import sys
+from pathlib import Path
 
 import yaml
-from pathlib import Path
 
 ALLOWED_PROPERTIES = {
     "name",
@@ -18,6 +25,13 @@ ALLOWED_PROPERTIES = {
     "metadata",
     "compatibility",
     "disable-model-invocation",
+}
+
+SKILL_MODES = ("bootstrap", "shared")
+
+MODE_LABELS = {
+    "bootstrap": "Bootstrap skill",
+    "shared": "Shared skill",
 }
 
 
@@ -81,7 +95,7 @@ def validate_description(description: str) -> str | None:
     return None
 
 
-def validate_frontmatter(frontmatter: dict, *, strict: bool) -> str | None:
+def validate_frontmatter(frontmatter: dict) -> str | None:
     unexpected_keys = set(frontmatter.keys()) - ALLOWED_PROPERTIES
     if unexpected_keys:
         return (
@@ -99,7 +113,7 @@ def validate_frontmatter(frontmatter: dict, *, strict: bool) -> str | None:
         return name_error
 
     description_error = validate_description(frontmatter.get("description", ""))
-    if description_error and strict:
+    if description_error:
         return description_error
 
     compatibility = frontmatter.get("compatibility", "")
@@ -116,77 +130,69 @@ def validate_frontmatter(frontmatter: dict, *, strict: bool) -> str | None:
 
 
 def detect_mode(skill_path: Path) -> str:
-    parts = skill_path.resolve().parts
-    if ".ai" in parts and "skills" in parts:
+    """Detect whether a skill directory is a bootstrap source or a shared install.
+
+    Installed skills live under .agents/skills/<name>/. Bootstrap sources live
+    at skills/<name>/ in the bootstrap tree. The .claude/skills bridge symlink
+    resolves to .agents/skills/, so bridged paths classify as shared.
+    """
+    parts = Path(skill_path).resolve().parts
+    if ".agents" in parts:
         return "shared"
-    tool_markers = {".cursor", ".claude", ".github"}
-    if any(marker in parts for marker in tool_markers) and "skills" in parts:
-        return "wrapper"
-    return "shared"
+    return "bootstrap"
 
 
-def expected_shared_reference(skill_name: str) -> str:
-    return f"../../../.ai/skills/{skill_name}/SKILL.md"
+def validate_flat_root(skill_path: Path) -> str | None:
+    """Reject category subfolders: a skill dir must be a direct child of a skills root.
+
+    Validated by structure (the parent directory is named 'skills'), not by
+    absolute location, so bootstrap (skills/<name>/) and installed
+    (.agents/skills/<name>/) layouts both pass.
+    """
+    parent_name = skill_path.parent.name
+    if parent_name != "skills":
+        return (
+            f"Skill directory '{skill_path.name}' must be a direct child of a "
+            f"skills root; found it under '{parent_name}/'. The single-root "
+            "layout is flat: .agents/skills/<name>/ with no category subfolders."
+        )
+    return None
+
+
+def validate_skill_dir(skill_path: Path, mode: str) -> tuple[bool, str]:
+    """Validate a skill directory containing SKILL.md, in any kept mode."""
+    root_error = validate_flat_root(skill_path)
+    if root_error:
+        return False, root_error
+
+    skill_md = skill_path / "SKILL.md"
+    if not skill_md.exists():
+        return False, "SKILL.md not found"
+
+    content = skill_md.read_text(encoding="utf-8")
+    frontmatter, error = parse_frontmatter(content)
+    if error:
+        return False, error
+
+    frontmatter_error = validate_frontmatter(frontmatter)
+    if frontmatter_error:
+        return False, frontmatter_error
+
+    name = frontmatter["name"].strip()
+    if skill_path.name != name:
+        return False, f"Directory name '{skill_path.name}' must match frontmatter name '{name}'"
+
+    return True, f"{MODE_LABELS[mode]} is valid!"
+
+
+def validate_bootstrap_skill(skill_path: Path) -> tuple[bool, str]:
+    """Validate a bootstrap source skill directory (skills/<name>/)."""
+    return validate_skill_dir(skill_path, "bootstrap")
 
 
 def validate_shared_skill(skill_path: Path) -> tuple[bool, str]:
-    skill_md = skill_path / "SKILL.md"
-    if not skill_md.exists():
-        return False, "SKILL.md not found"
-
-    content = skill_md.read_text()
-    frontmatter, error = parse_frontmatter(content)
-    if error:
-        return False, error
-
-    frontmatter_error = validate_frontmatter(frontmatter, strict=True)
-    if frontmatter_error:
-        return False, frontmatter_error
-
-    name = frontmatter["name"].strip()
-    if skill_path.name != name:
-        return False, f"Directory name '{skill_path.name}' must match frontmatter name '{name}'"
-
-    return True, "Shared skill is valid!"
-
-
-def validate_wrapper_skill(skill_path: Path) -> tuple[bool, str]:
-    skill_md = skill_path / "SKILL.md"
-    if not skill_md.exists():
-        return False, "SKILL.md not found"
-
-    extra_entries = [p.name for p in skill_path.iterdir() if p.name != "SKILL.md"]
-    if extra_entries:
-        return (
-            False,
-            "Wrapper skill directories should contain only SKILL.md; "
-            f"found: {', '.join(sorted(extra_entries))}",
-        )
-
-    content = skill_md.read_text()
-    frontmatter, error = parse_frontmatter(content)
-    if error:
-        return False, error
-
-    frontmatter_error = validate_frontmatter(frontmatter, strict=False)
-    if frontmatter_error:
-        return False, frontmatter_error
-
-    name = frontmatter["name"].strip()
-    if skill_path.name != name:
-        return False, f"Directory name '{skill_path.name}' must match frontmatter name '{name}'"
-
-    shared_ref = expected_shared_reference(name)
-    if shared_ref not in content:
-        return (
-            False,
-            f"Wrapper body must reference the shared skill path: {shared_ref}",
-        )
-
-    if "wrapper" not in content.lower():
-        return False, "Wrapper body should identify itself as a tool-specific wrapper"
-
-    return True, "Wrapper skill is valid!"
+    """Validate a shared/installed skill directory (.agents/skills/<name>/)."""
+    return validate_skill_dir(skill_path, "shared")
 
 
 def validate_skill(skill_path: Path, mode: str | None = None) -> tuple[bool, str]:
@@ -195,20 +201,22 @@ def validate_skill(skill_path: Path, mode: str | None = None) -> tuple[bool, str
         return False, f"Skill path is not a directory: {skill_path}"
 
     resolved_mode = mode or detect_mode(skill_path)
-    if resolved_mode == "wrapper":
-        return validate_wrapper_skill(skill_path)
+    if resolved_mode == "bootstrap":
+        return validate_bootstrap_skill(skill_path)
     return validate_shared_skill(skill_path)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate a shared or wrapper skill directory.")
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Validate a bootstrap or shared/installed skill directory."
+    )
     parser.add_argument("skill_path", help="Path to the skill directory")
     parser.add_argument(
         "--mode",
-        choices=("shared", "wrapper"),
+        choices=SKILL_MODES,
         help="Validation mode (auto-detected when omitted)",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv if argv is not None else sys.argv[1:])
 
     valid, message = validate_skill(args.skill_path, args.mode)
     print(message)

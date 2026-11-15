@@ -75,11 +75,11 @@ class FrontmatterDescriptionTests(unittest.TestCase):
             mod.REPO_ROOT = root
             try:
                 write_markdown(
-                    root / ".ai/skills/alpha" / "SKILL.md",
+                    root / ".agents/skills/alpha" / "SKILL.md",
                     description="Alpha skill",
                 )
                 write_markdown(
-                    root / ".ai/skills/beta" / "SKILL.md",
+                    root / ".agents/skills/beta" / "SKILL.md",
                     description="Beta skill",
                 )
                 descriptions = mod.load_skill_descriptions(["alpha", "beta", "missing"])
@@ -95,7 +95,7 @@ class FrontmatterDescriptionTests(unittest.TestCase):
             mod.REPO_ROOT = root
             try:
                 write_markdown(
-                    root / ".ai/agents/runner.md",
+                    root / ".claude/agents/runner.md",
                     description="Runs tasks",
                 )
                 descriptions = mod.load_agent_descriptions(["runner", "ghost"])
@@ -105,7 +105,22 @@ class FrontmatterDescriptionTests(unittest.TestCase):
         self.assertEqual(descriptions, {"runner": "Runs tasks"})
 
     def test_load_commit_message_writer_description_smoke(self) -> None:
-        descriptions = mod.load_skill_descriptions(["commit-message-writer"])
+        # Fixture-based (not real-repo): the repo itself still lives under
+        # .ai/skills/ until the stage-5 self-migration, so a REPO_ROOT-patched
+        # smoke test stays green across the migration boundary.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = root
+            try:
+                write_markdown(
+                    root / ".agents/skills/commit-message-writer" / "SKILL.md",
+                    description="Drafts commit messages",
+                )
+                descriptions = mod.load_skill_descriptions(["commit-message-writer"])
+            finally:
+                mod.REPO_ROOT = original_root
+
         self.assertIn("commit-message-writer", descriptions)
         self.assertTrue(descriptions["commit-message-writer"])
 

@@ -204,8 +204,8 @@ class CliSkillResolutionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             for rel in (
-                ".ai/skills/verdict-first/SKILL.md",
-                ".cursor/skills/verdict-first/SKILL.md",
+                ".agents/skills/verdict-first/SKILL.md",
+                ".agents/skills/verdict-first/EXTRA.md",
             ):
                 path = root / rel
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -221,6 +221,105 @@ class CliSkillResolutionTests(unittest.TestCase):
                 mod.REPO_ROOT = original_root
 
             self.assertIn("verdict-first", resolved)
+
+    def test_discover_skills_scans_agents_skills(self) -> None:
+        """t-014a: skills are discovered from .agents/skills/."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            skill_dir = root / ".agents" / "skills" / "alpha"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                "---\nname: alpha\ndescription: probe\n---\n", encoding="utf-8"
+            )
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = root
+            try:
+                discovered = mod.discover_skills()
+            finally:
+                mod.REPO_ROOT = original_root
+
+            self.assertEqual(discovered, ["alpha"])
+
+    def test_discover_agents_reads_both_files(self) -> None:
+        """t-014a: agents are discovered from both dual-target files."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            claude = root / ".claude" / "agents"
+            claude.mkdir(parents=True)
+            (claude / "alpha.md").write_text(
+                "---\nname: alpha\ndescription: probe\n---\n", encoding="utf-8"
+            )
+            (claude / "beta.md").write_text(
+                "---\nname: beta\ndescription: probe\n---\n", encoding="utf-8"
+            )
+            github = root / ".github" / "agents"
+            github.mkdir(parents=True)
+            (github / "beta.agent.md").write_text(
+                "---\nname: beta\ndescription: probe\n---\n", encoding="utf-8"
+            )
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = root
+            try:
+                discovered = mod.discover_agents()
+            finally:
+                mod.REPO_ROOT = original_root
+
+            self.assertEqual(discovered, ["alpha", "beta"])
+
+    def test_discover_commands_filters_command_skills(self) -> None:
+        """t-014a: commands are the command-skills — flag-filtered from
+        .agents/skills/ — so the --commands selector keeps functioning."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            command_dir = root / ".agents" / "skills" / "git-commit"
+            command_dir.mkdir(parents=True)
+            (command_dir / "SKILL.md").write_text(
+                "---\n"
+                "name: git-commit\n"
+                "description: Write commit messages\n"
+                "disable-model-invocation: true\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            plain_dir = root / ".agents" / "skills" / "plain-skill"
+            plain_dir.mkdir(parents=True)
+            (plain_dir / "SKILL.md").write_text(
+                "---\nname: plain-skill\ndescription: probe\n---\n",
+                encoding="utf-8",
+            )
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = root
+            try:
+                commands = mod.discover_commands()
+                # A --commands selection resolves only command-skills.
+                selection = mod.resolve_cli_selection(
+                    bundle_ids=None,
+                    skill_names=None,
+                    agent_names=None,
+                    command_names=["git-commit"],
+                    script_names=None,
+                )
+            finally:
+                mod.REPO_ROOT = original_root
+
+            self.assertEqual(commands, ["git-commit"])
+            self.assertEqual(selection.commands, ["git-commit"])
+
+    def test_discover_scripts_scans_agents_tools(self) -> None:
+        """t-014a: scripts are discovered from .agents/tools/."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            tools_dir = root / ".agents" / "tools" / "dev-workflow"
+            tools_dir.mkdir(parents=True)
+            (tools_dir / "README.md").write_text("# dev-workflow\n", encoding="utf-8")
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = root
+            try:
+                discovered = mod.discover_scripts()
+            finally:
+                mod.REPO_ROOT = original_root
+
+            self.assertEqual(discovered, ["dev-workflow"])
 
     def test_no_default_exclusion_mechanism_remains(self) -> None:
         """fr-7 (t-108): the personal-preference exclusion mechanism is gone."""
@@ -290,7 +389,7 @@ class DocsBundleMembershipRemovedTests(unittest.TestCase):
 
 class TargetBundleTests(unittest.TestCase):
     def _write_target_skill(self, root: Path, name: str) -> None:
-        skill_dir = root / ".ai" / "skills" / name
+        skill_dir = root / ".agents" / "skills" / name
         skill_dir.mkdir(parents=True, exist_ok=True)
         (skill_dir / "SKILL.md").write_text(
             f"---\nname: {name}\ndescription: {name} skill\n---\n",
@@ -298,7 +397,7 @@ class TargetBundleTests(unittest.TestCase):
         )
 
     def _write_target_agent(self, root: Path, name: str) -> None:
-        agents_dir = root / ".ai" / "agents"
+        agents_dir = root / ".claude" / "agents"
         agents_dir.mkdir(parents=True, exist_ok=True)
         (agents_dir / f"{name}.md").write_text(
             f"---\nname: {name}\ndescription: {name} agent\n---\n",
@@ -306,15 +405,19 @@ class TargetBundleTests(unittest.TestCase):
         )
 
     def _write_target_command(self, root: Path, name: str) -> None:
-        commands_dir = root / ".ai" / "commands"
-        commands_dir.mkdir(parents=True, exist_ok=True)
-        (commands_dir / f"{name}.md").write_text(
-            f"---\nname: {name}\ndescription: {name} command\n---\n",
+        skill_dir = root / ".agents" / "skills" / name
+        skill_dir.mkdir(parents=True, exist_ok=True)
+        (skill_dir / "SKILL.md").write_text(
+            f"---\n"
+            f"name: {name}\n"
+            f"description: {name} command\n"
+            "disable-model-invocation: true\n"
+            "---\n",
             encoding="utf-8",
         )
 
     def _write_target_scripts(self, root: Path, name: str) -> None:
-        scripts_dir = root / ".ai" / "tools" / name
+        scripts_dir = root / ".agents" / "tools" / name
         scripts_dir.mkdir(parents=True, exist_ok=True)
         (scripts_dir / "README.md").write_text(f"# {name}\n", encoding="utf-8")
 
@@ -323,7 +426,7 @@ class TargetBundleTests(unittest.TestCase):
             root = Path(tmp)
             self._write_target_skill(root, "alpha")
             self._write_target_skill(root, "beta")
-            (root / ".ai" / "skills" / "empty").mkdir(parents=True)
+            (root / ".agents" / "skills" / "empty").mkdir(parents=True)
             self.assertEqual(mod.discover_skills_in_project(root), ["alpha", "beta"])
 
     def test_discover_skills_in_project_missing_shared(self) -> None:
@@ -348,19 +451,25 @@ class TargetBundleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._write_target_skill(root, "research-guide")
-            self.assertEqual(
-                mod.resolve_target_bundle_skills(root),
-                ["research-guide"],
-            )
+            with mock.patch.object(
+                mod, "discover_skills", return_value=["research-guide", "other"]
+            ):
+                self.assertEqual(
+                    mod.resolve_target_bundle_skills(root),
+                    ["research-guide"],
+                )
 
     def test_resolve_bundle_skills_target_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._write_target_skill(root, "research-guide")
-            resolved = mod.resolve_bundle_skills(
-                [mod.TARGET_BUNDLE_ID],
-                target_root=root,
-            )
+            with mock.patch.object(
+                mod, "discover_skills", return_value=["research-guide", "other"]
+            ):
+                resolved = mod.resolve_bundle_skills(
+                    [mod.TARGET_BUNDLE_ID],
+                    target_root=root,
+                )
             self.assertEqual(resolved, ["research-guide"])
 
     def test_resolve_bundle_skills_target_bundle_requires_target(self) -> None:
@@ -388,7 +497,7 @@ class TargetBundleTests(unittest.TestCase):
             root = Path(tmp)
             self._write_target_agent(root, "alpha")
             self._write_target_agent(root, "beta")
-            (root / ".ai" / "agents" / ".hidden.md").write_text("x", encoding="utf-8")
+            (root / ".claude" / "agents" / ".hidden.md").write_text("x", encoding="utf-8")
             self.assertEqual(mod.discover_agents_in_project(root), ["alpha", "beta"])
 
     def test_discover_agents_in_project_missing_shared(self) -> None:
@@ -411,7 +520,7 @@ class TargetBundleTests(unittest.TestCase):
             root = Path(tmp)
             self._write_target_scripts(root, "alpha")
             self._write_target_scripts(root, "beta")
-            (root / ".ai" / "tools" / "__pycache__").mkdir(parents=True)
+            (root / ".agents" / "tools" / "__pycache__").mkdir(parents=True)
             self.assertEqual(mod.discover_scripts_in_project(root), ["alpha", "beta"])
 
     def test_discover_scripts_in_project_missing_shared(self) -> None:
@@ -486,11 +595,14 @@ class TargetBundleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._write_target_skill(root, "research-guide")
-            resolved = mod.resolve_cli_skills(
-                bundle_ids=["target-bundle"],
-                skill_names=None,
-                target_root=root,
-            )
+            with mock.patch.object(
+                mod, "discover_skills", return_value=["research-guide", "other"]
+            ):
+                resolved = mod.resolve_cli_skills(
+                    bundle_ids=["target-bundle"],
+                    skill_names=None,
+                    target_root=root,
+                )
             self.assertEqual(resolved, ["research-guide"])
 
 

@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 """
-Install a bootstrap agent package into the portable shared-first layout.
+Install a bootstrap agent package into the dual-target agent layout.
 
-Copies agents/<name>/AGENT.md to .ai/agents/<name>.md and installs
-custom tool wrappers from agents/<name>/wrappers/<tool>/AGENT.md when present.
+Reads agents/<name>/AGENT.md and writes two real copies:
+
+- .claude/agents/<name>.md — AGENT.md verbatim (frontmatter + body), which
+  Cursor compat-reads.
+- .github/agents/<name>.agent.md — a Copilot transform: name/description
+  frontmatter plus the body.
+
+Tool-specific guidance belongs in `## Tool notes` sections of the bootstrap
+AGENT.md; there is no shared wrapper layer.
 
 Example:
     python install_portable_agent.py \\
@@ -22,7 +29,13 @@ from pathlib import Path
 
 import yaml
 
-from create_agent import TOOL_PATHS, AgentCreatorError, slugify_name, write_file
+from create_agent import (
+    CLAUDE_AGENT_PATH,
+    GITHUB_AGENT_PATH,
+    AgentCreatorError,
+    slugify_name,
+    write_file,
+)
 from quick_validate import body_after_frontmatter, parse_frontmatter, validate_agent
 
 
@@ -34,28 +47,31 @@ def read_agent_metadata(agent_md: Path) -> tuple[str, str]:
     if error:
         raise AgentCreatorError(f"Invalid source AGENT.md: {error}")
 
-    description = frontmatter.get("description", "").strip()
-    if not description:
+    description = frontmatter.get("description") or ""
+    if not isinstance(description, str):
+        raise AgentCreatorError("Source AGENT.md description must be a string.")
+    if not description.strip():
         raise AgentCreatorError("Source AGENT.md is missing a description in frontmatter.")
 
-    source_name = frontmatter.get("name", "").strip()
-    return description, source_name
+    source_name = frontmatter.get("name") or ""
+    if not isinstance(source_name, str):
+        raise AgentCreatorError("Source AGENT.md name must be a string.")
+    return description.strip(), source_name.strip()
 
 
-def sync_description(content: str, description: str) -> str:
-    fm, error = parse_frontmatter(content)
-    if error or not fm:
-        raise AgentCreatorError(f"Cannot sync description: {error or 'missing frontmatter'}")
+def build_github_content(agent_md_content: str) -> str:
+    """Transform an AGENT.md into a GitHub Copilot .agent.md real copy."""
+    frontmatter, error = parse_frontmatter(agent_md_content)
+    if error or not frontmatter:
+        raise AgentCreatorError(f"Cannot build Copilot agent: {error or 'missing frontmatter'}")
 
-    name = fm.get("name", "").strip()
-    if not name:
-        raise AgentCreatorError("Wrapper is missing name in frontmatter")
-
-    updated = dict(fm)
-    updated["description"] = description
-    body = body_after_frontmatter(content)
+    body = body_after_frontmatter(agent_md_content)
+    copilot_frontmatter = {
+        "name": frontmatter.get("name", ""),
+        "description": frontmatter.get("description", ""),
+    }
     yaml_block = yaml.dump(
-        updated,
+        copilot_frontmatter,
         default_flow_style=False,
         allow_unicode=True,
         sort_keys=False,
@@ -66,21 +82,6 @@ def sync_description(content: str, description: str) -> str:
     else:
         rebuilt += "\n"
     return rebuilt
-
-
-def load_custom_wrapper(source: Path, tool: str, description: str) -> str | None:
-    wrapper_path = source / "wrappers" / tool / "AGENT.md"
-    if not wrapper_path.is_file():
-        return None
-    return sync_description(wrapper_path.read_text(encoding="utf-8"), description)
-
-
-def assert_install_allowed(target_paths: list[Path], overwrite: bool) -> None:
-    if overwrite:
-        return
-    for path in target_paths:
-        if path.exists():
-            raise AgentCreatorError(f"Refusing to overwrite existing file: {path}")
 
 
 def install_portable_agent(
@@ -103,44 +104,46 @@ def install_portable_agent(
             f"Agent name '{agent_name}' does not match source frontmatter name '{source_name}'."
         )
 
-    shared_path = root / ".ai" / "agents" / f"{agent_name}.md"
-    shared_content = agent_md.read_text(encoding="utf-8")
-    wrapper_installs: list[tuple[str, Path, str]] = []
+    agent_md_content = agent_md.read_text(encoding="utf-8")
+    claude_target = root / CLAUDE_AGENT_PATH.format(name=agent_name)
+    github_target = root / GITHUB_AGENT_PATH.format(name=agent_name)
 
-    for tool, pattern in TOOL_PATHS.items():
-        content = load_custom_wrapper(source, tool, description)
-        if content is None:
-            continue
-        wrapper_installs.append((tool, root / pattern.format(name=agent_name), content))
+    assert_install_allowed([claude_target, github_target], overwrite)
 
-    assert_install_allowed(
-        [shared_path, *(path for _, path, _ in wrapper_installs)],
-        overwrite,
-    )
-
-    write_file(shared_path, shared_content, overwrite)
-    written: list[Path] = [shared_path]
-    installed_tools: set[str] = set()
-
-    for tool, wrapper_path, content in wrapper_installs:
-        write_file(wrapper_path, content, overwrite)
-        written.append(wrapper_path)
-        installed_tools.add(tool)
+    write_file(claude_target, agent_md_content, overwrite)
+    write_file(github_target, build_github_content(agent_md_content), overwrite)
+    written: list[Path] = [claude_target, github_target]
 
     removed: list[Path] = []
     if overwrite:
-        for tool, pattern in TOOL_PATHS.items():
-            if tool in installed_tools:
-                continue
-            stale_path = root / pattern.format(name=agent_name)
-            if stale_path.is_file():
-                stale_path.unlink()
-                removed.append(stale_path)
+        removed = remove_legacy_outputs(root, agent_name)
 
     return written, removed
 
 
-def validate_install(root: Path, written: list[Path], validator_script: Path) -> None:
+def assert_install_allowed(target_paths: list[Path], overwrite: bool) -> None:
+    if overwrite:
+        return
+    for path in target_paths:
+        if path.exists():
+            raise AgentCreatorError(f"Refusing to overwrite existing file: {path}")
+
+
+def remove_legacy_outputs(root: Path, agent_name: str) -> list[Path]:
+    """Delete legacy shared-layer and wrapper outputs left by older installs."""
+    legacy_patterns = {
+        "shared": root / ".ai" / "agents" / f"{agent_name}.md",
+        "cursor": root / ".cursor" / "agents" / f"{agent_name}.md",
+    }
+    removed: list[Path] = []
+    for stale_path in legacy_patterns.values():
+        if stale_path.is_file():
+            stale_path.unlink()
+            removed.append(stale_path)
+    return removed
+
+
+def validate_install(written: list[Path], validator_script: Path) -> None:
     for path in written:
         valid, message = validate_agent(path)
         if not valid:
@@ -159,7 +162,7 @@ def validate_install(root: Path, written: list[Path], validator_script: Path) ->
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Install a bootstrap agent into the portable shared-first layout."
+        description="Install a bootstrap agent into the dual-target agent layout."
     )
     parser.add_argument("--root", required=True, help="Repository root directory.")
     parser.add_argument("--name", required=True, help="Agent name; normalized to hyphen-case.")
@@ -172,7 +175,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--overwrite",
         action="store_true",
         default=True,
-        help="Overwrite existing shared agent and wrappers (default: true).",
+        help="Overwrite existing installed agent files (default: true).",
     )
     parser.add_argument(
         "--no-overwrite",
@@ -204,7 +207,7 @@ def main(argv: list[str]) -> int:
     if not args.skip_validate:
         validator = Path(__file__).resolve().parent / "quick_validate.py"
         try:
-            validate_install(Path(args.root), written, validator)
+            validate_install(written, validator)
         except AgentCreatorError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 1
@@ -213,11 +216,11 @@ def main(argv: list[str]) -> int:
     for path in written:
         print(f"- {path}")
     for path in removed:
-        print(f"- removed stale wrapper: {path}")
+        print(f"- removed legacy output: {path}")
 
     print(
-        "\nReload Cursor, VS Code (Copilot), and Claude Code so each tool "
-        "rediscovers the installed agent."
+        "\nReload VS Code (Copilot) and restart or reload the Claude Code "
+        "session so each tool rediscovers the installed agent."
     )
     return 0
 

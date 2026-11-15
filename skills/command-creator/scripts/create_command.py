@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Create a portable slash command directly in the installed layout.
+Create a portable command-skill directly in the installed layout.
 
 Example:
     python create_command.py \\
         --root /path/to/repo \\
         --name code-review \\
-        --description "Review staged changes before commit." \\
+        --description "Review staged changes when the user explicitly invokes /code-review." \\
         --body-file /tmp/code-review-body.md \\
         --overwrite
 """
@@ -17,14 +17,15 @@ import argparse
 import sys
 from pathlib import Path
 
-from quick_validate import body_after_frontmatter, validate_command
+from quick_validate import (
+    COMMAND_SKILL_DIR_PARTS,
+    COMMAND_SKILL_FILENAME,
+    validate_command_skill,
+)
 from scaffold_command import (
-    TOOL_PATHS,
     CommandCreatorError,
-    build_claude_content,
-    build_cursor_content,
-    build_github_content,
-    shared_command_content,
+    assert_command_skill_target_available,
+    command_skill_content,
     slugify_name,
     write_file,
 )
@@ -42,48 +43,38 @@ def create_command(
     if not description.strip():
         raise CommandCreatorError("Description cannot be empty.")
 
-    shared_path = root / ".ai" / "commands" / f"{command_name}.md"
-    shared_content = shared_command_content(command_name, description, body)
+    skill_dir = root.joinpath(*COMMAND_SKILL_DIR_PARTS) / command_name
+    skill_path = skill_dir / COMMAND_SKILL_FILENAME
 
-    shared_body = body_after_frontmatter(shared_content)
-    cursor_content = build_cursor_content(shared_body)
-    claude_content = build_claude_content(command_name, description, shared_body)
-    github_content = build_github_content(command_name, description, shared_body)
+    assert_command_skill_target_available(skill_dir, skill_path, overwrite)
 
-    written: list[Path] = []
-    for path, content in (
-        (shared_path, shared_content),
-        (root / TOOL_PATHS["cursor"].format(name=command_name), cursor_content),
-        (root / TOOL_PATHS["claude"].format(name=command_name), claude_content),
-        (root / TOOL_PATHS["github"].format(name=command_name), github_content),
-    ):
-        write_file(path, content, overwrite)
-        written.append(path)
+    content = command_skill_content(command_name, description, body)
+    write_file(skill_path, content, overwrite)
 
-    return written
+    return [skill_path]
 
 
 def validate_install(written: list[Path]) -> None:
     for path in written:
-        valid, message = validate_command(path)
+        valid, message = validate_command_skill(path)
         if not valid:
             raise CommandCreatorError(f"Validation failed for {path}: {message}")
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Create portable command install outputs.")
+    parser = argparse.ArgumentParser(description="Create a portable command-skill.")
     parser.add_argument("--root", required=True, help="Repository or output root directory.")
     parser.add_argument("--name", required=True, help="Command name; normalized to hyphen-case.")
     parser.add_argument("--description", required=True, help="Short command description.")
     parser.add_argument(
         "--body-file",
         required=True,
-        help="Markdown file containing the tool-neutral command body (no frontmatter).",
+        help="Markdown file containing the command body (no frontmatter).",
     )
     parser.add_argument(
         "--overwrite",
         action="store_true",
-        help="Overwrite existing generated files if they already exist.",
+        help="Overwrite an existing command-skill install if it already exists.",
     )
     return parser.parse_args(argv)
 
@@ -112,7 +103,7 @@ def main(argv: list[str]) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    print("created command files:")
+    print("created command skill:")
     for path in written:
         print(f"- {path}")
     return 0

@@ -13,14 +13,7 @@ class SkillScaffoldError(Exception):
     """Raised for user-correctable scaffold errors."""
 
 
-TOOL_SKILL_PATHS = {
-    "claude": ".claude/skills/{name}",
-    "cursor": ".cursor/skills/{name}",
-    "github": ".github/skills/{name}",
-}
-
-RELATIVE_SHARED_SKILL_PATH = "../../../.ai/skills/{name}/SKILL.md"
-RELATIVE_SHARED_SKILL_ROOT = "../../../.ai/skills/{name}"
+AGENTS_SKILL_DIR = ".agents/skills/{name}"
 
 
 SKILL_TEMPLATE = """---
@@ -138,12 +131,6 @@ Asset files are NOT intended to be loaded into context, but rather used within
 the output the agent produces.
 """
 
-WRAPPER_DESCRIPTION_TEMPLATE = (
-    '"[TODO: Same trigger description as the shared skill in '
-    '.ai/skills/{skill_name}/SKILL.md]"'
-)
-
-
 def title_case_skill_name(skill_name: str) -> str:
     """Convert hyphenated skill name to Title Case for display."""
     return " ".join(word.capitalize() for word in skill_name.split("-"))
@@ -164,44 +151,6 @@ def slugify_name(value: str) -> str:
 def shared_skill_content(skill_name: str) -> str:
     skill_title = title_case_skill_name(skill_name)
     return SKILL_TEMPLATE.format(skill_name=skill_name, skill_title=skill_title)
-
-
-def wrapper_skill_content(tool: str, skill_name: str, note: str | None) -> str:
-    shared_skill_path = RELATIVE_SHARED_SKILL_PATH.format(name=skill_name)
-    shared_skill_root = RELATIVE_SHARED_SKILL_ROOT.format(name=skill_name)
-    tool_titles = {
-        "claude": "Claude Code",
-        "cursor": "Cursor",
-        "github": "GitHub Copilot",
-    }
-    title = tool_titles[tool]
-    note = (note or "No additional tool-specific instructions were provided.").strip()
-    description = WRAPPER_DESCRIPTION_TEMPLATE.format(skill_name=skill_name)
-
-    body = f"""\
-# {skill_name} wrapper for {title}
-
-This is a tool-specific wrapper. The canonical shared skill is:
-
-`{shared_skill_path}`
-
-Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<SKILL_ROOT>` as `{shared_skill_root}` and resolve paths to `scripts/`, `references/`, and `assets/` from that shared skill directory.
-
-## {title}-specific information
-
-{note}
-
-## Wrapper policy
-
-- Do not treat this wrapper as the full skill specification.
-- Prefer the shared skill whenever this wrapper and the shared skill conflict.
-- Keep edits to common behavior in `{shared_skill_root}/`.
-- Keep only {title}-specific information in this wrapper.
-"""
-    return (
-        f"---\nname: {skill_name}\ndescription: {description}\n---\n\n"
-        + body
-    )
 
 
 def write_file(path: Path, content: str, overwrite: bool) -> None:
@@ -251,31 +200,11 @@ def scaffold_portable_skill(
     root: Path,
     skill_name: str,
     overwrite: bool,
-    claude_note: str | None = None,
-    cursor_note: str | None = None,
-    github_note: str | None = None,
 ) -> list[Path]:
-    """Scaffold shared skill plus tool-specific wrappers."""
+    """Scaffold a skill into the single-root .agents/skills/ layout."""
     root = root.resolve()
     skill_name = slugify_name(skill_name)
-    written: list[Path] = []
 
-    shared_dir = root / ".ai" / "skills" / skill_name
-    scaffold_shared_skill_dir(shared_dir, skill_name, overwrite)
-    written.append(shared_dir)
-
-    notes = {
-        "claude": claude_note,
-        "cursor": cursor_note,
-        "github": github_note,
-    }
-    for tool, pattern in TOOL_SKILL_PATHS.items():
-        wrapper_dir = root / pattern.format(name=skill_name)
-        write_file(
-            wrapper_dir / "SKILL.md",
-            wrapper_skill_content(tool, skill_name, notes[tool]),
-            overwrite,
-        )
-        written.append(wrapper_dir)
-
-    return written
+    skill_dir = root / AGENTS_SKILL_DIR.format(name=skill_name)
+    scaffold_shared_skill_dir(skill_dir, skill_name, overwrite)
+    return [skill_dir]

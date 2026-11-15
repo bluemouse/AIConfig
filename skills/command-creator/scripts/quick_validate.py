@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
-Quick validation for portable commands — shared files and tool install outputs.
+Quick validation for portable commands — bootstrap sources and command-skills.
+
+A bootstrap command lives at commands/<name>/COMMAND.md. Installing it writes
+a command-skill: .agents/skills/<name>/SKILL.md with
+`disable-model-invocation: true` and an invocation-gated description, so
+every coding agent can invoke it as /<name> and the model never self-invokes
+it.
 """
 
 from __future__ import annotations
@@ -12,33 +18,19 @@ from pathlib import Path
 
 import yaml
 
-SHARED_ALLOWED_KEYS = {"name", "description"}
+BOOTSTRAP_COMMAND_FILENAME = "COMMAND.md"
+COMMAND_SKILL_FILENAME = "SKILL.md"
+COMMAND_SKILL_DIR_PARTS = (".agents", "skills")
 
-CLAUDE_ALLOWED_KEYS = {
+MAX_DESCRIPTION_LENGTH = 120
+INVOCATION_GATE_PATTERN = re.compile(r"explicitly invokes", re.IGNORECASE)
+
+BOOTSTRAP_ALLOWED_KEYS = {"name", "description", "allowed-tools"}
+COMMAND_SKILL_ALLOWED_KEYS = {
     "name",
     "description",
-    "argument-hint",
-    "allowed-tools",
-    "model",
     "disable-model-invocation",
-    "user-invocable",
-    "context",
-    "agent",
-}
-
-GITHUB_ALLOWED_KEYS = {
-    "name",
-    "description",
-    "argument-hint",
-    "agent",
-    "model",
-    "tools",
-}
-
-TOOL_PATHS = {
-    "cursor": ".cursor/commands/{name}.md",
-    "claude": ".claude/commands/{name}.md",
-    "github": ".github/prompts/{name}.prompt.md",
+    "allowed-tools",
 }
 
 TOOL_NEUTRALITY_PATTERNS = (
@@ -93,64 +85,50 @@ def validate_name(name: str) -> str | None:
     return None
 
 
-def validate_description(description: str, *, strict: bool) -> str | None:
+def validate_description(description: str) -> str | None:
+    """Command descriptions must be <=120 chars and invocation-gated."""
     if not isinstance(description, str):
         return f"Description must be a string, got {type(description).__name__}"
     description = description.strip()
     if not description:
         return "Description cannot be empty"
-    if strict and ("<" in description or ">" in description):
-        return "Description cannot contain angle brackets (< or >)"
-    if len(description) > 1024:
+    if len(description) > MAX_DESCRIPTION_LENGTH:
         return (
             f"Description is too long ({len(description)} characters). "
-            "Maximum is 1024 characters."
+            f"Maximum is {MAX_DESCRIPTION_LENGTH} characters."
+        )
+    if not INVOCATION_GATE_PATTERN.search(description):
+        return (
+            "Description must be invocation-gated: state that the user explicitly "
+            "invokes the command (e.g. \"... when the user explicitly invokes /<name>.\")"
         )
     return None
 
 
-def normalize_description(description: str) -> str:
-    return " ".join(description.strip().split())
-
-
 def detect_mode(command_path: Path) -> str:
-    parts = command_path.resolve().parts
-    if command_path.name == "COMMAND.md":
-        parent = command_path.parent
-        if parent.parent.name == "wrappers" or parent.name == "wrappers":
-            tool = parent.name if parent.parent.name == "wrappers" else ""
-            if tool == "cursor":
-                return "bootstrap_cursor_wrapper"
-            return "bootstrap_wrapper"
-        if parent.parent.name == "commands" or parent.name == "commands":
-            return "bootstrap_shared"
-    if ".ai" in parts and "commands" in parts:
-        return "shared"
-    if ".cursor" in parts and "commands" in parts:
-        return "cursor"
-    if ".claude" in parts and "commands" in parts:
-        return "claude"
-    if ".github" in parts and "prompts" in parts:
-        return "github"
-    return "shared"
+    """Detect whether a file is a bootstrap source or an installed command-skill."""
+    if command_path.resolve().name == BOOTSTRAP_COMMAND_FILENAME:
+        return "bootstrap_shared"
+    return "command_skill"
 
 
-def validate_shared_command(command_path: Path, *, mode: str = "shared") -> tuple[bool, str]:
+def validate_bootstrap_shared(command_path: Path) -> tuple[bool, str]:
+    """Validate a bootstrap source COMMAND.md (commands/<name>/COMMAND.md)."""
     if not command_path.is_file():
-        return False, f"Shared command path is not a file: {command_path}"
+        return False, f"Bootstrap command path is not a file: {command_path}"
 
     content = command_path.read_text(encoding="utf-8")
     frontmatter, error = parse_frontmatter(content)
     if error:
         return False, error
 
-    unexpected_keys = set(frontmatter.keys()) - SHARED_ALLOWED_KEYS
+    unexpected_keys = set(frontmatter.keys()) - BOOTSTRAP_ALLOWED_KEYS
     if unexpected_keys:
         return (
             False,
-            "Unexpected key(s) in shared command frontmatter: "
+            "Unexpected key(s) in bootstrap command frontmatter: "
             f"{', '.join(sorted(unexpected_keys))}. "
-            f"Allowed properties are: {', '.join(sorted(SHARED_ALLOWED_KEYS))}",
+            f"Allowed properties are: {', '.join(sorted(BOOTSTRAP_ALLOWED_KEYS))}",
         )
 
     if "name" not in frontmatter:
@@ -158,72 +136,57 @@ def validate_shared_command(command_path: Path, *, mode: str = "shared") -> tupl
     if "description" not in frontmatter:
         return False, "Missing 'description' in frontmatter"
 
-    name = frontmatter["name"].strip()
+    name = str(frontmatter["name"]).strip()
     name_error = validate_name(name)
     if name_error:
         return False, name_error
 
-    description_error = validate_description(frontmatter.get("description", ""), strict=True)
+    if command_path.name != BOOTSTRAP_COMMAND_FILENAME:
+        return False, f"Bootstrap command file must be named '{BOOTSTRAP_COMMAND_FILENAME}'"
+
+    parent_name = command_path.parent.name
+    if parent_name != name:
+        return (
+            False,
+            f"Bootstrap source directory '{parent_name}' must match the command name '{name}'",
+        )
+
+    description_error = validate_description(frontmatter.get("description", ""))
     if description_error:
         return False, description_error
 
-    if mode == "bootstrap_shared" and command_path.name != "COMMAND.md":
-        return False, "Bootstrap shared command file must be named COMMAND.md"
-
-    if mode == "shared":
-        expected = f"{name}.md"
-        if command_path.name != expected:
-            return False, f"Filename '{command_path.name}' must be '{expected}'"
-
     body = body_after_frontmatter(content)
     if not body:
-        return False, "Shared command body cannot be empty"
+        return False, "Bootstrap command body cannot be empty"
 
-    if mode in {"bootstrap_shared", "shared"}:
-        for pattern in TOOL_NEUTRALITY_PATTERNS:
-            if pattern.search(body):
-                return (
-                    False,
-                    f"Shared command body appears tool-specific ({pattern.pattern}). "
-                    "Move tool-native details into wrappers.",
-                )
+    for pattern in TOOL_NEUTRALITY_PATTERNS:
+        if pattern.search(body):
+            return (
+                False,
+                f"Bootstrap command body appears tool-specific ({pattern.pattern}). "
+                "Keep the command body agent-neutral.",
+            )
 
-    label = "Bootstrap shared command" if mode == "bootstrap_shared" else "Shared command"
-    return True, f"{label} is valid!"
+    return True, "Bootstrap command is valid!"
 
 
-def validate_cursor_command(command_path: Path) -> tuple[bool, str]:
+def validate_command_skill(command_path: Path) -> tuple[bool, str]:
+    """Validate an installed command-skill (.agents/skills/<name>/SKILL.md)."""
     if not command_path.is_file():
-        return False, f"Cursor command path is not a file: {command_path}"
-
-    content = command_path.read_text(encoding="utf-8")
-    if content.strip().startswith("---"):
-        return False, "Cursor command must not contain YAML frontmatter"
-
-    if not content.strip():
-        return False, "Cursor command body cannot be empty"
-
-    if not command_path.name.endswith(".md") or command_path.name.endswith(".prompt.md"):
-        return False, "Cursor command filename must be '<name>.md'"
-
-    return True, "Cursor command is valid!"
-
-
-def validate_claude_command(command_path: Path, *, mode: str = "claude") -> tuple[bool, str]:
-    if not command_path.is_file():
-        return False, f"Claude command path is not a file: {command_path}"
+        return False, f"Command skill path is not a file: {command_path}"
 
     content = command_path.read_text(encoding="utf-8")
     frontmatter, error = parse_frontmatter(content)
     if error:
         return False, error
 
-    unexpected_keys = set(frontmatter.keys()) - CLAUDE_ALLOWED_KEYS
+    unexpected_keys = set(frontmatter.keys()) - COMMAND_SKILL_ALLOWED_KEYS
     if unexpected_keys:
         return (
             False,
-            "Unexpected key(s) in Claude command frontmatter: "
-            f"{', '.join(sorted(unexpected_keys))}",
+            "Unexpected key(s) in command skill frontmatter: "
+            f"{', '.join(sorted(unexpected_keys))}. "
+            f"Allowed properties are: {', '.join(sorted(COMMAND_SKILL_ALLOWED_KEYS))}",
         )
 
     if "name" not in frontmatter:
@@ -231,106 +194,54 @@ def validate_claude_command(command_path: Path, *, mode: str = "claude") -> tupl
     if "description" not in frontmatter:
         return False, "Missing 'description' in frontmatter"
 
-    name = frontmatter["name"].strip()
+    name = str(frontmatter["name"]).strip()
     name_error = validate_name(name)
     if name_error:
         return False, name_error
 
-    description_error = validate_description(frontmatter.get("description", ""), strict=False)
+    description_error = validate_description(frontmatter.get("description", ""))
     if description_error:
         return False, description_error
 
-    if mode == "bootstrap_wrapper" and command_path.name != "COMMAND.md":
-        return False, "Bootstrap Claude wrapper must be named COMMAND.md"
-
-    if mode == "claude":
-        expected = f"{name}.md"
-        if command_path.name != expected:
-            return False, f"Filename '{command_path.name}' must be '{expected}'"
-
-    body = body_after_frontmatter(content)
-    if not body:
-        return False, "Claude command body cannot be empty"
-
-    label = "Bootstrap Claude wrapper" if mode == "bootstrap_wrapper" else "Claude command"
-    return True, f"{label} is valid!"
-
-
-def validate_github_prompt(command_path: Path, *, mode: str = "github") -> tuple[bool, str]:
-    if not command_path.is_file():
-        return False, f"GitHub prompt path is not a file: {command_path}"
-
-    if mode == "bootstrap_wrapper" and command_path.name != "COMMAND.md":
-        return False, "Bootstrap GitHub wrapper must be named COMMAND.md"
-
-    if mode != "bootstrap_wrapper" and not command_path.name.endswith(".prompt.md"):
-        return False, "GitHub prompt filename must end with '.prompt.md'"
-
-    content = command_path.read_text(encoding="utf-8")
-    frontmatter, error = parse_frontmatter(content)
-    if error:
-        return False, error
-
-    unexpected_keys = set(frontmatter.keys()) - GITHUB_ALLOWED_KEYS
-    if unexpected_keys:
+    flag = frontmatter.get("disable-model-invocation")
+    if flag is not True:
         return (
             False,
-            "Unexpected key(s) in GitHub prompt frontmatter: "
-            f"{', '.join(sorted(unexpected_keys))}",
+            "Command skill 'disable-model-invocation' must be true; commands are "
+            f"slash-invoked only (got {flag!r})",
         )
 
-    if "description" not in frontmatter:
-        return False, "Missing 'description' in frontmatter"
+    if command_path.name != COMMAND_SKILL_FILENAME:
+        return False, f"Filename '{command_path.name}' must be '{COMMAND_SKILL_FILENAME}'"
 
-    name = frontmatter.get("name", command_path.stem.replace(".prompt", ""))
-    if isinstance(name, str):
-        name_error = validate_name(name.strip())
-        if name_error:
-            return False, name_error
-
-    description_error = validate_description(frontmatter.get("description", ""), strict=False)
-    if description_error:
-        return False, description_error
-
-    if mode == "github" and "name" in frontmatter:
-        expected = f"{frontmatter['name'].strip()}.prompt.md"
-        if command_path.name != expected:
-            return False, f"Filename '{command_path.name}' must be '{expected}'"
+    parent_name = command_path.parent.name
+    if parent_name != name:
+        return (
+            False,
+            f"Command skill directory '{parent_name}' must match the skill name '{name}'",
+        )
 
     body = body_after_frontmatter(content)
     if not body:
-        return False, "GitHub prompt body cannot be empty"
+        return False, "Command skill body cannot be empty"
 
-    label = "Bootstrap GitHub wrapper" if mode == "bootstrap_wrapper" else "GitHub prompt"
-    return True, f"{label} is valid!"
+    for pattern in TOOL_NEUTRALITY_PATTERNS:
+        if pattern.search(body):
+            return (
+                False,
+                f"Command skill body appears tool-specific ({pattern.pattern}). "
+                "Keep the command body agent-neutral.",
+            )
 
-
-def validate_bootstrap_cursor_wrapper(command_path: Path) -> tuple[bool, str]:
-    if not command_path.is_file():
-        return False, f"Bootstrap Cursor wrapper path is not a file: {command_path}"
-
-    content = command_path.read_text(encoding="utf-8")
-    if content.strip().startswith("---"):
-        return False, "Cursor wrapper must not contain YAML frontmatter"
-    if command_path.name != "COMMAND.md":
-        return False, "Bootstrap Cursor wrapper must be named COMMAND.md"
-    return True, "Bootstrap Cursor wrapper is valid!"
+    return True, "Command skill is valid!"
 
 
 def validate_command(command_path: Path, mode: str | None = None) -> tuple[bool, str]:
     command_path = Path(command_path)
     resolved_mode = mode or detect_mode(command_path)
-    if resolved_mode == "cursor":
-        return validate_cursor_command(command_path)
-    if resolved_mode == "claude":
-        return validate_claude_command(command_path)
-    if resolved_mode == "github":
-        return validate_github_prompt(command_path)
-    if resolved_mode == "bootstrap_wrapper":
-        return validate_claude_command(command_path, mode="bootstrap_wrapper")
-    if resolved_mode == "bootstrap_cursor_wrapper":
-        return validate_bootstrap_cursor_wrapper(command_path)
-    return validate_shared_command(command_path, mode=resolved_mode)
+    if resolved_mode == "bootstrap_shared":
+        return validate_bootstrap_shared(command_path)
+    return validate_command_skill(command_path)
 
 
 def validate_bootstrap_command(source: Path) -> tuple[bool, list[str]]:
@@ -338,25 +249,10 @@ def validate_bootstrap_command(source: Path) -> tuple[bool, list[str]]:
     messages: list[str] = []
     all_valid = True
 
-    command_md = source / "COMMAND.md"
-    valid, message = validate_shared_command(command_md, mode="bootstrap_shared")
+    command_md = source / BOOTSTRAP_COMMAND_FILENAME
+    valid, message = validate_bootstrap_shared(command_md)
     messages.append(f"{command_md}: {message}")
     all_valid = all_valid and valid
-
-    wrappers_dir = source / "wrappers"
-    if wrappers_dir.is_dir():
-        for wrapper_path in sorted(wrappers_dir.glob("*/COMMAND.md")):
-            tool = wrapper_path.parent.name
-            if tool == "cursor":
-                valid, message = validate_bootstrap_cursor_wrapper(wrapper_path)
-            elif tool == "claude":
-                valid, message = validate_claude_command(wrapper_path, mode="bootstrap_wrapper")
-            elif tool == "github":
-                valid, message = validate_github_prompt(wrapper_path, mode="bootstrap_wrapper")
-            else:
-                valid, message = False, f"Unknown wrapper tool '{tool}'"
-            messages.append(f"{wrapper_path}: {message}")
-            all_valid = all_valid and valid
 
     if all_valid and command_md.is_file():
         frontmatter, _ = parse_frontmatter(command_md.read_text(encoding="utf-8"))
@@ -368,39 +264,22 @@ def validate_bootstrap_command(source: Path) -> tuple[bool, list[str]]:
 def validate_portable_command(root: Path, name: str) -> tuple[bool, list[str]]:
     root = root.resolve()
     command_name = name.strip()
-    messages: list[str] = []
-    all_valid = True
-
-    shared_path = root / ".ai" / "commands" / f"{command_name}.md"
-    valid, message = validate_shared_command(shared_path)
-    messages.append(f"{shared_path}: {message}")
-    all_valid = all_valid and valid
-
-    cursor_path = root / TOOL_PATHS["cursor"].format(name=command_name)
-    valid, message = validate_cursor_command(cursor_path)
-    messages.append(f"{cursor_path}: {message}")
-    all_valid = all_valid and valid
-
-    claude_path = root / TOOL_PATHS["claude"].format(name=command_name)
-    valid, message = validate_claude_command(claude_path)
-    messages.append(f"{claude_path}: {message}")
-    all_valid = all_valid and valid
-
-    github_path = root / TOOL_PATHS["github"].format(name=command_name)
-    valid, message = validate_github_prompt(github_path)
-    messages.append(f"{github_path}: {message}")
-    all_valid = all_valid and valid
-
-    if all_valid:
+    skill_path = (
+        root.joinpath(*COMMAND_SKILL_DIR_PARTS) / command_name / COMMAND_SKILL_FILENAME
+    )
+    valid, message = validate_command_skill(skill_path)
+    messages = [f"{skill_path}: {message}"]
+    if valid:
         messages.append(
-            f"Portable command '{command_name}' is valid across 4 installed file(s)."
+            f"Portable command '{command_name}' is valid as a command skill "
+            f"at {skill_path}."
         )
-    return all_valid, messages
+    return valid, messages
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Validate a shared or tool command file, or a full portable command set."
+        description="Validate a command-skill, a bootstrap command source, or an installed command."
     )
     parser.add_argument(
         "command_path",
@@ -409,23 +288,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--root",
-        help="Repository root when validating a full portable command set",
+        help="Repository root when validating an installed command",
     )
     parser.add_argument(
         "--name",
-        help="Command name when validating a full portable command set (used with --root)",
+        help="Command name when validating an installed command (used with --root)",
     )
     parser.add_argument(
         "--mode",
-        choices=(
-            "shared",
-            "bootstrap_shared",
-            "cursor",
-            "claude",
-            "github",
-            "bootstrap_wrapper",
-            "bootstrap_cursor_wrapper",
-        ),
+        choices=("command_skill", "bootstrap_shared"),
         help="Validation mode (auto-detected when omitted)",
     )
     parser.add_argument(
@@ -453,7 +324,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--root and --name must be used together")
 
     command_path = Path(args.command_path)
-    if command_path.is_dir() and (command_path / "COMMAND.md").is_file():
+    if command_path.is_dir() and (command_path / BOOTSTRAP_COMMAND_FILENAME).is_file():
         valid, messages = validate_bootstrap_command(command_path)
         for message in messages:
             print(message)

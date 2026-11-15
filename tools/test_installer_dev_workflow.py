@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -29,44 +30,34 @@ mod = load_installer_module()
 
 
 def write_source_skill(root: Path, name: str) -> None:
-    """Write a minimal skill (shared dir + SKILL.md + three tool wrappers)."""
-    shared = root / ".ai" / "skills" / name / "SKILL.md"
+    """Write a minimal skill directory under .agents/skills/<name>/."""
+    shared = root / ".agents" / "skills" / name / "SKILL.md"
     shared.parent.mkdir(parents=True, exist_ok=True)
     shared.write_text(
         f"---\nname: {name}\ndescription: {name} skill\n---\n\n# {name}\n",
         encoding="utf-8",
     )
-    for rel in (
-        f".cursor/skills/{name}/SKILL.md",
-        f".claude/skills/{name}/SKILL.md",
-        f".github/skills/{name}/SKILL.md",
-    ):
-        path = root / rel
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(f"# {name}\n", encoding="utf-8")
 
 
 def write_source_command(root: Path, name: str) -> None:
-    """Write a minimal command (shared file + three tool wrappers)."""
-    shared = root / ".ai" / "commands" / f"{name}.md"
-    shared.parent.mkdir(parents=True, exist_ok=True)
-    shared.write_text(
-        f"---\nname: {name}\ndescription: {name} command\n---\n\n# {name}\n",
+    """Write a minimal command-skill: .agents/skills/<name>/SKILL.md with the
+    disable-model-invocation flag (commands share the skill namespace)."""
+    skill_md = root / ".agents" / "skills" / name / "SKILL.md"
+    skill_md.parent.mkdir(parents=True, exist_ok=True)
+    skill_md.write_text(
+        "---\n"
+        f"name: {name}\n"
+        "description: Run the commit message writer skill first\n"
+        "disable-model-invocation: true\n"
+        "---\n\n"
+        f"# {name}\n",
         encoding="utf-8",
     )
-    for rel in (
-        f".cursor/commands/{name}.md",
-        f".claude/commands/{name}.md",
-        f".github/prompts/{name}.prompt.md",
-    ):
-        path = root / rel
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(f"# {name}\n", encoding="utf-8")
 
 
 def write_source_scripts(root: Path, name: str = "dev-workflow") -> None:
     """Write a minimal tools/<name>/ scripts tree with a checks/ subpackage."""
-    scripts = root / ".ai" / "tools" / name
+    scripts = root / ".agents" / "tools" / name
     scripts.mkdir(parents=True, exist_ok=True)
     (scripts / "validate_phase.py").write_text("# validate_phase\n", encoding="utf-8")
     (scripts / "check_pre_phase.py").write_text("# check_pre_phase\n", encoding="utf-8")
@@ -77,28 +68,21 @@ def write_source_scripts(root: Path, name: str = "dev-workflow") -> None:
 
 
 def write_source_agent(root: Path, name: str) -> None:
-    """Write a minimal agent (shared file + three tool wrappers).
+    """Write a minimal agent in the dual-target layout.
 
-    Paths mirror the installer's TOOL_AGENT_FILES and SHARED_AGENT_FILE:
-    - .ai/agents/<name>.md
-    - .cursor/agents/<name>.md
+    Paths mirror the installer's agent sources:
     - .claude/agents/<name>.md
     - .github/agents/<name>.agent.md  (note the .agent.md suffix for Copilot)
     """
-    shared = root / ".ai" / "agents" / f"{name}.md"
-    shared.parent.mkdir(parents=True, exist_ok=True)
-    shared.write_text(
+    claude = root / ".claude" / "agents" / f"{name}.md"
+    claude.parent.mkdir(parents=True, exist_ok=True)
+    claude.write_text(
         f"---\nname: {name}\ndescription: {name} agent\n---\n\n# {name}\n",
         encoding="utf-8",
     )
-    for rel in (
-        f".cursor/agents/{name}.md",
-        f".claude/agents/{name}.md",
-        f".github/agents/{name}.agent.md",
-    ):
-        path = root / rel
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(f"# {name}\n", encoding="utf-8")
+    github = root / ".github" / "agents" / f"{name}.agent.md"
+    github.parent.mkdir(parents=True, exist_ok=True)
+    github.write_text(f"---\nname: {name}\ndescription: {name} agent\n---\n\n# {name}\n", encoding="utf-8")
 
 
 def write_full_harness_source(root: Path) -> None:
@@ -170,18 +154,18 @@ class ScriptsInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            scripts = target / ".ai" / "tools" / "dev-workflow"
+            scripts = target / ".agents" / "tools" / "dev-workflow"
             self.assertTrue(scripts.is_dir())
             self.assertTrue((scripts / "validate_phase.py").is_file())
             self.assertTrue((scripts / "checks" / "__init__.py").is_file())
-            self.assertIn(".ai/tools/dev-workflow", result.installed)
+            self.assertIn(".agents/tools/dev-workflow", result.installed)
 
     def test_install_scripts_skips_existing_without_override(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
             write_source_scripts(source)
-            stale = target / ".ai" / "tools" / "dev-workflow" / "stale.txt"
+            stale = target / ".agents" / "tools" / "dev-workflow" / "stale.txt"
             stale.parent.mkdir(parents=True, exist_ok=True)
             stale.write_text("stale", encoding="utf-8")
 
@@ -196,7 +180,7 @@ class ScriptsInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertIn(".ai/tools/dev-workflow", result.skipped)
+            self.assertIn(".agents/tools/dev-workflow", result.skipped)
             self.assertEqual(stale.read_text(encoding="utf-8"), "stale")
 
     def test_install_scripts_override_replaces(self) -> None:
@@ -204,7 +188,7 @@ class ScriptsInstallTests(unittest.TestCase):
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
             write_source_scripts(source)
-            stale = target / ".ai" / "tools" / "dev-workflow" / "stale.txt"
+            stale = target / ".agents" / "tools" / "dev-workflow" / "stale.txt"
             stale.parent.mkdir(parents=True, exist_ok=True)
             stale.write_text("stale", encoding="utf-8")
 
@@ -219,7 +203,7 @@ class ScriptsInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertIn(".ai/tools/dev-workflow", result.installed)
+            self.assertIn(".agents/tools/dev-workflow", result.installed)
             self.assertFalse(stale.exists())
 
     def test_install_scripts_missing_source_records_error(self) -> None:
@@ -271,8 +255,8 @@ class ScriptsUninstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertFalse((target / ".ai" / "tools" / "dev-workflow").exists())
-            self.assertIn(".ai/tools/dev-workflow", result.removed)
+            self.assertFalse((target / ".agents" / "tools" / "dev-workflow").exists())
+            self.assertIn(".agents/tools/dev-workflow", result.removed)
 
     def test_uninstall_scripts_when_not_installed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -364,15 +348,38 @@ class DevWorkflowBundleTests(unittest.TestCase):
 
             self.assertTrue(result.ok, result.errors)
             for skill in mod.DEV_WORKFLOW_SKILLS:
-                self.assertTrue((target / ".ai" / "skills" / skill / "SKILL.md").is_file())
-            self.assertTrue((target / ".ai" / "commands" / "dev-workflow.md").is_file())
-            self.assertTrue((target / ".ai" / "tools" / "dev-workflow" / "validate_phase.py").is_file())
+                self.assertTrue((target / ".agents" / "skills" / skill / "SKILL.md").is_file())
+            self.assertTrue((target / ".agents" / "skills" / "dev-workflow" / "SKILL.md").is_file())
+            self.assertTrue((target / ".agents" / "tools" / "dev-workflow" / "validate_phase.py").is_file())
             # t-014: agents are installed via --dev-workflow
             for agent in mod.DEV_WORKFLOW_AGENTS:
-                self.assertTrue((target / ".ai" / "agents" / f"{agent}.md").is_file())
-                self.assertTrue((target / ".cursor" / "agents" / f"{agent}.md").is_file())
                 self.assertTrue((target / ".claude" / "agents" / f"{agent}.md").is_file())
                 self.assertTrue((target / ".github" / "agents" / f"{agent}.agent.md").is_file())
+
+    def test_install_harness_creates_bridge_symlink(self) -> None:
+        """Skill installs into a target also create the Claude Code bridge symlink."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            write_source_skill(source, "dev-workflow-orchestrator")
+
+            result = mod.install_items(
+                source_root=source,
+                target_root=target,
+                skills=["dev-workflow-orchestrator"],
+                agents=[],
+                commands=[],
+                scripts=[],
+                override=False,
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            bridge = target / ".claude" / "skills"
+            self.assertTrue(bridge.is_symlink())
+            self.assertEqual(os.readlink(bridge), "../.agents/skills")
+            self.assertTrue(
+                (bridge / "dev-workflow-orchestrator" / "SKILL.md").is_file()
+            )
 
     def test_uninstall_harness_removes_agents(self) -> None:
         """Uninstalling the harness removes agent files from the target."""
@@ -402,12 +409,12 @@ class DevWorkflowBundleTests(unittest.TestCase):
             self.assertTrue(uninstall_result.ok, uninstall_result.errors)
             for agent in mod.DEV_WORKFLOW_AGENTS:
                 self.assertFalse(
-                    (target / ".ai" / "agents" / f"{agent}.md").is_file(),
-                    f"Agent {agent} shared file not removed by uninstall",
+                    (target / ".claude" / "agents" / f"{agent}.md").is_file(),
+                    f"Agent {agent} claude copy not removed by uninstall",
                 )
                 self.assertFalse(
-                    (target / ".cursor" / "agents" / f"{agent}.md").is_file(),
-                    f"Agent {agent} cursor wrapper not removed by uninstall",
+                    (target / ".github" / "agents" / f"{agent}.agent.md").is_file(),
+                    f"Agent {agent} copilot copy not removed by uninstall",
                 )
 
     def test_override_replaces_agent_files(self) -> None:
@@ -430,7 +437,7 @@ class DevWorkflowBundleTests(unittest.TestCase):
             self.assertTrue(result1.ok, result1.errors)
 
             # Modify a target agent file to simulate stale content
-            stale_path = target / ".ai" / "agents" / "implementation-auditor.md"
+            stale_path = target / ".claude" / "agents" / "implementation-auditor.md"
             stale_path.write_text("STALE CONTENT", encoding="utf-8")
 
             # Override install
@@ -469,7 +476,7 @@ class DevWorkflowBundleTests(unittest.TestCase):
             self.assertTrue(result.ok, result.errors)
             for agent in mod.DEV_WORKFLOW_AGENTS:
                 self.assertTrue(
-                    (target / ".ai" / "agents" / f"{agent}.md").is_file(),
+                    (target / ".claude" / "agents" / f"{agent}.md").is_file(),
                     f"Composed install did not install agent {agent}",
                 )
 
@@ -550,16 +557,16 @@ class PhaseCommandsInstallTests(unittest.TestCase):
 
             self.assertTrue(result.ok, result.errors)
             for name in mod.DEV_WORKFLOW_COMMANDS:
-                for rel in (
-                    f".ai/commands/{name}.md",
-                    f".cursor/commands/{name}.md",
-                    f".claude/commands/{name}.md",
-                    f".github/prompts/{name}.prompt.md",
-                ):
-                    self.assertTrue(
-                        (target / rel).is_file(),
-                        f"Expected installed command file missing: {rel}",
-                    )
+                skill_md = target / ".agents" / "skills" / name / "SKILL.md"
+                self.assertTrue(
+                    skill_md.is_file(),
+                    f"Expected installed command-skill missing: {skill_md}",
+                )
+                self.assertIn(
+                    "disable-model-invocation: true",
+                    skill_md.read_text(encoding="utf-8"),
+                    f"Command-skill {name} must carry the invocation flag",
+                )
 
     def test_uninstall_dev_workflow_harness_removes_phase_commands(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -587,16 +594,10 @@ class PhaseCommandsInstallTests(unittest.TestCase):
 
             self.assertTrue(result.ok, result.errors)
             for name in mod.DEV_WORKFLOW_COMMANDS:
-                for rel in (
-                    f".ai/commands/{name}.md",
-                    f".cursor/commands/{name}.md",
-                    f".claude/commands/{name}.md",
-                    f".github/prompts/{name}.prompt.md",
-                ):
-                    self.assertFalse(
-                        (target / rel).exists(),
-                        f"Command file should be removed after uninstall: {rel}",
-                    )
+                self.assertFalse(
+                    (target / ".agents" / "skills" / name).exists(),
+                    f"Command-skill should be removed after uninstall: {name}",
+                )
 
     def test_install_dev_workflow_harness_override_replaces_phase_commands(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -614,8 +615,8 @@ class PhaseCommandsInstallTests(unittest.TestCase):
                 override=False,
             )
 
-            # Write a stale marker into one of the new command paths.
-            stale = target / ".ai" / "commands" / "dev-workflow-research.md"
+            # Write a stale marker into one of the command-skill paths.
+            stale = target / ".agents" / "skills" / "dev-workflow-research" / "SKILL.md"
             stale.write_text("stale content", encoding="utf-8")
 
             result = mod.install_items(
@@ -649,7 +650,7 @@ class GuideTravelsWithOrchestratorTests(unittest.TestCase):
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
             write_source_skill(source, "dev-workflow-orchestrator")
-            guide = source / ".ai" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
+            guide = source / ".agents" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
             guide.parent.mkdir(parents=True, exist_ok=True)
             guide.write_text("# Development Workflow\n", encoding="utf-8")
 
@@ -665,7 +666,7 @@ class GuideTravelsWithOrchestratorTests(unittest.TestCase):
 
             self.assertTrue(result.ok, result.errors)
             installed_guide = (
-                target / ".ai" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
+                target / ".agents" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
             )
             self.assertTrue(installed_guide.is_file())
             self.assertEqual(
@@ -678,7 +679,7 @@ class GuideTravelsWithOrchestratorTests(unittest.TestCase):
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
             write_source_skill(source, "dev-workflow-orchestrator")
-            guide = source / ".ai" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
+            guide = source / ".agents" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
             guide.parent.mkdir(parents=True, exist_ok=True)
             guide.write_text("# Development Workflow\n", encoding="utf-8")
 
@@ -703,7 +704,7 @@ class GuideTravelsWithOrchestratorTests(unittest.TestCase):
 
             self.assertTrue(uninstall_result.ok, uninstall_result.errors)
             installed_guide = (
-                target / ".ai" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
+                target / ".agents" / "skills" / "dev-workflow-orchestrator" / "references" / "dev-workflow.md"
             )
             self.assertFalse(installed_guide.exists())
 

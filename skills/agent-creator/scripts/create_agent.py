@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Create a shared custom agent plus tool-specific wrappers for Claude Code,
-Cursor, and GitHub Copilot.
+Create a portable custom agent as two real copies for Claude Code (which
+Cursor compat-reads) and GitHub Copilot.
 
 Example:
     python create_agent.py \
@@ -21,28 +21,8 @@ import textwrap
 from pathlib import Path
 
 
-TOOL_PATHS = {
-    "claude": ".claude/agents/{name}.md",
-    "cursor": ".cursor/agents/{name}.md",
-    "github": ".github/agents/{name}.agent.md",
-}
-
-RELATIVE_SHARED_PATH = "../../.ai/agents/{name}.md"
-
-DEFAULT_TOOL_NOTES = {
-    "cursor": (
-        "Reload the Cursor window after adding or editing this agent "
-        "so the agent rediscovers it."
-    ),
-    "claude": (
-        "Restart or reload the Claude Code session after adding or editing "
-        "this agent."
-    ),
-    "github": (
-        "Reload VS Code after adding or editing this agent so Copilot "
-        "rediscovers it."
-    ),
-}
+CLAUDE_AGENT_PATH = ".claude/agents/{name}.md"
+GITHUB_AGENT_PATH = ".github/agents/{name}.agent.md"
 
 
 class AgentCreatorError(Exception):
@@ -82,41 +62,8 @@ def normalize_markdown_body(body: str) -> str:
     return body + "\n"
 
 
-def shared_agent_content(name: str, description: str, instructions: str) -> str:
+def agent_content(name: str, description: str, instructions: str) -> str:
     return frontmatter(name, description) + "\n" + normalize_markdown_body(instructions)
-
-
-def wrapper_content(tool: str, name: str, description: str, note: str | None) -> str:
-    shared_path = RELATIVE_SHARED_PATH.format(name=name)
-    tool_titles = {
-        "claude": "Claude Code",
-        "cursor": "Cursor",
-        "github": "GitHub Copilot",
-    }
-    title = tool_titles[tool]
-    note = (note or DEFAULT_TOOL_NOTES[tool]).strip()
-
-    body = f"""\
-# {name} wrapper for {title}
-
-This is a tool-specific wrapper. The canonical shared agent definition is:
-
-`{shared_path}`
-
-Before doing agent work, read that shared file and treat it as the source of truth for the role, task boundaries, review criteria, and response format.
-
-## {title}-specific information
-
-{note}
-
-## Wrapper policy
-
-- Do not treat this wrapper as the full agent specification.
-- Prefer the shared file whenever this wrapper and the shared file conflict.
-- Keep edits to common behavior in `{shared_path}`.
-- Keep only {title}-specific information in this wrapper.
-"""
-    return frontmatter(name, description) + "\n" + body
 
 
 def write_file(path: Path, content: str, overwrite: bool) -> None:
@@ -132,46 +79,36 @@ def create_agent(
     description: str,
     instructions: str,
     overwrite: bool,
-    claude_note: str | None = None,
-    cursor_note: str | None = None,
-    github_note: str | None = None,
 ) -> list[Path]:
     root = root.resolve()
     agent_name = slugify_name(name)
     if not description.strip():
         raise AgentCreatorError("Description cannot be empty.")
 
-    written: list[Path] = []
-    shared_path = root / ".ai" / "agents" / f"{agent_name}.md"
-    write_file(shared_path, shared_agent_content(agent_name, description, instructions), overwrite)
-    written.append(shared_path)
+    content = agent_content(agent_name, description, instructions)
 
-    notes = {
-        "claude": claude_note,
-        "cursor": cursor_note,
-        "github": github_note,
-    }
-    for tool, pattern in TOOL_PATHS.items():
-        path = root / pattern.format(name=agent_name)
-        write_file(path, wrapper_content(tool, agent_name, description, notes[tool]), overwrite)
-        written.append(path)
+    written: list[Path] = []
+    claude_path = root / CLAUDE_AGENT_PATH.format(name=agent_name)
+    write_file(claude_path, content, overwrite)
+    written.append(claude_path)
+
+    github_path = root / GITHUB_AGENT_PATH.format(name=agent_name)
+    write_file(github_path, content, overwrite)
+    written.append(github_path)
 
     return written
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Create portable shared agent files.")
+    parser = argparse.ArgumentParser(description="Create portable agent files.")
     parser.add_argument("--root", required=True, help="Repository or output root directory.")
     parser.add_argument("--name", required=True, help="Agent name; normalized to hyphen-case.")
     parser.add_argument("--description", required=True, help="Agent trigger description.")
     parser.add_argument(
         "--instructions-file",
         required=True,
-        help="Markdown file containing the shared, tool-neutral agent instructions.",
+        help="Markdown file containing the agent instructions.",
     )
-    parser.add_argument("--claude-note", help="Extra Claude Code-specific wrapper note.")
-    parser.add_argument("--cursor-note", help="Extra Cursor-specific wrapper note.")
-    parser.add_argument("--github-note", help="Extra GitHub Copilot-specific wrapper note.")
     parser.add_argument(
         "--overwrite",
         action="store_true",
@@ -193,9 +130,6 @@ def main(argv: list[str]) -> int:
             description=args.description,
             instructions=instructions,
             overwrite=args.overwrite,
-            claude_note=args.claude_note,
-            cursor_note=args.cursor_note,
-            github_note=args.github_note,
         )
     except AgentCreatorError as exc:
         print(f"error: {exc}", file=sys.stderr)
