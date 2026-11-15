@@ -90,7 +90,7 @@ repo/
 │   ├── plans/                         # Dev-workflow plans (untracked)
 │   └── researches/                    # Dev-workflow research reports (untracked)
 ├── .claude/
-│   ├── agents/                        # Claude Code custom agents (one dual-target copy)
+│   ├── agents/                        # Claude Code half of the dual-target agent install
 │   └── skills -> ../.agents/skills    # Claude Code bridge symlink (auto-created)
 └── .github/
     └── agents/                        # GitHub Copilot custom agents (*.agent.md)
@@ -163,6 +163,12 @@ Bootstrap skills live under `skills/`. Installing one copies the package to `.ag
 | `android-dev` | `skills/android-dev/` | Kotlin Android app layer: Compose, architecture, CameraX/Media3, permissions, release quality |
 | `android-ndk-dev` | `skills/android-ndk-dev/` | Android NDK: CMake, JNI, native libraries, memory, debugging, 16 KB page size |
 | `android-vulkan-dev` | `skills/android-vulkan-dev/` | Vulkan on Android: surface/swapchain, AHB interop, AVP, wide color, GPU image processing |
+| `kotlin-coding` | `skills/kotlin-coding/` | Kotlin/JVM language, stdlib, coroutines, and idiomatic code |
+| `kotlin-testing` | `skills/kotlin-testing/` | Kotlin/JVM test design: kotlin.test, Kotest, MockK, coroutines, flake triage |
+| `gradle-dev` | `skills/gradle-dev/` | Gradle build engineering for JVM/Kotlin projects |
+| `gradle-android-dev` | `skills/gradle-android-dev/` | Android Gradle Plugin builds: variants, lint, R8, build performance |
+| `code-review-resolver` | `skills/code-review-resolver/` | Resolve and fix code review findings; route upstream causes backward |
+| `dev-workflow-orchestrator` | `skills/dev-workflow-orchestrator/` | Orchestrate the full dev workflow with bounded loops and artifact contracts |
 
 ### Skill clusters
 
@@ -186,7 +192,7 @@ Several installed skills cross-link as companions — install related skills tog
 | Dev-workflow harness | `dev-workflow-orchestrator`, `prompt-clarifier`, `research-guide`/`research-reviewer`, `plan-guide`/`plan-reviewer`, `plan-executor`/`implementation-auditor`, `code-review-resolver`/`code-reviewer`, `commit-message-writer` | Full pipeline via `/dev-workflow` or individual phase loops via `/dev-workflow-{research,plan,implement,review}`; installed/uninstalled as a unit via `--dev-workflow` |
 | Parallel execution | `agent-runner` | Dispatch independent workstreams to isolated subagents; defers diff review to `code-reviewer`, git mechanics to `git-guide`, skill evals to `skill-creator`, harness orchestration to `dev-workflow-orchestrator` |
 
-Per-skill deferrals, companion links, and boundary rules live in each installed skill's body and in the cluster tables above. For step-by-step workflow sequencing and intake routing, see [dev-workflow.md](skills/dev-workflow-orchestrator/references/dev-workflow.md) (it travels inside the `dev-workflow-orchestrator skill`).
+Per-skill deferrals, companion links, and boundary rules live in each installed skill's body and in the cluster tables above. For step-by-step workflow sequencing and intake routing, see [dev-workflow.md](skills/dev-workflow-orchestrator/references/dev-workflow.md) (it travels inside the `dev-workflow-orchestrator` skill).
 
 ### skill-creator
 
@@ -233,11 +239,9 @@ Or ask in chat: **use skill-creator** to install or refresh the meta-skill.
 
 The script copies the bootstrap skill to `.agents/skills/skill-creator/`, ensures the `.claude/skills` bridge symlink exists, validates the install, and prints a summary.
 
-Reload each tool after install:
-
-- **Cursor** — reload the window
-- **VS Code + Copilot** — reload the window
-- **Claude Code** — restart or reload the session
+Only Claude Code needs a reload after install (restart or reload the
+session): Cursor and VS Code (Copilot) discover `.agents/` and
+`.github/agents/` natively on their next session.
 
 ## Install agent-creator
 
@@ -257,7 +261,7 @@ Or ask in chat: **use agent-creator** after ensuring the skill is installed.
 
 The script copies the bootstrap skill to `.agents/skills/agent-creator/`, ensures the bridge symlink, validates the install, and prints a summary.
 
-Reload each tool after install (same as skill-creator above).
+Only Claude Code needs a reload after install (same as skill-creator above).
 
 ## Install a bootstrap skill
 
@@ -309,11 +313,11 @@ Install multiple related skills in any order when they cross-reference each othe
 python skills/skill-creator/scripts/quick_validate.py .agents/skills/<skill-name>
 ```
 
-### 4. Reload each tool
+### 4. Reload
 
-- **Cursor** — reload the window
-- **VS Code + Copilot** — reload the window
-- **Claude Code** — restart or reload the session
+Only Claude Code needs a reload (restart or reload the session): Cursor
+and VS Code (Copilot) discover `.agents/` and `.github/agents/` natively
+on their next session.
 
 ### 5. Re-install after edits
 
@@ -497,7 +501,7 @@ python tools/installer.py /path/to/other-project --guidelines coding-behavior-gu
 | `--uninstall` | Remove the selected skills, agents, commands, scripts, and guidelines from the target project |
 | *(no arguments)* | Open a tkinter GUI with skill/agent/command/scripts checkboxes and a **Bundles** panel for workflow batch selection |
 
-Without `--override`, existing paths in the target are skipped. The script refuses to install into this AIConfig repo itself. Reload each tool in the target project after install. Bundle definitions live in [tools/bundles.md](tools/bundles.md) (human-readable) and [tools/bundles.json](tools/bundles.json) (machine-readable).
+Without `--override`, existing paths in the target are skipped. The script refuses to install into this AIConfig repo itself. Reload Claude Code in the target project after install (Cursor and VS Code rediscover natively). Bundle definitions live in [tools/bundles.md](tools/bundles.md) (human-readable) and [tools/bundles.json](tools/bundles.json) (machine-readable).
 
 **GUI:**
 
@@ -598,7 +602,7 @@ python skills/agent-creator/scripts/install_portable_agent.py \
   --root . --name <name> --source agents/<name> --overwrite
 ```
 
-Reload each tool after install so custom agents are rediscovered.
+Reload Claude Code after install so custom agents are rediscovered (Cursor and VS Code rediscover `.github/agents/` natively).
 
 ## Further reading
 

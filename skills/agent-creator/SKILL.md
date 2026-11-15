@@ -59,7 +59,7 @@ Ask about edge cases, success criteria, output format, boundaries (what the agen
 
 The questions above are a fixed intake. When the request is ambiguous beyond them — the user is unsure whether they need an agent, a skill, or a command; the agent's boundaries conflict with its stated role; or nobody can yet say what a good result looks like — run the clarification loop in [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before authoring files, and carry its requirement ledger into the agent's instructions and `description`.
 
-Check the target repository for existing agent conventions before generating files. If `agents/`, `.claude/agents/`, `.github/agents/`, or `.cursor/agents/` already exist, match their style.
+Check the target repository for existing agent conventions before generating files. If `agents/`, `.claude/agents/`, or `.github/agents/` already exist, match their style.
 
 Use available research tools (MCP, docs search, similar agents in the repo) when helpful — in parallel when your environment allows.
 

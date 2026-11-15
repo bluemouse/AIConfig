@@ -21,7 +21,7 @@
     "query": "install my command bootstrap to .github/prompts as a copilot prompt file",
     "should_trigger": true,
     "split": "train",
-    "rationale": "direct: copilot prompt install path"
+    "rationale": "user phrasing names the legacy host format; command-creator installs a command-skill"
   },
   {
     "query": "help me author COMMAND.md for a portable command with wrappers",
