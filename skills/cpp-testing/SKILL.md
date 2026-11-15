@@ -132,3 +132,11 @@ The **Gate** workflow step requires **both** parts above — part 1 (test qualit
 - [GoogleTest documentation](https://google.github.io/googletest/)
 
 Bundled references: see **Reference Routing** above.
+
+## Tool notes
+
+Tool-specific mechanics are minimal for this skill — the body and references are host-neutral. Per-host differences from the former wrapper layer, retained for reference:
+
+- After installing or editing the skill, reload the coding agent (restart or reload the Claude Code session; reload the Cursor window; reload VS Code for Copilot) so the skill is rediscovered.
+
+For production C++ code under test (RAII, ownership, concurrency, Core Guidelines), use the companion skill [cpp-coding](../cpp-coding/SKILL.md).

@@ -1,6 +1,6 @@
 ---
 name: dev-workflow-research
-description: Run the Research phase loop (research-guide → research-reviewer) to acceptance or escalation on an existing or bootstrapped dev-workflow run. Loads the dev-workflow-orchestrator skill's Phase 1 procedure.
+description: Run the Research phase loop when the user explicitly invokes /dev-workflow-research.
 ---
 
 # Dev Workflow Research
@@ -12,18 +12,18 @@ skill's Phase 1 procedure and the `research-guide` / `research-reviewer` skills.
 ## Steps
 
 1. Read and follow the **dev-workflow-orchestrator** skill
-   (`.ai/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill), specifically
+   (`.agents/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill), specifically
    the **Within a phase (the loop)** procedure for Phase 1 (Research). Treat
    `/dev-workflow-research` as the explicit start signal — proceed without asking for a
    second confirmation.
 
 2. **Resolve the run directory** (one of):
-   - **Explicit slug**: if the user passes `<slug>`, use `.ai/workflow/<slug>/`.
+   - **Explicit slug**: if the user passes `<slug>`, use `.agents/workflow/<slug>/`.
    - **Auto-detect**: if no slug is given and exactly one run dir exists under
-     `.ai/workflow/`, use it. If zero or multiple run dirs exist, error and ask the user
+     `.agents/workflow/`, use it. If zero or multiple run dirs exist, error and ask the user
      to pass an explicit `<slug>`.
    - **Bootstrap**: if no slug is given and no run dir exists, create a feature slug
-     (kebab-case) from the user's argument, create `.ai/workflow/<slug>/`, write
+     (kebab-case) from the user's argument, create `.agents/workflow/<slug>/`, write
      `01-feature-brief.md` from the argument, and write a minimal `02-requirement-ledger.md`
      with required sections `# Requirement Ledger`, `## Outcome`, `## Scope`,
      `## Acceptance criteria`, `## Assumptions` (these sections come from
@@ -45,16 +45,16 @@ skill's Phase 1 procedure and the `research-guide` / `research-reviewer` skills.
 4. **Run the Phase 1 loop** (doer → checker → revise) per the orchestrator skill.
    This procedure mirrors the orchestrator skill's `Within a phase (the loop)` — if the
    orchestrator's procedure changes, update all four `/dev-workflow-*` commands:
-   - **Record baseline**: `python .ai/tools/dev-workflow/record_baseline.py --phase research --run-dir .ai/workflow/<slug>`
-   - **Pre-flight**: `python .ai/tools/dev-workflow/check_pre_phase.py --phase research --run-dir .ai/workflow/<slug>`. If it fails, stop and report.
+   - **Record baseline**: `python .agents/tools/dev-workflow/record_baseline.py --phase research --run-dir .agents/workflow/<slug>`
+   - **Pre-flight**: `python .agents/tools/dev-workflow/check_pre_phase.py --phase research --run-dir .agents/workflow/<slug>`. If it fails, stop and report.
    - **Doer pass**: invoke `research-guide` as a named pass with input `02-requirement-ledger.md` and output `10-research-report.md`.
    - **Checker pass**: first read the `## Dispatch log` section of `00-run-manifest.md`; if it records `Dispatch mode: native`, dispatch `research-reviewer` as a subagent per the orchestrator's native-mode task packet; otherwise (delegated/simulated, or the manifest has no dispatch log — default to delegated and say so) invoke `research-reviewer` as a named pass with input `10-research-report.md` and output `11-research-review.md`. The checker must include `root-cause-phase` on every finding.
-   - **Post-flight**: `python .ai/tools/dev-workflow/check_post_phase.py --phase research --run-dir .ai/workflow/<slug>`. If it fails, stop and report.
+   - **Post-flight**: `python .agents/tools/dev-workflow/check_post_phase.py --phase research --run-dir .agents/workflow/<slug>`. If it fails, stop and report.
    - **Read verdict** from the `## Verdict` heading in `11-research-review.md`.
    - **Route**:
-     - `ready` or `conditionally ready` → run `python .ai/tools/dev-workflow/validate_phase.py --phase research --run-dir .ai/workflow/<slug>`. If validation passes, update manifest (phase status `accepted`) and stop with a summary. If validation fails, handle per the orchestrator's validation rules.
+     - `ready` or `conditionally ready` → run `python .agents/tools/dev-workflow/validate_phase.py --phase research --run-dir .agents/workflow/<slug>`. If validation passes, update manifest (phase status `accepted`) and stop with a summary. If validation fails, handle per the orchestrator's validation rules.
      - `needs revision` with `root-cause-phase: local` → increment round counter. On round > 1, copy `11-research-review.md` to `11-research-review-r<N>.md` where N is the round just completed (round 2 → `-r1`, round 3 → `-r2`) so the fresh-context checker sees prior findings and preserves finding ids, and include all prior `-r1`, `-r2`, … paths in the next round's context. Loop back to the doer pass. Round cap is 5; on cap, escalate.
-     - `needs revision` with `root-cause-phase: upstream` (clarify) → write a backward handoff packet `back-research-to-clarify-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.ai/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .ai/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .ai/workflow/<slug>`, update manifest (Clarify phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (since no `/dev-workflow-clarify` command exists, instruct the user to run `/dev-workflow` to resolve the Clarify issue, or resolve it manually), then stop. Backward edge cap is 2 per phase.
+     - `needs revision` with `root-cause-phase: upstream` (clarify) → write a backward handoff packet `back-research-to-clarify-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.agents/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .agents/workflow/<slug>`, update manifest (Clarify phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (since no `/dev-workflow-clarify` command exists, instruct the user to run `/dev-workflow` to resolve the Clarify issue, or resolve it manually), then stop. Backward edge cap is 2 per phase.
      - `blocked` → escalate immediately with a blocker summary and stop.
    - **Update manifest** after every step.
 
@@ -63,7 +63,7 @@ skill's Phase 1 procedure and the `research-guide` / `research-reviewer` skills.
 
 ## Optional arguments
 
-- `<slug>` — existing run directory under `.ai/workflow/`.
+- `<slug>` — existing run directory under `.agents/workflow/`.
 - `<requirement text>` — when no run dir exists, bootstraps a new run with the text as the feature brief.
 
 ## Output

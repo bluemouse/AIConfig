@@ -6,28 +6,38 @@ Use this guide when creating or reviewing skills that should work across GitHub 
 
 Portable skills use **two phases**:
 
-1. **Bootstrap** — Author tool-neutral content under `skills/<name>/` (plus optional custom wrappers). This is the source of truth when bootstrap exists.
-2. **Install** — Run `install_portable_skill.py` to copy the bootstrap package to `.ai/skills/<name>/` and generate tool skills under `.cursor/`, `.claude/`, and `.github/`.
+1. **Bootstrap** — Author tool-neutral content under `skills/<name>/`. This is the source of truth when bootstrap exists.
+2. **Install** — Run `install_portable_skill.py` to copy the bootstrap package to `.agents/skills/<name>/` and create the Claude Code bridge symlink (`.claude/skills -> ../.agents/skills`).
 
-Do not hand-edit `.ai/skills/` or tool skill folders for bootstrapped skills — edit bootstrap and reinstall.
+Do not hand-edit `.agents/skills/` for bootstrapped skills — edit bootstrap and reinstall.
 
 For one-off skills without bootstrap source, use `create_skill.py` to scaffold directly into the installed layout (direct path).
 
-## Skills vs agents (install differences)
+## Single-root install
 
-| | Skills | Agents |
-| --- | --- | --- |
-| Tool wrappers on install | Always creates all three paths; missing custom wrappers get default templates | Installs only wrappers present under `wrappers/` |
-| Partial custom wrappers | Custom per tool; defaults fill gaps | Omitted tools are not installed |
-| Shrinking wrapper set | Re-install overwrites all three tool skills | Re-install with `--overwrite` removes stale tool wrappers |
+One real copy of each skill lives at `.agents/skills/<name>/`. Claude Code discovers skills through the `.claude/skills` bridge symlink (auto-created on install); Cursor and GitHub Copilot read `.agents/skills/` directly. There are no per-tool wrapper copies and no category subfolders — a skill directory must be a direct child of a skills root (the validator rejects `skills/<category>/<name>/`).
+
+Tool-specific guidance lives in `## Tool notes` sections of the `SKILL.md` body, not in separate files:
+
+```markdown
+## Tool notes
+
+### Claude Code
+
+- Restart or reload the session after install so the skill is rediscovered.
+
+### Cursor
+
+- Reload the window after adding or editing this skill so the agent rediscovers it.
+```
 
 ## Directory structure
 
-**Installed layout:**
+**Installed layout (single root):**
 
 ```text
 repo/
-  .ai/
+  .agents/
     skills/
       code-reviewer/
         SKILL.md
@@ -35,17 +45,7 @@ repo/
         references/
         assets/
   .claude/
-    skills/
-      code-reviewer/
-        SKILL.md
-  .cursor/
-    skills/
-      code-reviewer/
-        SKILL.md
-  .github/
-    skills/
-      code-reviewer/
-        SKILL.md
+    skills -> ../.agents/skills
 ```
 
 **Bootstrap layout** (when the skill ships bootstrap source):
@@ -58,16 +58,9 @@ repo/
       scripts/
       references/
       assets/
-      wrappers/
-        cursor/
-          SKILL.md
-        claude/
-          SKILL.md
-        github/
-          SKILL.md
 ```
 
-`.ai/skills/<name>/` is the tool-neutral install output. The three tool-specific folders contain wrappers that point back to the shared skill and add local integration notes. Bundled resources (`scripts/`, `references/`, `assets/`) live in the shared skill directory after install (copied from bootstrap). The bootstrap `wrappers/` tree is install-only and is not copied into `.ai/skills/`.
+`.agents/skills/<name>/` is the install output — a verbatim copy of the bootstrap package. Bundled resources (`scripts/`, `references/`, `assets/`) live in the skill directory after install (copied from bootstrap).
 
 ## Shared skill template
 
@@ -103,53 +96,15 @@ When reporting findings:
 If no significant issues are found, say so and list any minor observations separately.
 ```
 
-Keep shared `SKILL.md` tool-neutral. Use `<SKILL_ROOT>` for bundled script and reference paths inside the shared skill.
-
-## Wrapper template
-
-Use the same `name` and `description` frontmatter in each wrapper unless the user asks for tool-specific frontmatter.
-
-```markdown
----
-name: code-reviewer
-description: Reviews code changes for correctness, safety, maintainability, and test coverage. Use after implementation or before opening a pull request.
----
-
-# code-reviewer wrapper for Cursor
-
-This is a tool-specific wrapper. The canonical shared skill is:
-
-`../../../.ai/skills/code-reviewer/SKILL.md`
-
-Before following this skill, read that shared `SKILL.md` and treat it as the source of truth for workflows, output formats, and bundled resources. Resolve `<SKILL_ROOT>` as `../../../.ai/skills/code-reviewer/` and resolve paths to `scripts/`, `references/`, and `assets/` from that shared skill directory.
-
-## Cursor-specific information
-
-Reload the Cursor window after adding or editing this skill so the agent rediscovers it.
-
-## Wrapper policy
-
-- Do not treat this wrapper as the full skill specification.
-- Prefer the shared skill whenever this wrapper and the shared skill conflict.
-- Keep edits to common behavior in `../../../.ai/skills/code-reviewer/`.
-- Keep only Cursor-specific information in this wrapper.
-```
+Keep the body tool-neutral above `## Tool notes`. Use `<SKILL_ROOT>` for bundled script and reference paths inside the skill.
 
 ## Tool-specific paths
 
-| Tool | Wrapper path |
+| Tool | Read path |
 | --- | --- |
-| Claude Code | `.claude/skills/<name>/SKILL.md` |
-| Cursor | `.cursor/skills/<name>/SKILL.md` |
-| GitHub Copilot | `.github/skills/<name>/SKILL.md` |
-
-Relative path from any wrapper to the shared skill:
-
-`../../../.ai/skills/<name>/SKILL.md`
-
-Relative path from any wrapper to the shared skill root:
-
-`../../../.ai/skills/<name>/`
+| Claude Code | `.claude/skills/<name>/SKILL.md` via the bridge symlink to `.agents/skills/` |
+| Cursor | `.agents/skills/<name>/SKILL.md` |
+| GitHub Copilot | `.agents/skills/<name>/SKILL.md` |
 
 ## Worked example: bootstrap and install
 
@@ -159,7 +114,6 @@ Create bootstrap source:
 skills/code-reviewer/
   SKILL.md
   references/review-checklist.md
-  wrappers/cursor/SKILL.md   # optional custom wrapper
 ```
 
 Validate and install:
@@ -174,13 +128,12 @@ python skills/skill-creator/scripts/install_portable_skill.py \
   --overwrite
 ```
 
-This copies the bootstrap package to `.ai/skills/code-reviewer/` (excluding `wrappers/`) and generates tool skills — using custom wrappers from `wrappers/` when present, otherwise default templates.
+This copies the bootstrap package to `.agents/skills/code-reviewer/` and creates the `.claude/skills -> ../.agents/skills` bridge symlink when it does not yet exist. If `.claude/skills` is a real directory (legacy install), the installer refuses and asks you to purge the legacy tree first.
 
-Validate installed paths:
+Validate the installed skill:
 
 ```bash
-python skills/skill-creator/scripts/quick_validate.py .ai/skills/code-reviewer
-python skills/skill-creator/scripts/quick_validate.py .cursor/skills/code-reviewer
+python skills/skill-creator/scripts/quick_validate.py .agents/skills/code-reviewer
 ```
 
 ## Worked example: direct scaffold
@@ -194,23 +147,22 @@ python skills/skill-creator/scripts/create_skill.py \
   --overwrite
 ```
 
-This creates `.ai/skills/code-reviewer/` with placeholders and default tool wrappers. Edit `.ai/skills/code-reviewer/SKILL.md` for cross-tool behavior; edit tool skill files for tool-only notes.
+This scaffolds `.agents/skills/code-reviewer/` with placeholders. Edit its `SKILL.md` directly; put tool-specific mechanics in a `## Tool notes` section.
 
 ## Packaging
 
-Validate, then package the **shared** skill only (wrappers stay project-local):
+Validate, then package the installed skill:
 
 ```bash
-python skills/skill-creator/scripts/quick_validate.py .ai/skills/code-reviewer
-python skills/skill-creator/scripts/package_skill.py .ai/skills/code-reviewer
+python skills/skill-creator/scripts/quick_validate.py .agents/skills/code-reviewer
+python skills/skill-creator/scripts/package_skill.py .agents/skills/code-reviewer
 ```
 
 ## Notes on portability
 
-- Reference-based wrappers reduce duplication but depend on the tool following the wrapper instruction to read the shared skill.
-- If the user needs maximum standalone behavior, use `init_skill.py --path <tool-skills-dir>` to create a full copy in one location instead of wrappers.
+- If the user needs a standalone copy outside the single-root layout, use `init_skill.py --path <skills-root>` to create a full copy in one location.
 - Repo-root `skills-ref/` can hold reference templates. Bootstrapped portable skills belong in `skills/<name>/`.
-- Add tool-specific frontmatter such as `disable-model-invocation` only in wrappers when the user explicitly wants per-tool variants.
+- Tool-specific frontmatter such as `disable-model-invocation` marks a **command-skill** (slash-invoked only); see command-creator for that flow.
 
 ## Quality checklist
 
@@ -220,4 +172,4 @@ Before finishing, confirm the skill meets the three bars from the shared skill:
 | --- | --- |
 | Correctness | Is the scope accurate? Are capabilities realistic? Are success criteria verifiable? |
 | Completeness | Are edge cases, output format, and boundaries documented? Are long sections in `references/`? |
-| Efficiency | Is the shared file lean? Are tool-native shortcuts in wrappers, not duplicated in shared? |
+| Efficiency | Is the body lean? Are tool-native shortcuts in `## Tool notes`, not duplicated in the tool-neutral body? |

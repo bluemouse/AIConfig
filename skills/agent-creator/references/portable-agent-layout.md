@@ -6,34 +6,41 @@ Use this guide when creating or reviewing agents that should work across GitHub 
 
 Portable agents use **two phases**:
 
-1. **Bootstrap** — Author tool-neutral content under `agents/<name>/` (plus optional custom wrappers). This is the source of truth when bootstrap exists.
-2. **Install** — Run `install_portable_agent.py` to copy `AGENT.md` to `.ai/agents/<name>.md` and install tool wrappers under `.cursor/`, `.claude/`, and `.github/`.
+1. **Bootstrap** — Author tool-neutral content under `agents/<name>/`. This is the source of truth when bootstrap exists.
+2. **Install** — Run `install_portable_agent.py` to write two real copies: `.claude/agents/<name>.md` (AGENT.md verbatim, which Cursor compat-reads) and `.github/agents/<name>.agent.md` (a Copilot transform).
 
-Do not hand-edit `.ai/agents/` or tool agent folders for bootstrapped agents — edit bootstrap and reinstall.
+Do not hand-edit installed agent files for bootstrapped agents — edit bootstrap and reinstall.
 
 For one-off agents without bootstrap source, use `create_agent.py` to scaffold directly into the installed layout (direct path).
 
-## Skills vs agents (install differences)
+## Dual-target install
 
-| | Skills | Agents |
-| --- | --- | --- |
-| Tool wrappers on install | Always creates all three paths; missing custom wrappers get default templates | Installs only wrappers present under `wrappers/` |
-| Partial custom wrappers | Custom per tool; defaults fill gaps | Omitted tools are not installed |
-| Shrinking wrapper set | Re-install overwrites all three tool skills | Re-install with `--overwrite` removes stale tool wrappers |
+There is no shared wrapper layer. Each agent installs as two real files:
+
+- **Claude Code** — `.claude/agents/<name>.md`, verbatim from `AGENT.md` (frontmatter + body). Cursor compat-reads this file.
+- **GitHub Copilot** — `.github/agents/<name>.agent.md`, a transform keeping only `name` and `description` frontmatter plus the body.
+
+Tool-specific guidance lives in `## Tool notes` sections of the agent body, not in separate files:
+
+```markdown
+## Tool notes
+
+### Claude Code
+
+- Restart or reload the session after install so the agent is rediscovered.
+
+### GitHub Copilot
+
+- Reload the window after adding or editing this agent.
+```
 
 ## Directory structure
 
-**Installed layout:**
+**Installed layout (dual target):**
 
 ```text
 repo/
-  .ai/
-    agents/
-      code-reviewer.md
   .claude/
-    agents/
-      code-reviewer.md
-  .cursor/
     agents/
       code-reviewer.md
   .github/
@@ -48,18 +55,11 @@ repo/
   agents/
     code-reviewer/
       AGENT.md
-      wrappers/
-        cursor/
-          AGENT.md
-        claude/
-          AGENT.md
-        github/
-          AGENT.md
 ```
 
-`.ai/agents/<name>.md` is the tool-neutral install output. The three tool-specific files are wrappers that point back to the shared file and add local integration notes. When bootstrap source exists at `agents/<name>/`, edit there and reinstall — do not hand-edit `.ai/agents/` or tool agent folders.
+`.claude/agents/<name>.md` and `.github/agents/<name>.agent.md` are the install outputs. When bootstrap source exists at `agents/<name>/`, edit there and reinstall — do not hand-edit installed files.
 
-## Shared agent template
+## Agent template
 
 ```markdown
 ---
@@ -97,49 +97,14 @@ When reporting findings:
 If no significant issues are found, say so and list any minor observations separately.
 ```
 
-Keep shared agents tool-neutral. Do not embed reload steps, subagent spawn commands, or vendor-specific frontmatter in the shared file.
-
-## Wrapper template
-
-Use the same `name` and `description` frontmatter in each wrapper unless the user asks for tool-specific frontmatter.
-
-```markdown
----
-name: code-reviewer
-description: Reviews code changes for correctness, safety, maintainability, and test coverage. Use after implementation or before opening a pull request.
----
-
-# code-reviewer wrapper for Cursor
-
-This is a tool-specific wrapper. The canonical shared agent definition is:
-
-`../../.ai/agents/code-reviewer.md`
-
-Before doing agent work, read that shared file and treat it as the source of truth for the role, task boundaries, review criteria, and response format.
-
-## Cursor-specific information
-
-Reload the Cursor window after adding or editing this agent so the agent rediscovers it.
-
-## Wrapper policy
-
-- Do not treat this wrapper as the full agent specification.
-- Prefer the shared file whenever this wrapper and the shared file conflict.
-- Keep edits to common behavior in `../../.ai/agents/code-reviewer.md`.
-- Keep only Cursor-specific information in this wrapper.
-```
+Keep the agent body tool-neutral above `## Tool notes`. Do not embed reload steps, subagent spawn commands, or vendor-specific frontmatter in the tool-neutral body.
 
 ## Tool-specific paths
 
-| Tool | Wrapper path |
+| Tool | Install path |
 | --- | --- |
-| Claude Code | `.claude/agents/<name>.md` |
-| Cursor | `.cursor/agents/<name>.md` |
+| Claude Code (and Cursor compat-read) | `.claude/agents/<name>.md` |
 | GitHub Copilot | `.github/agents/<name>.agent.md` |
-
-Relative path from any wrapper to the shared agent:
-
-`../../.ai/agents/<name>.md`
 
 ## Worked example: bootstrap and install
 
@@ -148,7 +113,6 @@ Create bootstrap source:
 ```text
 agents/code-reviewer/
   AGENT.md
-  wrappers/cursor/AGENT.md   # optional; omit tools you do not need
 ```
 
 Validate and install:
@@ -163,20 +127,17 @@ python skills/agent-creator/scripts/install_portable_agent.py \
   --overwrite
 ```
 
-Do not skip bootstrap validation before install. Install syncs `description` from shared `AGENT.md` into custom wrappers; validation catches inconsistent bootstrap wrapper files first.
+Do not skip bootstrap validation before install.
 
-**Overwrite:** `--overwrite` (default) removes installed tool wrappers no longer present under `wrappers/` — use when dropping a tool or migrating from direct scaffold. `--no-overwrite` refuses existing targets and does not delete stale wrappers.
+This writes `AGENT.md` verbatim to `.claude/agents/code-reviewer.md` and the Copilot transform to `.github/agents/code-reviewer.agent.md`. With `--overwrite`, stale legacy outputs from older installs (a shared-layer file or a `.cursor/agents/` copy) are removed.
 
-This copies `AGENT.md` to `.ai/agents/code-reviewer.md` and installs only wrappers present under `wrappers/`. Partial wrapper sets (e.g. Cursor only) are supported.
-
-Validate installed paths:
+Validate the installed set:
 
 ```bash
-python skills/agent-creator/scripts/quick_validate.py .ai/agents/code-reviewer.md
-python skills/agent-creator/scripts/quick_validate.py .cursor/agents/code-reviewer.md
+python skills/agent-creator/scripts/quick_validate.py --root /path/to/repo --name code-reviewer
 ```
 
-Then edit bootstrap files for cross-tool behavior and expand each wrapper with tool-native spawn mechanics, reload steps, and optional frontmatter (`model`, `tools`, `readonly`, etc.). Re-run validation after substantive edits.
+Then edit bootstrap files for cross-tool behavior and expand `## Tool notes` subsections with tool-native spawn mechanics, reload steps, and per-tool frontmatter notes. Re-run validation after substantive edits.
 
 ## Worked example: direct scaffold
 
@@ -191,7 +152,7 @@ python skills/agent-creator/scripts/create_agent.py \
   --overwrite
 ```
 
-This creates `.ai/agents/code-reviewer.md` and all three default tool wrappers. Edit the shared file for cross-tool behavior; edit tool agent files for tool-only notes.
+This writes `.claude/agents/code-reviewer.md` and `.github/agents/code-reviewer.agent.md` with identical content. Edit the Claude copy for Claude behavior and the GitHub copy for Copilot behavior; put shared guidance in the tool-neutral body.
 
 Validate:
 
@@ -201,10 +162,9 @@ python skills/agent-creator/scripts/quick_validate.py --root /path/to/repo --nam
 
 ## Notes on portability
 
-- Reference-based wrappers reduce duplication but depend on the tool following the wrapper instruction to read the shared file.
-- If the user needs maximum standalone behavior, generate copy-based wrappers with the full shared body inlined in each tool file instead of reference wrappers.
-- Bootstrapped portable agents belong in `agents/<name>/`; agents without bootstrap source belong in `.ai/agents/`.
-- Add tool-specific frontmatter such as `model`, `tools`, or `readonly` only in wrappers when the user explicitly wants per-tool variants.
+- The two installed copies are real files; edits made in one do not propagate to the other. Prefer bootstrap + reinstall as the single edit point.
+- Bootstrapped portable agents belong in `agents/<name>/`.
+- Tool-specific frontmatter such as `model`, `tools`, or `readonly` is not portable; keep it as prose in `## Tool notes` when the user wants per-tool variants.
 
 ## Quality checklist
 
@@ -214,4 +174,4 @@ Before finishing, confirm the agent meets the three bars from the shared skill:
 | --- | --- |
 | Correctness | Is the role accurate? Are capabilities realistic? Are success criteria verifiable? |
 | Completeness | Are edge cases, output format, and boundaries documented? |
-| Efficiency | Is the shared file lean? Are tool-native shortcuts in wrappers, not duplicated in shared? |
+| Efficiency | Is the tool-neutral body lean? Are tool-native shortcuts in `## Tool notes`, not duplicated in the body? |

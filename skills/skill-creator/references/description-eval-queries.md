@@ -54,6 +54,6 @@ Aim for ~20 queries: 8–10 should-trigger, 8–10 should-not-trigger. Focus on 
 
 ## Automated optimization (Claude Code / Cowork only)
 
-When `run_loop.py` is available (see Claude Code wrapper), it splits the eval set ~60% train / 40% held-out test, runs each query multiple times, and proposes description revisions. Execution details are **not** shared here — see your tool wrapper.
+When `run_loop.py` is available (see the Claude Code `## Tool notes` section), it splits the eval set ~60% train / 40% held-out test, runs each query multiple times, and proposes description revisions. Execution details are **not** shared here — see the skill's `## Tool notes`.
 
-Manual optimization (all tools): draft queries (Step 1), review with user via `assets/eval_review.html` (Step 2), revise description yourself, apply and sync wrappers (Step 4).
+Manual optimization (all tools): draft queries (Step 1), review with user via `assets/eval_review.html` (Step 2), revise the description yourself, apply, and reinstall or re-sync the installed copy (Step 4).

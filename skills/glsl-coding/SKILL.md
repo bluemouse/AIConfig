@@ -128,4 +128,4 @@ Vulkan fragment output example: `layout(location = 0) out vec4 outColor;` — no
 | Renderer architecture (render graph, binding model) | [`../gpu-rendering-guide/SKILL.md`](../gpu-rendering-guide/SKILL.md) |
 | `Vk*` pipelines, descriptors, barriers, swapchain | [`../vulkan-dev/SKILL.md`](../vulkan-dev/SKILL.md) |
 
-Relative paths resolve from `.ai/skills/glsl-coding/` when installed (or `skills/glsl-coding/` in bootstrap layout).
+Relative paths resolve from `.agents/skills/glsl-coding/` when installed (or `skills/glsl-coding/` in bootstrap layout).

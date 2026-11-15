@@ -16,7 +16,7 @@
       "files": [],
       "expectations": [
         "The drafted message is a valid Conventional Commit: `<type>[scope]: <imperative description>`, no trailing period, <= 72 characters",
-        "The drafted message contains no plan, research, review, audit, manifest, or handoff artifact name (e.g. `20-implementation-plan.md`, `10-research-report.md`, `50-commit.md`, `back-*.md`, `.ai/workflow/`, `.ai/plans/`)",
+        "The drafted message contains no plan, research, review, audit, manifest, or handoff artifact name (e.g. `20-implementation-plan.md`, `10-research-report.md`, `50-commit.md`, `back-*.md`, `.agents/workflow/`, `.agents/plans/`)",
         "The drafted message contains no stage, task, requirement, or finding label (e.g. `stage 2`, `task 4`, `requirement R3`, `cr-003`)",
         "The drafted message contains no 'as planned', 'as discussed', 'per the review', or 'per the plan' phrasing",
         "The drafted message states the motivation for the change in the message body itself, without relying on the supplied plan context",

@@ -1,6 +1,6 @@
 # Platform adapters
 
-Host-specific dispatch mechanics live in your **tool wrapper** — read it after the shared skill. This file defines the common contract and capability checks that apply on every host.
+Host-specific dispatch mechanics live in the skill's `## Tool notes` section — read it after the tool-neutral body. This file defines the common contract and capability checks that apply on every host.
 
 Select the native concurrency mechanism that is actually available in the current host. Tool names and UI labels can change; inspect the exposed tools rather than assuming a command exists.
 

@@ -1,6 +1,6 @@
 # Cursor Command Best Practices
 
-Reference for `.cursor/commands/<name>.md` slash commands.
+Reference for Cursor slash commands — host-format background. command-creator installs commands as command-skills at `.agents/skills/<name>/SKILL.md` (frontmatter preserved, `disable-model-invocation: true`), which Cursor invokes as `/command-name`; the native `.cursor/commands/` format below is reference for hand-authored commands.
 
 **Official docs:** [Cursor Commands](https://docs.cursor.com/en/agent/chat/commands)
 
@@ -13,7 +13,7 @@ Reference for `.cursor/commands/<name>.md` slash commands.
 | Frontmatter | **Not supported** — plain Markdown only |
 | Filename | kebab-case, descriptive (`code-review.md`, not `cr.md`) |
 
-Install strips frontmatter from shared bootstrap content. Cursor wrapper files under `wrappers/cursor/` must also be plain Markdown with no YAML block.
+For hand-authored `.cursor/commands/` files, plain Markdown only — no YAML block.
 
 ## Writing effective commands
 

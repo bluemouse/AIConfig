@@ -66,7 +66,7 @@ rewrite, not an immediate commit.
    path, and the check costs seconds at draft time versus a history rewrite
    after the fact. When the dev-workflow harness is installed, its
    implement/code-review/commit phase gates enforce the same rules on history
-   (`.ai/tools/dev-workflow/checks/message_checks.py`); a flagged-but-legit
+   (`.agents/tools/dev-workflow/checks/message_checks.py`); a flagged-but-legit
    token there is dispositioned in the run manifest, never silently ignored.
 2. Stage only when needed and only files in scope
 3. Use HEREDOC for multi-line messages

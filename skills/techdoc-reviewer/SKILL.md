@@ -279,3 +279,17 @@ Before finishing, confirm that:
 - related documents were searched where a cross-document conflict is plausible;
 - synchronization edits are conservative, complete for the affected contract, and scoped; and
 - unresolved evidence conflicts and verification limits are explicit.
+
+## Tool notes
+
+### Claude Code
+
+For deep reviews involving separate document domains or independent claim groups, use subagents only for independent evidence passes. Include each pass's documentation paths, audience/purpose, evidence targets, and required finding fields from the report template. Reconcile conflicts, duplicate findings, severity, and the decision to synchronize documentation yourself. Keep a complete multi-step procedure in one review pass rather than splitting its sequence across subagents.
+
+### Cursor
+
+For deep reviews involving distinct document domains or independently verifiable claim groups, parallelize only the independent evidence passes with the Task tool. Give each pass its document paths, purpose/audience, exact evidence targets, and the required output fields from the report template. Keep the final conflict resolution, cross-document deduplication, severity assignment, and synchronization decision in the parent review. Do not use parallelism to split one tightly coupled workflow across agents; validate its complete reader journey in one pass.
+
+### GitHub Copilot
+
+Run independent documentation claim groups sequentially and keep evidence notes separate. Do not skip cross-document reconciliation or executable-procedure verification because the work is sequential. Use the body for scope, evidence hierarchy, and final report contents.

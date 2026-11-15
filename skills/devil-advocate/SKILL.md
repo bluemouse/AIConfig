@@ -254,3 +254,41 @@ Before finalizing, verify:
 - Do not replace qualified legal, medical, safety, compliance, security, or domain expert review. Identify where specialist validation is required.
 - Do not use stakeholder caricatures or assume malicious intent when ordinary incentives, errors, or constraints explain the risk.
 - Do not reject a proposal because it is unconventional. Reject only when the objective cannot be achieved acceptably under the constraints.
+
+## Tool notes
+
+### Claude Code
+
+Use subagents only for deep red-team reviews where independence materially improves quality:
+
+1. Frame and steelman the proposal yourself first.
+2. Select distinct challenge lenses from the body.
+3. In a single turn, spawn independent subagents for the highest-value lenses.
+4. Give each subagent the same proposal frame and only its assigned lens. Ask for candidate findings with causal chain, severity, evidence, disposition, and resolution path. When subagent completion notifications include `total_tokens` and `duration_ms`, note them only if comparing red-team efficiency across runs.
+5. Collect final replies, deduplicate and rank findings yourself, then apply the show-stopper gate and issue exactly one verdict.
+
+For quick or standard reviews, stay inline — do not launch subagents merely to create more objections. On Claude.ai (no Claude Code CLI), no parallel subagents are available: run challenge lenses sequentially in one context, keep candidate findings separated by lens until deduplication, and label any uncertainty from missing independent review.
+
+### Cursor
+
+Use Cursor subagents only for deep red-team reviews where independence materially improves quality:
+
+1. Frame and steelman the proposal yourself first.
+2. Select distinct challenge lenses from the body.
+3. In a single message, dispatch independent subagents for the highest-value lenses. Use `subagent_type: "generalPurpose"` unless the work is pure repository discovery, where `explore` may fit.
+4. Give each subagent the same proposal frame and only its assigned lens. Ask for candidate findings with causal chain, severity, evidence, disposition, and resolution path.
+5. Collect final replies, deduplicate and rank findings yourself, then apply the show-stopper gate and issue exactly one verdict.
+
+For quick or standard reviews, stay inline. Use `AskQuestion` only when a missing non-negotiable, risk tolerance, or decision-owner preference would change the verdict — otherwise state assumptions and use scenario branches. When the review depends on current external facts and web or MCP tools are available, gather those facts before treating a claim as evidence, and cite the source in the finding.
+
+### GitHub Copilot
+
+Copilot Chat usually has no parallel subagent API, so deep reviews should run challenge lenses sequentially:
+
+1. Frame and steelman the proposal first.
+2. Select the relevant challenge lenses from the body.
+3. Keep candidate findings separated by lens until deduplication and ranking.
+4. Apply the show-stopper gate strictly before using `REJECT`.
+5. End with exactly one verdict and a concrete repair, replacement, or stop path.
+
+If Copilot is running as a non-interactive coding agent, do not wait for user answers unless the missing decision is unsafe to assume. Record assumptions, decision gates, and kill criteria in the final report or pull request text.

@@ -20,7 +20,7 @@ lines for Claude, Copilot, or other assistants).
 Commit messages must be **self-contained**. A message may reference only content a reader
 can reach from the repository — committed code, committed docs, and user-supplied ticket
 ids. Plan documents, research reports, requirement ledgers, reviews, audits, workflow
-manifests, and handoff packets are **temporary by design**: the `.ai/` planning
+manifests, and handoff packets are **temporary by design**: the `.agents/` planning
 directories are gitignored, and even a committed planning artifact is state for the run
 that produced it, not a reference a future reader can interpret. Never name, link,
 summarize, or imply one of them in a commit message — restate the underlying behavior,
@@ -147,7 +147,7 @@ message):
   length, attribution footers). Fix every flagged pattern before committing;
   drafting from plan/review context is the known leak path. (When the
   dev-workflow harness is installed, its commit-phase gate enforces the same
-  rules on history — `.ai/tools/dev-workflow/checks/message_checks.py`.)
+  rules on history — `.agents/tools/dev-workflow/checks/message_checks.py`.)
 - Stage only when needed and only files in scope
 - Use HEREDOC for multi-line messages
 - Never `--no-verify` unless explicitly requested

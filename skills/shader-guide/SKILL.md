@@ -191,4 +191,4 @@ Complete rendering pipelines assembled from technique modules — see [reference
 | Renderer architecture (render graph, bindless, sync) | [`../gpu-rendering-guide/SKILL.md`](../gpu-rendering-guide/SKILL.md) |
 | Concrete Vulkan API (`Vk*`, pipelines, descriptors) | [`../vulkan-dev/SKILL.md`](../vulkan-dev/SKILL.md) |
 
-Relative paths resolve from `.ai/skills/shader-guide/` when installed (or `skills/shader-guide/` in bootstrap layout).
+Relative paths resolve from `.agents/skills/shader-guide/` when installed (or `skills/shader-guide/` in bootstrap layout).

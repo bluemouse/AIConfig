@@ -129,4 +129,19 @@ This skill is the concrete **Vulkan 1.3 implementation** layer: the `Vk*` object
 | Android surface lifecycle, WSI, AHB interop, AVP, wide color | [`../android-vulkan-dev/SKILL.md`](../android-vulkan-dev/SKILL.md) |
 | GLSL source, layouts, GLSL-to-SPIR-V compile validation | [`../glsl-coding/SKILL.md`](../glsl-coding/SKILL.md) |
 
-Relative paths above resolve from `.ai/skills/vulkan-dev/` when installed (or `skills/vulkan-dev/` in bootstrap layout). Wrappers point to the shared copy; read companions from the same `.ai/skills/<name>/` tree when available.
+Relative paths above resolve from `.agents/skills/vulkan-dev/` when installed (or `skills/vulkan-dev/` in bootstrap layout). Read companions from the same `.agents/skills/<name>/` tree when available.
+
+## Tool notes
+
+### Anti-pattern scanner
+
+For code review, run the bundled scanner from the skill root (review prompts only, not a validator):
+
+```bash
+python .agents/skills/vulkan-dev/scripts/vulkan_antipattern_scan.py <paths> [--severity info|medium|high]
+```
+
+### Per-host notes
+
+- After installing or editing the skill, reload the coding agent (restart or reload the Claude Code session; reload the Cursor window; reload VS Code for Copilot) so the skill is rediscovered.
+- The companion table in the body ([gpu-rendering-guide](../gpu-rendering-guide/SKILL.md), [cpp-coding](../cpp-coding/SKILL.md), [cpp-memory-guide](../cpp-memory-guide/SKILL.md)) applies on every host.

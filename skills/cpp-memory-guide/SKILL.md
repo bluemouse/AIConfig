@@ -87,3 +87,11 @@ C++20 memory design: ownership, allocators, RAII, smart pointers, `span`, PMR, a
 |-------|------|
 | General C++20 style, Core Guidelines R.* overview | [../cpp-coding/SKILL.md](../cpp-coding/SKILL.md) |
 | GPU device memory strategy | [../gpu-rendering-guide/SKILL.md](../gpu-rendering-guide/SKILL.md) |
+
+## Tool notes
+
+Tool-specific mechanics are minimal for this skill — the body and references are host-neutral. Per-host differences from the former wrapper layer, retained for reference:
+
+- After installing or editing the skill, reload the coding agent (restart or reload the Claude Code session; reload the Cursor window; reload VS Code for Copilot) so the skill is rediscovered.
+
+Companion skills: [cpp-coding](../cpp-coding/SKILL.md) for general C++20 style and Core Guidelines; [gpu-rendering-guide](../gpu-rendering-guide/SKILL.md) for GPU device memory strategy (VRAM tiers, staging).

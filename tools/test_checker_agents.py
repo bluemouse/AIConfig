@@ -2,10 +2,10 @@
 """Structural tests for the four dev-workflow checker agents.
 
 Validates that each checker agent:
-- Has a bootstrap AGENT.md and three tool wrappers (FR-1)
+- Has a bootstrap AGENT.md with a `## Tool notes` section (FR-1, post-merge)
 - Points to its corresponding skill (FR-2)
-- Has per-host read-only enforcement (FR-3)
-- Has model inheritance per wrapper (FR-4)
+- Documents per-host read-only enforcement in Tool notes (FR-3)
+- Documents model inheritance per host in Tool notes (FR-4)
 - Has a differentiated description from the skill (FR-12, rr-008)
 
 Also validates orchestrator edits:
@@ -14,6 +14,9 @@ Also validates orchestrator edits:
 - task packet construction documented (FR-7)
 - manifest-format.md has Dispatch log section (FR-9)
 - prior-round -r1 copy documented (FR-11)
+
+Bootstrap-side (post Tool-notes merge). Installed-path tests live in
+InstalledPathTests and stay on the pre-migration layout until the stage-5 move.
 """
 
 from __future__ import annotations
@@ -32,12 +35,6 @@ CHECKER_AGENTS = (
     "implementation-auditor",
     "code-reviewer",
 )
-
-WRAPPER_REL_PATHS = {
-    "cursor": "wrappers/cursor/AGENT.md",
-    "claude": "wrappers/claude/AGENT.md",
-    "github": "wrappers/github/AGENT.md",
-}
 
 INSTALLED_WRAPPER_PATHS = {
     "cursor": ".cursor/agents/{name}.md",
@@ -71,62 +68,59 @@ class CheckerAgentBootstrapTests(unittest.TestCase):
             agent_md = REPO_ROOT / "agents" / name / "AGENT.md"
             self.assertTrue(agent_md.is_file(), f"Missing bootstrap AGENT.md: {agent_md}")
 
-    def test_all_four_have_three_wrappers(self):
-        """t-002: Each checker has wrappers/{cursor,claude,github}/AGENT.md."""
+    def test_all_four_have_tool_notes_section(self):
+        """t-002 (post-merge): Each AGENT.md has a `## Tool notes` section."""
         for name in CHECKER_AGENTS:
-            for tool, rel in WRAPPER_REL_PATHS.items():
-                wrapper = REPO_ROOT / "agents" / name / rel
-                self.assertTrue(
-                    wrapper.is_file(),
-                    f"Missing {tool} wrapper for {name}: {wrapper}",
-                )
+            agent_md = REPO_ROOT / "agents" / name / "AGENT.md"
+            content = agent_md.read_text(encoding="utf-8")
+            self.assertRegex(
+                content,
+                r"(?m)^## Tool notes\s*$",
+                f"{agent_md} missing '## Tool notes' section",
+            )
 
 
 class CheckerAgentContentTests(unittest.TestCase):
     """t-003, t-004, t-010, t-012: Agent content checks."""
 
     def test_agent_points_to_skill(self):
-        """t-003: Each AGENT.md references .ai/skills/<name>/SKILL.md."""
+        """t-003: Each AGENT.md references .agents/skills/<name>/SKILL.md."""
         for name in CHECKER_AGENTS:
             agent_md = REPO_ROOT / "agents" / name / "AGENT.md"
             content = agent_md.read_text(encoding="utf-8")
-            expected_ref = f".ai/skills/{name}/SKILL.md"
+            expected_ref = f".agents/skills/{name}/SKILL.md"
             self.assertIn(
                 expected_ref,
                 content,
                 f"{agent_md} does not reference skill at {expected_ref}",
             )
 
-    def test_readonly_enforcement_per_host(self):
-        """t-004: Cursor has readonly:true in frontmatter, Claude has tools restriction in frontmatter, Copilot documents instruction-only."""
+    def test_readonly_enforcement_documented_per_host(self):
+        """t-004 (post-merge): Tool notes document Cursor readonly, Claude tools restriction, Copilot instruction-only."""
         for name in CHECKER_AGENTS:
-            # Cursor: readonly: true in frontmatter
-            cursor_wrapper = REPO_ROOT / "agents" / name / "wrappers" / "cursor" / "AGENT.md"
-            cursor_fm = parse_frontmatter(cursor_wrapper.read_text(encoding="utf-8"))
+            agent_md = REPO_ROOT / "agents" / name / "AGENT.md"
+            content = agent_md.read_text(encoding="utf-8")
+            tool_notes = content.split("## Tool notes", 1)
+            self.assertEqual(
+                len(tool_notes),
+                2,
+                f"{agent_md} missing '## Tool notes' section for host checks",
+            )
+            notes = tool_notes[1]
             self.assertIn(
-                "readonly",
-                cursor_fm,
-                f"Cursor wrapper for {name} missing 'readonly' frontmatter field",
+                "`readonly: true`",
+                notes,
+                f"{agent_md} Tool notes missing Cursor `readonly: true` documentation",
             )
-            self.assertTrue(
-                cursor_fm["readonly"] is True or cursor_fm["readonly"] == "true",
-                f"Cursor wrapper for {name} 'readonly' field is not true: {cursor_fm.get('readonly')}",
-            )
-            # Claude: tools: restricted in frontmatter (not Edit/Write)
-            claude_wrapper = REPO_ROOT / "agents" / name / "wrappers" / "claude" / "AGENT.md"
-            claude_fm = parse_frontmatter(claude_wrapper.read_text(encoding="utf-8"))
             self.assertIn(
-                "tools",
-                claude_fm,
-                f"Claude wrapper for {name} missing 'tools' frontmatter field",
+                "`tools: Read, Grep, Glob, Bash`",
+                notes,
+                f"{agent_md} Tool notes missing Claude `tools` restriction documentation",
             )
-            # Copilot: documents instruction-only enforcement
-            github_wrapper = REPO_ROOT / "agents" / name / "wrappers" / "github" / "AGENT.md"
-            github_content = github_wrapper.read_text(encoding="utf-8")
             self.assertIn(
                 "instruction-only",
-                github_content.lower(),
-                f"GitHub wrapper for {name} missing instruction-only documentation",
+                notes.lower(),
+                f"{agent_md} Tool notes missing Copilot instruction-only documentation",
             )
 
     def test_agent_description_differs_from_skill(self):
@@ -142,27 +136,22 @@ class CheckerAgentContentTests(unittest.TestCase):
                 f"may not be differentiated from the skill description",
             )
 
-    def test_model_inheritance_per_wrapper(self):
-        """t-012: Claude/Cursor wrappers set model: inherit; GitHub wrappers omit the field (structural proxy for model inheritance)."""
+    def test_model_inheritance_documented_per_host(self):
+        """t-012 (post-merge): Tool notes document model:inherit for Claude/Cursor and Copilot's user-selected model."""
         for name in CHECKER_AGENTS:
-            for tool, rel in WRAPPER_REL_PATHS.items():
-                wrapper = REPO_ROOT / "agents" / name / rel
-                content = wrapper.read_text(encoding="utf-8")
-                frontmatter = parse_frontmatter(content)
-                if tool in ("cursor", "claude"):
-                    self.assertEqual(
-                        frontmatter.get("model"),
-                        "inherit",
-                        f"{tool} wrapper for {name} must set 'model: inherit' — "
-                        f"got {frontmatter.get('model')!r}",
-                    )
-                else:
-                    self.assertNotIn(
-                        "model",
-                        frontmatter,
-                        f"github wrapper for {name} must omit the 'model:' frontmatter "
-                        f"field so the agent runs on the user's selected Copilot chat model",
-                    )
+            agent_md = REPO_ROOT / "agents" / name / "AGENT.md"
+            content = agent_md.read_text(encoding="utf-8")
+            tool_notes = content.split("## Tool notes", 1)[1]
+            self.assertIn(
+                "`model: inherit`",
+                tool_notes,
+                f"{agent_md} Tool notes missing 'model: inherit' documentation",
+            )
+            self.assertIn(
+                "user's currently selected Copilot chat model",
+                tool_notes,
+                f"{agent_md} Tool notes missing Copilot selected-model documentation",
+            )
 
 
 class OrchestratorEditTests(unittest.TestCase):

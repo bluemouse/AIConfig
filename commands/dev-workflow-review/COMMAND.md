@@ -1,6 +1,6 @@
 ---
 name: dev-workflow-review
-description: Run the Code Review phase loop (code-review-resolver → code-reviewer) to acceptance or escalation on an existing or bootstrapped dev-workflow run. Loads the dev-workflow-orchestrator skill's Phase 4 procedure.
+description: Run the Code Review phase loop when the user explicitly invokes /dev-workflow-review.
 ---
 
 # Dev Workflow Review
@@ -12,20 +12,20 @@ skill's Phase 4 procedure and the `code-review-resolver` / `code-reviewer` skill
 ## Steps
 
 1. Read and follow the **dev-workflow-orchestrator** skill
-   (`.ai/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill), specifically
+   (`.agents/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill), specifically
    the **Within a phase (the loop)** procedure for Phase 4 (Code Review). Treat
    `/dev-workflow-review` as the explicit start signal — proceed without asking for a
    second confirmation.
 
 2. **Resolve the run directory** (one of):
-   - **Explicit slug**: if the user passes `<slug>`, use `.ai/workflow/<slug>/`.
+   - **Explicit slug**: if the user passes `<slug>`, use `.agents/workflow/<slug>/`.
    - **Auto-detect**: if no slug is given and exactly one run dir exists under
-     `.ai/workflow/`, use it. If zero or multiple run dirs exist, error and ask the user
+     `.agents/workflow/`, use it. If zero or multiple run dirs exist, error and ask the user
      to pass an explicit `<slug>`.
    - **Bootstrap**: if no slug is given and no run dir exists, first check the working
      tree: if `git diff --stat` produces no output (clean working tree), report "No
      changes to review — working tree is clean" and stop before synthesizing the report.
-     Otherwise, create a feature slug (kebab-case), create `.ai/workflow/<slug>/`, and
+     Otherwise, create a feature slug (kebab-case), create `.agents/workflow/<slug>/`, and
      synthesize `30-implementation-report.md`
      from the working-tree diff with the required heading `# Implementation Report` plus
      minimal sections: a one-paragraph summary, a files-changed list from `git diff --stat`,
@@ -48,16 +48,16 @@ skill's Phase 4 procedure and the `code-review-resolver` / `code-reviewer` skill
    - **Round-1 ordering (Code Review exception):** on round 1 the checker runs
      first — there are no findings to resolve on a clean first pass. On round > 1 the
      doer runs first (applying the prior round's fixes), then the checker re-reviews.
-   - **Record baseline**: `python .ai/tools/dev-workflow/record_baseline.py --phase code-review --run-dir .ai/workflow/<slug>`
-   - **Pre-flight**: `python .ai/tools/dev-workflow/check_pre_phase.py --phase code-review --run-dir .ai/workflow/<slug>`. If it fails, stop and report.
+   - **Record baseline**: `python .agents/tools/dev-workflow/record_baseline.py --phase code-review --run-dir .agents/workflow/<slug>`
+   - **Pre-flight**: `python .agents/tools/dev-workflow/check_pre_phase.py --phase code-review --run-dir .agents/workflow/<slug>`. If it fails, stop and report.
    - **Checker pass (round 1)**: first read the `## Dispatch log` section of `00-run-manifest.md`; if it records `Dispatch mode: native`, dispatch `code-reviewer` as a subagent per the orchestrator's native-mode task packet; otherwise (delegated/simulated, or the manifest has no dispatch log — default to delegated and say so) invoke `code-reviewer` as a named pass with input `30-implementation-report.md` (and the working-tree diff) and output `40-code-review.md`. The checker must include `root-cause-phase` on every finding.
    - **Doer pass**: invoke `code-review-resolver` as a named pass with the findings from `40-code-review.md` (and the working-tree diff) and output `41-fix-report.md`. On round > 1 the doer runs first, applying the prior round's findings, then the checker re-reviews.
-   - **Post-flight**: `python .ai/tools/dev-workflow/check_post_phase.py --phase code-review --run-dir .ai/workflow/<slug>`. If it fails, stop and report.
+   - **Post-flight**: `python .agents/tools/dev-workflow/check_post_phase.py --phase code-review --run-dir .agents/workflow/<slug>`. If it fails, stop and report.
    - **Read verdict** from the `## Verdict` heading in `40-code-review.md`.
    - **Route**:
-     - `ready to commit` or `ready with notes` → run `python .ai/tools/dev-workflow/validate_phase.py --phase code-review --run-dir .ai/workflow/<slug>`. If validation passes, update manifest (phase status `accepted`) and stop with a summary. If validation fails, handle per the orchestrator's validation rules.
+     - `ready to commit` or `ready with notes` → run `python .agents/tools/dev-workflow/validate_phase.py --phase code-review --run-dir .agents/workflow/<slug>`. If validation passes, update manifest (phase status `accepted`) and stop with a summary. If validation fails, handle per the orchestrator's validation rules.
      - `needs revision` with `root-cause-phase: local` → increment round counter. On round > 1, copy `40-code-review.md` to `40-code-review-r<N>.md` where N is the round just completed (round 2 → `-r1`, round 3 → `-r2`) so the fresh-context checker sees prior findings and preserves finding ids, and include all prior `-r1`, `-r2`, … paths in the next round's context. Loop back to the doer pass. Round cap is 5; on cap, escalate.
-     - `needs revision` with `root-cause-phase: upstream` (plan or research) → write a backward handoff packet `back-code-review-to-<target>-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.ai/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .ai/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .ai/workflow/<slug>`, update manifest (target phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (instruct the user to run `/dev-workflow-plan <slug>` for plan issues or `/dev-workflow-research <slug>` for research issues), then stop. Backward edge cap is 2 per phase.
+     - `needs revision` with `root-cause-phase: upstream` (plan or research) → write a backward handoff packet `back-code-review-to-<target>-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.agents/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .agents/workflow/<slug>`, update manifest (target phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (instruct the user to run `/dev-workflow-plan <slug>` for plan issues or `/dev-workflow-research <slug>` for research issues), then stop. Backward edge cap is 2 per phase.
      - `blocked` → escalate immediately with a blocker summary and stop.
    - **Update manifest** after every step.
 
@@ -67,7 +67,7 @@ skill's Phase 4 procedure and the `code-review-resolver` / `code-reviewer` skill
 
 ## Optional arguments
 
-- `<slug>` — existing run directory under `.ai/workflow/`.
+- `<slug>` — existing run directory under `.agents/workflow/`.
 - When no slug is given and no run dir exists, bootstraps from the working-tree diff.
 
 ## Output

@@ -32,7 +32,7 @@
 
 ## skills-ref/krita-engine-dev (bootstrap template)
 
-- **Path:** `.ai/skills/krita-engine-dev/` (installed reference)
+- **Path:** `.agents/skills/krita-engine-dev/` (installed reference)
 - **Last reviewed:** 2026-07-06
 - **Used for:**
   - `SKILL.md` structure: `<SKILL_ROOT>`, When to Use / When NOT, reference routing, source verification workflow

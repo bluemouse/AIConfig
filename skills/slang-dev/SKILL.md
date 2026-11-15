@@ -124,4 +124,21 @@ Prioritize correctness, reflection-validated layout, and measurable performance.
 | API-agnostic binding model, render graph, shader-system architecture | [`../gpu-rendering-guide/SKILL.md`](../gpu-rendering-guide/SKILL.md) |
 | C++20 style and build verification | [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md) |
 
-Relative paths resolve from `skills/slang-dev/` in bootstrap layout (or `.ai/skills/slang-dev/` when installed).
+Relative paths resolve from `skills/slang-dev/` in bootstrap layout (or `.agents/skills/slang-dev/` when installed).
+
+## Tool notes
+
+### Compile matrix
+
+For repeatable SPIR-V and MSL builds across entry points, run the bundled script from the skill root:
+
+```bash
+python .agents/skills/slang-dev/scripts/slang_compile_matrix.py manifest.json [--print-only]
+```
+
+Use `--print-only` to emit commands without executing; `--allow-missing-slangc` when `slangc` is not on PATH.
+
+### Per-host notes
+
+- After installing or editing the skill, reload the coding agent (restart or reload the Claude Code session; reload the Cursor window; reload VS Code for Copilot) so the skill is rediscovered.
+- The companion table in the body ([vulkan-dev](../vulkan-dev/SKILL.md), [gpu-rendering-guide](../gpu-rendering-guide/SKILL.md), [cpp-coding](../cpp-coding/SKILL.md)) applies on every host.

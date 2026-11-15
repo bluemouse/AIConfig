@@ -18,7 +18,7 @@ Use this skill to settle blocking decisions, then hand the settled requirement l
 The requirement ledger is this skill's terminal output. Its shape is defined in
 [references/requirement-ledger.md](references/requirement-ledger.md) — read it before writing a
 ledger. Inside the dev-workflow harness the ledger is the Phase 0 artifact
-(`.ai/workflow/<slug>/02-requirement-ledger.md`) consumed by `research-guide`; standalone, it is the
+(`.agents/workflow/<slug>/02-requirement-ledger.md`) consumed by `research-guide`; standalone, it is the
 confirmation summary you carry into the handoff.
 
 ## When NOT to Use
@@ -284,3 +284,51 @@ Rewrite or omit any question that fails this test.
 Read [references/examples.md](references/examples.md) when the current task involves multiple clarification rounds, conflicting requirements, or ambiguity discovered during execution.
 
 Read [references/question-patterns.md](references/question-patterns.md) when selecting a question form for definitions, scope, acceptance criteria, technical environments, risk, or authority.
+
+## Tool notes
+
+### Claude Code
+
+There is no structured question widget — questions are plain text and you must **end the turn** to receive an answer. That makes turn economy the main constraint:
+
+1. Complete the INSPECT state before ending a turn. Read, Grep, and Glob are cheap; a wasted question round is not.
+2. Send the whole current batch in one message using the numbered format with lettered options, a marked recommendation, and an explicit reply hint such as `Reply with defaults, 1c 2a, or your own wording`.
+3. Do not end the turn for a question that a default and a stated assumption would cover.
+4. When only part of the task is blocked, do the unblocked reversible work first and end the turn with both the progress and the remaining question.
+
+Use Read, Grep, and Glob for anything discoverable in the repository; dispatch a read-only subagent when the lookup is broad enough to need its own context, and keep clarifying other dimensions while it runs.
+
+Subagents cannot reach the user. When running as a subagent, skip the ASK state, apply the assumption rules, and return every assumption explicitly in the status report along with any blocker that needed a human decision. Headless / `claude -p` runs are non-interactive for the same reason — prefer the STOP output (the exact missing requirement, why it blocks, and the smallest decision needed) over guessing on irreversible work. Before dispatching subagents yourself, resolve blockers first: an unclear task packet multiplies the ambiguity across every agent in the wave.
+
+On Claude.ai, interactive clarification works normally, but repository inspection may be unavailable. When you cannot inspect, treat facts that would have been discoverable as unknown and ask for them, or ask the user to paste the relevant file or configuration.
+
+### Cursor
+
+Use the **AskQuestion tool** for the ASK state whenever the question set is a small number of discrete decisions. It renders selectable options and collects structured answers, which is more reliable than options listed in prose:
+
+1. One question object per decision — do not pack several decisions into one prompt string.
+2. Put the recommended option **first** and append `(Recommended)` to its label, matching the default-marking rule.
+3. Add `Not sure - use the recommended default` as an option when a safe default exists; the user can always answer freely through "Other".
+4. Set `allow_multiple: true` only for genuinely multi-select decisions such as scope sets or platform targets.
+5. Fall back to the numbered-text format when a question needs an open-ended answer (a threshold, an example and non-example, an exact definition) or when the options cannot be made mutually distinct.
+
+Prefer Read, Grep, and Glob over asking about anything discoverable in the workspace; attached context, open files, and recently viewed files count as supplied facts. Dispatch an `explore` subagent through the Task tool when resolving the question would otherwise take many searches, and continue clarifying other dimensions while it runs.
+
+In **Plan mode**, clarification and plan drafting happen together — front-load the blocking decisions before proposing the plan, and record accepted defaults in the plan itself. Switching to Plan mode with `SwitchMode` is often better than a long clarification round when the task turns out to be large or architecture-shaped. In read-only modes, still apply the authority rules: confirm before proposing actions the current mode cannot perform.
+
+Subagents launched with the Task tool cannot ask the user anything. When running as a subagent, do not enter the ASK state — apply the assumption rules, state each assumption explicitly in the returned report, and flag any blocker that genuinely required a human decision.
+
+### GitHub Copilot
+
+Copilot runs both interactive chat sessions and non-interactive coding-agent sessions, and the two demand different behavior from the ASK state.
+
+Interactive chat has no structured question widget — use the numbered format with lettered options, a marked recommendation, and an explicit reply hint. Keep each question short; chat panes are narrow and long option blocks get skimmed. Complete the INSPECT state with workspace search and file reads before asking; open editors, selections, and `#file` / `#selection` references are supplied context — never ask for what they already contain.
+
+When Copilot is assigned an issue or runs as a background coding agent, there is no user to answer. Do not stall waiting for a reply:
+
+1. Apply the assumption rules and choose the recommended defaults.
+2. Record every assumption in the pull request description, next to what would change if the assumption is wrong.
+3. Prefer the smallest reversible change when a decision is genuinely undetermined, so a reviewer can redirect cheaply.
+4. For work the STOP criteria mark unsafe without the missing decision — destructive, externally visible, costly, or security-sensitive — leave the work undone and state the specific blocker in the pull request or issue comment instead of guessing.
+
+Recurring answers belong in `.github/copilot-instructions.md`, a path-scoped `*.instructions.md` file, or a `.github/prompts/*.prompt.md` prompt rather than in a repeated question. When the same project-level question recurs across sessions, suggest recording it there.

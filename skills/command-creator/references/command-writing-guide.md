@@ -1,10 +1,10 @@
 # Command Writing Guide
 
-Cross-tool best practices for portable slash commands and Copilot prompts.
+Cross-tool best practices for portable slash commands (command-skills).
 
 ## Purpose
 
-Commands are **explicitly invoked** with `/command-name`. Optimize for clarity, repeatability, and a single focused task — not passive discovery.
+Commands are **explicitly invoked** with `/command-name`. Optimize for clarity, repeatability, and a single focused task — not passive discovery. Commands install as **command-skills** (`.agents/skills/<name>/SKILL.md` with `disable-model-invocation: true`), so every coding agent exposes them as `/<name>` and the model never self-invokes them.
 
 Use commands when:
 
@@ -21,8 +21,7 @@ Migrate to a **skill** when:
 ## Authoring order
 
 1. Write tool-neutral `COMMAND.md` first — steps, output format, guardrails
-2. Add wrappers only for real per-tool differences (tool restrictions, agent mode, argument hints)
-3. Validate bootstrap, install, reload, and test `/command-name` in each IDE
+2. Validate bootstrap, install as a command-skill, reload, and test `/command-name`
 
 ## Structure checklist
 
@@ -43,9 +42,13 @@ Optional sections:
 
 | Tool | Syntax | Notes |
 | --- | --- | --- |
-| Claude Code | `$ARGUMENTS`, `$0`, `$1` | Set `argument-hint` in Claude wrapper frontmatter |
-| GitHub Copilot | `${input:name}`, `${input:name:placeholder}` | Set `argument-hint` in GitHub wrapper frontmatter |
+| Claude Code | `$ARGUMENTS`, `$0`, `$1` | Set `allowed-tools` in bootstrap `COMMAND.md` frontmatter; it transfers to the installed command-skill |
+| GitHub Copilot | `${input:name}`, `${input:name:placeholder}` | Document expected inputs in the body |
 | Cursor | User text after `/command` in chat | Document expected trailing input in the body |
+
+## Command-skill frontmatter
+
+Bootstrap `COMMAND.md` accepts `name`, `description`, and optional `allowed-tools`. Descriptions must be ≤120 chars and invocation-gated (state that the user explicitly invokes `/<name>`). Install adds `disable-model-invocation: true` — the model never self-invokes a command.
 
 ## Keep commands focused
 
@@ -54,9 +57,9 @@ Optional sections:
 - Prefer short, imperative steps over long prose
 - State success criteria when output quality matters
 
-## Tool neutrality in shared body
+## Tool neutrality in the body
 
-Keep the shared `COMMAND.md` body free of tool-specific UI names ("Cursor window", "Claude Code session", "VS Code"). Put reload notes and tool keys in wrappers or in command-creator install output messages.
+Keep the `COMMAND.md` body free of host-specific UI names ("Cursor window", "Claude Code session", "VS Code") — the validator rejects them in both bootstrap and installed bodies. Put host-specific behavior notes in the `## Tool notes` section of the command-creator skill, and reload instructions in install output messages.
 
 ## Review criteria
 
@@ -65,10 +68,8 @@ Before marking a command done:
 1. **Correctness** — steps match the intended workflow
 2. **Completeness** — output format and guardrails are explicit
 3. **Efficiency** — no duplicated rules already covered by repo skills or rules
-4. **Portability** — bootstrap validates; install produces all four paths
+4. **Portability** — bootstrap validates; install produces the command-skill
 
 See also:
 
-- [cursor-command-best-practices.md](cursor-command-best-practices.md)
-- [claude-command-best-practices.md](claude-command-best-practices.md)
-- [copilot-prompt-best-practices.md](copilot-prompt-best-practices.md)
+- [portable-command-layout.md](portable-command-layout.md)

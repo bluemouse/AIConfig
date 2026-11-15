@@ -1,6 +1,6 @@
 ---
 name: dev-workflow
-description: Run the full development workflow — clarify → research → plan → implement → code-review → commit — on a requirement or feature, with bounded loops, backward edges, and validation. Loads the dev-workflow-orchestrator skill.
+description: Run the full dev-workflow pipeline when the user explicitly invokes /dev-workflow.
 ---
 
 # Dev Workflow
@@ -13,7 +13,7 @@ edges for upstream root causes, artifact contracts, and mode enforcement.
 ## Steps
 
 1. Read and follow the **dev-workflow-orchestrator** skill
-   (`.ai/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill). Treat
+   (`.agents/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill). Treat
    `/dev-workflow` as the explicit start signal — proceed to orchestrate the workflow
    without asking for a second confirmation.
 
@@ -23,10 +23,10 @@ edges for upstream root causes, artifact contracts, and mode enforcement.
 
 3. Follow the orchestrator skill's **Starting a run** procedure:
    - Create a feature slug.
-   - Create `.ai/workflow/<slug>/`.
+   - Create `.agents/workflow/<slug>/`.
    - Write `00-run-manifest.md` and `01-feature-brief.md`.
    - Activate clarify mode.
-   - Record the baseline: `python .ai/tools/dev-workflow/record_baseline.py --phase clarify --run-dir .ai/workflow/<slug>` (captures git HEAD and dirty paths so mode-enforcement checks can distinguish pre-existing changes from changes made during the phase).
+   - Record the baseline: `python .agents/tools/dev-workflow/record_baseline.py --phase clarify --run-dir .agents/workflow/<slug>` (captures git HEAD and dirty paths so mode-enforcement checks can distinguish pre-existing changes from changes made during the phase).
    - Run the pre-flight check.
    - Start Phase 0 (Clarify loop).
 

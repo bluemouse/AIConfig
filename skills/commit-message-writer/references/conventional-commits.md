@@ -78,7 +78,7 @@ evidence, migration steps). Reference ticket ids in the verbose body when provid
 (e.g. `Refs PROJ-456`).
 
 **Restate planning context, never cite it.** Plan, research, and review documents
-are temporary by design — the `.ai/` planning directories are gitignored, and even a
+are temporary by design — the `.agents/` planning directories are gitignored, and even a
 committed planning artifact is state for the run that produced it. Fold their intent
 into the body as behavior, decisions, and root causes. Do not write "implements task 4",
 "per the plan", "20-implementation-plan.md", "finding cr-003", or any

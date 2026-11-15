@@ -1,46 +1,49 @@
 # Portable Command Layout
 
-Use this guide when creating or reviewing slash commands and Copilot prompts that should work across Cursor, Claude Code, and GitHub Copilot.
+Use this guide when creating or reviewing portable slash commands that should work across Cursor, Claude Code, and GitHub Copilot.
 
 ## Two-phase workflow
 
 Portable commands use **two phases**:
 
-1. **Bootstrap** — Author tool-neutral content under `commands/<name>/` (plus optional custom wrappers). This is the source of truth when bootstrap exists.
-2. **Install** — Run `install_portable_command.py` to copy `COMMAND.md` to `.ai/commands/<name>.md` and install tool outputs under `.cursor/`, `.claude/`, and `.github/`.
+1. **Bootstrap** — Author tool-neutral content under `commands/<name>/`. This is the source of truth when bootstrap exists.
+2. **Install** — Run `install_portable_command.py` to write the command-skill at `.agents/skills/<name>/SKILL.md` with `disable-model-invocation: true`.
 
-Do not hand-edit `.ai/commands/` or tool command folders for bootstrapped commands — edit bootstrap and reinstall.
+Do not hand-edit installed command-skills for bootstrapped commands — edit bootstrap and reinstall.
 
 For one-off commands without bootstrap source, use `create_command.py` to scaffold directly into the installed layout (direct path).
+
+## Command-skills
+
+A command installs as a single **command-skill**: `.agents/skills/<name>/SKILL.md` with frontmatter
+
+```yaml
+name: <name>
+description: <≤120 chars, invocation-gated — "Use only when the user explicitly invokes /<name> ...">
+disable-model-invocation: true
+```
+
+plus the command body. Every coding agent exposes it as `/<name>`; the model never self-invokes it. Commands and skills share the `.agents/skills/` namespace — a command name colliding with an existing skill is rejected.
 
 ## Commands vs skills vs agents
 
 | | Skills | Agents | Commands |
 | --- | --- | --- | --- |
 | Discovery | Passive (description triggers load) | Passive (description triggers load) | Explicit (`/command-name`) |
-| Shared install output | `.ai/skills/<name>/` directory | `.ai/agents/<name>.md` | `.ai/commands/<name>.md` |
-| Tool outputs | Thin pointer wrappers | Thin pointer wrappers | Format-transformed prompts |
-| Install coverage | Always all three tools | Only wrappers present under `wrappers/` | Always all three tools |
+| Install output | `.agents/skills/<name>/` directory | `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md` | `.agents/skills/<name>/SKILL.md` (flagged) |
+| Model self-invocation | Allowed | Allowed | Blocked (`disable-model-invocation: true`) |
 | Bootstrap file | `SKILL.md` | `AGENT.md` | `COMMAND.md` |
 
 ## Directory structure
 
-**Installed layout:**
+**Installed layout (command-skill):**
 
 ```text
 repo/
-  .ai/
-    commands/
-      code-review.md
-  .cursor/
-    commands/
-      code-review.md
-  .claude/
-    commands/
-      code-review.md
-  .github/
-    prompts/
-      code-review.prompt.md
+  .agents/
+    skills/
+      code-review/
+        SKILL.md
 ```
 
 **Bootstrap layout** (when the command ships bootstrap source):
@@ -50,27 +53,16 @@ repo/
   commands/
     code-review/
       COMMAND.md
-      wrappers/
-        cursor/
-          COMMAND.md
-        claude/
-          COMMAND.md
-        github/
-          COMMAND.md
 ```
 
-`.ai/commands/<name>.md` is the tool-neutral install output with frontmatter (`name`, `description`). Install transforms that content into tool-specific formats:
-
-- **Cursor** — body only (frontmatter stripped)
-- **Claude Code** — frontmatter + body; optional wrapper overrides for `allowed-tools`, `model`, `argument-hint`, etc.
-- **GitHub Copilot** — `.prompt.md` with frontmatter + body; optional wrapper overrides for `agent`, `model`, `tools`, etc.
+`.agents/skills/<name>/SKILL.md` is the install output. Install builds the command-skill frontmatter from the bootstrap `COMMAND.md` and copies the body verbatim; `allowed-tools`, when declared in bootstrap frontmatter, transfers verbatim.
 
 ## Shared command template
 
 ```markdown
 ---
 name: code-review
-description: Review staged changes and return a findings-first report with severity labels.
+description: Review staged changes when the user explicitly invokes /code-review. Returns a findings-first report.
 ---
 
 # Code Review
@@ -92,17 +84,13 @@ Findings-first markdown report. Use `Critical`, `Warning`, and `Note` labels.
 - Commit, push, or rewrite history unless explicitly asked.
 ```
 
-## Wrapper rules
+## Validation rules
 
-Add wrappers only when a tool needs different behavior:
-
-| Wrapper | Format | Purpose |
-| --- | --- | --- |
-| `wrappers/cursor/COMMAND.md` | Plain Markdown, **no frontmatter** | Append Cursor-only instructions |
-| `wrappers/claude/COMMAND.md` | YAML frontmatter + body | Override Claude keys; append Claude-only instructions |
-| `wrappers/github/COMMAND.md` | YAML frontmatter + body | Override Copilot keys; append Copilot-only instructions |
-
-Install merges wrapper frontmatter over shared defaults. `name` and `description` always sync from bootstrap `COMMAND.md`.
+- `name` — kebab-case, ≤64 chars, matches the bootstrap directory name
+- `description` — ≤120 chars and invocation-gated (states the user explicitly invokes the command)
+- Body — tool-neutral: no host names or host UI mechanics
+- Bootstrap frontmatter keys: `name`, `description`, optional `allowed-tools`
+- Installed command-skill frontmatter keys: `name`, `description`, `disable-model-invocation` (always `true`), optional `allowed-tools`
 
 ## Install commands
 
@@ -124,7 +112,7 @@ Direct scaffold (no bootstrap):
 python skills/command-creator/scripts/create_command.py \
   --root . \
   --name <command-name> \
-  --description "Short description for tool UIs." \
+  --description "Short invocation-gated description." \
   --body-file /path/to/body.md \
   --overwrite
 ```
@@ -134,20 +122,13 @@ python skills/command-creator/scripts/create_command.py \
 ```bash
 python skills/command-creator/scripts/quick_validate.py --bootstrap-source commands/<command-name>
 python skills/command-creator/scripts/quick_validate.py --root . --name <command-name>
-python skills/command-creator/scripts/quick_validate.py .ai/commands/<command-name>.md
-python skills/command-creator/scripts/quick_validate.py .cursor/commands/<command-name>.md
-python skills/command-creator/scripts/quick_validate.py .claude/commands/<command-name>.md
-python skills/command-creator/scripts/quick_validate.py .github/prompts/<command-name>.prompt.md
+python skills/command-creator/scripts/quick_validate.py .agents/skills/<command-name>/SKILL.md
 ```
 
 ## Reload requirements
 
-After install, tell the user to reload each tool:
-
-- **Cursor** — reload window
-- **Claude Code** — restart or reload session
-- **VS Code + Copilot** — reload window
+After install, tell the user to restart or reload the coding agent session so `/<command-name>` is rediscovered.
 
 ## Migration to skills
 
-When a command grows into passive discovery, bundled scripts, or large reference material, migrate to a portable skill under `skills/<name>/` using skill-creator instead of extending the command further.
+When a command grows into passive discovery, bundled scripts, or large reference material, migrate to a portable skill under `skills/<name>/` using skill-creator instead of extending the command further (drop `disable-model-invocation` so the model can discover it).

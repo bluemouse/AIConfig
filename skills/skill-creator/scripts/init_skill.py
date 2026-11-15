@@ -6,8 +6,8 @@ Usage:
     init_skill.py <skill-name> --path <path> [--overwrite]
 
 Examples:
-    init_skill.py my-new-skill --path .cursor/skills
-    init_skill.py my-api-helper --path ~/.cursor/skills
+    init_skill.py my-new-skill --path .agents/skills
+    init_skill.py my-api-helper --path ~/skills
 """
 
 import sys
@@ -22,14 +22,19 @@ def main() -> int:
 
     if len(argv) < 4 or argv[2] != "--path":
         print("Usage: init_skill.py <skill-name> --path <path> [--overwrite]")
+        print("\n<path> must be a skills root (a directory named 'skills'),")
+        print("with the skill created directly inside it — e.g.")
+        print(".agents/skills/ or a bootstrap skills/ directory. Category")
+        print("subfolders (skills/<category>/<name>) are rejected by the")
+        print("validator's flat-root check.")
         print("\nSkill name requirements:")
         print("  - Hyphen-case identifier (e.g., 'data-analyzer')")
         print("  - Lowercase letters, digits, and hyphens only")
         print("  - Max 64 characters")
         print("  - Must match directory name exactly")
         print("\nExamples:")
-        print("  init_skill.py my-new-skill --path .cursor/skills")
-        print("  init_skill.py my-api-helper --path ~/.cursor/skills")
+        print("  init_skill.py my-new-skill --path .agents/skills")
+        print("  init_skill.py my-api-helper --path ~/skills")
         print("\nFor portable shared-first skills in a repository, use create_skill.py instead.")
         sys.exit(1)
 

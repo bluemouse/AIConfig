@@ -60,6 +60,6 @@ task. Omit sections that are not relevant — do not fill them with placeholders
 
 > **Source of truth.** The dev-workflow harness's canonical template lives at
 > `skills/dev-workflow-orchestrator/references/requirement-ledger-template.md`
-> (installed as `.ai/skills/dev-workflow-orchestrator/references/requirement-ledger-template.md`).
+> (installed as `.agents/skills/dev-workflow-orchestrator/references/requirement-ledger-template.md`).
 > This file mirrors it so prompt-clarifier is self-contained when installed
 > without the orchestrator. Keep the two in sync when the schema changes.

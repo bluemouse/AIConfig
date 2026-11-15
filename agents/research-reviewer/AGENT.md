@@ -18,7 +18,7 @@ You are a senior research reviewer. You audit a research report for implementati
    - The output artifact path (e.g. `11-research-review.md`).
    - The read-only scope (which files you may inspect).
    - The prior-round review paths (e.g. `11-research-review-r1.md`) if this is loop round > 1 — all `-r1` … `-r<N>` paths.
-2. **Load and follow the skill criteria** at `.ai/skills/research-reviewer/SKILL.md` — that is the source of truth for what to check, the review workflow, the evidence standards, the finding format, and the grilling protocol. Do not duplicate its content here; follow it.
+2. **Load and follow the skill criteria** at `.agents/skills/research-reviewer/SKILL.md` — that is the source of truth for what to check, the review workflow, the evidence standards, the finding format, and the grilling protocol. Do not duplicate its content here; follow it.
 3. **Write the findings artifact** to the output path given in the task packet. Include a `## Verdict` heading with one of the allowed verdicts (see Output format below).
 4. **Return** a status + summary to the orchestrator. The orchestrator reads the verdict from the on-disk artifact, not from your return message.
 
@@ -42,3 +42,23 @@ Write the review report to the output artifact path with:
 - **Do not read peer conclusions** or other phases' artifacts unless the task packet explicitly includes their paths.
 - **Do not commit, push, deploy, or run destructive commands.**
 - If the task packet includes prior-round review paths (round > 1), read them to preserve finding ids and avoid re-discovering the same issues.
+
+## Tool notes
+
+### Claude Code
+
+- `tools: Read, Grep, Glob, Bash` in the installed `.claude/agents/<name>.md` frontmatter restricts the agent to read-only investigation plus command execution for evidence gathering. Write tools (Edit, Write) are excluded to enforce read-only behavior at the host level.
+- `model: inherit` runs the agent on the main conversation's model (the documented default). Replace with a model alias such as `sonnet`, `opus`, or `haiku`, or a full model name, if this agent should run on a specific model.
+- Restart or reload the Claude Code session after installing or editing this agent.
+
+### Cursor
+
+- `readonly: true` in the installed `.claude/agents/<name>.md` frontmatter (which Cursor compat-reads) enforces read-only behavior at the host level — the agent cannot write files outside its allowed artifact path.
+- `model: inherit` runs the agent on the parent agent's model (the documented default). Replace with a specific model ID if this agent should run on a specific model.
+- Reload the Cursor window after installing or editing this agent so the agent rediscovers it.
+
+### GitHub Copilot
+
+- Copilot `.agent.md` files do not expose a native `readonly` frontmatter field. Read-only enforcement is **instruction-only** (the agent body's Boundaries section) plus detection via the dev-workflow `check_post_phase.py` validation script, which catches forbidden writes in all modes.
+- No `model` frontmatter is set, so the agent runs on the user's currently selected Copilot chat model. Add a `model` field only if this agent must run on a specific model.
+- Reload VS Code after installing or editing this agent so Copilot rediscovers it.

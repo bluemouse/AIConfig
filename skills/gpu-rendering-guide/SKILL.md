@@ -119,7 +119,7 @@ Conceptual parallels only — not engine API how-tos.
 
 ## Companion Skills
 
-Paths below assume `<SKILL_ROOT>` is the directory containing this skill's `SKILL.md` (bootstrap: `skills/gpu-rendering-guide/`; installed: `.ai/skills/gpu-rendering-guide/`).
+Paths below assume `<SKILL_ROOT>` is the directory containing this skill's `SKILL.md` (bootstrap: `skills/gpu-rendering-guide/`; installed: `.agents/skills/gpu-rendering-guide/`).
 
 | Task | Path |
 |------|------|
@@ -131,4 +131,12 @@ Paths below assume `<SKILL_ROOT>` is the directory containing this skill's `SKIL
 | GLSL language, layouts, SPIR-V bindings | [../glsl-coding/SKILL.md](../glsl-coding/SKILL.md) |
 | GLSL shader effects and techniques | [../shader-guide/SKILL.md](../shader-guide/SKILL.md) |
 
-When a companion is installed to `.ai/skills/<name>/`, read that copy and resolve `<SKILL_ROOT>` from its directory.
+When a companion is installed to `.agents/skills/<name>/`, read that copy and resolve `<SKILL_ROOT>` from its directory.
+
+## Tool notes
+
+Tool-specific mechanics are minimal for this skill — the body and references are host-neutral. Per-host differences from the former wrapper layer, retained for reference:
+
+- After installing or editing the skill, reload the coding agent (restart or reload the Claude Code session; reload the Cursor window; reload VS Code for Copilot) so the skill is rediscovered.
+
+Companion skills: [cpp-memory-guide](../cpp-memory-guide/SKILL.md) for C++ CPU allocators (arenas, pools, ownership, PMR); [vulkan-dev](../vulkan-dev/SKILL.md) for the concrete Vulkan API; [glsl-coding](../glsl-coding/SKILL.md) and [shader-guide](../shader-guide/SKILL.md) for GLSL language and shader effects when installed.

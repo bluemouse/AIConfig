@@ -1,6 +1,6 @@
 # Claude Code Command Best Practices
 
-Reference for `.claude/commands/<name>.md` slash commands.
+Reference for Claude Code slash commands — host-format background. command-creator installs commands as command-skills at `.agents/skills/<name>/SKILL.md` (with `disable-model-invocation: true` and optional `allowed-tools` frontmatter), which Claude Code invokes as `/<name>`; the native `.claude/commands/` format below is reference for hand-authored commands.
 
 **Official docs:** [Slash Commands](https://code.claude.com/docs/en/slash-commands)
 
@@ -24,7 +24,7 @@ Reference for `.claude/commands/<name>.md` slash commands.
 | `disable-model-invocation` | User-only invocation when `true` |
 | `context` | Run in isolated subagent when set to `fork` |
 
-Put tool-specific keys in `wrappers/claude/COMMAND.md` — install merges them over shared defaults.
+Command-skills carry their frontmatter (`name`, `description`, `disable-model-invocation`, optional `allowed-tools`) directly — there is no wrapper-merge step.
 
 ## Arguments
 
@@ -45,11 +45,9 @@ allowed-tools: Read, Grep
 Review the file at $ARGUMENTS for correctness and style issues.
 ```
 
-## Skills vs legacy commands
+## Commands vs skills
 
-Claude Code also supports `.claude/skills/<name>/SKILL.md` with the same slash invocation plus passive discovery. Use **commands** for explicit shortcuts; migrate to **skills** when the workflow needs autonomous triggering or bundled resources.
-
-If both a skill and command share a name, the skill takes precedence.
+Claude Code discovers skills through the `.claude/skills` bridge to `.agents/skills/`; a command-skill is the same file with `disable-model-invocation: true`, so it is slash-invoked only. Use **commands** for explicit shortcuts; drop the flag to migrate to a **skill** with passive discovery. Commands and skills share the `.agents/skills/` namespace — a name collision is rejected at install.
 
 ## Reload
 

@@ -31,14 +31,14 @@ Delegate one independent problem domain per subagent. Give every subagent only t
 
 ## Required behavior
 
-- Use the host's native subagent or task-dispatch primitive (see your **tool wrapper** after reading this shared skill).
+- Use the host's native subagent or task-dispatch primitive (see `## Tool notes` after reading this skill body).
 - Launch all independent subagent calls together in the same tool batch or turn. Never launch one, wait, and then launch the next.
 - Give each subagent an isolated, self-contained task packet. Do not assume it inherits the parent conversation.
 - Assign disjoint writable scopes. Prefer read-only investigation when scopes overlap.
 - Keep cross-cutting decisions, conflict resolution, final edits, and full verification in the parent agent.
 - Do not claim parallel execution when the host exposes no concurrent subagent capability. State that the required execution mode is unavailable instead of silently running sequentially.
 
-Read your **tool wrapper** for host-native dispatch mechanics. Read [references/task-packet.md](references/task-packet.md) when constructing prompts. Read [references/platform-adapters.md](references/platform-adapters.md) for the common contract and capability detection.
+Read `## Tool notes` for host-native dispatch mechanics. Read [references/task-packet.md](references/task-packet.md) when constructing prompts. Read [references/platform-adapters.md](references/platform-adapters.md) for the common contract and capability detection.
 
 ## Workflow
 
@@ -181,3 +181,52 @@ Do not dispatch a packet such as "fix all tests." Do not omit errors, constraint
 | Git worktrees, commit, push, rebase | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
 | Skill eval loops and description optimization | [../skill-creator/SKILL.md](../skill-creator/SKILL.md) |
 | Dev-workflow orchestration | [../dev-workflow-orchestrator/SKILL.md](../dev-workflow-orchestrator/SKILL.md) |
+
+## Tool notes
+
+### Claude Code
+
+Use Claude Code's native subagent/task facility:
+
+1. Partition work and build complete task packets per the body and [references/task-packet.md](references/task-packet.md).
+2. Put multiple independent agent invocations in the **same assistant turn** or concurrent tool batch — never launch one, wait, and then launch the next.
+3. When agents will write, prefer separate worktrees or explicitly disjoint path ownership.
+4. Pass a complete prompt to each invocation; do not rely on inherited chat history.
+5. When subagent completion notifications include `total_tokens` and `duration_ms`, note them if comparing efficiency across dispatch runs.
+
+On Claude.ai (no Claude Code CLI), no parallel subagents are available — report that concurrent isolated dispatch is unavailable and run work sequentially in the parent session.
+
+### Cursor
+
+Use Cursor's **Task tool** for concurrent isolated dispatch:
+
+1. Partition work and build complete task packets per the body and [references/task-packet.md](references/task-packet.md).
+2. In a **single message**, issue one Task call per independent workstream — multiple tool calls in one turn, not sequential calls.
+3. Use `subagent_type: "generalPurpose"` unless a narrower type clearly fits the packet.
+4. Paste the full task packet into each Task `prompt`; subagents do not inherit parent chat history.
+5. Set `run_in_background: true` when the host allows it and you need to continue coordinating while subagents run.
+6. **Always await every Task in the wave** before starting §6 Integrate — never integrate while any subagent may still be writing.
+7. Use isolated worktrees or sandboxes when offered; otherwise enforce disjoint write sets per packet.
+8. If the current Cursor mode exposes only one foreground agent and no concurrent Task primitive, report that concurrent isolated dispatch is unavailable — do not claim compliance or silently run sequentially.
+
+Append to each packet:
+
+```
+You are an isolated subagent. You do not inherit the parent conversation.
+
+Use Read/Grep/Shell as needed within your assigned scope before changing anything.
+
+Return exactly the structured status block from your task packet: Status, Findings,
+Changes, Verification, and Risks.
+```
+
+### GitHub Copilot
+
+Use the available Copilot coding-agent, custom-agent, or agent-session facility when it supports multiple simultaneous sessions:
+
+1. Partition work and build complete task packets per the body and [references/task-packet.md](references/task-packet.md).
+2. Assign separate issues, task sessions, branches, or workspaces when agents write.
+3. Start all independent sessions before awaiting results.
+4. In IDE modes that expose a subagent tool, invoke all independent calls in one batch.
+
+If the active Copilot surface supports only a single agent session, report that concurrent isolated dispatch is unavailable; do not emulate parallelism with sequential prompts. For read-only investigation, packets may run sequentially in one session while still following the shared integration and verification rules.

@@ -249,8 +249,8 @@ for each candidate finding, drop anything not actually evidenced by it, and dedu
 findings that surfaced under more than one scope. Cap at **10** findings.
 
 **`deep`** — Full rigor, using parallel scope passes when your environment supports them.
-See **Deep Effort: Parallel Scope Passes** below and your tool wrapper for dispatch
-mechanics. Four stages: per-scope passes → cross-scope dedup → adversarial verify pass →
+See **Deep Effort: Parallel Scope Passes** below and the `## Tool notes` section for
+dispatch mechanics. Four stages: per-scope passes → cross-scope dedup → adversarial verify pass →
 final "sweep for gaps" pass. Cap at **15–20** findings.
 
 If effort is unspecified, default to `standard`.
@@ -331,8 +331,8 @@ faster) to run in parallel.
 
 **Dispatch**: run one independent pass per *selected* scope. When your environment
 supports parallel subagents or background agents, launch all scope passes in a single turn;
-otherwise run them sequentially but keep notes separate per scope. Read your **tool
-wrapper** for environment-specific dispatch mechanics (Task tool, Claude subagents,
+otherwise run them sequentially but keep notes separate per scope. The `## Tool notes`
+section covers environment-specific dispatch mechanics (Task tool, Claude subagents,
 sequential Copilot passes, etc.).
 
 **Scope-pass prompt template** — paste real content, not a pointer; parallel passes do
@@ -396,9 +396,9 @@ Do not duplicate the template body here — read it before assembling the report
 
 ### Artifact output path
 
-When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path) and the user wants the review report saved as a file, write it to `.ai/plans/<feature-or-topic-slug>-code-review.md`. The `.ai/plans/` directory is gitignored. Do not write review artifacts to the repository root — it pollutes the working tree and risks accidental commits.
+When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path) and the user wants the review report saved as a file, write it to `.agents/plans/<feature-or-topic-slug>-code-review.md`. The `.agents/plans/` directory is gitignored. Do not write review artifacts to the repository root — it pollutes the working tree and risks accidental commits.
 
-When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.ai/workflow/<slug>/40-code-review.md`); use that path instead. When the user has not asked for a file, return the report in chat without writing a file.
+When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.agents/workflow/<slug>/40-code-review.md`); use that path instead. When the user has not asked for a file, return the report in chat without writing a file.
 
 ## Routing Findings Back
 
@@ -506,3 +506,56 @@ in-chat report.
 `<SKILL_ROOT>/references/scope-checklists.md` has the full bullet list per scope — read it
 before running any scope's pass, and required verbatim in parallel pass prompts at `deep`
 effort.
+
+## Tool notes
+
+### Claude Code
+
+At `deep` effort, use **Deep Effort: Parallel Scope Passes** with Claude Code **subagents**:
+
+1. Run Scope & Intent Alignment yourself (inline) before dispatching.
+2. In a **single turn**, spawn one subagent per *selected* scope, all in parallel when possible.
+3. Each subagent prompt must include the full resolved diff (or exact git commands to reproduce it), the intent summary, and checklist bullets copied verbatim from `references/scope-checklists.md` (plus matching Conditional Extensions).
+4. Instruct each subagent to read surrounding code with its available tools before flagging anything, and to return up to 6 candidates in the shared markdown format.
+5. When subagent completion notifications include `total_tokens` and `duration_ms`, note them if comparing efficiency across review runs.
+6. Collect all subagent replies, then run cross-scope dedup, verify pass, and gap sweep yourself.
+
+On Claude.ai (no Claude Code CLI), no parallel subagents are available — at `deep` effort, run scope passes sequentially yourself, keeping notes separate per scope, then dedup, verify, and gap-sweep.
+
+### Cursor
+
+At `deep` effort, use **Deep Effort: Parallel Scope Passes** with Cursor's **Task tool**:
+
+1. Run Scope & Intent Alignment yourself (inline) before dispatching.
+2. In a **single message**, issue one Task call per *selected* scope, all in parallel.
+3. Use `subagent_type: "generalPurpose"` — it has Read/Grep/Shell access to inspect surrounding code.
+4. Paste the shared scope-pass prompt template with real diff content and the checklist bullets copied verbatim from `references/scope-checklists.md`.
+5. Collect each subagent's **final text reply** (you do not receive its tool calls).
+6. Run cross-scope dedup, verify pass, and gap sweep yourself.
+
+Append to each scope pass prompt:
+
+```
+Use Read/Grep/Shell as needed to inspect call sites, related tests, and existing patterns
+before flagging anything.
+
+If a ReportFindings tool is available in your environment, you may call it once at the end
+with raw candidates (file, line, summary, failure_scenario, category: "<scope>") — but
+your final reply text must still restate each candidate with Severity, Location, What's
+wrong, Why it matters, and Proposed fix, because the orchestrator only receives your final
+text message.
+```
+
+### GitHub Copilot
+
+Copilot Chat does not expose parallel subagents — at `deep` effort, follow the **Deep Effort: Parallel Scope Passes** intent but run scope passes **sequentially** in one session:
+
+1. Run Scope & Intent Alignment first (inline).
+2. For each selected scope, read `references/scope-checklists.md` for that section (and matching Conditional Extensions), apply the *how to look* heuristic, and keep notes separate per scope.
+3. After all scopes, run cross-scope dedup, verify pass, and gap sweep yourself.
+
+Do not skip the verify or gap-sweep stages just because passes were sequential — they are what separate `deep` from `standard`.
+
+### Cursor (GitHub posting convenience)
+
+On Cursor you may also suggest the built-in `/code-review --comment` for a quick native post — but prefer `github-guide` when the user needs `REQUEST_CHANGES`, multi-comment batching, or thread resolution via `gh api`.

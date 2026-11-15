@@ -202,3 +202,42 @@ If any gate fails, repair the deliberation before presenting the result.
 - Do not produce false consensus. Label unresolved disagreement precisely.
 - Do not continue debating after new rounds stop producing material information.
 - Do not delegate final accountability to the council. The synthesis must make a clear recommendation or explain the exact decision gate preventing one.
+
+## Tool notes
+
+### Claude Code
+
+Use subagents only when the decision is large enough to benefit from independent work:
+
+1. Run the charter, evidence ledger, role selection, and depth choice yourself first.
+2. In a single turn, spawn one subagent per selected Round 1 council member when parallel independence matters.
+3. Give every subagent the same charter and evidence ledger, plus only its own role brief. Do not include peer conclusions in Round 1.
+4. Ask each subagent to return the shared Round 1 fields: position, evidence, assumptions, self-critique, expected failure mode, mind-changing evidence, and confidence. When subagent completion notifications include `total_tokens` and `duration_ms`, note them only if comparing council efficiency across runs.
+5. Collect final replies, normalize claims, then run cross-examination and synthesis yourself. Dispatch a second round only for rigorous or high-stakes councils.
+
+On Claude.ai (no Claude Code CLI), no parallel subagents are available — use simulated council mode, label it honestly, write all independent Round 1 positions before cross-examination, and keep the final decision proportional to the prompt.
+
+### Cursor
+
+Use Cursor subagents only when the decision is large enough to benefit from independent work:
+
+1. Run the charter, evidence ledger, role selection, and depth choice yourself first.
+2. In a single message, launch one subagent per selected Round 1 council member when parallel independence matters.
+3. Use `subagent_type: "generalPurpose"` for broad analysis, or `explore` for repository discovery roles when the role is read-only and codebase-focused.
+4. Give every subagent the same charter and evidence ledger, plus only its own role brief. Do not include peer conclusions in Round 1.
+5. Ask each subagent to return the shared Round 1 fields: position, evidence, assumptions, self-critique, expected failure mode, mind-changing evidence, and confidence.
+6. Collect final replies, normalize claims, then run cross-examination and synthesis yourself. Dispatch a second round only for rigorous or high-stakes councils.
+
+If the decision is lean or subagents are unavailable, use simulated council mode and explicitly label it. Use `AskQuestion` only for a small number of blocking user decisions, such as criteria weights or whether a value trade-off is acceptable — do not ask for facts discoverable from the workspace or supplied context. When the council depends on current external facts and web or MCP tools are available, gather those facts before treating a claim as evidence, and cite the source in the evidence ledger.
+
+### GitHub Copilot
+
+Copilot Chat usually has no parallel subagent API, so preserve independence through disciplined sequential or simulated rounds:
+
+1. State that the council is simulated unless a real independent worker mechanism is available.
+2. Write all Round 1 positions before writing any cross-examination.
+3. Keep notes claim-indexed so later concessions and refinements are visible.
+4. Run cross-examination and convergence in the same chat, applying the shared quality gates.
+5. Use concise output for low-stakes decisions; avoid dumping raw debate when the user needs the recommendation.
+
+If Copilot is running as a non-interactive coding agent, do not wait for user answers unless the missing decision is unsafe to assume. Record assumptions and decision gates in the final report or pull request text.

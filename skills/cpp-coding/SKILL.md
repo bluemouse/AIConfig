@@ -160,3 +160,11 @@ workflow step 4 applied.
 - [cpp-performance-guide](../cpp-performance-guide/SKILL.md) — Measured C++ performance work when there is no correctness defect (companion skill)
 
 External reference: [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
+
+## Tool notes
+
+Tool-specific mechanics are minimal for this skill — the body and references are host-neutral. Per-host differences from the former wrapper layer, retained for reference:
+
+- After installing or editing the skill, reload the coding agent (restart or reload the Claude Code session; reload the Cursor window; reload VS Code for Copilot) so the skill is rediscovered.
+
+For C++ test work (GoogleTest, CMake/CTest, coverage, sanitizers), use the companion skill [cpp-testing](../cpp-testing/SKILL.md) instead of the brief testing notes in [references/code-quality.md](references/code-quality.md).

@@ -127,12 +127,12 @@ than committed as part of the change:
 | --- | --- |
 | Plan documents | `20-implementation-plan.md`, "the plan", "§10 Stage breakdown", "task 4", "as planned" |
 | Research / requirement docs | `10-research-report.md`, "the research report", "per the requirement ledger" |
-| Workflow artifacts | `00-run-manifest.md` … `50-commit.md`, `.ai/workflow/**`, `.ai/plans/**` |
+| Workflow artifacts | `00-run-manifest.md` … `50-commit.md`, `.agents/workflow/**`, `.agents/plans/**` |
 | Reviews and audits | `11-research-review.md`, `21-plan-review.md`, `31-*-audit.md`, `40-*-code-review.md`, `41-*-fix-report.md` |
 | Handoff packets | `back-<from>-<to>-<n>.md`, "the reviewer's handoff" |
 | Session-only context | "as discussed", "the notes in this session", "per the conversation" |
 
-These documents are **temporary by design**: the `.ai/` planning directories are gitignored,
+These documents are **temporary by design**: the `.agents/` planning directories are gitignored,
 and even a committed planning artifact is state for the run that produced it, not a
 reference a future reader can interpret. The rule is not "it is not in the repo" — a
 committed artifact is still a planning artifact, and a `<NN>-<artifact>.md` written outside
