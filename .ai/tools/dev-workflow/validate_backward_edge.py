@@ -5,7 +5,7 @@ Checks that the packet has all required fields, targets an earlier phase,
 respects the backward edge cap, and references a real finding id.
 
 Usage:
-    python .ai/tools/dev-workflow/validate_backward_edge.py --packet <path> [--run-dir <path>]
+    python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> [--run-dir <path>]
 
 Exit codes:
     0 — no errors (warnings may be present)
@@ -48,7 +48,7 @@ def main() -> int:
         "--run-dir",
         required=True,
         type=Path,
-        help="Path to the run directory (e.g., .ai/workflow/<slug>).",
+        help="Path to the run directory (e.g., .agents/workflow/<slug>).",
     )
     args = parser.parse_args()
 

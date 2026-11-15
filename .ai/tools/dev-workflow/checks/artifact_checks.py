@@ -107,6 +107,23 @@ def _is_staged_mode(run_dir: Path) -> bool:
     return False
 
 
+def allowed_prefixes_for_phase(run_dir: Path, phase: str, base_prefixes: set[str]) -> set[str]:
+    """Staged-mode exemption for a phase's allowed artifact prefixes.
+
+    In staged mode, the implement phase also produces the per-stage review
+    artifacts the staged iterator prescribes (40-stageN-*/41-stageN-* —
+    per-stage code reviews and fix reports), so its allowed prefix set gains
+    "40"/"41". Linear-mode implement keeps the base set unchanged. Callers
+    pass their own base prefix set (mode_checks' PHASE_ALLOWED_PREFIXES and
+    loop_checks' PHASE_ARTIFACT_PREFIXES are duplicates of one another, so
+    both consumption sites share this guard instead of redeclaring the dict).
+    """
+    allowed = set(base_prefixes)
+    if phase == "implement" and _is_staged_mode(run_dir):
+        allowed |= {"40", "41"}
+    return allowed
+
+
 def _resolve_artifact_path(
     run_dir: Path, filename: str, phase: str, staged_mode: bool
 ) -> Path | None:

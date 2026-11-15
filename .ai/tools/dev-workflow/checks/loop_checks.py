@@ -156,7 +156,9 @@ def check_loop_cap_respected(run_dir: Path, phase: str) -> list[Finding]:
     # Round artifacts are named with a -rN suffix. The highest suffix within the
     # current phase's prefix range is the number of iterations.
     rounds = 1
-    prefixes = PHASE_ARTIFACT_PREFIXES.get(phase, set())
+    prefixes = artifact_checks.allowed_prefixes_for_phase(
+        run_dir, phase, PHASE_ARTIFACT_PREFIXES.get(phase, set())
+    )
     for path in run_dir.iterdir():
         if not path.is_file() or not path.name.endswith(".md"):
             continue

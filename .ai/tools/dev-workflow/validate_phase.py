@@ -6,7 +6,7 @@ mode enforcement, handoff integrity) for the specified phase and reports
 findings with severity (error/warning).
 
 Usage:
-    python .ai/tools/dev-workflow/validate_phase.py --phase research --run-dir .ai/workflow/<slug>
+    python .agents/tools/dev-workflow/validate_phase.py --phase research --run-dir .agents/workflow/<slug>
 
 Exit codes:
     0 — no errors (warnings may be present)
@@ -58,7 +58,7 @@ def main() -> int:
         "--run-dir",
         required=True,
         type=Path,
-        help="Path to the run directory (e.g., .ai/workflow/<slug>).",
+        help="Path to the run directory (e.g., .agents/workflow/<slug>).",
     )
     parser.add_argument(
         "--repo-root",

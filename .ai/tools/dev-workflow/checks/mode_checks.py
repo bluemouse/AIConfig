@@ -162,7 +162,9 @@ def check_only_allowed_artifacts(run_dir: Path, phase: str) -> list[Finding]:
     snapshot are exempt; modified earlier artifacts are checked as phase writes.
     """
     findings: list[Finding] = []
-    allowed = PHASE_ALLOWED_PREFIXES.get(phase, set())
+    allowed = artifact_checks.allowed_prefixes_for_phase(
+        run_dir, phase, PHASE_ALLOWED_PREFIXES.get(phase, set())
+    )
     existing_files = _read_run_dir_snapshot(run_dir)
 
     for path in run_dir.iterdir():
@@ -276,9 +278,9 @@ def check_no_forbidden_source_edits(repo_root: Path, phase: str, run_dir: Path) 
         new_paths = current_paths
 
     for filepath in sorted(new_paths):
-        if filepath.startswith(".ai/workflow/"):
-            continue
-        if filepath.startswith(".ai/"):
+        # The whole .agents/ tree is exempt: workflow run state, plans, and
+        # researches live there alongside installed content.
+        if filepath.startswith(".agents/"):
             continue
         findings.append(Finding(
             severity="error",

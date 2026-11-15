@@ -11,7 +11,7 @@ These are written to `baseline.txt`, `phase-start-dirty-hashes.json`, and
 these to distinguish pre-existing changes from mutations made during the phase.
 
 Usage:
-    python .ai/tools/dev-workflow/record_baseline.py --phase research --run-dir .ai/workflow/<slug> [--repo-root <path>]
+    python .agents/tools/dev-workflow/record_baseline.py --phase research --run-dir .agents/workflow/<slug> [--repo-root <path>]
 
 Exit codes:
     0 — baseline recorded

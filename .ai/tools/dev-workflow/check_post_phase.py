@@ -7,7 +7,7 @@ Checks that:
 - The manifest is still valid after the phase step
 
 Usage:
-    python .ai/tools/dev-workflow/check_post_phase.py --phase research --run-dir .ai/workflow/<slug> [--repo-root <path>]
+    python .agents/tools/dev-workflow/check_post_phase.py --phase research --run-dir .agents/workflow/<slug> [--repo-root <path>]
 
 Exit codes:
     0 — post-flight checks passed

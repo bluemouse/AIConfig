@@ -5,7 +5,7 @@ Creates temporary run directories with various artifact configurations and
 verifies that the validation scripts produce the expected results.
 
 Usage:
-    python .ai/tools/dev-workflow/test_dry_run.py
+    python .agents/tools/dev-workflow/test_dry_run.py
 
 Exit codes:
     0 — all tests passed
@@ -31,7 +31,7 @@ def write_file(path: Path, content: str) -> None:
 def run_validator(script: str, args: list[str]) -> tuple[int, str]:
     """Run a validation script and return (exit_code, stdout)."""
     result = subprocess.run(
-        [sys.executable, f".ai/tools/dev-workflow/{script}", *args],
+        [sys.executable, str(Path(__file__).resolve().parent / script), *args],
         capture_output=True,
         text=True,
         timeout=30,
