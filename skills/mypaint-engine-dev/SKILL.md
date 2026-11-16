@@ -118,7 +118,8 @@ Preserve these unless the user explicitly wants a non-compatible engine:
 | Source navigation or verification against repositories | [source-map.md](references/source-map.md) |
 | Extended background when focused references are insufficient (~2800 lines) | [MyPaintProgrammingGuide.md](references/MyPaintProgrammingGuide.md) |
 
-When a task spans multiple areas, read **every matching row**.
+When a task spans multiple areas, read **every matching row**. Provenance and external
+references are tracked in [SOURCES.md](SOURCES.md) — read for attribution only.
 
 ## Source verification workflow
 
@@ -137,60 +138,3 @@ If a path or symbol is missing, search the checkout rather than guessing.
 Current upstream libmypaint uses the unified `mypaint_brush_stroke_to()` and `MyPaintSurface`
 callbacks documented in [source-map.md](references/source-map.md).
 
-## Output patterns
-
-For design reviews, use:
-
-```text
-Diagnosis
-- Likely layer/boundary:
-- Relevant source anchors:
-- Why this boundary owns the behavior:
-
-Implementation plan
-1. ...
-2. ...
-3. ...
-
-Parity and performance risks
-- ...
-
-Validation
-- Unit tests:
-- Determinism tests:
-- Visual/golden tests:
-```
-
-For implementing a new stroke renderer, use:
-
-```text
-Architecture
-- App/controller layer:
-- Brush core:
-- Surface backend:
-- Resource/preset model:
-- Display/GPU integration:
-
-Core data structures
-- BrushInfo/Preset:
-- BrushState:
-- MappingCurve:
-- DabOp:
-- Tile/LayerSurface:
-
-Stroke loop
-- input sanitize -> virtual cursor -> mapping eval -> dab scheduler -> draw callback -> dirty bbox
-
-Validation gates
-- preset parsing -> mapping math -> dab sequence -> pixel blend -> layer/UI integration -> performance
-```
-
-## Resources
-
-- [architecture.md](references/architecture.md) — application architecture and event path
-- [brush-engine.md](references/brush-engine.md) — libmypaint brush core and presets
-- [surface-layer-gpu.md](references/surface-layer-gpu.md) — tiles, compositing, GPU strategy
-- [performance-validation.md](references/performance-validation.md) — performance and parity testing
-- [source-map.md](references/source-map.md) — source reading order and verification
-- [MyPaintProgrammingGuide.md](references/MyPaintProgrammingGuide.md) — extended maintainer guide
-- [SOURCES.md](SOURCES.md) — provenance and external references (read for attribution only)

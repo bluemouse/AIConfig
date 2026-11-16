@@ -17,8 +17,7 @@
 
 ## Peer skill patterns (repository)
 
-- **Path:** `skills/minutes-writer/SKILL.md`, `skills/code-professor/SKILL.md`,
-  `skills/prompt-clarifier/SKILL.md`
+- **Path:** `skills/code-professor/SKILL.md`, `skills/prompt-clarifier/SKILL.md`
 - **Last reviewed:** 2026-08-15
 - **Used for:**
   - Primary directive and draft-only boundary → `SKILL.md`

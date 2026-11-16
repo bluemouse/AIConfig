@@ -38,55 +38,24 @@ API-agnostic architecture for a low-level GPU renderer. The concepts hold across
 - **You own GPU memory** - Sub-allocate from a few large blocks; never one allocation per resource, see [references/gpu-memory-strategy.md](references/gpu-memory-strategy.md)
 - **You own synchronization** - Nothing is implicit; barriers, queue waits, and fences are explicit, see [references/synchronization.md](references/synchronization.md)
 
-## Architecture
-
-- **Render graph** - Per-frame DAG that prunes dead passes, orders work, and aliases transient targets, see [references/render-graph.md](references/render-graph.md)
-- **Shader system** - Permutations vs ubershaders, pipeline keyed by shader+state, hot-reload, caching, see [references/shader-system.md](references/shader-system.md)
-- **Binding model** - Frequency-grouped bindings, bindless arrays, inline constants; precompile and cache PSOs, see [references/binding-model.md](references/binding-model.md)
-- **Command recording** - One recording context per thread per frame, multi-threaded record, see [references/command-recording-and-frames.md](references/command-recording-and-frames.md)
-- **Frames in flight** - Double/triple-buffer per-frame resource sets behind a fence so the CPU can't outrun the GPU, see [references/command-recording-and-frames.md](references/command-recording-and-frames.md)
-- **Sort keys** - A 64-bit key per command decouples GPU submission order from CPU record order; merge worker streams and sort before submit, see [references/command-recording-and-frames.md](references/command-recording-and-frames.md)
-- **Scene submission** - Cull visible geometry, sort draws by PSO/material, minimize state changes, see [references/scene-rendering-culling.md](references/scene-rendering-culling.md)
-- **GPU-driven rendering** - GPU cull + compact + indirect draw when CPU submission can't scale, see [references/gpu-driven-rendering.md](references/gpu-driven-rendering.md)
-- **Pipeline composition** - Core graph + pluggable extension passes at injection points, see [references/render-pipeline-composition.md](references/render-pipeline-composition.md)
-- **Async compute** - Schedule compute on a separate queue; model cross-queue edges in the graph with ownership transfer + queue waits, see [references/render-graph.md](references/render-graph.md), [references/synchronization.md](references/synchronization.md)
-- **Programmable vertex fetch** - Pull vertices from storage buffers behind a loader interface; skin in-shader from an indirected influence list, see [references/vertex-assembly-skinning.md](references/vertex-assembly-skinning.md)
-- **GPU-resident simulation** - GPU buffers + compute + indirect draw/dispatch; no CPU enumeration or readback, see [references/gpu-compute-simulation.md](references/gpu-compute-simulation.md)
-- **HDR output** - Linear scene pipeline, explicit final encode to swapchain color space, see [references/hdr-output.md](references/hdr-output.md)
-
-## Engine Pattern Map
+## Reference routing
 
 Conceptual parallels only — not engine API how-tos.
 
-| Engine pattern | Maps to |
-|----------------|---------|
-| Unreal RDG / Unity RenderGraph / Frostbite FrameGraph | [references/render-graph.md](references/render-graph.md) |
-| UE PSO precache / Unity shader variant stripping | [references/shader-system.md](references/shader-system.md), [references/binding-model.md](references/binding-model.md) |
-| UE bindless descriptor indexing | [references/binding-model.md](references/binding-model.md) |
-| Unity SRP Batcher (compatible CB layout batching) | [references/binding-model.md](references/binding-model.md), [references/scene-rendering-culling.md](references/scene-rendering-culling.md) |
-| UE mesh draw commands / sorted mesh passes | [references/scene-rendering-culling.md](references/scene-rendering-culling.md) |
-| id Tech clustered forward+ / many-light forward | [references/scene-rendering-culling.md](references/scene-rendering-culling.md), [references/binding-model.md](references/binding-model.md) |
-| Nanite / Unity BRG / GPU culling | [references/gpu-driven-rendering.md](references/gpu-driven-rendering.md) |
-| Unity RendererFeatures / UE render plugins | [references/render-pipeline-composition.md](references/render-pipeline-composition.md) |
-| UE timeline semaphores / RDG barrier automation | [references/synchronization.md](references/synchronization.md) |
-| Unity HDR Output / UE HDR display pipeline | [references/hdr-output.md](references/hdr-output.md) |
-
-## Reference routing
-
-| Task | Read |
-|------|------|
-| Pass ordering, barriers, transient aliasing, async compute in the graph | [references/render-graph.md](references/render-graph.md) |
-| Shader compile, variants/permutations, reflection, hot-reload | [references/shader-system.md](references/shader-system.md) |
-| PSO layout, descriptors, bindless, inline constants | [references/binding-model.md](references/binding-model.md) |
-| Barriers, queue waits, fences, cross-queue sync | [references/synchronization.md](references/synchronization.md) |
-| Command recording, threading, frames-in-flight, sort keys | [references/command-recording-and-frames.md](references/command-recording-and-frames.md) |
-| GPU memory tiers, sub-allocation, staging, ring buffers | [references/gpu-memory-strategy.md](references/gpu-memory-strategy.md) |
-| Culling, draw sorting, PSO/material batching | [references/scene-rendering-culling.md](references/scene-rendering-culling.md) |
-| GPU culling, indirect draw, scaling submission | [references/gpu-driven-rendering.md](references/gpu-driven-rendering.md) |
-| Pluggable render features, extension passes | [references/render-pipeline-composition.md](references/render-pipeline-composition.md) |
-| Vertex fetch, packing, morph targets, GPU skinning | [references/vertex-assembly-skinning.md](references/vertex-assembly-skinning.md) |
-| GPU compute simulation, indirect dispatch | [references/gpu-compute-simulation.md](references/gpu-compute-simulation.md) |
-| HDR output, swapchain color space, display encode | [references/hdr-output.md](references/hdr-output.md) |
+| Read when | Read | Engine parallel |
+|-----------|------|-----------------|
+| Pass ordering; barrier/layout-transition automation; transient aliasing; async compute edges in the graph | [references/render-graph.md](references/render-graph.md) | Unreal RDG / Unity RenderGraph / Frostbite FrameGraph; UE RDG barrier automation |
+| Shader compile; variants/permutations; reflection; hot-reload | [references/shader-system.md](references/shader-system.md) | UE PSO precache / Unity shader variant stripping |
+| PSO layout; descriptors; bindless; inline constants | [references/binding-model.md](references/binding-model.md) | UE bindless descriptor indexing; Unity SRP Batcher; id Tech clustered forward+ |
+| Barriers; queue waits; fences; cross-queue sync | [references/synchronization.md](references/synchronization.md) | UE timeline semaphores |
+| Command recording; threading; frames-in-flight; sort keys | [references/command-recording-and-frames.md](references/command-recording-and-frames.md) | — |
+| GPU memory tiers; sub-allocation; staging; ring buffers | [references/gpu-memory-strategy.md](references/gpu-memory-strategy.md) | — |
+| Culling; draw sorting; PSO/material batching | [references/scene-rendering-culling.md](references/scene-rendering-culling.md) | UE sorted mesh passes; id Tech many-light forward |
+| GPU culling; compact + indirect draw; scaling submission beyond CPU limits | [references/gpu-driven-rendering.md](references/gpu-driven-rendering.md) | Nanite / Unity BRG |
+| Pluggable render features; extension passes | [references/render-pipeline-composition.md](references/render-pipeline-composition.md) | Unity RendererFeatures / UE render plugins |
+| Vertex fetch; packing; morph targets; GPU skinning | [references/vertex-assembly-skinning.md](references/vertex-assembly-skinning.md) | — |
+| GPU compute simulation; indirect dispatch; no CPU readback | [references/gpu-compute-simulation.md](references/gpu-compute-simulation.md) | — |
+| HDR output; swapchain color space; display encode | [references/hdr-output.md](references/hdr-output.md) | Unity HDR Output / UE HDR display pipeline |
 
 ## Gotchas
 
@@ -101,21 +70,6 @@ Conceptual parallels only — not engine API how-tos.
 - Submitting draws in scene order instead of PSO/material order silently tanks throughput — sort before record, see [references/scene-rendering-culling.md](references/scene-rendering-culling.md).
 - Reading the GPU visible count back to size a CPU draw loop defeats GPU-driven rendering — use indirect draw, see [references/gpu-driven-rendering.md](references/gpu-driven-rendering.md).
 - Async-compute passes need queue ownership + cross-queue waits at graph boundaries, not just intra-queue barriers.
-
-## Progressive disclosure
-
-- Read [references/render-graph.md](references/render-graph.md) - Load when ordering passes, automating barriers/transitions, or aliasing transient targets
-- Read [references/shader-system.md](references/shader-system.md) - Load when compiling shaders, handling variants/permutations, reflection, or hot-reload
-- Read [references/binding-model.md](references/binding-model.md) - Load when designing pipeline state and the descriptor/binding model, or going bindless
-- Read [references/synchronization.md](references/synchronization.md) - Load when placing barriers, queue waits, fences, or reasoning about queue timelines
-- Read [references/command-recording-and-frames.md](references/command-recording-and-frames.md) - Load when recording commands, threading recording, or sizing frames-in-flight
-- Read [references/gpu-memory-strategy.md](references/gpu-memory-strategy.md) - Load when planning GPU memory tiers, sub-allocation, or uploads
-- Read [references/scene-rendering-culling.md](references/scene-rendering-culling.md) - Load when culling, sorting draws, or minimizing pipeline state changes
-- Read [references/gpu-driven-rendering.md](references/gpu-driven-rendering.md) - Load when GPU culling, indirect draw, or scaling draw submission beyond CPU limits
-- Read [references/render-pipeline-composition.md](references/render-pipeline-composition.md) - Load when adding pluggable render features or extension passes
-- Read [references/vertex-assembly-skinning.md](references/vertex-assembly-skinning.md) - Load when designing vertex fetch, vertex packing, morph targets, or GPU skinning
-- Read [references/gpu-compute-simulation.md](references/gpu-compute-simulation.md) - Load when simulating many elements (particles/agents) on the GPU with compute and indirect dispatch
-- Read [references/hdr-output.md](references/hdr-output.md) - Load when adding HDR output, picking a swapchain color space/format, or encoding for the display
 
 ## Companion Skills
 
@@ -135,8 +89,4 @@ When a companion is installed to `.agents/skills/<name>/`, read that copy and re
 
 ## Tool notes
 
-Tool-specific mechanics are minimal for this skill — the body and references are host-neutral. Per-host differences from the former wrapper layer, retained for reference:
-
 - After installing or editing the skill, reload the coding agent (restart or reload the Claude Code session; reload the Cursor window; reload VS Code for Copilot) so the skill is rediscovered.
-
-Companion skills: [cpp-memory-guide](../cpp-memory-guide/SKILL.md) for C++ CPU allocators (arenas, pools, ownership, PMR); [vulkan-dev](../vulkan-dev/SKILL.md) for the concrete Vulkan API; [glsl-coding](../glsl-coding/SKILL.md) and [shader-guide](../shader-guide/SKILL.md) for GLSL language and shader effects when installed.

@@ -16,17 +16,8 @@ bundled references on demand — do not load all reference files unless the task
 - CMake ≥ 3.20; prefer target commands over directory/global state.
 - Match the project's existing CMake style, minimum version, and dependency patterns before
   introducing new conventions.
-
-## When to Use
-
-- Authoring or reviewing `CMakeLists.txt` and `*.cmake` modules
-- Creating libraries and executables with `add_library` / `add_executable`
-- Linking dependencies with `target_link_libraries` and correct visibility
-- Integrating packages via `find_package` or vendoring with `FetchContent`
-- Enabling CTest, registering tests, and wiring test executables into the build graph
-- Organizing multi-directory projects with `add_subdirectory`
-- Applying generator expressions for build/install interfaces, configs, or toolchains
-- Writing `install()` rules and `install(EXPORT …)` for downstream `find_package`
+- Link `Pkg::component` imported-target names from `find_package`, not raw `-l` paths.
+- Pin `GIT_TAG` / `URL_HASH` in `FetchContent_Declare` so vendored deps are reproducible.
 
 ## When NOT to Use
 
@@ -34,7 +25,7 @@ bundled references on demand — do not load all reference files unless the task
   [cpp-coding](../cpp-coding/SKILL.md) for idiomatic C++20 code, RAII, concepts, and
   refactoring production sources
 - **GoogleTest/Mock test code, sanitizer/coverage test builds, flaky-test triage** — use
-  [cpp-testing](../cpp-testing/SKILL.md) for `TEST`/`TEST_F` authoring, `gtest_discover_tests`,
+  [cpp-coding](../cpp-coding/SKILL.md) for `TEST`/`TEST_F` authoring, `gtest_discover_tests`,
   ASan/UBSan/TSan flags on test targets, and coverage reporting
 - Pure CI YAML or non-CMake build systems (Meson, Bazel, MSBuild `.csproj`) with no CMake
   file changes
@@ -44,6 +35,7 @@ bundled references on demand — do not load all reference files unless the task
 
 Treat this as a production CMake engineering skill. Optimize for **correct propagation of
 usage requirements**, **reproducible dependencies**, and **maintainable project layout**.
+Properties live on targets; PUBLIC propagates to consumers, so minimize the PUBLIC surface.
 
 Before editing nontrivial build files:
 
@@ -54,14 +46,6 @@ Before editing nontrivial build files:
 3. Prefer the smallest target-scoped change that fixes the build graph; avoid global
    `include_directories`, `link_libraries`, or `add_definitions`.
 4. After changes, configure and build the affected targets, then run CTest when tests exist.
-
-## Cross-cutting principles
-
-1. **Targets first** — properties live on targets; globals are legacy exceptions only
-2. **Visibility discipline** — PUBLIC propagates to consumers; minimize PUBLIC surface
-3. **Imported targets** — link `Pkg::component` names from `find_package`, not raw `-l` paths
-4. **Reproducible deps** — pin `GIT_TAG` / `URL_HASH` in `FetchContent_Declare`
-5. **Verify before claiming** — run configure/build/ctest or state what was not verified
 
 ## Workflow
 
@@ -76,7 +60,7 @@ Before editing nontrivial build files:
 - Apply routed references for target types, visibility, options, dependencies, structure,
   generator expressions, testing hooks, and installation.
 - Keep test *executable* targets and CTest registration here; route test *source* patterns to
-  [cpp-testing](../cpp-testing/SKILL.md).
+  [cpp-coding](../cpp-coding/SKILL.md).
 - Route C++ standard enforcement on production code to target properties; route C++ idioms in
   sources to [cpp-coding](../cpp-coding/SKILL.md).
 
@@ -91,11 +75,13 @@ ctest --test-dir build --output-on-failure
 ```
 
 For install/export work, also run `cmake --install build --prefix /tmp/prefix-check` when
-safe. Report changed files, commands run, and remaining risks.
+safe. Report changed files, commands run, and remaining risks. Unverified
+configure/build/ctest must be stated explicitly.
 
-Report results and the failure slice, not raw output streams — prefer
-`ctest --output-on-failure` and filtered reads (`| tail`, `| grep`) over pasting full
-build logs; quote the first error and its context, never the whole compile output.
+## Review priorities
+
+- Prioritize propagation leaks, missing `PRIVATE` on impl deps, unpinned FetchContent,
+  non-relocatable install interfaces, and missing test registration.
 
 ## Common gotchas
 
@@ -128,48 +114,8 @@ Verified against [cmake.org](https://cmake.org/cmake/help/latest/) — see [SOUR
 | Root layout, `add_subdirectory`, include interfaces | [project-structure.md](references/project-structure.md) |
 | `$<BUILD_INTERFACE:…>`, `$<CONFIG:…>`, toolchain conditionals | [generator-expressions.md](references/generator-expressions.md) |
 | `install(TARGETS …)`, `install(EXPORT …)`, relocatable packages | [installation.md](references/installation.md) |
+| Provenance and external references (attribution only) | [SOURCES.md](SOURCES.md) |
 
 When a change spans multiple areas, read **every matching row** — e.g. installable libraries
 need [project-structure.md](references/project-structure.md), [generator-expressions.md](references/generator-expressions.md),
 and [installation.md](references/installation.md).
-
-## Quick completion checklist
-
-Complete **both** before marking CMake work done:
-
-1. **Build graph** — targets exist, visibility is minimal, no inappropriate global commands,
-   dependencies use imported targets or well-scoped `FetchContent`
-2. **Verification** — configure and build affected targets succeeded; CTest ran when tests
-   were touched; install/export smoke-checked when install rules changed
-
-Unverified configure/build/ctest must be stated explicitly.
-
-## Output standards
-
-For CMake answers:
-
-- Provide complete, copy-pasteable snippets with `cmake_minimum_required` context when needed.
-- Explain visibility and propagation when linking or setting include directories.
-- Separate CMake build wiring from C++ source changes; point to companion skills when test
-  code or C++ style is the main task.
-
-For reviews:
-
-- Prioritize propagation leaks, missing `PRIVATE` on impl deps, unpinned FetchContent,
-  non-relocatable install interfaces, and missing test registration.
-- Distinguish confirmed defects from stylistic preferences.
-
-## Resources
-
-- [target-types.md](references/target-types.md) — Static, shared, object, interface targets
-- [visibility-specifiers.md](references/visibility-specifiers.md) — Usage requirement propagation
-- [compile-options.md](references/compile-options.md) — Target-scoped flags and features
-- [find-package.md](references/find-package.md) — Config and Module mode discovery
-- [fetchcontent.md](references/fetchcontent.md) — Configure-time dependency population
-- [testing.md](references/testing.md) — CTest integration (not GTest authoring)
-- [project-structure.md](references/project-structure.md) — Multi-directory target layout
-- [generator-expressions.md](references/generator-expressions.md) — Build-time conditionals
-- [installation.md](references/installation.md) — Install and export for `find_package`
-- [SOURCES.md](SOURCES.md) — Provenance and external references (read for attribution only)
-
-External reference: [CMake documentation](https://cmake.org/cmake/help/latest/)

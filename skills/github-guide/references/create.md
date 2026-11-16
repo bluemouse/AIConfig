@@ -2,7 +2,7 @@
 
 ## Guideline
 
-Push the branch (that's `git-guide`'s job), then open the PR with `gh pr create`, which pushes the branch for you if it isn't on the remote and sets reviewers/labels/assignees in one call. The PR description content is `pull-request-guide`'s.
+Push the branch (that's `git-guide`'s job), then open the PR with `gh pr create`, which pushes the branch for you if it isn't on the remote and sets reviewers/labels/assignees in one call. The PR description content follows this skill's PR authoring defaults.
 
 ## Rationale
 

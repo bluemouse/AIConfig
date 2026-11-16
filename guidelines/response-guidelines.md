@@ -124,9 +124,8 @@ depth always win over brevity. Never trim, reorder, or compress an artifact to
 satisfy these rules. When summarizing an artifact in chat, apply these rules to
 the summary, not to the artifact.
 
-Long-form skills (code-professor, tutorial-writer, advisory-council,
-minutes-writer) override brevity when the user asks to "explain" or "walk me
-through" — see below.
+Long-form skills (code-professor, tutorial-writer, advisory-council) override
+brevity when the user asks to "explain" or "walk me through" — see below.
 
 ## When to break the rules
 

@@ -1,6 +1,6 @@
 ---
 name: debugging-guide
-description: "Use when diagnosing a software defect before fixing it — reproducing or shrinking failures, tracing root cause with evidence, ranking hypotheses, choosing prevention-by-design tripwires, writing regression tests, applying a minimal fix, and verifying with commands. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, failing tests, build failures, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging, dangling-pointer crashes, buffer-overwrite classes, and unclear integration failures — even when the user does not say debugging. Does not trigger on active merge/rebase integration (git-merge-guide), strict TDD coaching (test-driven-dev-guide), correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning (code-professor), profiling without a defect, ownership API design (cpp-memory-guide), or native GDB/LLDB steps while editing C++ (cpp-coding)."
+description: "Use when diagnosing a software defect before fixing it — reproducing or shrinking failures, tracing root cause with evidence, ranking hypotheses, choosing prevention-by-design tripwires, writing regression tests, applying a minimal fix, and verifying with commands. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, failing tests, build failures, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging, dangling-pointer crashes, buffer-overwrite classes, and unclear integration failures — even when the user does not say debugging. Does not trigger on active merge/rebase integration (git-merge-guide), strict TDD coaching (test-driven-dev-guide), correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning (code-professor), profiling without a defect, ownership API design (cpp-memory-guide), or native GDB/LLDB steps while editing C++."
 ---
 
 # Debugging Guide
@@ -9,13 +9,8 @@ Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. 
 paths to `references/` from that directory.
 
 Locate the true root cause of a software bug and apply the smallest correct fix. Treat
-debugging as an evidence-driven investigation, not a guessing loop.
-
-## Primary Directive
-
-Your job is to **diagnose the root cause with evidence and apply a minimal verified fix**,
-not to coach strict TDD, audit post-implementation correctness, review diffs, or execute
-implementation plans.
+debugging as an evidence-driven investigation, not a guessing loop — not strict TDD
+coaching, post-implementation correctness audit, diff review, or plan execution.
 
 ## When to Use
 
@@ -24,27 +19,6 @@ implementation plans.
 - Writing or updating a regression test or durable reproducer for a specific defect
 - Applying a focused production fix and verifying it with commands
 - Producing a debugging report for reviewers or follow-up agents
-
-## When NOT to Use
-
-- **Active local merge/rebase integration** — when
-  [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) is already driving conflict
-  resolution, integration review, and verification, stay there unless local evidence
-  shows the failure is not caused by branch interaction and root cause must be proven
-- **Strict TDD coaching during active implementation** — use
-  [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md)
-- **Post-implementation correctness audit** — use
-  [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md)
-- **Structured diff or commit review** — use
-  [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-- **Plan execution without a debugging focus** — use
-  [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
-- **Open-ended codebase learning or architecture documentation** — use
-  [../code-professor/SKILL.md](../code-professor/SKILL.md) when the goal is a teaching
-  guide, not a verified fix
-- **Performance optimization or profiling without a defect** — use language or domain skills
-- **Ownership/lifetime API design (not chasing a specific bug)** — use
-  [../cpp-memory-guide/SKILL.md](../cpp-memory-guide/SKILL.md) for C++ memory design
 
 ## Iron rule
 
@@ -108,17 +82,15 @@ For multi-component systems, instrument boundaries first: UI to app, app to serv
 Load `references/diagnostic-techniques.md` for tracing, differential comparison, bisecting, and bug-class-specific tactics.
 Load `references/instrumentation-and-checks.md` when adding assertions, sanitizers, or tripwires — instrument to surface the fault **earlier** or where it is cheaper to act on, not to restate what the crash already showed.
 
-When reproduction exists and the defect is in **native C++**, load GDB/LLDB, sanitizer,
-and core-dump steps from
-[../cpp-coding/references/native-debugging.md](../cpp-coding/references/native-debugging.md)
-(via [../cpp-coding/SKILL.md](../cpp-coding/SKILL.md)).
+When reproduction exists and the defect is in **native C++**, apply the debugger
+(GDB/LLDB) and sanitizer toolchain directly; debugger rules and sanitizer build flags
+live in
+[cpp-coding's build-and-verification.md](../cpp-coding/references/build-and-verification.md#native-debugging-with-gdblldb)
+(via [cpp-coding](../cpp-coding/SKILL.md)).
 
 ### 6. Compare against working patterns
 
-- Find the closest working example in the same codebase before inventing a new approach.
-- Compare broken and working paths: inputs, flags, lifetime, thread, platform, config, data shape, generated artifacts, dependency versions, and recent diffs.
-- List differences before judging which difference matters.
-- Read reference implementations completely when the bug is caused by an incomplete pattern, adapter, protocol, API contract, or framework lifecycle.
+Find the closest working example in the same codebase before inventing a new approach; list the differences between broken and working paths before judging which difference matters.
 
 ### 7. Form and test one hypothesis at a time
 
@@ -154,25 +126,11 @@ Use [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md) when 
 
 ### 9. Apply the minimal root-cause fix
 
-- Fix the earliest incorrect transition, not the nearest symptom.
-- Make the smallest production change that satisfies the failing test and preserves existing valid behavior.
-- Keep names, architecture, style, error handling, ownership, and threading conventions consistent with nearby code.
-- Add validation or defensive handling only at boundaries where invalid state can enter.
-- Avoid broad catches, sleeps, global state, hidden retries, silent fallbacks, duplicated logic, or unrelated refactors.
-- If cleanup is necessary to make the fix safe, state why it is required for the fix.
+Fix the earliest incorrect transition, not the nearest symptom. Banned fixes: sleeps, hidden retries, silent fallbacks.
 
 ### 10. Verify with evidence
 
-Run verification in increasing scope:
-
-1. the new failing test or reproducer;
-2. the smallest existing related test set;
-3. broader package/module tests affected by the change;
-4. build, typecheck, lint, sanitizer, race detector, static analyzer, platform-specific test, or performance check when relevant.
-
 If verification cannot be run, state exactly why, what was not verified, and which command should be run next. Do not claim the bug is fixed without command-backed evidence.
-
-Use [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) when available for an independent correctness and evidence review.
 
 ### 11. Produce the debugging report
 
@@ -228,8 +186,7 @@ Before finishing, ensure:
 - temporary diagnostics are removed or intentionally retained as useful observability.
 
 When debugging was invoked from an active merge/rebase integration, return control to
-[../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) afterward so integration
-coordination, verification, and reporting can continue.
+[../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) afterward.
 
 ## Progressive disclosure
 
@@ -243,4 +200,4 @@ Load these references on demand:
 - `references/diagnostic-techniques.md` — tracing, comparison, bisection, bug-class table
 - `references/gotchas.md` — common misreadings and anti-patterns
 - `references/debugging-report.md` — final report template
-- [../cpp-coding/references/native-debugging.md](../cpp-coding/references/native-debugging.md) — C++ GDB/LLDB, sanitizers, core dumps (after repro exists; via [cpp-coding](../cpp-coding/SKILL.md))
+- [../cpp-coding/references/build-and-verification.md](../cpp-coding/references/build-and-verification.md) — C++ sanitizer builds, clang-tidy, coverage (via [cpp-coding](../cpp-coding/SKILL.md))

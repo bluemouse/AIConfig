@@ -4,33 +4,11 @@
 
 Use this reference when creating a Vulkan renderer on Android, wiring a Kotlin `Surface` to C++, creating the instance/device/swapchain, or handling lifecycle events.
 
-For generic Vulkan 1.3 instance/device/queue/memory setup, use [vulkan-dev](../../vulkan-dev/SKILL.md) references starting at [capabilities-and-setup.md](../../vulkan-dev/references/capabilities-and-setup.md).
+For generic Vulkan 1.3 instance/device/queue/memory setup, use [vulkan-dev](../../vulkan-dev/SKILL.md) references starting at [capabilities-and-setup.md](../../vulkan-dev/references/capabilities-and-setup.md). For full CMake/JNI/native-library setup, use [android-ndk-dev](../../android-ndk-dev/SKILL.md).
 
 ## Minimum support stance
 
 Although this skill assumes Android 16/API 36+ as the app target, still query Vulkan support on the device. Vulkan originally requires Android 7.0/API 24+ plus supporting hardware, but target API is not the same as GPU capability.
-
-## CMake linking sketch
-
-Use [android-ndk-dev](../../android-ndk-dev/SKILL.md) for full CMake/JNI setup. Vulkan renderer targets commonly link Android, log, and Vulkan libraries.
-
-```cmake
-add_library(vulkan_renderer SHARED
-    native_vulkan_api.cpp
-    renderer.cpp
-    swapchain.cpp
-)
-
-find_library(android-lib android)
-find_library(log-lib log)
-find_library(vulkan-lib vulkan)
-
-target_link_libraries(vulkan_renderer PRIVATE
-    ${android-lib}
-    ${log-lib}
-    ${vulkan-lib}
-)
-```
 
 ## Surface ownership
 

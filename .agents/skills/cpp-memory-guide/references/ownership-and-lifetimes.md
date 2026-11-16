@@ -15,7 +15,7 @@ Most memory bugs are ownership bugs: a leak (nobody freed), a double-free (two o
 3. **Transfer ownership** with move (`return std::move(ptr)` or return by value from `make_unique`) — never by raw pointer (Core Guidelines **I.11**).
 4. **Tie lifetime to a phase** (frame, level, request) and reclaim via arena/PMR reset rather than individual deletes.
 5. When storage may relocate (`std::vector` reallocation), reference by **index/handle**, not pointer into the container.
-6. Follow **Rule of 0** (compiler-generated special members) when possible; Rule of 3/5 when you own a raw resource — see [references/raii-and-smart-pointers.md](./raii-and-smart-pointers.md).
+6. Follow **Rule of 0** (compiler-generated special members) when possible; Rule of 3/5 when you own a raw resource.
 
 ## Example
 
@@ -46,7 +46,9 @@ Entity* get_node(Graph& g, int i);
 - A `span` or reference cached across `vector` push_back or arena reset dangles — re-fetch or hold a handle.
 - `shared_ptr` cycles leak; do not use it to paper over unclear ownership. Prefer explicit parent/child lifetimes.
 - `std::move` on a `const` object copies — only move from non-const sources.
+- Custom deleters and manual frees must match the actual allocator: `delete` vs `delete[]` vs `free` — the wrong one is undefined behavior.
+- Arena placement-new objects still need an explicit destructor call before arena reset — wrap `~T()` in a scope guard; RAII members do not run automatically for raw placement-constructed storage.
 
 ## Related
 
-[references/arenas-and-pools.md](./arenas-and-pools.md), [references/caller-owns-memory.md](./caller-owns-memory.md), [references/raii-and-smart-pointers.md](./raii-and-smart-pointers.md)
+[references/arenas-and-pools.md](./arenas-and-pools.md), [references/caller-owns-memory.md](./caller-owns-memory.md)

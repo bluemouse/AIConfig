@@ -153,16 +153,40 @@ ctest --output-on-failure
 
 All tests should pass clean — no reported leaks or undefined behavior.
 
-When debugging a crash or sanitizer failure during implementation, follow the diagnostic
-workflow in [native-debugging.md](native-debugging.md) and the root-cause method in
-[debugging-guide](../../debugging-guide/SKILL.md).
+When debugging a crash or sanitizer failure during implementation, follow the root-cause
+method in [debugging-guide](../../debugging-guide/SKILL.md).
+
+## Native debugging with GDB/LLDB
+
+Non-obvious debugger rules for crash triage; core commands (`bt`, `frame`, `info locals`,
+`print`) are assumed knowledge.
+
+- Build with `-g` (or `-gline-tables-only` for large builds) and `-O0`/`-O1` for
+  debuggability; sanitizer builds need no extra flags to break on the fault.
+- Run under the debugger directly (`gdb --args ./binary args…`, `lldb -- ./binary args…`)
+  rather than attaching, when practical — attach pauses all threads at an arbitrary point.
+- On crash: `bt full` (GDB) / `bt` then `frame select` + `frame variable` (LLDB) to see
+  locals per frame; suspect raw pointers whose pointee was freed — prefer repro under
+  ASan over manual heap archaeology.
+- Use `catch throw` (GDB) / `break set -E c++` (LLDB) to stop where an exception is
+  thrown, not where it is caught; use conditional breakpoints on corruption-detection
+  globals only if the fault is non-deterministic.
+- For core dumps: `coredumpctl gdb <pid>` (systemd) or `gdb binary core`; ensure
+  `ulimit -c unlimited` and `kernel.core_pattern` are set before the crash — configuring
+  them after is useless.
 
 ## Test coverage
 
 - Use **gcov/llvm-cov** or project CI coverage reporting.
+- Put coverage flags on the test target (and any libraries linked into it), not global
+  `CMAKE_CXX_FLAGS` — GNU uses `--coverage`, Clang uses
+  `-fprofile-instr-generate -fcoverage-mapping`; mixing them breaks report generation.
+- lcov flow (GNU): run the test binary to flush `.gcda` counters, then
+  `lcov --capture --directory build --output-file coverage.info` and
+  `genhtml coverage.info --output-dir out`; for Clang, run the binary to flush
+  `.profraw`, then `llvm-cov show`/`llvm-cov generate-report` with the `.profdata`.
 - Prioritize coverage on error paths, ownership boundaries, and concurrency code.
-- Coverage percentage alone is not sufficient — assert meaningful behavior (see
-  [code-quality.md](code-quality.md)).
+- Coverage percentage alone is not sufficient — assert meaningful behavior.
 
 ## Verification checklist
 

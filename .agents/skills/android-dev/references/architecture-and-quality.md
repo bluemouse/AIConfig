@@ -145,7 +145,7 @@ Rules:
 ## Testing strategy
 
 - Unit test use cases, repositories, mappers, and error mapping with fake data sources.
-- Use [kotlin-testing](../../kotlin-testing/SKILL.md) for test design, Kotest/MockK, coroutine tests, and flaky-test triage.
+- Use [kotlin-coding](../../kotlin-coding/SKILL.md) for test design, Kotest/MockK, coroutine tests, and flaky-test triage.
 - Use Robolectric or instrumentation only when Android framework behavior matters. Map Android Gradle test **tasks** (`testDebugUnitTest`, `connectedDebugAndroidTest`) via [gradle-android-dev](../../gradle-android-dev/SKILL.md).
 - Test Compose screens with stable semantics, not pixel-perfect snapshots only.
 - For camera/media, provide fake frame sources and fake media repositories for deterministic tests.

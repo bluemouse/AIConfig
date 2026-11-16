@@ -4,7 +4,7 @@
 
 Enable CTest in CMake and register tests with `add_test` / `gtest_discover_tests` — keep
 **test source authoring** (GoogleTest macros, mocks, sanitizer/coverage flags) in
-[cpp-testing](../../cpp-testing/SKILL.md).
+[cpp-coding](../../cpp-coding/SKILL.md).
 
 ## Rationale
 
@@ -39,15 +39,16 @@ gtest_discover_tests(core_tests DISCOVERY_MODE PRE_TEST)
 - **Separate test targets** — build test binaries separately from production targets; link
   `PRIVATE` to code under test.
 
-## Boundary with cpp-testing
+## Boundary with cpp-coding
 
-| Topic | cmake-dev | cpp-testing |
+| Topic | cmake-dev | cpp-coding |
 |-------|-----------|-------------|
 | `add_executable` for tests, `add_test`, CTest labels | Yes | References CMake wiring |
 | `TEST`/`TEST_F`, gmock, fixtures, sanitizer/coverage | Route there | Yes |
+| GoogleTest target wiring (`gtest_discover_tests`, `GTest::gtest_main` vs `GTest::gtest`, version pinning) | Route there | Yes |
 | Diagnosing assertion failures / flakiness | Route there | Yes |
 
 ## See also
 
 - [project-structure.md](project-structure.md) — placing tests in subdirectories
-- [../cpp-testing/SKILL.md](../../cpp-testing/SKILL.md) — GoogleTest, coverage, sanitizers
+- [../cpp-coding/SKILL.md](../../cpp-coding/SKILL.md) — GoogleTest, coverage, sanitizers

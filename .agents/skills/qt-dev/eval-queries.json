@@ -99,7 +99,7 @@
     "query": "add GoogleTest gmock tests for my engine math library with CMake FetchContent",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: GoogleTest-only setup -> cpp-testing"
+    "rationale": "near-miss: GoogleTest-only setup -> cpp-coding"
   },
   {
     "query": "explain C++20 concepts and std::span for a non-Qt header-only library",

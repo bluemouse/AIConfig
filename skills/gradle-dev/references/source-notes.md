@@ -16,7 +16,7 @@ This skill integrates patterns from:
 - This skill owns generic Gradle semantics and build engineering.
 - `gradle-android-dev` owns AGP and Android-specific build behavior.
 - `kotlin-coding` owns Kotlin language/API design.
-- `kotlin-testing` owns Kotlin test design and test-framework patterns.
+- `kotlin-coding` owns Kotlin test design and test-framework patterns.
 
 ## Versioning policy
 

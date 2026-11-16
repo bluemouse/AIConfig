@@ -46,7 +46,7 @@ Start by deciding what kind of input you have.
 | Bug report, failing test, crash, regression, or flaky behavior | [debugging-guide](../../debugging-guide/SKILL.md) | Root cause must be proven before implementation changes |
 | Approved implementation plan | [plan-executor](../../plan-executor/SKILL.md) | Execution needs task tracking, working-tree safety, edits, and verification |
 | Finished code changes | [implementation-auditor](../../implementation-auditor/SKILL.md), then [code-reviewer](../../code-reviewer/SKILL.md), then [techdoc-reviewer](../../techdoc-reviewer/SKILL.md) when reader-visible contracts or documentation are in scope | Correctness evidence comes before reviewer-side diff risk analysis; documentation truth follows when APIs, setup, migration, or operational docs may be affected |
-| Ready-to-submit branch | [commit-message-writer](../../commit-message-writer/SKILL.md), [git-guide](../../git-guide/SKILL.md), [pull-request-guide](../../pull-request-guide/SKILL.md) | Delivery needs commits, git mechanics, and a reviewable PR narrative |
+| Ready-to-submit branch | [commit-message-writer](../../commit-message-writer/SKILL.md), [git-guide](../../git-guide/SKILL.md), [github-guide](../../github-guide/SKILL.md) | Delivery needs commits, git mechanics, and a reviewable PR narrative |
 
 ### 2. Research: make the requirement plannable
 
@@ -215,16 +215,7 @@ Use [git-guide](../../git-guide/SKILL.md) for local git mechanics:
 - worktree creation, validation, merge, cleanup, or abandon flows;
 - branch hygiene and history repair.
 
-Use [pull-request-guide](../../pull-request-guide/SKILL.md) to write the PR/MR description. A good PR should include:
-
-- what changed;
-- why it changed;
-- how it was implemented;
-- testing evidence with commands and outcomes;
-- tradeoffs, limitations, risks, screenshots, or rollout notes when relevant;
-- related issues, specs, or follow-up PRs.
-
-Use [github-guide](../../github-guide/SKILL.md) only for GitHub host delivery: `gh pr create`, posting structured reviews with inline comments, resolving review threads, or handling GitHub authentication and token scope. It does not replace [pull-request-guide](../../pull-request-guide/SKILL.md) for PR writing or [code-reviewer](../../code-reviewer/SKILL.md) for review judgment.
+Use [github-guide](../../github-guide/SKILL.md) for PR authoring and GitHub host delivery. It owns the PR/MR description defaults (what/why/how, testing evidence, tradeoffs, sizing and splitting, draft-until-CI-green self-review) and the GitHub mechanics: `gh pr create`, posting structured reviews with inline comments, resolving review threads, and GitHub authentication and token scope. It does not replace [code-reviewer](../../code-reviewer/SKILL.md) for review judgment.
 
 #### Delivery orchestration sequence
 
@@ -233,8 +224,7 @@ The delivery skills are separate on purpose; run them in order and pass each out
 1. [commit-message-writer](../../commit-message-writer/SKILL.md) drafts the Conventional Commit message from git evidence.
 2. The developer reviews and approves (or iterates) the message.
 3. [git-guide](../../git-guide/SKILL.md) stages, commits with the approved message, and pushes or rebases the branch.
-4. [pull-request-guide](../../pull-request-guide/SKILL.md) writes the PR/MR description and saves it (for example `pr-body.md`) for host delivery.
-5. [github-guide](../../github-guide/SKILL.md) opens the PR (`gh pr create --body-file`) or posts a review, only when the host is GitHub.
+4. [github-guide](../../github-guide/SKILL.md) writes the PR/MR description from its PR authoring defaults, saves it (for example `pr-body.md`), and opens the PR (`gh pr create --body-file`) or posts a review when the host is GitHub.
 
 If the developer already has a message, skip step 1 and start at [git-guide](../../git-guide/SKILL.md). None of these skills commit, push, or open a PR unless explicitly asked.
 
@@ -242,7 +232,7 @@ If the developer already has a message, skip step 1 and start at [git-guide](../
 
 One concern per PR. Within a PR, each commit should be coherent and independently describable:
 
-- If the working tree mixes unrelated changes, split first. [commit-message-writer](../../commit-message-writer/SKILL.md) flags mixed diffs at the commit level; [pull-request-guide](../../pull-request-guide/SKILL.md) owns PR-level sizing and splitting.
+- If the working tree mixes unrelated changes, split first. [commit-message-writer](../../commit-message-writer/SKILL.md) flags mixed diffs at the commit level; [github-guide](../../github-guide/SKILL.md) owns PR-level sizing and splitting.
 - Closely related changes can be separate commits in one PR. Independent changes belong in separate PRs.
 - Split a bundled refactor out of a feature PR into its own PR.
 
@@ -302,7 +292,7 @@ For each stage (1..N):
        ↓ (all stages committed)
 Final deep code review (full Loop 4, deep effort, cumulative commit range)
        ↓
-Terminal delivery: pull-request-guide → github-guide (PR creation)
+Terminal delivery: github-guide (PR authoring + creation)
 ```
 
 ### How staged mode differs from linear
@@ -351,7 +341,7 @@ The core bundle is always available. The extended-bundle gates are optional by d
 | Data or schema migration | [research-reviewer](../../research-reviewer/SKILL.md) (when a research report exists), [plan-reviewer](../../plan-reviewer/SKILL.md), [implementation-auditor](../../implementation-auditor/SKILL.md) | Hard to roll back |
 | Public API or contract change | [plan-reviewer](../../plan-reviewer/SKILL.md), `deep` [code-reviewer](../../code-reviewer/SKILL.md), [techdoc-reviewer](../../techdoc-reviewer/SKILL.md) | Cross-team impact and reader-visible contracts |
 | Refactor across 3+ modules | [plan-reviewer](../../plan-reviewer/SKILL.md), `standard`+ [code-reviewer](../../code-reviewer/SKILL.md) | Cascade risk |
-| Production incident follow-up | [debugging-guide](../../debugging-guide/SKILL.md), [implementation-auditor](../../implementation-auditor/SKILL.md), [minutes-writer](../../minutes-writer/SKILL.md) | Defect prevention and record |
+| Production incident follow-up | [debugging-guide](../../debugging-guide/SKILL.md), [implementation-auditor](../../implementation-auditor/SKILL.md), `minutes-guidelines` guideline | Defect prevention and record |
 
 [agent-runner](../../agent-runner/SKILL.md) is never mandatory; use it only when independent workstreams exist and the host supports subagents.
 
@@ -363,11 +353,11 @@ When a defect is found in merged or deployed code, re-enter the lifecycle:
 2. [test-driven-dev-guide](../../test-driven-dev-guide/SKILL.md) to write a regression test before the fix (required for production bugs).
 3. [plan-guide](../../plan-guide/SKILL.md) if the fix needs coordinated changes; otherwise a direct scoped fix.
 4. [implementation-auditor](../../implementation-auditor/SKILL.md) then [code-reviewer](../../code-reviewer/SKILL.md), then [techdoc-reviewer](../../techdoc-reviewer/SKILL.md) when reader-visible contracts or docs are in scope, then the delivery chain.
-5. [minutes-writer](../../minutes-writer/SKILL.md) for the post-incident record when the impact warrants it.
+5. The `minutes-guidelines` behavioral guideline for the post-incident record when the impact warrants it.
 
 ## Decision Traceability
 
-Decisions made in meetings should not be lost between phases. After [minutes-writer](../../minutes-writer/SKILL.md) records decisions and action items:
+Decisions made in meetings should not be lost between phases. After applying the `minutes-guidelines` behavioral guideline to record decisions and action items:
 
 - Feed product or scope decisions into the [research-guide](../../research-guide/SKILL.md) report.
 - Feed constraints and action items into the [plan-guide](../../plan-guide/SKILL.md) plan as assumptions or tasks.
@@ -388,8 +378,8 @@ Use this path when the work begins as a product requirement, customer problem, r
 6. Use [plan-executor](../../plan-executor/SKILL.md) to implement.
 7. Use [implementation-auditor](../../implementation-auditor/SKILL.md) to map results back to requirements.
 8. Use [code-reviewer](../../code-reviewer/SKILL.md) to review the diff.
-9. Use [commit-message-writer](../../commit-message-writer/SKILL.md), [git-guide](../../git-guide/SKILL.md), and [pull-request-guide](../../pull-request-guide/SKILL.md) for delivery.
-10. Use [github-guide](../../github-guide/SKILL.md) if delivery happens on GitHub through `gh`.
+9. Use [commit-message-writer](../../commit-message-writer/SKILL.md) and [git-guide](../../git-guide/SKILL.md) for delivery.
+10. Use [github-guide](../../github-guide/SKILL.md) if delivery happens on GitHub through `gh`, including PR description authoring.
 
 ### Path B: Software feature request
 
@@ -446,9 +436,9 @@ Do not use [plan-executor](../../plan-executor/SKILL.md) without an implementati
 - If the question is "is this diff safe to merge?", use [code-reviewer](../../code-reviewer/SKILL.md).
 - If the question is "what should the commit say?", use [commit-message-writer](../../commit-message-writer/SKILL.md).
 - If the question is "perform the git operation", use [git-guide](../../git-guide/SKILL.md).
-- If the question is "what should the PR say?", use [pull-request-guide](../../pull-request-guide/SKILL.md).
+- If the question is "what should the PR say?", use [github-guide](../../github-guide/SKILL.md).
 - If the question is "post this to GitHub or manage GitHub review threads", use [github-guide](../../github-guide/SKILL.md).
-- If the question is "summarize the meeting decisions", use [minutes-writer](../../minutes-writer/SKILL.md).
+- If the question is "summarize the meeting decisions", apply the `minutes-guidelines` behavioral guideline.
 - If the question is "can independent work happen in parallel?", use [agent-runner](../../agent-runner/SKILL.md).
 - If plan execution hits an unexpected verification failure, use [debugging-guide](../../debugging-guide/SKILL.md), then resume execution.
 - If the plan is unsafe, impossible, or contradicts the repo mid-execution, return to [plan-guide](../../plan-guide/SKILL.md).
@@ -530,6 +520,5 @@ prompt-clarifier when the request itself is ambiguous
 -> techdoc-reviewer when reader-visible contracts or documentation changed
 -> commit-message-writer
 -> git-guide
--> pull-request-guide
--> github-guide when delivering on GitHub
+-> github-guide (PR authoring defaults, and delivery when the host is GitHub)
 ```

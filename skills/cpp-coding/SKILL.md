@@ -1,6 +1,6 @@
 ---
 name: cpp-coding
-description: Write, review, and refactor modern C++20 code following C++ Core Guidelines — RAII, concepts, value semantics, and safe concurrency. Use when implementing C++ classes or functions, reviewing C++ diffs, choosing between language alternatives (enum vs enum class, raw pointer vs smart pointer), refactoring C++ modules, or enforcing idiomatic C++20 style — even if the user says "C++ help" or "fix this C++ code" without naming a standard.
+description: Write, review, and refactor modern C++20 code following C++ Core Guidelines — RAII, concepts, value semantics, and safe concurrency. Use when implementing C++ classes or functions, move constructors and move assignment, const-correct APIs, ranges and concept-constrained templates, reviewing C++ diffs for Core Guidelines violations, choosing between language alternatives (enum vs enum class, raw pointer vs smart pointer), refactoring C++ modules, or enforcing idiomatic C++20 style — even if the user says "C++ help" or "fix this C++ code" without naming a standard. Also use when writing or fixing C++ tests with GoogleTest/GoogleMock, CMake/CTest test targets, regression/coverage/sanitizer test builds, or failing and flaky gtest tests — even if the user says "add tests" or "this test is flaky" without naming a framework.
 ---
 
 # C++ Coding (C++20)
@@ -20,19 +20,6 @@ files unless the task requires them.
 - Do **not** use C++23-only features (e.g. `std::expected`, `std::print`) unless the
   project explicitly targets a newer standard.
 
-## When to Use
-
-- Writing new C++ code (classes, functions, templates)
-- Reviewing or refactoring existing C++ code
-- Making architectural decisions in C++ projects
-- Enforcing consistent style across a C++ codebase
-- Choosing between language features (e.g. `enum` vs `enum class`, raw pointer vs smart
-  pointer)
-- Diagnosing native C++ runtime failures while actively writing or reviewing C++ — when
-  reproduction is already established or the failure is confined to code under edit; use
-  [debugging-guide](../debugging-guide/SKILL.md) first if repro or root-cause workflow is
-  not established (see workflow step 4 and [native-debugging.md](references/native-debugging.md))
-
 ## When NOT to Use
 
 - Non-C++ projects (use language-specific skills instead)
@@ -45,6 +32,8 @@ files unless the task requires them.
   [debugging-guide](../debugging-guide/SKILL.md) first for repro, hypotheses, and minimal fix
 - Performance-only tuning without a correctness defect — use
   [cpp-performance-guide](../cpp-performance-guide/SKILL.md)
+- Writing/fixing C++ tests is **in scope** (see **Testing** below) — but strict
+  red-green-refactor coaching is [test-driven-dev-guide](../test-driven-dev-guide/SKILL.md)
 
 ## Cross-Cutting Principles
 
@@ -56,8 +45,8 @@ These themes apply to every C++ change:
 4. **Express intent** — names, types, and interfaces communicate purpose
 5. **Value semantics** — return by value; smart pointers for ownership; raw pointers as
    non-owning observers
-6. **Minimize complexity** — KISS, DRY, YAGNI; simple code is correct code (expands
-   core-guidelines principle 5)
+6. **Minimize complexity** — KISS, DRY, YAGNI; simple code is correct code
+   (F.2/F.3, ES.5)
 7. **Measure before optimizing** — profile first; see [Per.*](references/core-guidelines.md#performance-per)
    in core-guidelines
 
@@ -80,8 +69,6 @@ Before writing or reviewing:
   error handling, and naming rules (NL.*)
 - Apply [modern-cpp20.md](references/modern-cpp20.md) for concepts, ranges, concurrency,
   and modern idioms
-- Apply [code-quality.md](references/code-quality.md) for readability, code smells, tests,
-  and comments
 - Match existing project style when it conflicts with defaults — document intentional
   deviations
 
@@ -95,17 +82,29 @@ Run the quality bar in [build-and-verification.md](references/build-and-verifica
 
 ### 4. Debug native failures (when applicable)
 
-When the task involves crashes, sanitizer output, undefined behavior, or debugger-only
-state while writing or reviewing C++:
+Crashes, sanitizer output, undefined behavior, or debugger-only state during C++ work:
+start with [debugging-guide](../debugging-guide/SKILL.md) for reproduction and root-cause
+method. After the fix is confirmed, add regression tests per **Testing** below and rerun
+sanitizer-enabled builds per [build-and-verification.md](references/build-and-verification.md).
 
-1. If reproduction or root-cause workflow is not established, start with
-   [debugging-guide](../debugging-guide/SKILL.md).
-2. Apply C++ toolchain techniques in
-   [native-debugging.md](references/native-debugging.md) — debug symbols, GDB/LLDB,
-   sanitizers, core dumps, and typical lifetime/UB root causes.
-3. After the fix is confirmed, add regression tests via
-   [cpp-testing](../cpp-testing/SKILL.md) and rerun sanitizer-enabled builds per
-   [build-and-verification.md](references/build-and-verification.md).
+## Testing
+
+Write and fix C++ tests with **GoogleTest/GoogleMock** wired through **CMake/CTest** —
+in scope for this skill. Most test work is standard framework usage; the non-obvious
+rules:
+
+- **Never combine ASan and TSan in one build** — the runtimes are incompatible; use
+  separate build directories (`build-asan`, `build-tsan`) and separate CI jobs
+- **`GTest::gtest_main` vs `GTest::gtest`** — link `gtest_main` unless the test binary
+  provides its own `main()` or needs custom entry-point initialization
+- **Flake triage** — rerun the suspect with `--gtest_filter=... --gtest_repeat=100`;
+  any failing iteration confirms nondeterminism before code inspection
+- **Pin the GoogleTest version** (FetchContent `GIT_TAG` or versioned `find_package`) —
+  behavior and deprecations shift across releases
+- **Prefer `gtest_discover_tests` over one `add_test` per binary** — it registers each
+  `TEST` as its own CTest entry for per-test filtering, labels, and failure reporting
+- For failure triage, flaky-test guardrails, and the pitfalls table, read
+  [debugging-flakiness.md](references/debugging-flakiness.md)
 
 ## Reference routing
 
@@ -114,22 +113,20 @@ state while writing or reviewing C++:
 | Classes, RAII, ownership, functions, error handling | [core-guidelines.md](references/core-guidelines.md) |
 | Naming rules (NL.*), file/header conventions (SF.*) | [core-guidelines.md](references/core-guidelines.md) |
 | Concepts, ranges, coroutines, threading, STL choices | [modern-cpp20.md](references/modern-cpp20.md) |
-| Readability, code smells, tests, comments, KISS/DRY/YAGNI | [code-quality.md](references/code-quality.md) |
 | Performance rules (Per.*) | [core-guidelines.md](references/core-guidelines.md#performance-per) |
 | CMake, sanitizers, clang-tidy, coverage | [build-and-verification.md](references/build-and-verification.md) |
-| Native crashes, GDB/LLDB, sanitizers, UB, core dumps | [native-debugging.md](references/native-debugging.md) |
+| GoogleTest/CTest test targets, flaky tests, pitfalls | **Testing** section + [debugging-flakiness.md](references/debugging-flakiness.md) |
 | Allocators, ownership APIs, move semantics, memory bugs | [cpp-memory-guide](../cpp-memory-guide/SKILL.md) |
 | Structured debugging method, repro, bisect, debug report | [debugging-guide](../debugging-guide/SKILL.md) |
 
-When a change spans multiple areas, read **every matching row** — e.g. generic templates
-need both [core-guidelines.md](references/core-guidelines.md) (T.*) and
-[modern-cpp20.md](references/modern-cpp20.md); concurrent code needs core-guidelines (CP.*)
-and modern-cpp20.
+Read a routing row only when you are about to act on that area with uncertain ground —
+e.g. about to write generic templates with an unrecalled rule set, or unsure of the
+project's lint conventions. When a change spans multiple areas, read the rows for the
+areas you are about to touch.
 
 ## Quick completion checklist
 
-Complete **both** parts before marking ordinary C++ work done; add part 3 when a native
-crash or UB was fixed:
+Complete **both** parts before marking ordinary C++ work done:
 
 1. **Core Guidelines** — rule checklist in
    [core-guidelines.md](references/core-guidelines.md#quick-reference-checklist)
@@ -137,25 +134,20 @@ crash or UB was fixed:
 2. **Build and verification** — toolchain checklist in
    [build-and-verification.md](references/build-and-verification.md#verification-checklist)
    (C++20 build, warnings, static analysis, sanitizers, tests, coverage)
-3. **Native crash/UB fix (when applicable)** — verification checklist in
-   [native-debugging.md](references/native-debugging.md#verification)
 
-The Verify workflow step (above) is satisfied when part 2 is complete; include part 3 when
-workflow step 4 applied.
+The Verify workflow step (above) is satisfied when part 2 is complete. After a native
+crash or UB fix, also satisfy debugging-guide's verification discipline before closing.
 
 ## Resources
 
-- [core-guidelines.md](references/core-guidelines.md) — C++ Core Guidelines (P, I, F, C, R,
-  ES, E, Con, CP, T, SL, Enum, SF, NL, Per)
+- [core-guidelines.md](references/core-guidelines.md) — C++ Core Guidelines rule-ID
+  checklist (P, I, F, C, R, ES, E, Con, CP, T, SL, Enum, SF, NL, Per)
 - [modern-cpp20.md](references/modern-cpp20.md) — C++20 language and library idioms
-- [code-quality.md](references/code-quality.md) — Readability, smells, comments (brief
-  testing notes; use [cpp-testing](../cpp-testing/SKILL.md) for test work)
 - [build-and-verification.md](references/build-and-verification.md) — Toolchain and quality
   gates
-- [native-debugging.md](references/native-debugging.md) — Native C++ crash/UB diagnosis with
-  debuggers and sanitizers (companion to debugging-guide)
+- [debugging-flakiness.md](references/debugging-flakiness.md) — Test failure triage,
+  flaky-test guardrails, and pitfalls table
 - [cpp-memory-guide](../cpp-memory-guide/SKILL.md) — C++20 allocators, ownership, PMR (companion skill)
-- [cpp-testing](../cpp-testing/SKILL.md) — C++20 GoogleTest/CMake testing (companion skill)
 - [debugging-guide](../debugging-guide/SKILL.md) — Evidence-driven root-cause debugging before patching (companion skill)
 - [cpp-performance-guide](../cpp-performance-guide/SKILL.md) — Measured C++ performance work when there is no correctness defect (companion skill)
 
@@ -163,8 +155,8 @@ External reference: [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidel
 
 ## Tool notes
 
-Tool-specific mechanics are minimal for this skill — the body and references are host-neutral. Per-host differences from the former wrapper layer, retained for reference:
+Tool-specific mechanics are minimal for this skill — the body and references are
+host-neutral.
 
-- After installing or editing the skill, reload the coding agent (restart or reload the Claude Code session; reload the Cursor window; reload VS Code for Copilot) so the skill is rediscovered.
-
-For C++ test work (GoogleTest, CMake/CTest, coverage, sanitizers), use the companion skill [cpp-testing](../cpp-testing/SKILL.md) instead of the brief testing notes in [references/code-quality.md](references/code-quality.md).
+C++ test work (GoogleTest, CMake/CTest, coverage, sanitizers) is handled by the **Testing**
+section above.

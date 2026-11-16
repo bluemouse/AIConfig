@@ -98,6 +98,24 @@ notification. Follow these rules to avoid that gap:
   reasonable window, call `get_terminal_output` once to check status rather than
   ending the turn and stalling the conversation.
 
+## 6. Python Conventions
+
+**Standard library first. Explicit CLI contracts. No hidden mutations.**
+
+- Prefer the standard library before adding dependencies (this repo's scripts use
+  stdlib plus `yaml` only); add third-party packages only when asked.
+- Use `main(argv: Sequence[str] | None = None) -> int` with
+  `if __name__ == "__main__": raise SystemExit(main())` — no `sys.exit()` deep in helpers.
+- Keep argument parsing outside core logic so tests can call functions directly.
+- Destructive behavior requires an explicit flag (`--write`, `--in-place`,
+  `--overwrite`); default to dry-run or confirm before mutating.
+- Use `pathlib.Path` for filesystem paths, `logging` for diagnostics, `print()` only
+  for intended user output.
+- Verify before claiming done: `python -m compileall` (or `py_compile`) plus at
+  least one realistic CLI invocation (`--help` or representative args).
+
+Apply these to new scripts and substantial rewrites; do not retrofit existing scripts.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

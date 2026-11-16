@@ -111,7 +111,7 @@
     "query": "write a pull request description for this branch",
     "should_trigger": false,
     "split": "validation",
-    "rationale": "near-miss: PR authoring, use pull-request-guide"
+    "rationale": "near-miss: PR authoring, use github-guide"
   },
   {
     "query": "what does the conventional commits spec say about breaking change footers",

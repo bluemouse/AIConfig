@@ -11,27 +11,19 @@ Use this skill when an Android app needs C++ code or native libraries. Keep Kotl
 
 Assume Android 16/API 36+ target and Kotlin-only managed app code. JNI is still the bridge mechanism between Kotlin/ART bytecode and C/C++ native code.
 
-## When to Use
+## Scope and delegation
 
-- Adding or reviewing C++ source, CMake, `externalNativeBuild`, JNI bridges, prebuilt `.so` libraries, or ABI packaging
-- Native memory, threading, direct buffers, native handles, and camera/media/image processing in C++
-- Native debugging (LLDB, tombstones, sanitizers), simpleperf profiling, symbols, and release native packaging
+This skill owns C++, CMake, `externalNativeBuild`, JNI bridges, prebuilt `.so` libraries, ABI packaging, native memory/threading, native camera/media/image processing in C++, native debugging (LLDB, tombstones, sanitizers), simpleperf profiling, symbols, and release native packaging.
 
-## When NOT to Use
+Delegate instead of duplicating:
 
-- Kotlin app architecture, Compose UI, permissions, or SDK CameraX/Media3 — [android-dev](../android-dev/SKILL.md)
-- Vulkan instance/device/swapchain/shader/pipeline/synchronization — [android-vulkan-dev](../android-vulkan-dev/SKILL.md)
+- App-layer Kotlin architecture, Compose UI, permissions, SDK CameraX/Media3 — [android-dev](../android-dev/SKILL.md)
+- Vulkan instance/device/swapchain/shader/pipeline/synchronization and GPU image processing — [android-vulkan-dev](../android-vulkan-dev/SKILL.md)
 - AGP `android {}` DSL, variants, lint, R8, signing — [gradle-android-dev](../gradle-android-dev/SKILL.md)
-- General C++20 style and Core Guidelines — [cpp-coding](../cpp-coding/SKILL.md)
+- General C++20 style, Core Guidelines, and GoogleTest/CMake native test targets — [cpp-coding](../cpp-coding/SKILL.md)
 - C++ allocator/ownership design (arenas, PMR) — [cpp-memory-guide](../cpp-memory-guide/SKILL.md)
-- GoogleTest/CMake native test targets — [cpp-testing](../cpp-testing/SKILL.md)
 
-## Scope
-
-- Own C++, CMake, `externalNativeBuild`, JNI, native libraries, ABIs, native memory/threading, native camera/media/image processing, debug symbols, sanitizers, and native profiling.
-- Do not duplicate app architecture, Compose UI, permissions, or SDK camera/media guidance; use [android-dev](../android-dev/SKILL.md) for those.
-- Do not implement Vulkan renderer details here; use [android-vulkan-dev](../android-vulkan-dev/SKILL.md) for instance/device/swapchain/shader/pipeline/synchronization/GPU image processing details.
-- Defer AGP Gradle DSL details to [gradle-android-dev](../gradle-android-dev/SKILL.md); keep minimal CMake/JNI examples here.
+The Reference routing table below carries the per-task reference files and companion links.
 
 ## Native-code decision gate
 
@@ -50,7 +42,7 @@ Do not add native code just to make code "faster" without measurement. JNI and m
 2. Choose data ownership: Kotlin-owned arrays/buffers, native-owned handles, direct buffers, file descriptors, or hardware buffers.
 3. Configure Gradle and CMake via [gradle-android-dev](../gradle-android-dev/SKILL.md) and [cmake-gradle-jni.md](references/cmake-gradle-jni.md). Build debug first, then release with symbols and 16 KB page-size compliance handled correctly.
 4. Implement JNI with explicit lifetime, errors, threading, and cancellation. Apply [cpp-coding](../cpp-coding/SKILL.md) and [cpp-memory-guide](../cpp-memory-guide/SKILL.md) for C++ design.
-5. Test with small deterministic inputs before camera/media integration. Use [cpp-testing](../cpp-testing/SKILL.md) for native unit tests where applicable.
+5. Test with small deterministic inputs before camera/media integration. Use [cpp-coding](../cpp-coding/SKILL.md) for native unit tests where applicable.
 6. Profile and debug with Android Studio, LLDB, simpleperf, sanitizers, and logs.
 7. Package only needed ABIs and libraries in the App Bundle.
 
@@ -73,35 +65,11 @@ Use `java/` as the Android source-set directory name if the project already has 
 
 ## Kotlin facade pattern
 
-Expose native code through a Kotlin class with explicit lifecycle. Avoid exposing raw `Long` handles throughout the app.
+Expose native code through one Kotlin facade class with an explicit lifecycle. Do not expose raw `Long` handles outside the facade.
 
-```kotlin
-class NativeImageProcessor : Closeable {
-    private var handle: Long = nativeCreate()
-
-    fun applyFilter(input: ByteBuffer, width: Int, height: Int): ByteBuffer {
-        check(handle != 0L) { "NativeImageProcessor is closed" }
-        require(input.isDirect) { "Use a direct ByteBuffer to avoid extra copies" }
-        return nativeApplyFilter(handle, input, width, height)
-    }
-
-    override fun close() {
-        val h = handle
-        if (h != 0L) {
-            handle = 0L
-            nativeDestroy(h)
-        }
-    }
-
-    private external fun nativeCreate(): Long
-    private external fun nativeApplyFilter(handle: Long, input: ByteBuffer, width: Int, height: Int): ByteBuffer
-    private external fun nativeDestroy(handle: Long)
-
-    companion object {
-        init { System.loadLibrary("image_processor") }
-    }
-}
-```
+- Implement `Closeable`; make `close()` idempotent (zero the handle before native destroy).
+- Validate direct buffers and preconditions at the boundary; return an error rather than proceeding on a closed handle.
+- Convert native errors into Kotlin exceptions or sealed error results at the boundary.
 
 ## Core rules
 
@@ -127,18 +95,6 @@ class NativeImageProcessor : Closeable {
 | AGP externalNativeBuild, variants, lint | [gradle-android-dev](../gradle-android-dev/SKILL.md) |
 | C++ style and Core Guidelines | [cpp-coding](../cpp-coding/SKILL.md) |
 | C++ memory/ownership | [cpp-memory-guide](../cpp-memory-guide/SKILL.md) |
-| Native unit tests | [cpp-testing](../cpp-testing/SKILL.md) |
+| Native unit tests | [cpp-coding](../cpp-coding/SKILL.md) |
 | App-layer Kotlin/Compose | [android-dev](../android-dev/SKILL.md) |
 | Vulkan on Android | [android-vulkan-dev](../android-vulkan-dev/SKILL.md) |
-
-## Companion Skills
-
-For cross-skill delegation, see the Reference routing table above.
-
-## References
-
-- [cmake-gradle-jni.md](references/cmake-gradle-jni.md): Gradle, CMake, JNI signatures, prebuilt libraries, ABI packaging, 16 KB page size.
-- [native-memory-threads-libraries.md](references/native-memory-threads-libraries.md): RAII, references, direct buffers, native handles, threads, library ownership.
-- [camera-media-image-pipeline.md](references/camera-media-image-pipeline.md): NDK camera/media/image processing and handoff to Vulkan.
-- [debugging-profiling-release.md](references/debugging-profiling-release.md): Android Studio, LLDB, ndk-stack, simpleperf, sanitizers, symbols, release packaging.
-- [source-map.md](references/source-map.md): source links and update notes used to build this skill.

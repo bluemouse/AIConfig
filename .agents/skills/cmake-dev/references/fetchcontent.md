@@ -51,4 +51,4 @@ targets in `add_subdirectory` until population completes.
 
 - [find-package.md](find-package.md) — prefer system packages when suitable
 - [project-structure.md](project-structure.md) — wiring fetched subprojects
-- [../cpp-testing/SKILL.md](../../cpp-testing/SKILL.md) — GoogleTest FetchContent patterns in test code
+- [../cpp-coding/SKILL.md](../../cpp-coding/SKILL.md) — GoogleTest FetchContent patterns in test code

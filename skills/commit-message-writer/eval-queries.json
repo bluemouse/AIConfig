@@ -99,7 +99,7 @@
     "query": "split my branch into three small PRs with good titles",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: PR splitting -> pull-request-guide"
+    "rationale": "near-miss: PR splitting -> github-guide"
   },
   {
     "query": "git push origin HEAD and open a pull request",

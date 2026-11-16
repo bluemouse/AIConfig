@@ -117,6 +117,6 @@
     "query": "Write a PR description for these changes",
     "should_trigger": false,
     "split": "test",
-    "rationale": "near-miss: PR authoring belongs to pull-request-guide"
+    "rationale": "near-miss: PR authoring belongs to github-guide"
   }
 ]

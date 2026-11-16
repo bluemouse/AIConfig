@@ -19,14 +19,6 @@ trace directly to a specific finding id. When a finding's root cause traces to a
 phase (research, plan, or implement), do not patch it locally — emit a backward handoff
 packet instead.
 
-## When to Use
-
-- Resolving code review findings classified as `root-cause-phase: local`
-- Applying targeted fixes to specific findings from [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-- Producing a fix report for re-review
-- Classifying findings as upstream and emitting backward handoff packets when the root
-  cause traces to research, plan, or implement phases
-
 ## When NOT to Use
 
 - **Reviewing code or diffs** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
@@ -39,161 +31,81 @@ packet instead.
   [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md)
 - **Authoring or repairing an implementation plan** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
 
-**Boundary vs plan-executor:** this skill resolves **review findings** — discrete,
-finding-level issues with a specific location and required fix. [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
-executes **implementation plans** — ordered tasks with TDD specs and execution waves. A
-review finding is not a plan task; forcing it into plan-executor's format loses the
-finding's severity, location, and root-cause classification.
+**Boundary vs debugging-guide:** if a fix attempt reveals a defect with an unclear root
+cause, switch to [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) to prove root
+cause before continuing.
 
-**Boundary vs debugging-guide:** this skill applies known fixes to specific findings. When
-a fix attempt reveals a defect with an unclear root cause — a test fails unexpectedly, a
-crash appears, or the fix doesn't resolve the finding — switch to
-[../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) to prove root cause before
-continuing.
+## Rules
 
-## Companion Skills
+Non-negotiable; violating them produces unreviewable diffs and breaks the review loop:
 
-- Primary input from [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) — findings with
-  `root-cause-phase` field
-- After local fixes: return to [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) for
-  re-review (the code review loop)
-- When a fix attempt reveals a defect with unclear root cause:
-  [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md)
-- When a finding is classified as upstream: emit a backward handoff packet to the target
-  phase (research, plan, or implement)
-- For git mechanics after re-review approves: [../git-guide/SKILL.md](../git-guide/SKILL.md)
-  or the `/git-commit` command
-
-## Operating posture
-
-Default to a **surgical** posture: precise, minimal, and scope-disciplined.
-
-Always:
-- Fix only the specific findings reported. Every changed line must trace to a finding id.
-- Do not expand scope. Do not refactor adjacent code, improve naming, fix unrelated issues,
-  or make opportunistic changes — even if they seem helpful.
-- Match existing project conventions over introducing new patterns.
-- Run verification after each fix or batch of related fixes.
-- Preserve the finding id throughout the fix so re-review can trace the change back to the
-  finding.
-- When a finding's root cause is genuinely upstream (the design decision, requirement, or
-  plan is the cause, not the code), do not patch it locally. Emit a backward handoff packet.
+1. **Every changed line traces to a finding id.** If a line was changed and no finding
+   covers it, the change is out of scope.
+2. **No opportunistic changes.** Do not refactor, rename, reformat, or "improve" code not
+   flagged by a finding; note unrelated issues in the fix report instead of fixing them.
+3. **No scope expansion.** If fixing a finding reveals the issue is larger than the finding
+   suggests, mark the finding `unresolved` with the larger issue noted and let code-reviewer
+   re-review with the new context.
+4. **Match existing style.** Match the surrounding code's conventions; do not introduce
+   new patterns.
+5. **No commits.** This skill does not commit, push, stage, or deploy. Hand off to
+   code-reviewer for re-review, then to git-guide or `/git-commit`.
+6. **Surface failures.** Run verification after each fix or batch, record ambiguities and
+   failures in the fix report, and never hide a scope violation in a long diff.
 
 ## Workflow
 
 ### 1. Parse the findings
 
-Read the code review report. For each finding, extract:
+Read the code review report. For each finding, extract the finding id (e.g., `cr-001`),
+severity (`blocker`, `major`, `minor`), `root-cause-phase` (`local`, `research`, `plan`,
+`implement`), location, scope, what is wrong, why it matters, and the proposed fix.
+Separate findings into **local findings** (`root-cause-phase: local` — resolve with code
+fixes) and **upstream findings** (`research`/`plan`/`implement` — do not fix; emit a
+backward handoff packet for each).
 
-- Finding id (e.g., `cr-001`)
-- Severity (`blocker`, `major`, `minor`)
-- `root-cause-phase` field (`local`, `research`, `plan`, `implement`)
-- Location (file, line range, symbol)
-- Scope (design/correctness/maintainability/security/performance/tests/scope-intent-alignment)
-- Issue description (What is wrong)
-- Why it matters
-- Proposed fix
-
-Separate findings into two groups:
-
-- **Local findings** (`root-cause-phase: local`): resolve these with code fixes.
-- **Upstream findings** (`root-cause-phase: research | plan | implement`): do not fix
-  these. Emit a backward handoff packet for each.
-
-### 2. Classify and route upstream findings
+### 2. Route upstream findings
 
 For each upstream finding, create a backward handoff packet following the canonical
 format in [../dev-workflow-orchestrator/references/backward-handoff-format.md](../dev-workflow-orchestrator/references/backward-handoff-format.md).
-Set the routing and source fields as follows:
+From phase: code-review; To: the finding's `root-cause-phase`; carry the finding id and
+severity. Write each packet to `back-code-review-to-<target-phase>-<n>.md` in the run
+directory. Do not attempt a local fix for an upstream finding. A local patch for a systemic
+problem creates technical debt and hides the root cause.
 
-- `From phase`: code-review
-- `To phase`: the `root-cause-phase` value (must be `research`, `plan`, or `implement`)
-- `Backward edge count for target phase`: <n> of 2
-- `Created`: <ISO timestamp>
-- `Source finding` → `Finding id`: the finding id (e.g., `cr-007`)
-- `Source finding` → `Severity`: the finding severity (`blocker`/`major`/`minor`)
-- `Source finding` → `Source artifact`: path to `40-code-review.md`
-- `Root cause classification` → `Classification`: upstream
-- `Root cause classification` → `Why this is not a local defect`: <explanation>
-- `Root cause classification` → `Why the target phase is the root`: <explanation — trace to the earliest phase whose artifact is the cause>
-- `What the target phase must resolve` → `Issue`, `Why it matters`, `Required fix`, `Evidence`: <from the finding's what-is-wrong, why-it-matters, proposed-fix, plus file/symbol evidence>
-- `Context from the source phase` → `What was attempted`, `Why local fix is insufficient`, `Artifacts to review`: <what was attempted, why local fix is insufficient, paths to `41-fix-report.md` if any>
+### 3. Plan and apply local fixes
 
-Write each packet to `back-code-review-to-<target-phase>-<n>.md` in the run directory.
+Group related findings that touch the same file or module. Fix blockers first, then
+majors, then minors (or defer minors if the user or reviewer indicated they are optional).
+For each fix, identify the exact file and location, the minimal change that resolves the
+finding, the verification command, and whether a test must be added or updated. If a
+finding is ambiguous — unclear location, open-ended required fix, or contradicting the
+codebase — do not guess; mark it `unresolved` in the fix report with the reason.
 
-Do not attempt a local fix for an upstream finding. A local patch for a systemic problem
-creates technical debt and hides the root cause.
+Apply fixes one at a time or in small related batches: make the minimal change, update or
+add the test if the finding is about missing or wrong tests, run the finding's verification
+command or the project's focused test/build/lint for the touched area, and record the
+result. If a fix attempt fails — the fix doesn't resolve the finding, a test breaks
+unexpectedly, or a deeper issue appears — stop fixing that finding. Switch to
+[../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) if the root cause is unclear,
+or mark the finding `unresolved` with the failure reason in the fix report.
 
-### 3. Plan the local fixes
+### 4. Verify
 
-For local findings, group related findings that touch the same file or module. Plan the
-fix order:
+After all local fixes, run the project's focused test/build/lint for all touched areas and
+the broader regression suite if the changes could affect other areas. Confirm every fix's
+verification command passes and no unrelated tests broke. If verification fails, do not
+commit or proceed. Record the failure in the fix report and return to code-reviewer with
+the failure visible.
 
-1. Fix blockers first.
-2. Fix majors next.
-3. Fix minors last (or defer them if the user or reviewer indicated they are
-   optional).
-
-For each fix, identify:
-
-- The exact file and location to change.
-- The minimal change that resolves the finding.
-- The verification command to run after the fix.
-- Whether the fix requires a new test or modifies an existing test.
-
-If a finding is ambiguous — the location is unclear, the required fix is open-ended, or
-the finding contradicts the codebase — do not guess. Mark the finding as `unresolved` in
-the fix report with the reason, and let code-reviewer re-review with the ambiguity
-visible.
-
-### 4. Apply fixes
-
-Apply fixes one at a time or in small related batches. For each fix:
-
-1. Make the minimal change that resolves the finding.
-2. Do not touch code outside the finding's scope.
-3. If the fix requires a test change (the finding is about missing or wrong tests), update
-   or add the test.
-4. Run the finding's verification command or the project's focused test/build/lint for the
-   touched area.
-5. Record the result.
-
-If a fix attempt fails — the fix doesn't resolve the finding, a test breaks unexpectedly,
-or the change reveals a deeper issue — stop fixing that finding. Switch to
-[../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) if the root cause is unclear, or
-mark the finding as `unresolved` with the failure reason in the fix report.
-
-### 5. Verify
-
-After all local fixes are applied:
-
-- Run the project's focused test/build/lint for all touched areas.
-- Run the broader regression suite if the changes could affect other areas.
-- Confirm that every fix's verification command passes.
-- Confirm that no unrelated tests broke.
-
-If verification fails, do not commit or proceed. Record the failure in the fix report and
-return to code-reviewer with the failure visible.
-
-### 6. Produce the fix report
+### 5. Produce the fix report
 
 Write the fix report using [references/fix-report-template.md](references/fix-report-template.md)
-as the default structure. The report must include:
-
-- Run directory and source review report path.
-- Summary: counts of findings resolved, unresolved, deferred, and routed upstream.
-- Per-finding resolution: finding id, severity, resolution status (`fixed`, `unresolved`,
-  `deferred`, `upstream`), what was changed, verification result.
-- Upstream findings: list of backward handoff packets created, with target phase and
-  finding id.
-- Verification commands run and outcomes.
-- Files changed and why (traced to finding ids).
-- Risks, assumptions, and follow-up needs.
-- Readiness for re-review: whether the fix report is ready for code-reviewer to re-review.
-
-Do not create a report file in the repository unless the dev-workflow-orchestrator or user
-asks for one at a specific path. Otherwise, provide the report in the response or at the
-path the orchestrator specifies.
+as the default structure, covering every finding id with a disposition
+(`fixed`/`unresolved`/`deferred`/`upstream`), verification evidence, and backward handoff
+packet paths for upstream findings. Do not create a report file in the repository unless the
+dev-workflow-orchestrator or user asks for one at a specific path; otherwise provide the
+report in the response or at the path the orchestrator specifies.
 
 ## Re-review handoff contract
 
@@ -210,31 +122,3 @@ fixes), not the original diff. code-reviewer treats this as a fresh review pass 
 not assume prior findings are resolved; it verifies the fixes against the finding ids and
 may raise new findings introduced by the fixes. The loop continues until code-reviewer
 returns `ready to commit` or `ready with notes`, or the round cap is hit.
-
-## Scope discipline rules
-
-These rules are non-negotiable. Violating them produces unreviewable diffs and breaks the
-code review loop.
-
-1. **Every changed line traces to a finding id.** If a line was changed and no finding
-   covers it, the change is out of scope.
-2. **No opportunistic changes.** Do not refactor, rename, reformat, or "improve" code that
-   was not flagged by a finding. If you notice an unrelated issue, mention it in the fix
-   report — do not fix it.
-3. **No scope expansion.** If fixing a finding reveals that the issue is larger than the
-   finding suggests, do not expand the fix. Mark the finding as `unresolved` with the
-   larger issue noted, and let code-reviewer re-review with the new context.
-4. **Match existing style.** Even when fixing, match the surrounding code's conventions.
-   Do not introduce new patterns.
-5. **No commits.** This skill does not commit, push, stage, or deploy. Hand off to
-   code-reviewer for re-review, then to git-guide or `/git-commit` for commit.
-
-## Quality bar
-
-A strong fix report:
-- Traces every change to a specific finding id.
-- Distinguishes fixed, unresolved, deferred, and upstream-routed findings.
-- Shows verification evidence (commands run, outcomes).
-- Surfaces ambiguities and failures instead of hiding them.
-- Makes re-review straightforward for code-reviewer.
-- Does not bury scope violations in a long diff.

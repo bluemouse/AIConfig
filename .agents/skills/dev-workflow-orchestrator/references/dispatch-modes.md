@@ -57,7 +57,9 @@ not from the subagent's return message. The subagent's return message is a conve
 In delegated or simulated mode, the orchestrator invokes the checker skill as a named pass
 with explicit input/output paths — the current behavior before the agent conversion. The
 checker runs in the orchestrator's context (no fresh context), but the artifact contract,
-loop contracts, and validation scripts all hold unchanged.
+loop contracts, and validation scripts all hold unchanged. Named passes receive artifact
+paths plus section pointers, not full contents; per turn, re-read only the manifest and the
+current phase's artifacts; load superseded `-r<N>` artifacts only when a round requires them.
 
 **Why doers stay in-context:** doer passes (research-guide, plan-guide, plan-executor,
 code-review-resolver) always run in the orchestrator's context in every mode. This is

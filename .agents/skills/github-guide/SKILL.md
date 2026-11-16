@@ -1,6 +1,6 @@
 ---
 name: github-guide
-description: "Use when delivering a pull request and its review on GitHub (github.com or GitHub Enterprise Server) from the command line with the `gh` CLI and `gh api` — opening a PR with `gh pr create`, posting a structured review with line-anchored inline comments, resolving review threads, detecting that the host is GitHub from the git remote, and scoping a classic or fine-grained token. Triggers on a github.com / GHES remote, `gh pr create`, `gh api .../pulls/.../reviews`, an inline review comment by path+line, resolving a review thread (resolveReviewThread), REQUEST_CHANGES / branch-protection merge gating, or GH_TOKEN / GH_ENTERPRISE_TOKEN scopes — even when the user doesn't say 'gh' but the repo is hosted on GitHub."
+description: "Use when delivering a pull request and its review on GitHub (github.com or GitHub Enterprise Server) from the command line with the `gh` CLI and `gh api` — opening a PR with `gh pr create`, writing or self-reviewing the PR description or body (what/why/how, how-tested, tradeoffs, sizing and splitting), posting a structured review with line-anchored inline comments, resolving review threads, detecting that the host is GitHub from the git remote, and scoping a classic or fine-grained token. Triggers on a github.com / GHES remote, `gh pr create`, `gh api .../pulls/.../reviews`, writing a PR description / PR body, sizing or splitting a large change into reviewable PRs, self-reviewing a PR before requesting review, draft vs ready, an inline review comment by path+line, resolving a review thread (resolveReviewThread), REQUEST_CHANGES / branch-protection merge gating, or GH_TOKEN / GH_ENTERPRISE_TOKEN scopes — even when the user doesn't say 'gh' or 'PR', e.g. 'write the PR description'."
 ---
 
 # GitHub PR & review delivery — quick reference
@@ -8,34 +8,9 @@ description: "Use when delivering a pull request and its review on GitHub (githu
 Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve
 paths to `references/` from that directory.
 
-How to realize a pull request and its review on GitHub from the shell. This is the host-**delivery** tier: it does not teach the craft, only how to land it on GitHub.
+## Scope / handoffs
 
-- _What the review finds and how severe it is_ (findings, scopes, merge readiness) belongs to **[code-reviewer](../code-reviewer/SKILL.md)**.
-- _What a good PR description says_ (sizing, how-tested, tradeoffs, self-review) belongs to **[pull-request-guide](../pull-request-guide/SKILL.md)**.
-- _The local-git push and rebase_ that get a clean branch onto the remote belong to **[git-guide](../git-guide/SKILL.md)**'s push reference.
-- _Complex local merge/rebase integration_ (semantic conflicts, integration review, verification) belongs to **[git-merge-guide](../git-merge-guide/SKILL.md)**.
-
-This skill only takes those finished artifacts and posts them through `gh` / `gh api`.
-
-## When to Use
-
-- Opening a PR on GitHub with `gh pr create` (reviewers, labels, draft, issue linking)
-- Posting a structured PR review with inline comments via `gh api … /pulls/{n}/reviews`
-- Resolving or replying on review threads (`resolveReviewThread`, GraphQL)
-- GitHub / `gh` auth setup, token scoping (classic vs fine-grained PAT), or GHES env vars
-- Mapping and posting findings from a prior `code-reviewer` run onto an open PR
-
-## When NOT to Use
-
-- **Reviewing a diff or judging severity / findings** — use
-  [code-reviewer](../code-reviewer/SKILL.md)
-- **Writing PR descriptions, sizing, or self-review narrative** — use
-  [pull-request-guide](../pull-request-guide/SKILL.md)
-- **Commit, push, rebase, worktrees, simple conflict triage, final merge commit** — use
-  [git-guide](../git-guide/SKILL.md)
-- **Complex local merge/rebase integration** — use
-  [git-merge-guide](../git-merge-guide/SKILL.md)
-- **Non-GitHub hosts** (GitLab, Azure DevOps, etc.) — use that host's tooling when installed
+The host-**delivery** tier: take finished artifacts and land them on GitHub via `gh` / `gh api` — open a PR (`gh pr create`), post a structured review with line-anchored inline comments (`POST …/pulls/{n}/reviews`), resolve threads (GraphQL `resolveReviewThread`), scope a classic or fine-grained token, or set up auth / GHES env vars. The author-side PR description, sizing, and self-review defaults live in **PR authoring defaults** below; for everything else hand off: findings and severity → [code-reviewer](../code-reviewer/SKILL.md); commit, push, rebase, worktrees, final merge commit → [git-guide](../git-guide/SKILL.md); complex local merge/rebase integration → [git-merge-guide](../git-merge-guide/SKILL.md); non-GitHub hosts (GitLab, Azure DevOps) → that host's tooling.
 
 ## Core model
 
@@ -51,20 +26,34 @@ When this skill fires:
 3. Load the `references/*.md` file matching the task, not everything upfront.
 4. Run all `gh` commands in **sync terminal mode**. Always pass `--body-file -` (never let `gh pr create` / `gh pr edit` open `$EDITOR`), and avoid `--web` (it launches a browser and blocks).
 
-## Requirements
-
-- `gh` authenticated to the target host. First-time install + `gh auth login` + protocol + clone + verify are in [references/onboarding.md](references/onboarding.md); token families, per-operation least-privilege scopes, and storage are in [references/auth.md](references/auth.md).
-- The git remote points at GitHub: `gh repo view --json nameWithOwner,url` resolves it; a `github.com` host (or a GHES host) on `git remote get-url origin` is the detection signal. For GHES, set `GH_HOST` / `--hostname` and use `GH_ENTERPRISE_TOKEN` (see auth).
-
 ## Essentials
 
+- **Confirm host and auth** — a `github.com` (or GHES) host on `git remote get-url origin` (resolved via `gh repo view --json nameWithOwner,url`) is the detection signal; for GHES set `GH_HOST` / `--hostname` and use `GH_ENTERPRISE_TOKEN`. First-time install + `gh auth login` + protocol + clone + verify: [references/onboarding.md](references/onboarding.md); token families, per-operation least-privilege scopes, and storage: [references/auth.md](references/auth.md).
 - **Open a PR** — `gh pr create --base <target> --head <source> --title … --body-file -` auto-pushes the branch if it isn't on the remote and sets reviewers/labels/assignees in one call; the raw `POST /repos/{owner}/{repo}/pulls` does NOT push. See [references/create.md](references/create.md).
 - **Push / rebase first** — the clean branch is [git-guide](../git-guide/SKILL.md)'s job; this skill assumes the source branch builds on the latest target. See [git-guide push reference](../git-guide/references/push.md).
 - **Post a structured review** — `gh pr review` only carries the summary + verdict; batch the summary, every inline comment, and the verdict into one `gh api … /pulls/{n}/reviews` object. See [references/review-post.md](references/review-post.md).
 - **Write the review content with code-reviewer** — findings, severity, and merge verdict are `code-reviewer`'s; this skill maps them to GitHub bodies and submits them (see **Handoff from code-reviewer** below).
-- **Write the PR body with pull-request-guide** — `gh pr create --body-file` takes a description authored per `pull-request-guide`.
+- **Write the PR body from the authoring defaults** — `gh pr create --body-file` takes a description authored per the **PR authoring defaults** below.
 - **Resolve a thread** — GraphQL-only `resolveReviewThread` by thread node id (`PRRT_…`), matched by id never by line; list threads with `pullRequest.reviewThreads`. See [references/review-resolve.md](references/review-resolve.md).
 - **Scope the token per operation** — push needs Contents: write; open-PR / post-review need Pull requests: write; resolve also needs Contents: read & write on a fine-grained token. See [references/auth.md](references/auth.md).
+
+## PR authoring defaults
+
+Author-side defaults for the PR description, sizing, and self-review — apply them before `gh pr create`. Four are firm:
+
+- **"Tested locally" tells the reviewer nothing** — name the scenario, the environment, and how the reviewer can re-run it (a command, a request, a deep link); list the automated tests added and the edge cases checked (empty, error, concurrency, large input).
+- **50-200 changed lines per PR, ~400 as a soft cap** — line counts approximate the real target: review time under roughly an hour. Limit files touched, not just lines; a wide diff is hard to follow even when small.
+- **Split a refactor out of a feature PR** — one concern per PR; break large changes into independently reviewable slices or stack dependent PRs and cross-link them. Line count measures volume, not risk, so call out legitimately big diffs (scaffolding, generated code, dependency bumps, renames) up front and the reviewer calibrates instead of skimming.
+- **Keep the PR a draft until CI is green and you have self-reviewed the diff** — read your own diff file by file, remove debug logging, commented-out code, and stray files, confirm the diff matches the description, run the project checks (typecheck / lint / build / test), then flip to ready and assign reviewers.
+
+Description shape:
+
+- Lead with **What / Why / How** — the net effect, the goal with the linked work item, the approach plus any rejected alternative and the reason.
+- Match depth to size — one sentence for a typo or version bump; ~300-400 words for a multi-area change. Link context (work items, related PRs, design docs) and attach screenshots for any UI change.
+- Add a short **Tradeoffs / risks** section when the change has limitations or non-obvious decisions: each known limitation and why it is acceptable for now, alternatives considered, and anything affecting backwards compatibility, data, or config. Do not invent risks when there are none.
+- A lean template of 4-6 prompts (What / Why / Changes / Testing / Tradeoffs / Related) beats a long checklist form — set it as `PULL_REQUEST_TEMPLATE.md` so every PR starts pre-filled.
+
+For the surrounding work, hand off: **[git-guide](../git-guide/SKILL.md)** for mechanics (commit, push, rebase, worktrees), **[git-merge-guide](../git-merge-guide/SKILL.md)** for local merge/rebase integration, **[commit-message-writer](../commit-message-writer/SKILL.md)** for the commit message, **[code-reviewer](../code-reviewer/SKILL.md)** for diff review.
 
 ## Gotchas
 
@@ -156,21 +145,3 @@ gh api graphql -f query='mutation($t:ID!){resolveReviewThread(input:{threadId:$t
   -f t=PRRT_kwDOxxxxx
 ```
 
-## Progressive disclosure
-
-Each reference is a trigger — read only the one matching the user's intent; do not preload everything.
-
-- Read [references/onboarding.md](references/onboarding.md) — Load when setting up a fresh machine/account: installing `gh`, running `gh auth login`, picking HTTPS vs SSH, making gh the git credential helper, cloning, and verifying with a read call (GHES included).
-- Read [references/auth.md](references/auth.md) — Load when auth fails, choosing classic vs fine-grained PAT, scoping a token per operation (push / open-PR / review / resolve), the GH_TOKEN vs GH_ENTERPRISE_TOKEN split, keyring storage, or wiring tokens into CI / GitHub Actions.
-- Read [references/create.md](references/create.md) — Load when opening a PR: `gh pr create` flags, draft, reviewers/labels, issue-linking and auto-close semantics, the additive-body / replace-on-edit trap, idempotency guard, and the raw `POST /pulls` REST equivalent.
-- Read [references/review-post.md](references/review-post.md) — Load when publishing a review: the single `.../reviews` object, the exact path/line/side inline anchor model, the REQUEST_CHANGES blocking mechanism, and deep-linking from `html_url`.
-- Read [references/review-resolve.md](references/review-resolve.md) — Load when resolving/replying on threads: listing `reviewThreads`, matching a finding to a thread by id (never line), the GraphQL `resolveReviewThread` mutation, in-thread replies, and the conversation-resolution merge gate.
-
-## Companion Skills
-
-| Task | Path |
-| --- | --- |
-| Review diff / produce findings | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
-| PR description, sizing, self-review | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |
-| Commit, push, rebase, worktrees, simple conflict triage | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
-| Local merge/rebase integration and verification | [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) |

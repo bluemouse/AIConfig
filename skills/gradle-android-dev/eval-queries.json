@@ -45,7 +45,7 @@
     "query": "write Kotest tests for ViewModel with runTest and fake repository",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: plain Kotlin test design -> kotlin-testing"
+    "rationale": "near-miss: plain Kotlin test design -> kotlin-coding"
   },
   {
     "query": "fix sealed class when exhaustiveness in domain model",

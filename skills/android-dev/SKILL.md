@@ -5,139 +5,58 @@ description: kotlin-only native android app development guidance for android 16/
 
 # Android Dev
 
-Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve paths to `references/` and `scripts/` from that directory.
+Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`; resolve `references/` paths from it. App-layer entrypoint for Kotlin Android development — teach junior developers the decision process and safe defaults before final code. Assume `compileSdk`/`targetSdk` are Android 16 / API 36+ unless the user says otherwise; do not interpret "Android 16+" as minSdk 16 (modern Compose/Media/Vulkan guidance needs major fallback work there).
 
-Use this skill as the app-layer entrypoint for Kotlin Android development. Teach junior developers by showing the decision process, safe defaults, and small Kotlin examples before giving final code.
+## Scope and routing
 
-Assume `compileSdk` and `targetSdk` are Android 16 / API 36 or newer unless the user gives a different modern target. Do not interpret "Android 16+" as minimum API 16. If the user requests `minSdk 16`, warn that modern Compose, Media, and Vulkan guidance will not apply without major fallback work.
+Kotlin only for app code — no Java classes; XML only for manifest, resources, legacy interop, and build metadata. Covers app architecture, Compose UI, camera/media, painting/photo flows, permissions, accessibility, app-layer performance/memory/lifecycle, and release quality. Everything else routes to sibling skills per the Reference routing table at the end.
 
-## When to Use
+## Workflow and architecture
 
-- Designing or implementing Kotlin Android app architecture, Jetpack Compose UI, ViewModels, repositories, and use cases
-- CameraX/Camera2, Media3, Photo Picker, MediaStore, painting/photo editing flows, permissions, and accessibility
-- App-layer performance, memory budgets, lifecycle safety, and release quality gates for Android 16/API 36+
-- Reviewing Kotlin Android diffs for architecture, Compose, camera/media, or release readiness
+1. Check project state first (wrapper, modules, `./gradlew assembleDebug`); build/sync issues → [gradle-android-dev](../gradle-android-dev/SKILL.md).
+2. Pick the simplest correct API: Compose for UI, CameraX for capture/preview, Media3 for playback, Photo Picker for user-selected media, MediaStore for owned/shared media, WorkManager for deferrable work, NDK/Vulkan only for measured performance or GPU needs.
+3. Design the data flow before writing code: UI event -> ViewModel -> use case/repository -> data source/native bridge -> immutable UI state.
 
-## When NOT to Use
-
-- Plain Kotlin language/stdlib/API design without Android framework — [kotlin-coding](../kotlin-coding/SKILL.md)
-- Kotlin test design, Kotest/MockK, coroutine tests, or flaky-test triage — [kotlin-testing](../kotlin-testing/SKILL.md)
-- Android Gradle Plugin, `android {}` DSL, variants, lint, R8, signing, or sync failures — [gradle-android-dev](../gradle-android-dev/SKILL.md)
-- C++, CMake, JNI, native libraries, native memory, or NDK debugging — [android-ndk-dev](../android-ndk-dev/SKILL.md)
-- Vulkan instance/device/swapchain/shader/pipeline/synchronization on Android — [android-vulkan-dev](../android-vulkan-dev/SKILL.md)
-
-## Scope
-
-- Use Kotlin only for app code. Do not generate Java classes. XML is allowed only for manifest, resources, legacy interop, and build metadata.
-- Use this skill for architecture, Compose UI, camera/media SDK usage, app permissions, testing, accessibility, memory/performance, and release quality.
-- Use [gradle-android-dev](../gradle-android-dev/SKILL.md) for AGP build files, SDK levels, variants, lint/R8 task wiring, and signing — not duplicated here.
-- Use [android-ndk-dev](../android-ndk-dev/SKILL.md) when the task needs C++ code, JNI, native libraries, native memory management, or NDK build/debugging.
-- Use [android-vulkan-dev](../android-vulkan-dev/SKILL.md) when the task needs Vulkan instance/device/swapchain/render-pass/pipeline/shader/synchronization logic or GPU image processing through the NDK.
-
-## Development workflow
-
-1. Classify the feature: UI, camera/media, storage, data, background work, native bridge, or Vulkan renderer.
-2. Check project state before adding logic: Gradle wrapper exists, `settings.gradle.kts` includes modules, AndroidX is enabled, the app builds with `./gradlew assembleDebug`, and lint/test tasks are known. For build/sync issues, use [gradle-android-dev](../gradle-android-dev/SKILL.md).
-3. Pick the simplest correct API: Compose for UI, CameraX for standard camera capture/preview, Media3 for playback, Android Photo Picker for user-selected media, MediaStore for owned/shared media, WorkManager for deferrable work, NDK/Vulkan only for measured performance or GPU needs.
-4. Design the data flow before writing code: UI event -> ViewModel -> use case/repository -> data source/native bridge -> result -> immutable UI state.
-5. Add performance and lifecycle constraints early: no blocking work on main, no unbounded image allocations, no leaked lifecycle observers, no native handles without explicit close/release.
-6. Finish with build, lint, unit tests, instrumentation tests where useful, and a release checklist.
-
-## Default architecture
-
-Prefer a modular, testable architecture:
-
-```text
-app/                 application entry, DI, navigation shell
-feature/<name>/      screens, ViewModels, feature-specific use cases
-core/ui/             theme, design system, reusable Compose widgets
-core/domain/         pure Kotlin domain models and repository interfaces
-core/data/           repository implementations, Room, network, MediaStore
-core/nativebridge/   optional Kotlin wrappers over NDK libraries
-```
-
-Dependency rule: UI depends inward on domain abstractions; domain never depends on Android framework, data, UI, NDK, or Vulkan implementation details. Put camera/media framework types at the edge and map to app models before crossing module boundaries.
-
-For complete architecture, data, error, DI, coroutine, and testing guidance, read [architecture-and-quality.md](references/architecture-and-quality.md).
+Module boundaries, the dependency rule (domain has no Android framework dependency), DI, errors, permissions, and testing are in [architecture-and-quality.md](references/architecture-and-quality.md).
 
 ## Kotlin and coroutine rules
 
 Apply [kotlin-coding](../kotlin-coding/SKILL.md) for language/stdlib correctness. Android-specific additions:
 
-- Make suspend functions main-safe: the function that performs blocking work switches to `Dispatchers.IO` or `Dispatchers.Default` internally.
-- Use `viewModelScope` and structured concurrency. Do not use `GlobalScope`.
-- Represent screen state as an immutable data class or sealed interface. Expose `StateFlow` from ViewModel and collect it with lifecycle awareness in Compose.
+- Make suspend functions main-safe: the function performing blocking work switches to `Dispatchers.IO` or `Dispatchers.Default` internally.
+- Use `viewModelScope` and structured concurrency. Never `GlobalScope`.
+- Represent screen state as an immutable data class or sealed interface; expose `StateFlow` and collect it with lifecycle awareness.
 - Use explicit error models for user-visible failures; do not swallow exceptions or expose raw stack traces to UI.
 - Avoid `!!`, mutable global state, long-lived references to `Activity`, and uncancelled callbacks.
 
-```kotlin
-data class EditorUiState(
-    val isLoading: Boolean = false,
-    val image: ImageBitmap? = null,
-    val errorMessage: String? = null
-)
-
-class EditorViewModel(
-    private val loadPhoto: LoadPhotoUseCase
-) : ViewModel() {
-    private val _uiState = MutableStateFlow(EditorUiState())
-    val uiState: StateFlow<EditorUiState> = _uiState.asStateFlow()
-
-    fun open(uri: Uri) = viewModelScope.launch {
-        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-        runCatching { loadPhoto(uri) }
-            .onSuccess { bitmap -> _uiState.update { it.copy(isLoading = false, image = bitmap) } }
-            .onFailure { error ->
-                _uiState.update {
-                    it.copy(isLoading = false, errorMessage = error.toUserMessage())
-                }
-            }
-    }
-}
-
-private fun Throwable.toUserMessage(): String = when (this) {
-    is SecurityException -> "Permission denied"
-    else -> message ?: "Something went wrong"
-}
-```
-
 ## Compose UI rules
 
-Use Compose as the default UI toolkit. Read [ui-camera-media.md](references/ui-camera-media.md) before implementing screens with camera preview, media playback, painting canvases, image editing, or heavyweight images.
+Use Compose as the default UI toolkit; read [ui-camera-media.md](references/ui-camera-media.md) before any screen with camera preview, media playback, painting canvases, or heavyweight images.
 
-- Hoist state. Keep Composables mostly stateless and previewable.
-- Use `remember` only for UI-local state. Use `rememberSaveable` for state that should survive configuration changes.
-- Use `derivedStateOf` for derived values that are expensive or frequently invalidated.
-- Use `LaunchedEffect`, `DisposableEffect`, and `rememberUpdatedState` for lifecycle-bound side effects; always clean up callbacks, players, sensors, and preview sessions.
-- Use keys for lazy lists and stable model types for large feeds or media grids.
 - Use `AndroidView` for SDK views such as camera preview or platform media surfaces when Compose wrappers are not enough.
-- Support edge-to-edge layouts, predictive back, adaptive screen sizes, dark theme, dynamic type, and accessibility labels.
+- Edge-to-edge and predictive back are API 36 release blockers, not polish — handle them per the Android 16 checks below.
 
 ## Camera, media, painting, and photography defaults
 
-- Camera preview/capture: start with CameraX. Use Camera2 only when the feature requires manual sensor controls, custom stream combinations, low-level timing, or device-specific capability queries.
-- Image analysis: use backpressure, close every `ImageProxy`, keep YUV processing off main, and avoid conversion to large RGBA bitmaps unless required.
-- Photo picking: prefer Android Photo Picker for user-selected media. Request broad storage permissions only when a real product requirement cannot be met by picker/MediaStore.
-- Media playback: use Media3 for playback. Use lower-level MediaCodec/MediaMuxer or NDK APIs only for custom decode/encode pipelines.
-- Painting: use Compose Canvas for simple drawing; use tiled bitmaps or a native/Vulkan renderer for large canvases, high-frequency brushes, filters, or non-destructive layer compositing.
-- Image processing: CPU filters can live in Kotlin for small images, NDK C++ for heavy scalar/SIMD work, and Vulkan compute/render passes for real-time preview or large images.
+- Camera: CameraX first; Camera2 only for manual sensor controls or custom stream combinations. Backpressure in analysis, close every `ImageProxy`, YUV off main.
+- Media: Photo Picker for user-selected media (broad storage permissions only when picker/MediaStore cannot meet a real product need); Media3 for playback; custom pipelines drop to MediaCodec/MediaMuxer or NDK.
+- Painting/images: Compose Canvas and Kotlin CPU filters for simple drawing and small images; tiled bitmaps, NDK C++, or Vulkan compute for large canvases, high-frequency brushes, filters, or real-time preview.
 
 ## Android 16/API 36 checks
 
-When targeting Android 16/API 36+, review platform behavior changes before release. At minimum verify edge-to-edge behavior (no `windowOptOutEdgeToEdgeEnforcement`), predictive back (`OnBackInvokedCallback` / Navigation Compose back stack), large-screen/adaptive behavior, JobScheduler/WorkManager quota behavior, camera/media permission flows, foreground-service declarations, and notification behavior.
+These platform behavior changes break apps that still compile cleanly — verify each on an emulator/device before release, not just with compile checks.
+
+- **Edge-to-edge is enforced.** Apps targeting API 36 cannot opt out; `windowOptOutEdgeToEdgeEnforcement` is ignored. Call `enableEdgeToEdge()` in `Activity.onCreate()` and handle insets explicitly (`WindowInsets.safeDrawing`, scaffold `innerPadding`) — system bars overlay content by default. Details and code: [ui-camera-media.md](references/ui-camera-media.md).
+- **Predictive back is on by default.** `onBackPressed()` and `KEYCODE_BACK` are no longer dispatched for custom back handling; use `OnBackInvokedCallback` or Navigation Compose back stacks with predictive animations, and test back from camera preview, modal sheets, and export flows.
+- **JobScheduler/WorkManager quota behavior changed.** Do not assume pre-16 scheduling rates — test deferrable and expedited work under quota limits, including restricted standby buckets.
+- **Foreground-service and notification rules.** Every foreground service needs a declared type (e.g. `camera`, `mediaPlayback`) with its required permission and a posted notification; FGS launches from the background are restricted, and runtime `POST_NOTIFICATIONS` denial must not break the feature.
+- Also verify: large-screen/adaptive layouts, camera/media permission flows (denied, one-time, settings-disabled), and picker flows after process death.
+
+Track upstream changes via the Android 16 behavior-changes links in [source-map.md](references/source-map.md); the full release checklist is in [performance-release-checklist.md](references/performance-release-checklist.md).
 
 ## Performance and release gates
 
-Read [performance-release-checklist.md](references/performance-release-checklist.md) before finalizing code or reviewing a PR. Use [gradle-android-dev](../gradle-android-dev/SKILL.md) for App Bundle, R8, signing, and AGP release validation.
-
-Minimum gates:
-
-- `./gradlew assembleDebug` succeeds before feature work is considered complete.
-- `./gradlew lint test` runs cleanly or has documented, justified suppressions.
-- No disk, network, camera decode, bitmap conversion, or image processing blocks the main thread.
-- Large images are decoded to target size, reused or pooled where safe, and released promptly.
-- Camera/media/native/Vulkan resources are lifecycle-bound and released in `onCleared`, `DisposableEffect`, `onStop`, or explicit `close` paths.
-- Release builds use App Bundles, R8/resource shrinking, signed configs, no debug logging, no bundled unused ABIs, and documented native symbol handling when NDK is present.
+Read [performance-release-checklist.md](references/performance-release-checklist.md) before finalizing code or reviewing a PR; App Bundle, R8, and signing validation → [gradle-android-dev](../gradle-android-dev/SKILL.md). Non-negotiable gates: `./gradlew assembleDebug` and `./gradlew lint test` pass; no disk/network/decode/bitmap work on the main thread; camera/media/native/Vulkan resources are lifecycle-bound and released; release builds are App Bundles with R8 shrinking and no debug logging.
 
 ## Reference routing
 
@@ -148,18 +67,7 @@ Minimum gates:
 | Speed, memory, power, jank, startup, profiling, release gates | [performance-release-checklist.md](references/performance-release-checklist.md) |
 | Source links and update notes | [source-map.md](references/source-map.md) |
 | Kotlin language/stdlib/API design | [kotlin-coding](../kotlin-coding/SKILL.md) |
-| Kotlin test design and frameworks | [kotlin-testing](../kotlin-testing/SKILL.md) |
+| Kotlin test design and frameworks | [kotlin-coding](../kotlin-coding/SKILL.md) |
 | AGP, variants, lint, R8, signing | [gradle-android-dev](../gradle-android-dev/SKILL.md) |
 | JNI, CMake, native libraries | [android-ndk-dev](../android-ndk-dev/SKILL.md) |
 | Vulkan renderer on Android | [android-vulkan-dev](../android-vulkan-dev/SKILL.md) |
-
-## Companion Skills
-
-For cross-skill delegation, see the Reference routing table above.
-
-## References
-
-- [architecture-and-quality.md](references/architecture-and-quality.md): modules, ViewModel/use case/repository, DI, errors, permissions, testing, junior review checklist.
-- [ui-camera-media.md](references/ui-camera-media.md): Compose, CameraX, Media3, Photo Picker, painting, photography, edge-to-edge, predictive back, and image-processing app patterns.
-- [performance-release-checklist.md](references/performance-release-checklist.md): speed, memory, power, jank, startup, profiling, release, and app bundle checks.
-- [source-map.md](references/source-map.md): source links and update notes used to build this skill.

@@ -5,130 +5,74 @@ description: "Review, verify, and synchronize technical documentation for softwa
 
 # Technical Documentation Reviewer
 
-Resolve `<SKILL_ROOT>` as the directory containing this skill's `SKILL.md`. Resolve paths
-to `references/` from that directory.
+Resolve `<SKILL_ROOT>` as the directory containing this skill's `SKILL.md`; resolve
+`references/` paths from it. Read `<SKILL_ROOT>/references/review-rubric.md` (drift taxonomy,
+document-type checklists, evidence hierarchy, severity rules) before a substantive review, and
+`<SKILL_ROOT>/references/review-report-template.md` before preparing the report.
 
 ## Mission and boundary
 
-Treat technical documentation as a reader-facing specification of the software. Its central
-quality invariant is that a reader can form a correct, sufficiently complete model of the
-current supported behavior and successfully perform the documented task.
-
-This skill reviews documentation and its relationship to repository evidence. It does not
-replace a code review:
-
-- Use **code-reviewer** to find defects, design risks, security issues, and missing tests in
-  a change set.
-- Use **techdoc-reviewer** to verify the truth, completeness, safety, and executability of
-  the documentation for that change or repository.
-- For a combined implementation-and-documentation review, first establish the code change's
-  semantics with `code-reviewer`, then use this skill to trace its documentation impact.
-  Do not have either review silently stand in for the other.
-
-Prioritize contradiction, omission, unsafe instruction, and broken workflow findings over
-prose polish. Do not turn a documentation review into copy editing unless the user explicitly
-asks for it.
+Treat technical documentation as a reader-facing specification: a reader must be able to form a
+correct, sufficiently complete model of the current supported behavior and successfully perform
+the documented task. Prioritize contradiction, omission, unsafe instruction, and broken
+workflow findings over prose polish; do not turn a review into copy editing unless asked.
 
 ## When NOT to Use
 
-- **Code defect review without a documentation task** — when the user wants bugs, security,
-  design, or test gaps in a diff, use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md).
-  This skill may follow a code review for documentation impact, but does not replace it.
+- **Code defect review without a documentation task** — bugs, security, design, or test gaps in
+  a diff belong to [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md). This skill may follow
+  a code review for documentation impact, but does not replace it.
 - **Codebase learning or architecture explanation** — use
-  [../code-professor/SKILL.md](../code-professor/SKILL.md) when there is no documentation set
-  to verify against repository evidence.
-- **Authoring new tutorials, guides, or user documentation from scratch** — use
-  [../tutorial-writer/SKILL.md](../tutorial-writer/SKILL.md). Return here afterward to verify
-  the draft against the repository.
+  [../code-professor/SKILL.md](../code-professor/SKILL.md) when there is no documentation set to
+  verify against repository evidence.
+- **Authoring tutorials, guides, or user documentation from scratch** — use
+  [../tutorial-writer/SKILL.md](../tutorial-writer/SKILL.md); return here to verify the draft.
 - **PR description, commit message, or meeting minutes** — use
-  [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md),
-  [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md), or
-  [../minutes-writer/SKILL.md](../minutes-writer/SKILL.md) respectively.
-- **Pure copy editing** — grammar, tone, or style without technical verification unless the
-  user explicitly requests copy editing alongside factual review.
+  [../github-guide/SKILL.md](../github-guide/SKILL.md),
+  [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md), or the
+  `minutes-guidelines` behavioral guideline respectively.
+- **Pure copy editing** — grammar, tone, or style without technical verification, unless the
+  user explicitly requests it alongside factual review.
 
-**Boundary vs tutorial-writer:** techdoc-reviewer verifies or synchronizes existing technical
-documentation against repository evidence; tutorial-writer creates or revises instructional
-content.
-
-Read `<SKILL_ROOT>/references/review-rubric.md` for the drift taxonomy, document-type
-checklists, evidence hierarchy, and severity rules before conducting a substantive review.
-Read `<SKILL_ROOT>/references/review-report-template.md` before preparing the final report.
+**Boundary vs tutorial-writer:** this skill verifies or synchronizes existing documentation
+against repository evidence; tutorial-writer creates or revises instructional content.
 
 ## Operating modes
 
-Infer the mode from the request. State the resolved mode and target in the report.
+Infer the mode from the request and state the resolved mode and target in the report:
 
-1. **Document review** — review named documents, a documentation area, or repository docs
-   against current evidence.
-2. **Documentation-impact review** — begin with a commit, branch, PR, working tree, or diff;
+1. **Document review** — review named documents or repository docs against current evidence.
+2. **Documentation-impact review** — start from a commit, branch, PR, working tree, or diff;
    determine which reader-visible behavior changed and whether affected documentation is
    correct, complete, and discoverable.
-3. **Synchronization** — update documentation after a verified implementation change. Enter
-   this mode only when the user asks to update, sync, fix, or document the changes.
-4. **Targeted verification** — validate one claim, command, API contract, configuration
-   example, architecture statement, procedure, or link.
+3. **Synchronization** — update documentation after a verified implementation change; enter
+   only when the user asks to update, sync, fix, or document the changes.
+4. **Targeted verification** — validate one claim, command, API contract, config example,
+   architecture statement, procedure, or link.
 
 If the user asks only for a review, report proposed fixes and do not edit files. If the request
-is unclear between review and synchronization, default to review rather than changing docs.
+is unclear between review and synchronization, default to review.
 
 ## Resolve scope and effort
 
-Use the narrowest defensible target:
+Use the narrowest defensible target: the paths the user names; the named ref or diff for an
+impact review (or the active working tree, with the basis explained — never widen into
+unrelated history); for a repository-wide review, the repository's actual documentation
+locations, distinguishing generated, vendored, release-note, and historical material from
+current product documentation. Read repository guidance, identify each document's purpose,
+intended reader, and lifecycle, and read evidence proportional to the claim — not the whole
+repository by default. Record material areas that could not be checked.
 
-- Review the paths the user names.
-- For a documentation-impact review, use the named ref or diff. If none is named, inspect the
-  active working tree and explain the chosen basis; do not widen into unrelated history.
-- For a repository-wide docs review, identify the repository's actual documentation locations
-  from project guidance and structure. Do not assume every Markdown file is current product
-  documentation: distinguish generated, vendored, release-note, and historical material.
-
-Choose an effort tier silently unless the user asks for an interactive review:
-
-| Tier | Use | Required rigor |
-| --- | --- | --- |
-| `basic` | Quick check or small, low-risk docs | Trace only directly material claims; do not report more than five findings. |
-| `standard` (default) | Ordinary documentation or change review | Inventory the document's important claims, validate them against relevant evidence, test executable material when practical, search for material cross-document conflicts, and re-check every candidate finding. Cap at ten findings. |
-| `deep` | Public APIs, setup paths, migrations, runbooks, security-sensitive docs, or a user request for exhaustive review | Build a claim and documentation-impact map, validate high-risk examples and procedures, inspect related docs and contracts, independently re-check candidates, and record coverage gaps. Cap at fifteen findings. |
-
-At any tier, assess risk before deciding depth. Setup, deployment, migration, security,
-destructive-operation, and public-contract instructions require more evidence than a
-low-impact overview.
-
-## Gather context before judging
-
-1. Read applicable repository guidance, contribution and docs conventions, nearby READMEs,
-   and audience-specific instructions.
-2. Identify each document's purpose, intended reader, lifecycle, and authority:
-   current reference, tutorial, operational runbook, design proposal, historical ADR, generated
-   output, or external/vendor material.
-3. Identify evidence that can establish its claims: tests, public interfaces, implementation,
-   schemas, configuration defaults, build files, package metadata, examples, CI, design records,
-   and history where needed.
-4. Search exact identifiers plus concepts, old/new terms, paths, option values, error messages,
-   and related workflows. A negative exact-name search alone does not prove that no relevant
-   documentation exists.
-5. For a change-set review, read enough surrounding code, tests, and configuration to explain
-   the semantic change rather than merely restating edited lines.
-
-Do not inspect the entire repository by default. Read evidence proportional to the claim and
-record material areas that could not be checked.
+Choose an effort tier silently (`basic` / `standard` / `deep`) unless the user asks for an
+interactive review. Depth scales with reader risk; setup, migration, security, and
+destructive-operation docs get the most evidence. Cap findings per tier: basic 5,
+standard 10, deep 15.
 
 ## Apply the evidence rule
 
-Never assess a technically verifiable claim in isolation when repository evidence is available.
-
-For **current behavior**, prefer evidence in this order when applicable:
-
-1. tests that demonstrate externally observable behavior or contractual invariants;
-2. current public interfaces and implementation;
-3. schemas, configuration definitions/defaults, build metadata, and package manifests;
-4. working examples and CI workflows;
-5. current documentation.
-
-For **intent or rationale**, prefer accepted design records, specifications, contractual tests,
-issue context present in the repository, and history. Do not invent rationale from an
-implementation detail.
+Never assess a technically verifiable claim in isolation when repository evidence is
+available — follow the rubric's evidence hierarchy and conflict rules, and never invent
+rationale from an implementation detail.
 
 Code does not automatically win a conflict. When implementation, test, contract, and
 documentation disagree, describe what each source establishes and surface the unresolved
@@ -136,126 +80,68 @@ code-versus-contract decision. Do not silently rewrite documentation to encode p
 accidental behavior.
 
 Preserve historical truth. An ADR, proposal, changelog, or release note is not stale merely
-because the software later changed; flag it only when it presents historical material as current
-or violates its stated lifecycle.
+because the software later changed; flag it only when it presents historical material as
+current or violates its stated lifecycle.
 
 ## Review workflow
 
-### 1. Build a claim map
+The rubric supplies the detail and drift taxonomy for each pass:
 
-Identify material claims and classify them as:
-
-- factual/current behavior;
-- instructional or executable procedure;
-- contractual API/configuration promise;
-- architecture or operational statement;
-- rationale/decision history; or
-- reader-navigation and discoverability information.
-
-Focus tracing effort on claims where being wrong would cause a failed setup, misuse, data loss,
-security exposure, incompatible integration, outage, or materially incorrect design decision.
-
-### 2. Verify claims and executable material
-
-Trace important claims into the evidence identified above. For commands, snippets,
-configuration, and workflows, check as many of these as apply:
-
-- prerequisites, supported versions, permissions, and working directory;
-- command syntax, flags, paths, environment variables, and generated artifacts;
-- sequence, expected intermediate result, failure handling, and cleanup;
-- API signatures, parameter/return/error semantics, ownership, ordering, concurrency, and
-  compatibility promises;
-- safety of destructive or privileged operations.
-
-Run non-destructive examples, focused tests, builds, linters, link checks, or project-provided
-documentation validation when practical and safe. If execution is not practical, inspect the
-actual command wiring and label the verification as static rather than claiming it ran.
-
-### 3. Check completeness and cross-document consistency
-
-Ask whether the intended reader has the information needed to succeed, including prerequisites,
-defaults, constraints, failure modes, and newly relevant behavior. Search related documentation
-for contradictory terminology, APIs, option values, instructions, and architecture descriptions.
-
-Check discoverability when a fact is necessary at a decision or action point: a correct fact
-hidden in an unrelated document can still be a reader-blocking omission.
-
-### 4. Build a documentation-impact map for changes
-
-For each semantic implementation change, determine whether it affects:
-
-- public APIs, data models, errors, ordering, lifetime, or compatibility;
-- commands, flags, configuration, environment variables, defaults, paths, or output;
-- installation, build, deployment, migration, troubleshooting, operation, or rollback;
-- architecture boundaries, control/data flow, extension points, or critical constraints;
-- examples, tutorials, reference material, or safety guidance.
-
-Search for exact and conceptual references. Mark relevant documentation as `updated`,
-`needs change`, `verified unaffected`, or `not found`. Ignore implementation-only refactors
-unless they alter an architecture fact that readers are expected to rely on.
-
-### 5. Decide whether to edit
-
-In synchronization mode:
-
-- make the smallest complete change that restores a verified contract or workflow;
-- update materially affected examples, cross-references, and safety notes together;
-- remove or clearly deprecate removed behavior;
-- preserve project terminology and local documentation style;
-- avoid unrelated rewriting and never edit generated, vendored, or externally sourced material
-  unless repository guidance requires it;
-- update the status or add a successor for historical decisions rather than rewriting their past.
-
-In review modes, provide concrete proposed corrections without modifying files.
-
-### 6. Re-verify
-
-After synchronization or while finalizing a review:
-
-1. Re-read changed or reviewed instructions as the target reader would use them.
-2. Re-check each changed factual claim against evidence.
-3. Re-run practical validation for changed executable material.
-4. Search for stale old terms, values, paths, and contradictory statements left elsewhere.
-5. Check affected local links, anchors, and references.
-6. Review the final documentation diff for scope and accidental claims.
+1. **Claim map** — identify material claims; focus tracing where being wrong would cause a
+   failed setup, misuse, data loss, security exposure, or broken integration.
+2. **Verify** — trace claims into evidence; run commands, snippets, and workflows where safe
+   and practical, or inspect the actual wiring and label the verification as static rather
+   than claiming it ran.
+3. **Cross-doc check** — search related docs for contradictory terminology, values, and
+   instructions; a correct fact hidden from the reader's decision point is still an omission.
+4. **Impact map** (change reviews) — read enough surrounding code to explain each semantic
+   change, then mark relevant documents `updated`, `needs change`, `verified unaffected`, or
+   `not found`; ignore implementation-only refactors unless they alter an architecture fact
+   readers rely on.
+5. **Edit or propose** — synchronization mode only: smallest complete change, affected examples
+   and safety notes updated together, never edit generated or vendored material, preserve
+   project terminology and historical truth. In review modes, propose concrete corrections
+   without modifying files.
+6. **Re-verify** — run the completion checklist below.
 
 ## Finding quality and severity
 
 Only report findings with concrete reader impact and repository evidence. Each material finding
 needs a severity, drift type, documentation location, evidence location, impact, and smallest
-complete fix. Use an open question for ambiguity that could change the conclusion, rather than
-presenting speculation as a defect.
-
-Use the severity definitions in the rubric:
+complete fix; use an open question for ambiguity that could change the conclusion, rather than
+presenting speculation as a defect. Severities (detailed in the rubric):
 
 - `blocker`: unsafe instructions, likely data loss, severe security exposure, or major outage;
 - `major`: primary workflow or important contract is wrong or cannot succeed;
 - `minor`: material misinformation or omission likely to produce incorrect integration,
   operation, or debugging decisions, with a workaround;
-- `nit`: real but limited reader cost;
-- suppress `nit` findings by default.
+- `nit`: real but limited reader cost; suppress `nit` findings by default.
 
-Do not report a style preference, an unchanged unrelated document, or a hypothetical gap with no
-reasonable evidence that readers need the claimed information.
+Do not report a style preference, an unchanged unrelated document, or a hypothetical gap with
+no reasonable evidence that readers need the claimed information.
+
+## Completion checklist
+
+Run after synchronization and while finalizing a review. Before finishing, confirm:
+
+- changed or reviewed instructions were re-read as the target reader would use them;
+- each changed factual claim was re-checked against evidence, with current behavior, intended
+  contract, and historical documentation not conflated;
+- changed executable material was re-validated or honestly labeled as unexecuted;
+- stale old terms, values, paths, cross-document conflicts, and affected links and anchors were
+  searched for and still resolve;
+- semantic drift was considered even when names did not change;
+- the final documentation diff is conservative, complete for the affected contract, and scoped;
+- findings are evidence-backed, severity reflects reader impact, and unresolved evidence
+  conflicts and verification limits are explicit.
 
 ## Output and handoff
 
 Use `<SKILL_ROOT>/references/review-report-template.md` unless the user requested another
 format. Findings are primary; keep process narration short. State only checks actually
-performed and clearly distinguish executed, statically inspected, skipped, and blocked checks.
-
-If no material findings are discovered, say so clearly, summarize the main evidence checked, and
+performed, distinguishing executed, statically inspected, skipped, and blocked checks. If no
+material findings are discovered, say so clearly, summarize the main evidence checked, and
 name meaningful residual coverage limits.
-
-Route work deliberately:
-
-- A code defect exposed by documentation evidence belongs to **code-reviewer**, followed by
-  implementation or debugging as appropriate.
-- Missing or stale documentation after a code review belongs to this skill's synchronization
-  workflow.
-- A broad behavioral change needing coordinated code and docs work may need
-  [../plan-guide/SKILL.md](../plan-guide/SKILL.md) or
-  [../plan-executor/SKILL.md](../plan-executor/SKILL.md) after the findings are accepted.
 
 ## Companion Skills
 
@@ -264,32 +150,16 @@ Route work deliberately:
 | Code diff review and implementation defects | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
 | Author or revise tutorials and user guides | [../tutorial-writer/SKILL.md](../tutorial-writer/SKILL.md) |
 | Learn or explain existing code without doc review | [../code-professor/SKILL.md](../code-professor/SKILL.md) |
-| PR description and self-review narrative | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |
+| PR description and self-review narrative | [../github-guide/SKILL.md](../github-guide/SKILL.md) |
 | Coordinated code and docs implementation | [../plan-guide/SKILL.md](../plan-guide/SKILL.md), [../plan-executor/SKILL.md](../plan-executor/SKILL.md) |
 | Root-cause repair when docs expose a code defect | [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) |
 
-## Completion quality bar
-
-Before finishing, confirm that:
-
-- material findings are evidence-backed and severity reflects reader impact;
-- current behavior, intended contract, and historical documentation were not conflated;
-- executable examples were validated or honestly labeled as unexecuted;
-- semantic drift was considered even if names did not change;
-- related documents were searched where a cross-document conflict is plausible;
-- synchronization edits are conservative, complete for the affected contract, and scoped; and
-- unresolved evidence conflicts and verification limits are explicit.
-
 ## Tool notes
 
-### Claude Code
-
-For deep reviews involving separate document domains or independent claim groups, use subagents only for independent evidence passes. Include each pass's documentation paths, audience/purpose, evidence targets, and required finding fields from the report template. Reconcile conflicts, duplicate findings, severity, and the decision to synchronize documentation yourself. Keep a complete multi-step procedure in one review pass rather than splitting its sequence across subagents.
-
-### Cursor
-
-For deep reviews involving distinct document domains or independently verifiable claim groups, parallelize only the independent evidence passes with the Task tool. Give each pass its document paths, purpose/audience, exact evidence targets, and the required output fields from the report template. Keep the final conflict resolution, cross-document deduplication, severity assignment, and synchronization decision in the parent review. Do not use parallelism to split one tightly coupled workflow across agents; validate its complete reader journey in one pass.
-
-### GitHub Copilot
-
-Run independent documentation claim groups sequentially and keep evidence notes separate. Do not skip cross-document reconciliation or executable-procedure verification because the work is sequential. Use the body for scope, evidence hierarchy, and final report contents.
+For deep reviews, parallelize only independent evidence passes — separate document domains or
+independently verifiable claim groups — giving each pass its document paths, purpose/audience,
+evidence targets, and required finding fields from the report template. Keep conflict
+reconciliation, cross-document deduplication, severity assignment, and the synchronization
+decision in the parent review; never split one tightly coupled workflow across agents. GitHub
+Copilot has no parallel dispatch: run independent claim groups sequentially with separate
+evidence notes, and do not skip reconciliation or executable-procedure verification.

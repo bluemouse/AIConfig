@@ -39,7 +39,7 @@
     "query": "write MockK verify block for suspend function call counts",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: Kotlin test design -> kotlin-testing"
+    "rationale": "near-miss: Kotlin test design -> kotlin-coding"
   },
   {
     "query": "refactor data class copy semantics for immutable domain model",

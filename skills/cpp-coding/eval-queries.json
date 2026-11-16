@@ -33,7 +33,7 @@
     "query": "I'm editing Parser.cpp and GDB shows a dangling reference in this frame — what commands inspect the owner",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: GDB toolchain -> debugging-guide or native-debugging body, not description"
+    "rationale": "near-miss: GDB toolchain -> debugging-guide or build-and-verification native-debugging section, not description"
   },
   {
     "query": "while refactoring MeshLoader.cpp what LLDB commands show whether this iterator is still valid",
@@ -91,9 +91,9 @@
   },
   {
     "query": "add GoogleTest coverage for the parser edge cases we fixed last week",
-    "should_trigger": false,
+    "should_trigger": true,
     "split": "train",
-    "rationale": "near-miss: test authoring -> cpp-testing"
+    "rationale": "direct: C++ test authoring is in scope (folded in from cpp-testing)"
   },
   {
     "query": "our exporter crashes on the second project — where do I even start debugging",
@@ -117,6 +117,6 @@
     "query": "I have a repro in Geometry.cpp — what -g -O0 flags and ctest command should I use while fixing this segfault",
     "should_trigger": false,
     "split": "validation",
-    "rationale": "near-miss: debug-build flags -> native-debugging body, not description"
+    "rationale": "near-miss: debug-build flags -> build-and-verification native-debugging section, not description"
   }
 ]

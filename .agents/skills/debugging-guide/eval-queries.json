@@ -123,7 +123,7 @@
     "query": "I'm refactoring Mesh.cpp and need LLDB commands to check whether this vector iterator is still valid",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: native debugger recipes while editing C++ -> cpp-coding native-debugging"
+    "rationale": "near-miss: native debugger recipes while editing C++ -> cpp-coding references/build-and-verification.md#native-debugging-with-gdblldb"
   },
   {
     "query": "I have a 100% repro of a use-after-free; walk me through forming a hypothesis and confirming it before I touch the code",

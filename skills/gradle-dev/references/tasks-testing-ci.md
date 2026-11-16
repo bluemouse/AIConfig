@@ -99,7 +99,7 @@ Rules:
 - Avoid making all tests run on every compile/assemble task; attach them to `check`.
 - Use test filters for local debugging, not as permanent CI filters unless the task is intentionally scoped.
 - Do not over-tune `maxParallelForks` without measuring CPU, memory, and test isolation.
-- For Kotlin test design, use [kotlin-testing](../../kotlin-testing/SKILL.md); this reference covers Gradle task wiring only.
+- For Kotlin test design, use [kotlin-coding](../../kotlin-coding/SKILL.md); this reference covers Gradle task wiring only.
 
 ## 5. JVM test suites
 

@@ -101,9 +101,7 @@ Rules:
 
 ## JNI naming and registration
 
-For small apps, generated JNI symbol names are acceptable. For larger apps, prefer `RegisterNatives` to keep names stable and reduce fragile mangling.
-
-Kotlin:
+For small apps, generated JNI symbol names are acceptable. Kotlin:
 
 ```kotlin
 package com.example.app.nativebridge
@@ -123,26 +121,7 @@ Java_com_example_app_nativebridge_NativeBindings_nativeVersion(JNIEnv* env, jobj
 }
 ```
 
-RegisterNatives style:
-
-```cpp
-static jstring NativeVersion(JNIEnv* env, jobject) {
-    return env->NewStringUTF("1.0");
-}
-
-static const JNINativeMethod kMethods[] = {
-    {"nativeVersion", "()Ljava/lang/String;", reinterpret_cast<void*>(NativeVersion)},
-};
-
-JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void*) {
-    JNIEnv* env = nullptr;
-    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) return JNI_ERR;
-    jclass clazz = env->FindClass("com/example/app/nativebridge/NativeBindings");
-    if (!clazz) return JNI_ERR;
-    if (env->RegisterNatives(clazz, kMethods, sizeof(kMethods) / sizeof(kMethods[0])) != 0) return JNI_ERR;
-    return JNI_VERSION_1_6;
-}
-```
+For larger apps, prefer `RegisterNatives` to keep names stable and reduce fragile mangling: declare a `JNINativeMethod` table and register it from `JNI_OnLoad`.
 
 ## Marshaling strategy
 

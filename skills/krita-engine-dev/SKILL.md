@@ -72,32 +72,7 @@ Use this routing to avoid debugging compositing when the issue is spacing, or de
 
 ### 2. Answer or implement
 
-When the user asks for architecture, implementation, debugging, or optimization help:
-
-1. **Name the Krita integration points**: specific classes and files to inspect or modify.
-2. **Describe the runtime flow** from input sample to dirty canvas update, only as deep as needed.
-3. **State invariants** that must not be broken: spacing/timing state, resource snapshots, dirty rects, undo, selections, mirroring, wrap-around, LOD, indirect painting.
-4. **Give an implementation plan** with ownership boundaries: tool, stroke strategy, paintop, resource, device, compositor, UI.
-5. **Give verification steps**: unit/integration/manual scenarios and performance probes.
-
-Use this concise structure unless the user asks for a different format:
-
-```markdown
-## likely subsystem
-[where the change belongs and why]
-
-## source anchors
-[file/class list]
-
-## design
-[data flow, object ownership, threading model]
-
-## implementation plan
-[ordered steps]
-
-## correctness and performance checks
-[mirroring, wrap, selection, indirect, lod, dirty rects, async, resource lifetime]
-```
+When the user asks for architecture, implementation, debugging, or optimization help, route the request through the Fast routing model, name the concrete Krita classes and files to inspect or modify, design against Core Krita invariants and Gotchas, and close with the verification steps below.
 
 ### 3. Verify
 
@@ -173,16 +148,6 @@ When the user is building a new painting application or stroke engine, reuse Kri
 - Treat GPU acceleration as an explicit design choice with synchronization costs, not a universal replacement for the CPU image model.
 - Define resource lifetime and snapshot semantics before adding complex brush presets.
 
-## Quick completion checklist
-
-Before marking brush-engine work done:
-
-1. **Routing** — change is classified to the correct layer; companion skills consulted when out of scope.
-2. **Contracts** — spacing/timing, resource snapshots, dirty rects, and async drain paths preserved.
-3. **Edge matrix** — mirror, wrap, selection, indirect painting, masking brush, LOD, undo tested or explicitly deferred.
-4. **Source grounding** — file/class claims verified via checkout probe or stated as path guidance.
-5. **Hot path named** — performance advice identifies dab generation, composite, tile access, projection, or UI throttle.
-
 ## Output quality rules
 
 When writing implementation advice:
@@ -195,10 +160,4 @@ When writing implementation advice:
 
 ## Resources
 
-- [architecture-map.md](references/architecture-map.md) — brush/stroke subsystem map and standard flow
-- [core-classes-and-contracts.md](references/core-classes-and-contracts.md) — class responsibilities and contracts
-- [implementation-playbooks.md](references/implementation-playbooks.md) — modify default brush, add paintop, design new app
-- [pixel-layer-gpu-performance.md](references/pixel-layer-gpu-performance.md) — tiles, projection, canvas, performance
-- [source-reading-map.md](references/source-reading-map.md) — checkout navigation order
-- [krita-programming-guide.md](references/krita-programming-guide.md) — extended source-derived guide
 - [SOURCES.md](SOURCES.md) — provenance and external references (read for attribution only)

@@ -41,10 +41,9 @@
 - **Used for:**
   - `SKILL.md` → tool usage, CMake-only policy
   - `references/toolchain-cmake.md` → build policy, configure/build/test commands
-  - `scripts/qt_cmake_plan.py` → skeleton CMake output
 - **Aspects extracted:**
   - `qt_standard_project_setup()`, `qt_add_executable()`, imported targets → `references/toolchain-cmake.md`
-  - `qt-cmake` and command-line configure/build workflow → `references/toolchain-cmake.md`, `scripts/qt_cmake_plan.py`
+  - `qt-cmake` and command-line configure/build workflow → `references/toolchain-cmake.md`
 
 ## Additional Qt documentation (synthesis metadata)
 

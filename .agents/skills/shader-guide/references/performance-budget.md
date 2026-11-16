@@ -21,7 +21,7 @@ Creative shaders often nest loops (march × shadow × AO × FBM). Each layer mul
 
 1. Start with half the budget (64 march steps, 4 FBM octaves) until the image is correct.
 2. Visualize step count heatmaps per [shader-debugging](shader-debugging.md) before increasing `MAX_STEPS`.
-3. Prefer analytic shortcuts ([analytic-ray-tracing](analytic-ray-tracing.md), cheaper AO) over deeper loops.
+3. Prefer analytic shortcuts (closed-form ray-primitive intersections, cheaper AO) over deeper loops.
 4. Use bounding volumes and [sdf-tricks](sdf-tricks.md) to skip empty space in march loops.
 5. For multi-pass sims, move heavy solvers to [multipass-buffer](multipass-buffer.md) passes with lower resolution.
 
@@ -49,4 +49,3 @@ for (int i = 0; i < MAX_STEPS; i++) {
 ## Combine With
 
 - [shader-debugging](shader-debugging.md)
-- [ray-marching](ray-marching.md)

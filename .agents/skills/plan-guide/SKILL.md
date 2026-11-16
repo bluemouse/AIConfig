@@ -18,37 +18,31 @@ Your job is to **author and repair implementation plans**, not to implement code
 
 - Turning a research report, spec, or requirements into an executable implementation plan
 - Decomposing work into ordered tasks with traceability and verification
-- Repairing a plan from [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) Guide handoff findings
+- Repairing a plan from plan-reviewer Guide handoff findings
 - Mapping acceptance criteria to tasks and validation commands
 
 ## When NOT to Use
 
-- **Interactive research or brainstorming** — use [../research-guide/SKILL.md](../research-guide/SKILL.md)
-- **Auditing a research report** — use [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
-- **Auditing an implementation plan before execution** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
-- **Code implementation** — use [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
-- **Code or diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-- **Codebase learning or documentation without a plan** — use [../code-professor/SKILL.md](../code-professor/SKILL.md)
+- **Interactive research or brainstorming** — use research-guide
+- **Auditing a research report** — use research-reviewer
+- **Auditing an implementation plan before execution** — use plan-reviewer
+- **Code implementation** — use plan-executor
+- **Code or diff review** — use code-reviewer
+- **Codebase learning or documentation without a plan** — use code-professor
 
-**Boundary vs code-professor:** this skill outputs an **implementation plan** with tasks and TDD specs. [../code-professor/SKILL.md](../code-professor/SKILL.md) outputs **learning guides**. Narrow codebase inspection here supports task breakdown; full orientation or module teaching belongs in code-professor.
+**Boundary vs code-professor:** this skill outputs an **implementation plan** with tasks and TDD specs; code-professor outputs **learning guides**. Narrow codebase inspection here supports task breakdown; full orientation or module teaching belongs in code-professor.
 
 ## Companion Skills
 
-- Preferred input from [../research-guide/SKILL.md](../research-guide/SKILL.md); optional audit via [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md)
-- When the source spec or request is **ambiguous** rather than merely incomplete — conflicting requirements, undefined terms, or several plausible readings — settle it with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before planning. Planning blockers on otherwise-settled requirements stay here, at this skill's one-question-at-a-time pacing.
-- When discovery-gated and the user needs codebase literacy before planning: [../code-professor/SKILL.md](../code-professor/SKILL.md) (orientation or module guide — then return here for the plan)
-- Quality loop with [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
-- Downstream execution after validation or explicit user acceptance via [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
-- Mandatory TDD execution discipline via [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md)
-- For code review during execution: [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-
-Treat reports from [../research-guide/SKILL.md](../research-guide/SKILL.md) as the preferred upstream input. Treat reports from [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) as repair instructions for the planning loop.
+- Preferred upstream input from research-guide; optional report audit via research-reviewer; quality loop with [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md); downstream execution via plan-executor; TDD discipline via test-driven-dev-guide; diff review during execution via code-reviewer.
+- When the source spec or request is **ambiguous** rather than merely incomplete — conflicting requirements, undefined terms, or several plausible readings — settle it with prompt-clarifier before planning. Planning blockers on otherwise-settled requirements stay here, at this skill's one-question-at-a-time pacing.
+- When discovery-gated and the user needs codebase literacy before planning: code-professor (orientation or module guide — then return here for the plan).
 
 ## Operating posture
 
 Default to a careful, engineering-focused posture: precise, concrete, and traceable.
 
-Use a stricter posture when the work is high risk, cross-cutting, security/privacy-sensitive, migration-heavy, performance-sensitive, user-visible, or when [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) returned blocked or needs revision.
+Use a stricter posture when the work is high risk, cross-cutting, security/privacy-sensitive, migration-heavy, performance-sensitive, user-visible, or when plan-reviewer returned blocked or needs revision.
 
 Always:
 - Ground the plan in the provided research-report, spec, requirements, bug report, codebase context, and reviewer findings.
@@ -67,29 +61,11 @@ Always:
 
 Choose the lightest depth that preserves traceability, TDD, verification, and readiness:
 
-- **Focused**: low-risk work in one subsystem or a small bug fix. Keep the plan compact, but still include red-phase tests for every code task, concrete verification, and blocker handling. Still required: goal and scope, source traceability, test design, task breakdown, verification per task, and execution class (default `sequential` when work is not parallelizable). May shorten or omit when not applicable: lengthy architecture alternatives, risk/rollout matrix detail, and domain specialists.
+- **Focused**: low-risk work in one subsystem or a small bug fix — roughly five or fewer tasks, no migration, production-data, security/privacy cross-cutting, or multi-system integration concerns. Keep the plan compact, but still include red-phase tests for every code task, concrete verification, and blocker handling. Still required: goal and scope, source traceability, test design, task breakdown, verification per task, and execution class (default `sequential` when work is not parallelizable); lengthy architecture alternatives, risk/rollout matrix detail, and domain specialists may be shortened or omitted.
 - **Standard**: default for most feature, refactor, integration, or multi-file work. Use the full template with proportional detail.
 - **Rigorous**: high-risk, cross-cutting, security/privacy-sensitive, migration-heavy, performance-sensitive, user-visible, production-data, or reviewer-blocked work. Preserve all template sections and strengthen risk, rollout, rollback, observability, and domain-specialist coverage.
 
-TDD-first task design, no-placeholder rules, source traceability, and final readiness labels apply at every depth. Depth changes section detail, not the quality bar.
-
-## Planning roles
-
-Use roles as analytical lenses, not as theatrical personas. Core roles including **Tests Designer** are always active for implementation plans; add **Domain Specialist** lenses when the domain requires them.
-
-Default roles:
-- **Plan Lead**: drive planning mode, choose scope, manage readiness, and synthesize the final plan.
-- **Requirements Mapper**: trace source requirements, acceptance criteria, constraints, and non-goals to plan tasks.
-- **Architecture Planner**: define the implementation approach, boundaries, interfaces, dependencies, and sequencing.
-- **Tests Designer**: aggressively design failing tests, test scenarios, fixtures, and edge cases from requirements, input context, and the planned implementation — before tasks are finalized.
-- **Task Decomposer**: split work into cohesive, reviewable tasks with clear dependencies and independently testable deliverables.
-- **Verification Planner**: define validation commands, manual checks, expected outcomes, observability signals, and acceptance checks that complement automated tests.
-- **Risk and Release Planner**: cover migration, rollout, rollback, observability, support, security, privacy, and operational risk.
-- **Execution Handoff Recorder**: preserve assumptions, task order, stop conditions, and the review status for the implementer.
-
-**Tests Designer collaboration (mandatory):** Tests Designer MUST iteratively collaborate with Requirements Mapper, Architecture Planner, Task Decomposer, and Verification Planner until test design, task boundaries, and verification coverage align. Run this loop during workflow steps 5–7 — not as a one-pass afterthought. See [references/planning-roles.md](references/planning-roles.md) for role details and collaboration rules.
-
-Add a **Domain Specialist** when the plan involves specialized domains such as graphics/rendering, AI, data, security, privacy, compliance, infrastructure, devops, UX, mobile, performance, enterprise workflow, finance, healthcare, or education.
+Depth changes section detail, not the quality bar.
 
 ## Workflow
 
@@ -99,34 +75,25 @@ Run the workflow as a planning loop. If reviewer findings are present, start wit
 
 Choose one input mode:
 
-- **Research handoff**: user provides a finalized or conditionally ready [../research-guide/SKILL.md](../research-guide/SKILL.md) report. Start from its implementation-planning handoff and preserve upstream readiness.
+- **Research handoff**: user provides a finalized or conditionally ready research-guide report. Start from its implementation-planning handoff and preserve upstream readiness.
 - **Direct spec**: user provides a spec, requirements, bug report, issue, design note, or acceptance criteria without an upstream research report.
 - **Codebase-led**: user provides a rough feature or fix request and repository exploration is the primary source of planning facts.
 - **Plan normalization**: user provides a thin, informal, external, or previously generated plan and asks to expand it into this skill's executable, TDD-first format.
-- **Review repair loop**: user provides a [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) report, reviewer findings, a Guide handoff packet, or asks whether the plan needs another iteration.
+- **Review repair loop**: user provides a plan-reviewer report, reviewer findings, a Guide handoff packet, or asks whether the plan needs another iteration.
 
-If the input mode is **codebase-led**, **direct spec** without explicit upstream readiness, or **plan normalization** from a thin plan, default the artifact status to `draft` or `ready for review`; do not mark it `validated` without a [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) result or explicit user acceptance.
-
-If plan-reviewer feedback is present, follow [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md) before rewriting the plan.
+If the input mode is **codebase-led**, **direct spec** without explicit upstream readiness, or **plan normalization** from a thin plan, default the artifact status to `draft` or `ready for review`; do not mark it `validated` without a plan-reviewer result or explicit user acceptance. If plan-reviewer feedback is present, follow [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md) before rewriting the plan.
 
 ### 2. Intake and source mapping
 
 Extract the source of truth:
-- Input mode.
-- Upstream artifact type: research-report, spec, requirements, bug report, issue, code context, prior plan, external plan, or reviewer report.
-- Goal and intended outcome.
-- Scope, non-goals, and first useful slice.
-- Functional requirements and non-functional requirements.
-- Acceptance criteria or success metrics.
+- Input mode and upstream artifact type: research-report, spec, requirements, bug report, issue, code context, prior plan, external plan, or reviewer report.
+- Goal, intended outcome, scope, non-goals, and first useful slice.
+- Functional and non-functional requirements, acceptance criteria or success metrics.
 - Architecture constraints, dependencies, integration points, data contracts, and platform constraints.
 - Security, privacy, compliance, migration, performance, reliability, observability, rollout, and support constraints.
 - Open questions and decisions.
 
-If a research-guide report is provided:
-- Preserve its agreement state and implementation-planning readiness.
-- Map the report's implementation-planning handoff into plan sections: recommended implementation slice, suggested milestones, dependencies to resolve first, testing focus, rollout or migration notes, and definition of ready for implementation planning.
-- Carry open questions marked required before implementation as blocking questions unless the user explicitly resolves or accepts them as execution risks.
-- If the report is not ready, conditionally ready, or blocked, reflect that status in the plan readiness and do not upgrade it without new evidence or user decision.
+If a research-guide report is provided, preserve its agreement state and implementation-planning readiness; map its handoff (recommended implementation slice, suggested milestones, dependencies to resolve first, testing focus, rollout or migration notes, definition of ready) into plan sections; carry open questions marked required before implementation as blocking questions unless the user explicitly resolves or accepts them as execution risks; and if the report is not ready, conditionally ready, or blocked, reflect that status in the plan readiness without upgrading it absent new evidence or user decision.
 
 ### 3. Decide whether planning can proceed
 
@@ -137,11 +104,7 @@ Before writing the plan, classify readiness:
 - **Discovery-gated**: repository, system, or dependency context must be inspected before exact implementation steps can be written.
 - **Blocked**: a core decision, requirement, source artifact, acceptance criterion, or risk decision is missing.
 
-Then choose planning depth and record it in §1 Planning status:
-
-- **Focused**: single subsystem or small bug fix; roughly five or fewer tasks; low risk; no migration, production-data, security/privacy cross-cutting, or multi-system integration concerns.
-- **Rigorous**: any criterion from **Planning depth** for rigorous work applies, or [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) returned blocked or needs revision on high-risk areas.
-- **Standard**: default when neither focused nor rigorous criteria apply.
+Then choose planning depth per **Planning depth** above and record it in §1 Planning status.
 
 Map process readiness to artifact status:
 
@@ -152,9 +115,9 @@ Map process readiness to artifact status:
 | Discovery-gated | `discovery-gated` |
 | Blocked | `blocked` |
 
-Use `validated` only after [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) approves or the user explicitly treats a reviewer-approved plan as final. Use `conditionally validated` only when review found no blockers and remaining risks are explicit and accepted.
+Use `validated` only after plan-reviewer approves or the user explicitly treats a reviewer-approved plan as final. Use `conditionally validated` only when review found no blockers and remaining risks are explicit and accepted.
 
-If blocked or discovery-gated, do not write a ready-to-execute plan. Provide a Planning Blocker Summary in the response and reflect the same content in template §4 **Blocking questions** and, when status is `discovery-gated`, **Discovery items to inspect**. Then ask the next required question, inspect the needed codebase context, or recommend returning to [../research-guide/SKILL.md](../research-guide/SKILL.md):
+If blocked or discovery-gated, do not write a ready-to-execute plan. Provide a Planning Blocker Summary in the response and reflect the same content in template §4 **Blocking questions** and, when status is `discovery-gated`, **Discovery items to inspect**. Then ask the next required question, inspect the needed codebase context, or recommend returning to research-guide:
 
 ```markdown
 Planning Blocker Summary:
@@ -167,12 +130,7 @@ Planning Blocker Summary:
 
 ### 4. Explore available project context
 
-When the task targets an existing codebase and tools/files are available, inspect before planning:
-- Relevant directories, files, tests, configuration, build scripts, dependency manifests, and coding patterns.
-- Existing interfaces, naming conventions, data models, feature flags, rollout mechanisms, and observability patterns.
-- Test commands and verification workflows.
-
-When context cannot be inspected, do not invent file paths or APIs. Use a discovery-gated plan only if it is still useful, and state exactly what must be discovered before execution.
+When the task targets an existing codebase and tools/files are available, inspect before planning: relevant directories, files, tests, configuration, build scripts, dependency manifests, and coding patterns; existing interfaces, naming conventions, data models, feature flags, rollout mechanisms, and observability patterns; and test commands and verification workflows. When context cannot be inspected, do not invent file paths or APIs. Use a discovery-gated plan only if it is still useful, and state exactly what must be discovered before execution.
 
 ### 5. Choose implementation approach
 
@@ -188,14 +146,7 @@ If multiple approaches are viable and the choice materially affects cost, risk, 
 
 ### 6. Design tests iteratively (TDD-first)
 
-Before finalizing tasks, run an iterative test-design pass led by **Tests Designer** in collaboration with **Requirements Mapper**, **Architecture Planner**, **Task Decomposer**, and **Verification Planner**:
-
-1. **Requirements Mapper → Tests Designer**: map each acceptance criterion and must-have requirement to concrete test scenarios, including negative and edge cases.
-2. **Architecture Planner → Tests Designer**: translate module boundaries, interfaces, and integration points into unit, integration, and contract test scope.
-3. **Tests Designer → Task Decomposer**: propose test slices and red-phase specs that inform task boundaries and sequencing.
-4. **Task Decomposer → Tests Designer**: refine per-task failing tests as deliverables and dependencies become concrete.
-5. **Tests Designer ↔ Verification Planner**: align automated test plans with manual checks, commands, observability validation, and the verification matrix; close coverage gaps.
-6. **Iterate** until every must-have requirement has at least one planned failing test or verification check (verification check for check-only requirements verified by checks only), task boundaries support independent red-green cycles, and verification coverage is complete.
+Use the planning roles as analytical lenses, not theatrical personas — **Tests Designer** is always active for implementation plans; add **Domain Specialist** lenses when the domain requires them. Before finalizing tasks, design tests from the requirements, interfaces, and the planned decomposition: failing tests, scenarios, fixtures, and edge cases mapped from acceptance criteria and must-have requirements, with test slices and red-phase specs informing task boundaries and sequencing, and automated tests aligned with manual checks, commands, observability validation, and the verification matrix. Iterate with **Requirements Mapper**, **Architecture Planner**, **Task Decomposer**, and **Verification Planner** across steps 5–7 until every must-have requirement has at least one planned failing test or verification check (check-only requirements by verification check), task boundaries support independent red-green cycles, and verification coverage is complete. See [references/planning-roles.md](references/planning-roles.md) for role details and collaboration rules.
 
 For each planned test, specify when known:
 - Test id, type (unit/integration/e2e/contract), and requirement ids covered.
@@ -229,54 +180,20 @@ For each task, include:
 
 Avoid fixed-length plans. Use as many tasks as required, but split the plan when independent subsystems should be planned separately.
 
-When tasks can run independently, define execution waves for [../plan-executor/SKILL.md](../plan-executor/SKILL.md). Parallel tasks in the same wave must have disjoint write paths and no dependency ordering. If tasks share mutable files, public contracts, generated files, or ordering dependencies, mark them `sequential` or reserve the shared change for an `integration` task.
+When tasks can run independently, define execution waves for plan-executor. Parallel tasks in the same wave must have disjoint write paths and no dependency ordering. If tasks share mutable files, public contracts, generated files, or ordering dependencies, mark them `sequential` or reserve the shared change for an `integration` task.
 
-### 7a. Stage decomposition and staged-mode recommendation
+### 7a. Staged-mode recommendation
 
-After decomposing work into tasks (§7), decide whether the plan should use **staged mode**. Staged mode decomposes the plan into self-contained, verifiable, committable stages — each stage is a group of `pg-NNN` tasks that together form a unit running the full implement → audit → review → commit loop, with `plan-reviewer` stage-exit review between stages and a final deep code review on the cumulative diff.
+After decomposing work into tasks (§7), decide the execution mode. Staged mode groups the `pg-NNN` tasks into ordered, self-contained stages (§10 `Stage breakdown`) — each stage independently verifiable and committable, with plan-reviewer stage-exit review between stages and a final deep code review on the cumulative diff.
 
-#### When to recommend staged mode
+Recommend `Execution mode: staged` when planning depth is `rigorous`, the plan has **more than 5** `pg-NNN` tasks (tunable threshold — 5 is the default boundary), or the user requests it (e.g., per-stage commits). Otherwise default to `Execution mode: linear`. Never recommend staged mode for a plan that decomposes to a single stage — that degenerates to linear mode plus a stage-exit review with nothing left to check. The user may still override at the plan gate to force staged semantics. Record any override (in either direction) and the rationale in the plan.
 
-Recommend `Execution mode: staged` when **any** of the following conditions hold:
-
-- Planning depth is `rigorous` (high-risk, cross-cutting, security/privacy/compliance-sensitive, migration-heavy, performance-sensitive, or user-visible work).
-- Task count is **> 5** (the plan has 6 or more `pg-NNN` tasks). This is a tunable threshold — adjust based on project context, but 5 is the default boundary.
-- The user explicitly requests staged mode (e.g., "I want per-stage commits" or "use staged mode").
-
-When none of these conditions hold, default to `Execution mode: linear` (the current behavior).
-
-#### Single-stage guard (single-stage guard)
-
-Do **not** recommend staged mode when the plan decomposes to a single stage. A single-stage staged plan degenerates to linear mode plus overhead (stage-exit review with no remaining stages to check). If the plan has only one stage, use `Execution mode: linear`.
-
-The user may still override at the plan gate to force staged mode for a single-stage plan if they want per-stage commit semantics.
-
-#### Stage grouping
-
-When recommending staged mode, group tasks into stages in §10 `Stage breakdown`:
-
-- Each stage is an ordered group of `pg-NNN` task ids.
-- Stages are ordered by dependency: stage N depends on stage N-1's committed output.
-- Each stage has a commit checkpoint (the Conventional Commit message or checkpoint description).
-- Each stage has a verification target (the command or check that proves the stage is complete).
-- Tasks within a stage may be sequential or parallel (waves), but stages themselves are sequential.
-- A stage should be large enough to carry a meaningful review gate but small enough to be independently verifiable and committable.
-
-#### Plan gate extension
-
-When staged mode is recommended, extend the plan gate (§11) to offer `execute (staged)`:
+When staged mode is recommended, extend the plan gate (§11): insert `execute (staged)` as option 5 and renumber `block` to option 6:
 
 ```markdown
-Plan gate: choose one:
-1. review: send this plan to plan-reviewer before execution
-2. iterate: revise the plan on [specific scope, finding, or task area]
-3. finalize: accept this plan at the stated readiness level
-4. execute: hand off to plan-executor (linear mode)
 5. execute (staged): hand off to plan-executor in staged mode (per-stage implement→audit→review→commit loop)
 6. block: stop planning until [specific missing input or decision] is resolved
 ```
-
-If the user overrides to staged mode when linear was recommended (or vice versa), record the override and the rationale in the plan.
 
 ### 8. Produce the implementation plan
 
@@ -288,16 +205,7 @@ When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator as
 
 When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.agents/workflow/<slug>/20-implementation-plan.md`); use that path instead.
 
-Include:
-- Planning readiness and review status.
-- Source traceability.
-- Architecture and execution strategy.
-- Test design (TDD-first scenarios and red-phase specs).
-- Task breakdown.
-- Requirement-to-task matrix.
-- Verification matrix.
-- Risk, rollout, rollback, and observability notes.
-- Execution handoff with execution waves, parallelizable work, file ownership, stop conditions, and TDD evidence requirements.
+Include planning readiness and review status, source traceability, architecture and execution strategy, test design (TDD-first scenarios and red-phase specs), task breakdown, requirement-to-task and verification matrices, risk/rollout/rollback/observability notes, and an execution handoff with execution waves, parallelizable work, file ownership, stop conditions, and TDD evidence requirements.
 
 ### 9. Self-review before handoff
 
@@ -307,15 +215,7 @@ Fix issues inline when possible. If any blocker or discovery gate remains, mark 
 
 ### 10. Collaborate with plan-reviewer
 
-[../plan-guide/SKILL.md](../plan-guide/SKILL.md) and [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) form a quality loop:
-
-1. [../plan-guide/SKILL.md](../plan-guide/SKILL.md) produces an implementation plan.
-2. [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) audits the plan against the source context.
-3. [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) returns a review-report with a Guide handoff packet.
-4. [../plan-guide/SKILL.md](../plan-guide/SKILL.md) consumes the review-report, repairs the plan, asks needed questions, narrows scope, or blocks execution.
-5. The loop repeats until the plan is validated or explicitly blocked.
-
-When a [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) report is provided, follow [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md) and [../plan-reviewer/references/re-review-protocol.md](../plan-reviewer/references/re-review-protocol.md). Never ignore blocker or major findings. Every material finding needs a disposition: resolved, partially resolved, reopened, needs user decision, needs codebase inspection, needs upstream research, accepted as execution risk, rejected with rationale, or still blocking.
+This skill and plan-reviewer form a quality loop: this skill produces an implementation plan, plan-reviewer audits it against the source context and returns a review-report with a Guide handoff packet, and this skill consumes the report — repairing the plan, asking needed questions, narrowing scope, or blocking execution — until the plan is validated or explicitly blocked. When a plan-reviewer report is provided, follow [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md) and [../plan-reviewer/references/re-review-protocol.md](../plan-reviewer/references/re-review-protocol.md). Never ignore blocker or major findings. Every material finding needs a disposition: resolved, partially resolved, reopened, needs user decision, needs codebase inspection, needs upstream research, accepted as execution risk, rejected with rationale, or still blocking.
 
 ### 11. End with a plan gate
 

@@ -123,7 +123,7 @@ Rules:
 - Prefer stdlib first. Add dependencies only when they reduce real complexity.
 - Keep dependencies out of core domain code when simple data classes/functions suffice.
 - Pin plugin and dependency versions through Gradle convention or catalogs — use [gradle-dev](../../gradle-dev/SKILL.md) for catalog and repository policy.
-- Avoid mixing multiple test assertion/mocking styles in a small module — use [kotlin-testing](../../kotlin-testing/SKILL.md) for test-library choice.
+- Avoid mixing multiple test assertion/mocking styles in a small module — keep one dominant assertion style per module — see the main SKILL.md Testing rules.
 - For examples, show minimal dependencies and note optional libraries separately.
 
 ## 8. Local check script

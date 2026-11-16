@@ -8,45 +8,13 @@ description: "Use when auditing an implementation for requirement coverage and f
 Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve
 paths to `references/` from that directory.
 
-Audit an implementation against a plan, bug, or requirement set. Combine analytical review
-with fresh command evidence and produce a compact audit report — not an implementation report
-or a structured diff review.
+## Scope and boundaries
 
-## Primary Directive
+Audit an implementation against a plan, bug, or requirement set: combine analytical review with fresh command evidence and produce a compact audit report — not an implementation report or a structured diff review. Use this skill after code changes, bug fixes, or [../plan-executor/SKILL.md](../plan-executor/SKILL.md) runs, and before claiming completion or merge readiness.
 
-Your job is to **audit an implementation for correctness and requirement coverage with fresh
-test/build evidence**, not to execute plans, author plans, coach strict TDD, or review code
-diffs. After a passing audit, suggest [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-for structured diff review.
+Do not claim correctness from inspection alone, and do not claim tests pass unless the relevant command was run in the current session and its output was read. Default to read-only auditing: do not modify implementation files unless the user explicitly asks for fixes. Temporary local commands, builds, generated test artifacts, and logs are allowed when needed; clean them up when practical and report leftovers.
 
-## When to Use
-
-- After code changes, bug fixes, or [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
-  runs — when deeper correctness proof is needed beyond an integration report
-- Before claiming completion or merge readiness
-- Checking requirement coverage against a plan, spec, or acceptance criteria
-- Validating that tests actually exercise changed behavior, with fresh command output
-- Producing a compact audit report mapping evidence, gaps, risks, and next steps
-
-## When NOT to Use
-
-- **Active local merge/rebase integration verification** — use
-  [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) first to prove branch
-  composition and affected-test health; use this skill afterward when requirement or
-  acceptance-criteria coverage still needs separate proof
-- **Structured diff or commit review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-- **Plan execution** — use [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
-- **Pre-execution plan audit** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
-- **Plan authoring or repair** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
-- **Strict TDD coaching during active implementation** — use
-  [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md)
-- **Codebase learning or architecture guides** — use [../code-professor/SKILL.md](../code-professor/SKILL.md)
-
-## Mission
-
-Audit the implementation against the requested plan, bug, or requirement. Combine analytical review with fresh command evidence. Do not claim correctness from inspection alone and do not claim tests pass unless the relevant command was run in the current session and its output was read.
-
-Default to read-only auditing. Do not modify implementation files unless the user explicitly asks for fixes. Temporary local commands, builds, generated test artifacts, and logs are allowed when needed; clean them up when practical and report leftovers.
+This skill proves whether requirements are met (requirement coverage, correctness, test-to-behavior mapping). It does not judge diff quality, design, readability, or maintainability. Neighboring skills own: active merge/rebase integration verification — [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) (use this skill only afterward, when requirement or acceptance-criteria coverage still needs separate proof); structured diff or commit review — [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) (audit first, then review the diff); plan execution — [../plan-executor/SKILL.md](../plan-executor/SKILL.md); pre-execution plan audit — [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md); plan authoring or repair — [../plan-guide/SKILL.md](../plan-guide/SKILL.md); strict TDD coaching during implementation — [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md); codebase learning or architecture guides — [../code-professor/SKILL.md](../code-professor/SKILL.md).
 
 ## Audit workflow
 
@@ -62,7 +30,6 @@ Default to read-only auditing. Do not modify implementation files unless the use
 
 3. **Select verification commands**
    - Discover the project's build and test system from repository files, docs, CI config, package manifests, and scripts.
-   - Load `<SKILL_ROOT>/references/test-command-matrix.md` when choosing commands by platform or tech stack.
    - Prefer the smallest focused command for changed behavior plus the relevant broader regression command.
 
 4. **Run fresh validation**
@@ -85,17 +52,6 @@ Default to read-only auditing. Do not modify implementation files unless the use
 When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path), write the audit report to `.agents/plans/<feature-or-topic-slug>-audit.md`. The `.agents/plans/` directory is gitignored. Do not write audit artifacts to the repository root — it pollutes the working tree and risks accidental commits.
 
 When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.agents/workflow/<slug>/31-implementation-audit.md`); use that path instead.
-
-## Boundary with code review
-
-This skill proves **whether requirements are met** with fresh evidence: requirement coverage, correctness, and test-to-behavior mapping. It does not judge diff quality, design, readability, or maintainability — that is [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md). When both are wanted, audit first (outcome proof), then review the diff.
-
-## Boundary with git-merge-guide
-
-[../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) proves **branch composition**:
-semantic conflict resolution, integration review of cleanly merged code, and affected-test
-verification. Use this skill only after that integration work when a plan, spec, or
-acceptance criteria still need separate requirement-coverage proof.
 
 ## Verdict routing
 
@@ -132,27 +88,10 @@ Classify gaps as:
 
 ## Platform and stack selection
 
-Load `<SKILL_ROOT>/references/test-command-matrix.md` to choose commands. Prefer repository-specific commands from docs or CI over generic commands. When multiple stacks exist, run commands for the affected stack and any integration boundary touched by the change.
-
-Examples:
-
-- Android Kotlin change: focused Gradle unit or instrumentation target, then affected module test task.
-- iOS Swift/Objective-C change: focused `xcodebuild test` with the relevant scheme and destination.
-- Desktop C++ change: configure/build target, focused test binary or `ctest -R`, then relevant suite.
-- Qt change: CMake or qmake build plus Qt test executable or `ctest` target.
+Load `<SKILL_ROOT>/references/test-command-matrix.md` to choose commands by platform or tech stack. Prefer repository-specific commands from docs or CI over generic commands. When multiple stacks exist, run commands for the affected stack and any integration boundary touched by the change.
 
 ## Report requirements
 
 The final report must be clear enough for a debugging agent, implementor, or reviewer to act on without rerunning the whole audit. Include exact commands, outcomes, key log snippets or summaries, and file-level observations. Be concise but precise.
 
 Use `<SKILL_ROOT>/references/audit-report-template.md` for the final format.
-
-## Companion Skills
-
-| Task | Path |
-| --- | --- |
-| Strict TDD during implementation | [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md) |
-| Structured diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
-| Plan execution | [../plan-executor/SKILL.md](../plan-executor/SKILL.md) |
-| Pre-execution plan audit | [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) |
-| Plan authoring and repair | [../plan-guide/SKILL.md](../plan-guide/SKILL.md) |

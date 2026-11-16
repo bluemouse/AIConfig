@@ -37,6 +37,36 @@ Defines the evals for a skill. Located at `evals/evals.json` within the skill di
 
 ---
 
+## eval_metadata.json
+
+Per-eval metadata within an eval workspace iteration. Located at `<workspace>/iteration-N/eval-<ID>/eval_metadata.json`. Assertions may start empty and be filled in while runs execute.
+
+```json
+{
+  "eval_id": 0,
+  "eval_name": "descriptive-name-here",
+  "prompt": "The user's task prompt",
+  "assertions": []
+}
+```
+
+---
+
+## feedback.json
+
+User review feedback collected after viewing eval results. Located at `<workspace>/iteration-N/feedback.json`. Empty `reviews` (or missing feedback) means the user accepted the output.
+
+```json
+{
+  "reviews": [
+    {"run_id": "eval-0-with_skill", "feedback": "...", "timestamp": "..."}
+  ],
+  "status": "complete"
+}
+```
+
+---
+
 ## history.json
 
 Tracks version progression in Improve mode. Located at workspace root.

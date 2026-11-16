@@ -3,19 +3,19 @@
     "query": "refactor this sealed class hierarchy so when is exhaustive without an else branch",
     "should_trigger": true,
     "split": "train",
-    "rationale": "Kotlin language modeling -> patterns.md / language-grammar.md"
+    "rationale": "Kotlin language modeling -> patterns.md (sealed when exhaustiveness)"
   },
   {
     "query": "why does smart cast fail on this mutable property and how do I fix the type model",
     "should_trigger": true,
     "split": "train",
-    "rationale": "compiler/nullability semantics -> language-grammar.md / debugging.md"
+    "rationale": "compiler/nullability semantics -> debugging.md"
   },
   {
     "query": "choose between Sequence and List for this multi-step collection pipeline on 10k items",
     "should_trigger": true,
     "split": "train",
-    "rationale": "stdlib API selection -> stdlib-api.md / best-practices.md"
+    "rationale": "stdlib API selection -> best-practices.md"
   },
   {
     "query": "review this Kotlin extension function for API clarity and null safety",
@@ -37,9 +37,9 @@
   },
   {
     "query": "write Kotest property tests for this parser with MockK suspend mocks",
-    "should_trigger": false,
+    "should_trigger": true,
     "split": "train",
-    "rationale": "near-miss: test design/frameworks -> kotlin-testing, not kotlin-coding"
+    "rationale": "Kotlin test design and frameworks -> Testing section / coroutine-testing.md (test design folded into this skill)"
   },
   {
     "query": "add kotest and kover dependencies to build.gradle.kts and wire tasks.test useJUnitPlatform",

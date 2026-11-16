@@ -81,6 +81,6 @@
     "query": "fix this Python script that parses JSON config files for our CI pipeline",
     "should_trigger": false,
     "split": "validation",
-    "rationale": "near-miss: Python scripting -> python-coding, not Krita engine"
+    "rationale": "near-miss: Python scripting, not Krita engine"
   }
 ]

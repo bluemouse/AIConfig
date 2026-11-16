@@ -51,7 +51,7 @@
     "query": "write a good pull request description for this change",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: PR authoring, use pull-request-guide"
+    "rationale": "near-miss: PR authoring, use github-guide"
   },
   {
     "query": "review this diff and tell me if the logic is correct",

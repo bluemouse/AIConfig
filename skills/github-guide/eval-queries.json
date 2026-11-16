@@ -79,9 +79,9 @@
   },
   {
     "query": "what should I write in the PR description and how do I split a large change",
-    "should_trigger": false,
+    "should_trigger": true,
     "split": "validation",
-    "rationale": "near-miss: PR description craft, use pull-request-guide"
+    "rationale": "PR description craft and sizing now live in github-guide's PR authoring defaults"
   },
   {
     "query": "review this PR and post the findings on GitHub",
@@ -94,5 +94,35 @@
     "should_trigger": true,
     "split": "validation",
     "rationale": "delivery-only: map and post via github-guide"
+  },
+  {
+    "query": "help me write a good pull request description for this change",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "PR authoring defaults (what/why/how) now live in github-guide"
+  },
+  {
+    "query": "this PR is getting huge, what should I do about it",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "sizing/splitting defaults now live in github-guide"
+  },
+  {
+    "query": "I finished the feature, get it ready for review",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "self-review and draft-until-CI-green defaults now live in github-guide"
+  },
+  {
+    "query": "split this large change into smaller reviewable pieces",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "size-and-atomicity defaults now live in github-guide"
+  },
+  {
+    "query": "run az repos pr create to open the PR on Azure DevOps",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "near-miss: non-GitHub host tooling, not github-guide"
   }
 ]

@@ -2,38 +2,13 @@
 
 ## Use this file when
 
-Use this reference when reviewing C++ ownership, JNI references, native handles, direct buffers, worker threads, or third-party library lifetimes.
-
-## Ownership model
-
-Every native object must have one owner and one release path.
-
-```cpp
-class NativeProcessor {
-public:
-    NativeProcessor(int width, int height);
-    ~NativeProcessor();
-
-    NativeProcessor(const NativeProcessor&) = delete;
-    NativeProcessor& operator=(const NativeProcessor&) = delete;
-    NativeProcessor(NativeProcessor&&) noexcept = default;
-    NativeProcessor& operator=(NativeProcessor&&) noexcept = default;
-};
-```
-
-Use RAII wrappers for:
-
-- Allocated image buffers.
-- File descriptors.
-- `AImage`, `AImageReader`, `AMediaCodec`, `AHardwareBuffer`.
-- Vulkan objects if used indirectly; otherwise use `android-vulkan-dev`.
-- JNI global references.
+Use this reference when reviewing JNI references, native handles, direct buffers, worker threads, or third-party library lifetimes. For general C++ RAII and allocator design, use [cpp-memory-guide](../../cpp-memory-guide/SKILL.md); for general C++ style and performance rules, use [cpp-coding](../../cpp-coding/SKILL.md).
 
 ## Native handles
 
 When Kotlin owns a native handle, protect against double free and use-after-free.
 
-- Store handle in one facade object.
+- Store handle in one facade object; give every native object one owner and one release path.
 - Set handle to zero before or immediately after native destroy.
 - Make `close()` idempotent.
 - For concurrent use, guard native object with a mutex or serialize calls on one dispatcher/thread.
@@ -124,12 +99,3 @@ Before integrating a library:
 - Ensure it uses a compatible STL and does not require unavailable libc symbols.
 - Wrap it behind a narrow C++ adapter and a narrow Kotlin facade.
 - Add smoke tests that load the library and exercise one simple call on each ABI.
-
-## Native performance rules
-
-- Minimize copies across Kotlin/native/media/GPU boundaries.
-- Use contiguous buffers and cache-friendly memory layouts.
-- Avoid heap allocation in per-frame loops.
-- Use worker thread pools deliberately; too many native threads can fight camera/media/UI scheduling.
-- Prefer explicit vectorized/SIMD code only after scalar correctness and benchmarks.
-- Avoid logging inside hot loops.

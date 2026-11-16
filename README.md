@@ -34,8 +34,7 @@ Install a bootstrap command with `install_portable_command.py`. Re-run after edi
 
 ```
 repo/
-├── AGENTS.md                          # Tool-neutral agent guidance (architecture, commands)
-├── CLAUDE.md                          # Claude Code-specific guidance
+├── AGENTS.md                          # Tool-neutral agent guidance (architecture, commands); auto-loaded by Claude Code
 ├── guidelines/                        # Behavioral guidelines for coding agents (installable)
 ├── tools/
 │   ├── installer.py                   # Copy installed skills/agents/commands to another project
@@ -54,7 +53,6 @@ repo/
 │   ├── code-professor/                # Evidence-based codebase learning and documentation guides
 │   ├── commit-message-writer/         # Conventional Commit message drafting from git diffs
 │   ├── github-guide/                  # GitHub PR/review delivery via gh CLI and gh api
-│   ├── minutes-writer/                # Source-grounded meeting minutes for engineering meetings
 │   ├── prompt-clarifier/              # Iterative clarification of ambiguous requests before acting
 │   ├── advisory-council/              # Multi-perspective council deliberation on complex decisions
 │   ├── devil-advocate/                # Adversarial stress-test of proposals with verdicts
@@ -67,16 +65,14 @@ repo/
 │   ├── test-driven-dev-guide/         # Strict TDD red-green-refactor coaching
 │   ├── debugging-guide/               # Systematic root-cause debugging and minimal verified repair
 │   ├── tutorial-writer/               # Example-driven tutorials, quickstarts, and user guides
-│   ├── cpp-coding/                    # C++20 coding guidelines
+│   ├── cpp-coding/                    # C++20 coding and GoogleTest/CTest testing
 │   ├── cpp-memory-guide/              # C++20 memory design and allocators
-│   ├── cpp-testing/                   # C++20 GoogleTest/CMake testing
 │   ├── cpp-performance-guide/         # C++ performance profiling, benchmarking, and optimization
 │   ├── cmake-dev/                     # CMake 3.20+ target-based builds
-│   ├── csharp-coding/                 # C# and .NET coding guidelines
+│   ├── csharp-coding/                 # C#/.NET language, LangVersion/SDK selection, minimal build/test verify
 │   ├── gpu-rendering-guide/           # API-agnostic GPU renderer architecture
 │   ├── krita-engine-dev/              # Krita brush engines, paintops, stroke scheduling
 │   ├── mypaint-engine-dev/            # MyPaint/libmypaint brush engine and tiled surfaces
-│   ├── python-coding/                 # Python 3.12+ CLI scripts and utilities
 │   ├── qt-dev/                        # Qt 6 Widgets/CMake desktop UI for render tools
 │   ├── qt-ui-guide/                   # Qt Widgets UI/UX design, review, and .ui authoring
 │   ├── vulkan-dev/                    # Vulkan 1.3 development
@@ -100,8 +96,7 @@ repo/
 
 | Path | Purpose |
 | --- | --- |
-| `AGENTS.md` | Tool-neutral guidance for coding agents (architecture, scripts, editing conventions). |
-| `CLAUDE.md` | Claude Code-specific guidance; references `AGENTS.md` for shared repo rules. |
+| `AGENTS.md` | Tool-neutral guidance for coding agents (architecture, scripts, editing conventions); auto-loaded by Claude Code (v2.1.277+) when no `CLAUDE.md`-family file exists — don't add one. |
 | `skills/` | **Bootstrap skills** — edit here, then install to `.agents/skills/`. |
 | `agents/` | **Bootstrap agents** (optional) — edit `agents/<name>/`, then install to the dual-target copies. |
 | `commands/` | **Bootstrap commands** (optional) — edit `commands/<name>/`, then install as command-skills. |
@@ -126,11 +121,9 @@ Bootstrap skills live under `skills/`. Installing one copies the package to `.ag
 | `techdoc-reviewer` | `skills/techdoc-reviewer/` | Review and synchronize technical documentation against code, tests, and configuration |
 | `code-professor` | `skills/code-professor/` | Evidence-based guides for learning, tracing, and documenting existing codebases |
 | `commit-message-writer` | `skills/commit-message-writer/` | Draft Conventional Commit messages from staged/working diffs, commits, or ranges |
-| `minutes-writer` | `skills/minutes-writer/` | Draft source-grounded meeting minutes and recaps from transcripts, notes, and supporting materials |
 | `git-guide` | `skills/git-guide/` | Git mechanics: commit, push, rebase, conflicts, worktrees |
 | `git-merge-guide` | `skills/git-merge-guide/` | Local merge/rebase integration: semantic conflicts, integration review, verification |
-| `github-guide` | `skills/github-guide/` | GitHub delivery: `gh pr create`, post structured reviews, resolve threads |
-| `pull-request-guide` | `skills/pull-request-guide/` | PR/MR authoring: description, sizing, testing evidence, self-review |
+| `github-guide` | `skills/github-guide/` | GitHub delivery: `gh pr create`, post structured reviews, resolve threads; PR authoring defaults (description, sizing, self-review) |
 | `prompt-clarifier` | `skills/prompt-clarifier/` | Iteratively clarify ambiguous requests with adaptive questions before or during a task |
 | `advisory-council` | `skills/advisory-council/` | Coordinate distinct expert and stakeholder perspectives into ranked recommendations with dissent |
 | `devil-advocate` | `skills/devil-advocate/` | Stress-test a proposal with steelmanning, findings, resolutions, and a proceed/rework/reject verdict |
@@ -143,16 +136,14 @@ Bootstrap skills live under `skills/`. Installing one copies the package to `.ag
 | `test-driven-dev-guide` | `skills/test-driven-dev-guide/` | Strict TDD red-green-refactor coaching with real command evidence |
 | `debugging-guide` | `skills/debugging-guide/` | Systematic root-cause debugging with evidence, regression tests, and minimal verified repair |
 | `tutorial-writer` | `skills/tutorial-writer/` | Write, revise, and review example-driven tutorials, quickstarts, walkthroughs, and user guides |
-| `cpp-coding` | `skills/cpp-coding/` | C++20 coding against Core Guidelines |
+| `cpp-coding` | `skills/cpp-coding/` | C++20 coding against Core Guidelines, with GoogleTest/CTest testing |
 | `cpp-memory-guide` | `skills/cpp-memory-guide/` | C++20 memory design: RAII, allocators, PMR, sanitizers |
-| `cpp-testing` | `skills/cpp-testing/` | C++20 GoogleTest/CMake testing |
 | `cpp-performance-guide` | `skills/cpp-performance-guide/` | C++ performance profiling, benchmarking, codegen tuning, and optimization with evidence |
 | `cmake-dev` | `skills/cmake-dev/` | CMake 3.20+ target-based builds, FetchContent, CTest, install/export |
-| `csharp-coding` | `skills/csharp-coding/` | C# and .NET coding, toolchain, and testing |
+| `csharp-coding` | `skills/csharp-coding/` | C#/.NET language, LangVersion/SDK selection, minimal build/test verify |
 | `gpu-rendering-guide` | `skills/gpu-rendering-guide/` | API-agnostic explicit-API renderer architecture |
 | `krita-engine-dev` | `skills/krita-engine-dev/` | Krita brush engines, paintops, stroke scheduling, tiled compositing, canvas/GPU display |
 | `mypaint-engine-dev` | `skills/mypaint-engine-dev/` | MyPaint/libmypaint brush engine, `.myb` presets, dab scheduling, tiled surfaces, parity testing |
-| `python-coding` | `skills/python-coding/` | Python 3.12+ CLI scripts: argparse, pyproject.toml, ruff, pyright, pytest |
 | `qt-dev` | `skills/qt-dev/` | Qt 6 Widgets/CMake desktop UI for Vulkan/Metal render tools |
 | `qt-ui-guide` | `skills/qt-ui-guide/` | Qt Widgets UI/UX design, review, accessibility, and `.ui` authoring |
 | `vulkan-dev` | `skills/vulkan-dev/` | Vulkan 1.3 development, validation, and performance triage |
@@ -163,8 +154,7 @@ Bootstrap skills live under `skills/`. Installing one copies the package to `.ag
 | `android-dev` | `skills/android-dev/` | Kotlin Android app layer: Compose, architecture, CameraX/Media3, permissions, release quality |
 | `android-ndk-dev` | `skills/android-ndk-dev/` | Android NDK: CMake, JNI, native libraries, memory, debugging, 16 KB page size |
 | `android-vulkan-dev` | `skills/android-vulkan-dev/` | Vulkan on Android: surface/swapchain, AHB interop, AVP, wide color, GPU image processing |
-| `kotlin-coding` | `skills/kotlin-coding/` | Kotlin/JVM language, stdlib, coroutines, and idiomatic code |
-| `kotlin-testing` | `skills/kotlin-testing/` | Kotlin/JVM test design: kotlin.test, Kotest, MockK, coroutines, flake triage |
+| `kotlin-coding` | `skills/kotlin-coding/` | Kotlin/JVM language, stdlib, coroutines, idiomatic code, and test design (kotlin.test, Kotest, MockK, coroutine tests, flake triage) |
 | `gradle-dev` | `skills/gradle-dev/` | Gradle build engineering for JVM/Kotlin projects |
 | `gradle-android-dev` | `skills/gradle-android-dev/` | Android Gradle Plugin builds: variants, lint, R8, build performance |
 | `code-review-resolver` | `skills/code-review-resolver/` | Resolve and fix code review findings; route upstream causes backward |
@@ -176,15 +166,15 @@ Several installed skills cross-link as companions — install related skills tog
 
 | Cluster | Skills | Relationship |
 | --- | --- | --- |
-| C++ | `cpp-coding`, `cpp-memory-guide`, `cpp-testing`, `cpp-performance-guide`, `cmake-dev` | CMake build graph → style and concurrency → CPU memory/ownership → GoogleTest/CTest → measurement-driven optimization |
+| C++ | `cpp-coding`, `cpp-memory-guide`, `cpp-performance-guide`, `cmake-dev` | CMake build graph → style, concurrency, and GoogleTest/CTest testing → CPU memory/ownership → measurement-driven optimization |
 | GPU rendering | `gpu-rendering-guide`, `vulkan-dev`, `slang-dev`, `shader-guide`, `glsl-coding`, `usd-hydra2-dev` | Renderer architecture → `Vk*` implementation → Slang shaders → creative GLSL effects / GLSL language → OpenUSD Hydra 2.0 scene-index consumption |
 | Painting engines | `mypaint-engine-dev`, `krita-engine-dev`, `gpu-rendering-guide` | App-specific stroke/dab paths (MyPaint or Krita) → tiled compositing and parity → GPU surface/display strategy |
 | Qt desktop | `qt-dev`, `qt-ui-guide`, `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` | UI/UX design and `.ui` review → Widgets/CMake implementation → C++ idioms → viewport/Vulkan integration → renderer architecture |
-| Kotlin/JVM | `kotlin-coding`, `kotlin-testing`, `gradle-dev`, `gradle-android-dev` | Language/stdlib/API design → test frameworks and flakes → Gradle build engineering → AGP variants, lint, R8 |
-| Android | `android-dev`, `android-ndk-dev`, `android-vulkan-dev`, `kotlin-coding`, `kotlin-testing`, `gradle-android-dev`, `vulkan-dev`, `gpu-rendering-guide` | App Kotlin/Compose → NDK/JNI → Android Vulkan → language/tests/AGP → generic Vulkan API → renderer architecture |
-| Git workflow | `commit-message-writer`, `git-guide`, `git-merge-guide`, `pull-request-guide`, `code-reviewer`, `techdoc-reviewer`, `github-guide` | Draft commit messages → git mechanics (commit/push/rebase/worktrees) → deep local merge/rebase integration → PR authoring → structured diff review → documentation truth/sync when reader-visible contracts change → GitHub delivery (`gh pr create`, post review, resolve threads) |
+| Kotlin/JVM | `kotlin-coding`, `gradle-dev`, `gradle-android-dev` | Language/stdlib/API design and tests (frameworks, coroutine tests, flakes) → Gradle build engineering → AGP variants, lint, R8 |
+| Android | `android-dev`, `android-ndk-dev`, `android-vulkan-dev`, `kotlin-coding`, `gradle-android-dev`, `vulkan-dev`, `gpu-rendering-guide` | App Kotlin/Compose → NDK/JNI → Android Vulkan → language/tests/AGP → generic Vulkan API → renderer architecture |
+| Git workflow | `commit-message-writer`, `git-guide`, `git-merge-guide`, `code-reviewer`, `techdoc-reviewer`, `github-guide` | Draft commit messages → git mechanics (commit/push/rebase/worktrees) → deep local merge/rebase integration → structured diff review → documentation truth/sync when reader-visible contracts change → GitHub delivery (`gh pr create`, PR authoring defaults, post review, resolve threads). PR authoring defaults are GitHub-delivery-scoped; GitLab/Azure DevOps MRs are host tooling outside the catalog |
 | Codebase learning | `code-professor`, `tutorial-writer`, `plan-guide`, `debugging-guide`, `code-reviewer` | Evidence-backed codebase onboarding → example-driven tutorials and user guides → implementation planning → verified defect repair → diff review |
-| Meeting notes | `minutes-writer`, `pull-request-guide`, `commit-message-writer` | Source-grounded minutes from transcripts → PR authoring → commit messages (does not create tickets or publish unless asked) |
+| Meeting notes | `minutes-guidelines` (guideline), `github-guide`, `commit-message-writer` | Source-grounded minutes from transcripts via the guideline → PR authoring (github-guide's PR authoring defaults) → commit messages (does not create tickets or publish unless asked) |
 | Requirement clarification | `prompt-clarifier`, `research-guide`, `plan-guide`, `debugging-guide` | Resolve blocking ambiguity in the request → open-ended discovery when the idea itself is unformed → implementation plan → root-cause work on defects |
 | Decision deliberation | `advisory-council`, `devil-advocate`, `prompt-clarifier`, `research-guide`, `plan-reviewer` | Clarify ambiguous decisions → council debate for multi-perspective synthesis → adversarial stress-test with proceed/rework/reject verdict → research and plan-audit companions |
 | Research workflow | `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor` | Interactive discovery and research report → readiness audit → implementation plan → plan audit → execution |
@@ -284,7 +274,7 @@ skills/<name>/
 - Keep the body **tool-neutral** — tool-specific mechanics belong in a `## Tool notes` section of the body (H2 with `### Claude Code` / `### Cursor` / `### GitHub Copilot` H3 subsections as needed), not in separate per-tool files
 - Resolve `<SKILL_ROOT>` as the directory containing the skill's `SKILL.md`
 - Put bundled resources only under `references/`, `scripts/`, or `assets/`
-- Cross-link sibling skills with relative paths (e.g. `../cpp-testing/SKILL.md`) — these resolve after install under `.agents/skills/`
+- Cross-link sibling skills with relative paths (e.g. `../cpp-coding/SKILL.md`) — these resolve after install under `.agents/skills/`
 - The skill directory must be a direct child of a skills root (e.g. `skills/<name>/` or `.agents/skills/<name>/`); category subfolders (`skills/<category>/<name>/`) are rejected by the validator
 
 ### 2. Install (single-root copy)
@@ -305,7 +295,7 @@ The script:
 2. Ensures the Claude Code bridge symlink `.claude/skills -> ../.agents/skills` exists (refuses when a real directory occupies the path — purge the legacy install first)
 3. Validates the installed skill with `quick_validate.py`
 
-Install multiple related skills in any order when they cross-reference each other — e.g. the C++ cluster (`cpp-coding`, `cpp-memory-guide`, `cpp-testing`), the Kotlin/Gradle cluster (`kotlin-coding`, `kotlin-testing`, `gradle-dev`, `gradle-android-dev`), or the GPU stack (`gpu-rendering-guide`, `vulkan-dev`, `slang-dev`, `shader-guide`, `glsl-coding`, `usd-hydra2-dev`) link via `../<sibling>/SKILL.md`.
+Install multiple related skills in any order when they cross-reference each other — e.g. the C++ cluster (`cpp-coding`, `cpp-memory-guide`), the Kotlin/Gradle cluster (`kotlin-coding`, `gradle-dev`, `gradle-android-dev`), or the GPU stack (`gpu-rendering-guide`, `vulkan-dev`, `slang-dev`, `shader-guide`, `glsl-coding`, `usd-hydra2-dev`) link via `../<sibling>/SKILL.md`.
 
 ### 3. Validate (optional manual check)
 
@@ -326,7 +316,7 @@ Edit the bootstrap skill under `skills/<name>/`, then re-run the install command
 **Example — install the C++ cluster:**
 
 ```bash
-for skill in cmake-dev cpp-coding cpp-memory-guide cpp-testing; do
+for skill in cmake-dev cpp-coding cpp-memory-guide; do
   python skills/skill-creator/scripts/install_portable_skill.py \
     --root . --name "$skill" --source "skills/$skill" --overwrite
 done
@@ -344,7 +334,7 @@ done
 **Example — install the Kotlin/Gradle cluster:**
 
 ```bash
-for skill in kotlin-coding kotlin-testing gradle-dev gradle-android-dev; do
+for skill in kotlin-coding gradle-dev gradle-android-dev; do
   python skills/skill-creator/scripts/install_portable_skill.py \
     --root . --name "$skill" --source "skills/$skill" --overwrite
 done
@@ -607,9 +597,9 @@ Reload Claude Code after install so custom agents are rediscovered (Cursor and V
 ## Further reading
 
 - `AGENTS.md` — architecture, common commands, and editing conventions for all coding agents
-- `CLAUDE.md` — Claude Code-specific discovery, evals, and install workflow
 - `guidelines/coding-behavior-guidelines.md` — Karpathy-inspired behavioral guidelines for coding agents
 - `guidelines/response-guidelines.md` — chat-output shaping rules for agent responses (result-first updates, structured questions, no preamble/recap)
 - `guidelines/code-comment-guidelines.md` — code comment rules for coding agents (why-not-what, contract docs, staleness, no session narration)
+- `guidelines/minutes-guidelines.md` — source-grounded meeting-minutes rules for coding agents (never invent, decisions vs discussion, `not specified`)
 - `skills/skill-creator/references/` — portable skill layout, JSON schemas, workflow and output patterns
 - `skills/agent-creator/references/` — portable agent layout

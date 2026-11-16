@@ -44,7 +44,7 @@ verification, or a merge report.
   [commit-message-writer](../commit-message-writer/SKILL.md) for message composition,
   type/scope selection, and compact/verbose output
 - **Authoring PR descriptions, sizing, or self-review** — use
-  [pull-request-guide](../pull-request-guide/SKILL.md)
+  [github-guide](../github-guide/SKILL.md)
 - **Structured diff review without git operations** — use
   [code-reviewer](../code-reviewer/SKILL.md)
 - **Host-specific PR/MR creation** — use `github-guide` or `gitlab-guide` when installed
@@ -112,6 +112,6 @@ verification, or a merge report.
 |------|------|
 | End-to-end merge/rebase integration and verification | [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) |
 | Draft Conventional Commit messages from diffs | [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) |
-| PR description, sizing, self-review | [../pull-request-guide/SKILL.md](../pull-request-guide/SKILL.md) |
+| PR description, sizing, self-review | [../github-guide/SKILL.md](../github-guide/SKILL.md) |
 | Structured diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
 | GitHub PR/review delivery (`gh pr create`, post review) | [../github-guide/SKILL.md](../github-guide/SKILL.md) |

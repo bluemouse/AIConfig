@@ -5,8 +5,8 @@
 - **URL:** https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines — R.* (resource management), I.11 (never transfer ownership by raw pointer), E.6 (RAII), Per.19 (predictable allocation)
 - **Last reviewed:** 2026-07-05
 - **Used for:**
-  - `SKILL.md` → C++ idioms, Gotchas, Essentials
-  - `references/raii-and-smart-pointers.md`, `references/ownership-and-lifetimes.md`, `references/caller-owns-memory.md`
+  - `SKILL.md` → When to Use, Gotchas
+  - `references/ownership-and-lifetimes.md`, `references/caller-owns-memory.md`
 - **Aspects extracted:**
   - RAII, `unique_ptr` default, non-owning borrows, Rule of 0/3/5, no hidden allocation in APIs
 
@@ -33,7 +33,7 @@
 - **URL:** https://en.wikipedia.org/wiki/Region-based_memory_management and Tofte & Talpin, "Region-Based Memory Management" (Information and Computation, 1997)
 - **Last reviewed:** 2026-07-05
 - **Used for:**
-  - `SKILL.md` → Allocation strategy, Ownership
+  - `SKILL.md` → When to Use (allocator choice, lifetime-by-reset semantics)
   - Lifetime-by-reset and arena semantics
 - **Aspects extracted:**
   - Arena/bump/linear allocators, lifetime reset, scratch arenas → `references/arenas-and-pools.md`
@@ -43,7 +43,7 @@
 - **URL:** Game Engine Architecture (J. Gregory), Memory Management chapter; Andrei Alexandrescu, "std::allocator Is to Allocation what std::vector Is to Vexation" (CppCon 2015)
 - **Last reviewed:** 2026-07-05
 - **Used for:**
-  - `SKILL.md` → Allocation strategy
+  - `SKILL.md` → When to Use (pool/arena allocator choice)
 - **Aspects extracted:**
   - Object pools, free lists, fragmentation, per-allocation overhead → `references/arenas-and-pools.md`
   - Caller-provided storage / non-allocating APIs → `references/caller-owns-memory.md`
@@ -53,7 +53,7 @@
 - **URL:** OS virtual-memory APIs — `mmap`/`mprotect` (POSIX), `VirtualAlloc` (Windows); reserve-then-commit growable-array technique
 - **Last reviewed:** 2026-07-05
 - **Used for:**
-  - `SKILL.md` → Allocation strategy
+  - `SKILL.md` → When to Use (virtual-memory reserve/commit)
 - **Aspects extracted:**
   - Reserve large / commit on demand, stable-address growable arrays → `references/virtual-memory.md`
 
@@ -62,7 +62,7 @@
 - **URL:** Ownership models as in RAII (C++) and the Rust ownership/borrow model — https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html
 - **Last reviewed:** 2026-07-05
 - **Used for:**
-  - `SKILL.md` → Ownership, Essentials
+  - `SKILL.md` → When to Use (ownership and lifetime design), Gotchas
 - **Aspects extracted:**
   - Single-owner/borrow, lifetime-by-scope, leak/double-free/use-after-free avoidance, refcount as exception → `references/ownership-and-lifetimes.md`
 
@@ -70,7 +70,7 @@
 
 - **Last reviewed:** 2026-07-05
 - **Used for:**
-  - `SKILL.md` → Allocation strategy
+  - `SKILL.md` → When to Use (virtual-memory reserve/commit)
   - Practical virtual-memory techniques built on address-space reservation
 - **Aspects extracted:**
   - "Virtual Memory Tricks" — reserve cheap address space vs commit physical, cap-free never-moving arrays, page-aligned growth to cut fragmentation, gapless ring buffer via double-mapping, end-of-page bounds-checking allocator → `references/virtual-memory.md`

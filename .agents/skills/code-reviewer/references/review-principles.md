@@ -120,7 +120,7 @@ A reportable finding must include:
 Flag (usually as `minor` or open questions) when the change makes review harder:
 
 - Diff too large or mixed concerns (refactor + behavior + formatting) — suggest
-  [pull-request-guide](../../pull-request-guide/SKILL.md) for split/self-review.
+  [github-guide](../../github-guide/SKILL.md) for split/self-review.
 - Missing or misleading commit message / PR description vs actual diff.
 - Public API or behavior change without documentation impact being assessed; route a full
   documentation truth or synchronization review to `techdoc-reviewer`.

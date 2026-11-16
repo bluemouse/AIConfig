@@ -52,6 +52,12 @@ Aim for ~20 queries: 8–10 should-trigger, 8–10 should-not-trigger. Focus on 
 
 ---
 
+## How skill triggering works (general)
+
+Agents match tasks against skill **name + description** in their available-skills list. Simple one-step tasks may not invoke a skill even when the description fits, because the base model handles them directly. Write eval queries substantial enough that consulting a skill would genuinely help.
+
+---
+
 ## Automated optimization (Claude Code / Cowork only)
 
 When `run_loop.py` is available (see the Claude Code `## Tool notes` section), it splits the eval set ~60% train / 40% held-out test, runs each query multiple times, and proposes description revisions. Execution details are **not** shared here — see the skill's `## Tool notes`.

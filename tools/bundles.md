@@ -116,7 +116,7 @@ The core bundle is the minimum workflow set a team should rely on for ordinary f
 | [code-reviewer](../skills/code-reviewer/SKILL.md) | Structured diff review | A diff, commit, branch, or PR needs reviewer-side risk analysis |
 | [commit-message-writer](../skills/commit-message-writer/SKILL.md) | Commit narrative | A Conventional Commit message is needed from staged, unstaged, or committed changes |
 | [git-guide](../skills/git-guide/SKILL.md) | Git mechanics | Staging, committing, pushing, rebasing, resolving conflicts, or worktrees are needed |
-| [pull-request-guide](../skills/pull-request-guide/SKILL.md) | PR authoring | The change needs a clear review-ready PR/MR description, testing evidence, or split advice |
+| [github-guide](../skills/github-guide/SKILL.md) | GitHub delivery and PR authoring | A GitHub PR or review must be created, updated, commented on, or resolved through `gh` / `gh api`, or the change needs a review-ready PR description, sizing, or self-review |
 
 ## Extended dev workflow bundle
 
@@ -131,9 +131,7 @@ The extended bundle includes the full core bundle plus these additional skills:
 | [advisory-council](../skills/advisory-council/SKILL.md) | Multi-perspective decision deliberation | Competing options, policy disputes, or explicit council/panel requests need ranked recommendations with dissent |
 | [devil-advocate](../skills/devil-advocate/SKILL.md) | Adversarial proposal review | A single proposal needs red-teaming, show-stopper analysis, and a proceed/rework/reject verdict |
 | [agent-runner](../skills/agent-runner/SKILL.md) | Parallel workstream coordination | Independent research, implementation, debug, or audit tasks can run concurrently |
-| [minutes-writer](../skills/minutes-writer/SKILL.md) | Meeting and decision record | Engineering discussions need grounded minutes, decisions, and action items |
 | [techdoc-reviewer](../skills/techdoc-reviewer/SKILL.md) | Documentation review and synchronization | Reader-facing docs must be verified against code, tests, and configuration, or updated after a behavior change |
-| [github-guide](../skills/github-guide/SKILL.md) | GitHub delivery | A GitHub PR or review must be created, updated, commented on, or resolved through `gh` / `gh api` |
 | [git-merge-guide](../skills/git-merge-guide/SKILL.md) | Deep local merge/rebase integration | A local merge or rebase needs intent reconstruction, semantic conflict resolution, combined-tree review, or impact-based verification |
 
 ## Choosing Core vs Extended
@@ -151,7 +149,7 @@ Use the extended bundle when:
 - The change affects security, privacy, compliance, data migration, public APIs, production reliability, or cross-team contracts.
 - The plan will be executed by someone who was not part of the original discussion.
 - Multiple independent subsystems, test failures, or research tracks can be split safely.
-- A formal PR process, GitHub inline review posting, or meeting record is required.
+- A formal PR process or GitHub inline review posting is required.
 
 When extending beyond core, add individual extended-bundle skills as the work warrants:
 
@@ -160,8 +158,6 @@ When extending beyond core, add individual extended-bundle skills as the work wa
 - [advisory-council](../skills/advisory-council/SKILL.md) when a consequential decision has competing perspectives or needs structured dissent.
 - [devil-advocate](../skills/devil-advocate/SKILL.md) when one proposal must be pressure-tested before commitment.
 - [agent-runner](../skills/agent-runner/SKILL.md) only when workstreams are genuinely independent.
-- [minutes-writer](../skills/minutes-writer/SKILL.md) when decisions are made in meetings or chat and need a durable record.
-- [github-guide](../skills/github-guide/SKILL.md) only when the delivery host is GitHub and `gh` or `gh api` mechanics are part of the task.
 
 ## Maintenance
 

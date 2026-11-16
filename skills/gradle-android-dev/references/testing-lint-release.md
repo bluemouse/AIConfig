@@ -22,7 +22,7 @@ Rules:
 
 - Put local unit tests in `src/test/kotlin` or `src/test/java`.
 - Use `testImplementation` dependencies.
-- For pure Kotlin test design and framework patterns, use [kotlin-testing](../../kotlin-testing/SKILL.md).
+- For pure Kotlin test design and framework patterns, use [kotlin-coding](../../kotlin-coding/SKILL.md).
 - For Gradle test task wiring, use [gradle-dev](../../gradle-dev/SKILL.md); this skill only maps Android variant task names and source sets.
 
 ## 2. Instrumentation test tasks

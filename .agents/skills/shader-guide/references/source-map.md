@@ -8,6 +8,8 @@ Each `references/<topic>.md` file was migrated from `skills-ref/shader-dev/` and
 
 The original reference lived under `skills-ref/shader-dev/techniques/` (implementation templates) and `skills-ref/shader-dev/reference/` (extended theory). This skill merges those layers into a single flat `references/` tree. `webgl-pitfalls` was not migrated as a standalone topic; relevant GLSL rules were folded into [shader-debugging](shader-debugging.md).
 
+> **2026-11-15 prune:** the encyclopedic technique walkthroughs were removed — frontier models write canonical ray marching, SDF, FBM, shadow, and pattern techniques fluently without them. The Topic Map below is retained as the provenance record of the original migration; only `effect-recipes`, `multipass-buffer`, `performance-budget`, `sdf-tricks`, `shader-debugging`, and `source-map` remain as files.
+
 ## Topic Map
 
 | Reference | techniques/ source | reference/ source |

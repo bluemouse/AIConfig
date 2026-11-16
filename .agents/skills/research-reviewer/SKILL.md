@@ -8,106 +8,39 @@ description: "Use when reviewing, auditing, re-reviewing, grilling, or validatin
 Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve
 paths to `references/` from that directory.
 
-Use this skill to review a research report before it is consumed by an implementation planner. The output is a review-report that identifies readiness, gaps, contradictions, weak evidence, risks, and required revisions.
-
 ## Primary Directive
 
-Your job is to **audit a research report and produce a review-report**, not to write implementation plans, revise the source report silently, or review code diffs. Review it, score it, and explain what must change unless the user asks for a revised research report.
+Audit a research report and produce a review-report identifying readiness, gaps, contradictions, weak evidence, risks, and required revisions — not write implementation plans, revise the source report silently, or review code diffs. Explain what must change unless the user asks for a revised research report.
 
-Use Grilling Mode to resolve material decisions through sequenced questions before the final verdict for standard and rigorous reviews, unless the user explicitly requests no grilling. Do not use it for focused reviews unless the user explicitly requests it.
+Default to a balanced audit posture: fair, direct, and specific. Use an aggressive posture when the user asks for a hard review, the work is expensive or safety/security/compliance-sensitive, the evidence is weak, or the report appears over-converged.
 
-## When to Use
-
-- Reviewing or auditing an existing research report before implementation planning
-- Validating requirements, assumptions, evidence, and risks in a discovery artifact
-- Assigning severity to gaps and deciding whether planning can proceed
-- Domain-specialist review of a research report (graphics, security, compliance, etc.)
-- Interactive grilling of a report's material assumptions or unresolved decisions
-
-## When NOT to Use
-
-- **Brainstorming or authoring research** — use [../research-guide/SKILL.md](../research-guide/SKILL.md)
-- **Code or diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-- **Writing implementation plans** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
-- **Auditing an implementation plan before execution** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
-- **Codebase learning or repository orientation** — use [../code-professor/SKILL.md](../code-professor/SKILL.md)
-
-## Companion Skills
-
-- Primary input from [../research-guide/SKILL.md](../research-guide/SKILL.md)
-- After accept verdict: hand off to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) for implementation planning
-- On `needs revision` or `blocked` (or unaccepted `conditionally ready`): return to [../research-guide/SKILL.md](../research-guide/SKILL.md) with a handoff packet per [references/research-guide-handoff-contract.md](references/research-guide-handoff-contract.md)
-- After [../plan-guide/SKILL.md](../plan-guide/SKILL.md) produces a plan: optional audit via [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
-- For code changes during execution: [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-
-## Operating posture
-
-Default to a balanced audit posture: fair, direct, and specific.
-
-Use an aggressive audit posture when the user asks for a hard review, the report will drive expensive work, the domain is safety/security/compliance-sensitive, the evidence is weak, or the report appears over-converged.
-
-Always:
-- Review the report as an implementation-readiness artifact, not as prose.
-- Prefer finding material gaps over rewriting style.
-- Separate missing information, contradiction, weak evidence, risky assumption, unclear decision, and implementation-planning blocker.
-- Assign severity to each finding.
-- Use domain-specific reviewers when the report implies a domain such as graphics, ai, data, security, privacy, compliance, infrastructure, devops, ux, product strategy, finance, healthcare, education, or enterprise workflow.
-- Cite provided report sections when possible. If external, internal, current, or project-specific facts are used, cite the source.
-- Avoid rubber-stamping. A report can be well-written and still not be ready for planning.
+Always review the report as an implementation-readiness artifact, not as prose; prefer material gaps over style rewrites and assign severity to each finding; use domain-specific reviewers when the report implies a domain (see [references/domain-lenses.md](references/domain-lenses.md)); cite provided report sections when possible and the source of any external or project-specific fact used.
 
 ## Input handling
 
-If the user has not provided a research report, ask for the report or the relevant sections. If the report is present but lacks a domain or product context, infer the likely domain and state the assumption. Ask for clarification only when the missing context would materially change the verdict.
+If no research report is provided, ask for it or the relevant sections. Infer an unstated domain and state the assumption; ask for clarification only when the missing context would materially change the verdict. Treat reports from [../research-guide/SKILL.md](../research-guide/SKILL.md) as first-class input. If the user provides a prior `research-reviewer` report or asks for re-review, follow [references/re-review-protocol.md](references/re-review-protocol.md); preserve prior finding ids and include finding dispositions in the new report.
 
-Treat reports from [../research-guide/SKILL.md](../research-guide/SKILL.md) as first-class input. Expect sections such as agreement state, problem statement, goals, requirements, recommended direction, alternatives, evidence and assumptions, user workflow, technical implications, risks, open questions, and implementation-planning handoff.
+When repository access is available, spot-check a high-risk sample of project-specific claims before assigning `ready`; record inspected paths or the limitation, and lower confidence with a finding if verification is impossible.
 
-If the user provides a prior `research-reviewer` report or asks for re-review, follow [references/re-review-protocol.md](references/re-review-protocol.md). Preserve prior finding ids and include finding dispositions in the new report.
+## Routing
 
-When repository access is available and the report makes project-specific claims about files, APIs, architecture, dependencies, commands, or constraints, spot-check a representative high-risk sample before assigning `ready`. Record inspected paths or state the limitation. If source precision matters and cannot be verified, lower confidence and mark the uncertainty as a finding.
+Defer instead of reviewing: research authoring — [../research-guide/SKILL.md](../research-guide/SKILL.md) (also the return path on `needs revision` / `blocked`, with a handoff packet per [references/research-guide-handoff-contract.md](references/research-guide-handoff-contract.md)); code or diff review — [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md); codebase learning — [../code-professor/SKILL.md](../code-professor/SKILL.md); writing implementation plans, the handoff target after an accept verdict — [../plan-guide/SKILL.md](../plan-guide/SKILL.md); auditing an implementation plan, optional after plan-guide — [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md).
 
 ## Workflow
 
-### 1. Parse the report
+### 1. Choose review depth and roles
 
-Extract:
-- Decision or recommendation
-- Agreement status
-- Scope, goals, non-goals, and success metrics
-- Requirements and acceptance criteria
-- Alternatives and trade-offs
-- Evidence and assumption ledger
-- User, technical, security, privacy, data, operational, and domain implications
-- Risks, mitigations, open questions, and implementation handoff
+Choose the lightest review depth that can safely judge implementation-planning readiness, and record it in the report:
 
-If any major section is absent, keep reviewing and mark the absence as a finding instead of stopping.
-
-### 2. Choose review depth
-
-Choose the lightest review depth that can safely judge implementation-planning readiness:
-
-- **Focused**: short, low-risk, narrow research report. Still audit problem, user, scope, requirements, acceptance signals, evidence separation, risks, open questions, and implementation handoff.
+- **Focused**: short, low-risk, narrow report. Still audit problem, user, scope, requirements, acceptance signals, evidence, risks, open questions, and handoff.
 - **Standard**: default for most reports. Apply the full rubric with proportional detail.
-- **Rigorous**: high-risk, cross-system, security/privacy/compliance-sensitive, migration-heavy, performance-sensitive, production-data, regulated, expensive, aggressive-posture, or previously blocked work. Apply all relevant domain lenses, source/evidence checks, risk/rollout scrutiny, and re-review discipline.
+- **Rigorous**: high-risk, cross-system, security/privacy/compliance-sensitive, migration-heavy, performance-sensitive, regulated, expensive, aggressive-posture, or previously blocked work. Apply all relevant domain lenses, source/evidence checks, risk/rollout scrutiny, and re-review discipline.
 
-Record the review depth in the report. Focused review does not relax false-readiness rejection.
+Select reviewer roles as analytical lenses, not theatrical personas, per [references/reviewer-roles.md](references/reviewer-roles.md); include a Domain Specialist whenever the domain is stated, implied, or requested. State the active roles near the start of the review.
 
-### 3. Select reviewer roles
+### 2. Parse and audit the report
 
-Use roles as analytical lenses, not theatrical personas. State the active reviewer roles near the start of the review.
-
-Default roles:
-- Review Lead
-- Requirements Auditor
-- Evidence Auditor
-- Skeptic / Red Team
-- Implementation Readiness Reviewer
-- Domain Specialist when the domain is clear or requested
-
-Use [references/reviewer-roles.md](references/reviewer-roles.md) when role selection or domain specialization needs more detail.
-
-### 4. Audit from multiple angles
-
-Run the review across the relevant lenses. Do not force irrelevant checks.
+Extract decision, scope, requirements, evidence ledger, risks, and handoff; absent sections become findings — keep reviewing instead of stopping. Then run the review across the relevant lenses. Do not force irrelevant checks.
 
 Core lenses:
 - Completeness: required planning inputs are present.
@@ -120,9 +53,9 @@ Core lenses:
 - Domain readiness: specialized constraints and best practices are considered.
 - Handoff readiness: an implementation planner can turn the report into a plan without inventing missing decisions.
 
-Use [references/validation-rubric.md](references/validation-rubric.md) for severity and verdict rules. Use [references/domain-lenses.md](references/domain-lenses.md) when specialized domain review is requested or implied.
+Use [references/validation-rubric.md](references/validation-rubric.md) for severity and verdict rules; use [references/domain-lenses.md](references/domain-lenses.md) when specialized domain review is requested or implied.
 
-### 5. Assign findings and verdict
+### 3. Assign findings and verdict
 
 Every material finding must include:
 - Stable id such as `rr-001`.
@@ -131,44 +64,26 @@ Every material finding must include:
 - Issue.
 - Why it matters.
 - Required fix or recommendation.
-- Recommended research-guide action: revise report, ask user, inspect codebase, gather evidence, validate assumption, resolve open question, reconcile contradiction, narrow scope, expand alternatives, accept as planning risk, or re-review.
-- `root-cause-phase`: `local` (fix within the research loop) | `research` (this phase) | `plan` | `implement` | `code-review`. Use `local` when the finding is a research-report defect fixable by research-guide. Use an earlier phase name only when the finding's root cause traces to a decision made before research — which is rare, since research is the first phase. When the dev-workflow-orchestrator is active, it reads this field to route backward handoff packets; outside the orchestrator, the field is informational.
+- Recommended research-guide action (revise report, ask user, inspect codebase, gather evidence, resolve open question, narrow scope, accept as planning risk, re-review, etc.).
+- `root-cause-phase`: `local` (fix within the research loop) | `research` (this phase) | `plan` | `implement` | `code-review`. Use `local` for a research-report defect fixable by research-guide; an earlier phase is rare, since research is the first phase. The dev-workflow-orchestrator reads this field to route backward handoff packets; outside the orchestrator, it is informational.
 
-Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `ready`, `conditionally ready`, `needs revision`, or `blocked`. Never rubber-stamp a ready verdict when core scope, target users, recommendation, acceptance criteria, evidence/assumption separation, implementation handoff, or blocking open questions are missing.
+Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `ready`, `conditionally ready`, `needs revision`, or `blocked`. Never rubber-stamp a ready verdict — the rubric lists the sections whose absence or contradiction blocks `ready`.
 
-### 6. Run Grilling Mode
+### 4. Run Grilling Mode
 
-Run Grilling Mode for standard and rigorous reviews by default. Skip it for focused reviews unless the user explicitly requests it. Skip it at any depth when the user explicitly requests no grilling. It supplements the audit; it does not replace evidence gathering, severity assignment, or the final verdict.
+Run Grilling Mode for standard and rigorous reviews by default; skip it for focused reviews unless explicitly requested, and at any depth on an explicit no-grilling request. It supplements — never replaces — evidence gathering, severity assignment, and the verdict. Build a decision tree from blocker and major findings, material questions, contradictions, and high-impact assumptions, and work it per [references/grilling-protocol.md](references/grilling-protocol.md), which defines rounds, question format, option limits, Recommended marking, stop-grilling semantics, and completion criteria.
 
-Build a decision tree from blocker and major findings, material questions, contradictions, and high-impact assumptions. Work the tree in rounds. The frontier contains only decisions whose prerequisites are settled. Ask every independent frontier question in the current round, then wait for the user's answers before asking a subsequent round.
+### 5. Self-review and produce the review-report
 
-For each question:
-- Ask for a user decision only when it cannot be established from available evidence. Investigate repository and external facts directly instead of asking the user to find them.
-- Provide one or two defensible substantive answer options plus a `stop grilling` option. Never exceed three options total or invent substantive options merely to fill the limit.
-- Mark exactly one substantive option as **Recommended** and state the evidence or trade-off supporting it.
-- Treat `stop grilling` as an instruction to end Grilling Mode immediately, preserve remaining decisions as findings or open questions, and continue the audit without further grilling.
-- Keep dependent questions for a later round; do not assume answers to questions that remain open.
-- Record the answer, its rationale, and any accepted risk in the review report.
-
-Use [references/grilling-protocol.md](references/grilling-protocol.md) for the question format, decision-tree rules, and completion criteria.
-
-### 7. Self-review before handoff
-
-Before presenting the report, run [references/review-quality-checklist.md](references/review-quality-checklist.md). Fix the report inline when the checklist catches a mismatch between severity, verdict, gate, or handoff content.
-
-### 8. Produce the review-report
-
-Use [references/review-report-template.md](references/review-report-template.md) as the default structure. Keep the report concise but specific enough for the author to revise the research report.
+Run [references/review-quality-checklist.md](references/review-quality-checklist.md) and fix inline any severity, verdict, gate, or handoff mismatch. Then produce the review-report using [references/review-report-template.md](references/review-report-template.md) — concise but specific enough for the author to revise the research report.
 
 #### Artifact output path
 
-When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator assigned an input/output artifact path), write the review report to `.agents/researches/<feature-or-topic-slug>-review.md`. The `.agents/researches/` directory is gitignored. Do not write review artifacts to the repository root — it pollutes the working tree and risks accidental commits.
+Outside the dev-workflow-orchestrator (no assigned artifact path), write the review report to `.agents/researches/<feature-or-topic-slug>-review.md` (gitignored; never to the repository root, which risks accidental commits). Inside the orchestrator, use the assigned path instead (typically `.agents/workflow/<slug>/11-research-review.md`).
 
-When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.agents/workflow/<slug>/11-research-review.md`); use that path instead.
+For `needs revision` and `blocked` verdicts — and unaccepted `conditionally ready` — include a handoff packet per [references/research-guide-handoff-contract.md](references/research-guide-handoff-contract.md): a concrete, prioritized revision path back to planning readiness, stating whether re-review is required before planning.
 
-For `needs revision` and `blocked` verdicts — and for `conditionally ready` when the conditions are not already accepted — include a handoff packet using [references/research-guide-handoff-contract.md](references/research-guide-handoff-contract.md). The packet gives [../research-guide/SKILL.md](../research-guide/SKILL.md) a concrete, prioritized revision path back to planning readiness without re-reading the full review. State whether re-review is required before planning.
-
-### 9. End with a review gate
+### 6. End with a review gate
 
 End with exactly one gate unless the user requested only a final audit:
 
@@ -180,16 +95,4 @@ Review gate: choose one:
 4. accept: treat the report as ready at the stated verdict level, only when verdict is ready or conditionally ready with accepted planning risks
 ```
 
-If the verdict is `blocked` or `needs revision`, do not offer `accept` as planning-ready. For `conditionally ready`, offer accept only as accepting the listed conditions as planning risks. Do not continue past the gate until the user answers.
-
-## Quality bar
-
-A strong review-report:
-- Names the active lenses.
-- Gives a clear verdict and confidence.
-- Prioritizes findings by planning impact.
-- Identifies contradictions and missing decisions.
-- Converts vague criticism into actionable fixes.
-- Distinguishes objective defects from judgment calls.
-- Preserves uncertainty instead of hiding it.
-- Provides a minimal revision path back to planning readiness.
+If the verdict is `blocked` or `needs revision`, do not offer `accept` as planning-ready; for `conditionally ready`, offer accept only as accepting the listed conditions as planning risks. Do not continue past the gate until the user answers.

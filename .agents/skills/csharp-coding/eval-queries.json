@@ -9,7 +9,7 @@
     "query": "review this ASP.NET minimal API endpoint for async cancellation and proper exception handling",
     "should_trigger": true,
     "split": "train",
-    "rationale": "direct: C# async, CancellationToken, ASP.NET review patterns"
+    "rationale": "direct: async/CancellationToken handling in .cs code is in scope; ASP.NET endpoint specifics are framework context"
   },
   {
     "query": "what dotnet commands should I run to restore build and test only the failing xunit project in this solution",
@@ -31,9 +31,9 @@
   },
   {
     "query": "add Roslyn analyzer enforcement and dotnet format verify-no-changes to our CI for this csproj",
-    "should_trigger": true,
+    "should_trigger": false,
     "split": "train",
-    "rationale": "direct: analyzers, dotnet format, MSBuild project configuration"
+    "rationale": "out of scope: toolchain/scaffolding content trimmed; narrow description excludes it"
   },
   {
     "query": "explain when I can use collection expressions vs array literals in C# 12 for this net8 project",
@@ -43,15 +43,15 @@
   },
   {
     "query": "write an integration test for this EF Core service using the repo's existing NUnit patterns",
-    "should_trigger": true,
+    "should_trigger": false,
     "split": "train",
-    "rationale": "direct: C# test strategy and framework-specific test code"
+    "rationale": "out of scope: toolchain/scaffolding content trimmed; narrow description excludes it"
   },
   {
     "query": "NuGet central package management is enabled — how do I add a package reference without breaking Directory.Packages.props",
-    "should_trigger": true,
+    "should_trigger": false,
     "split": "train",
-    "rationale": "direct: NuGet and MSBuild dependency hygiene"
+    "rationale": "out of scope: toolchain/scaffolding content trimmed; narrow description excludes it"
   },
   {
     "query": "refactor this long method into smaller testable units while keeping the public API stable",
@@ -61,9 +61,9 @@
   },
   {
     "query": "enable PublishTrimmed and Native AOT safely for this console app — what project properties and tests do I need",
-    "should_trigger": true,
+    "should_trigger": false,
     "split": "train",
-    "rationale": "direct: publish, trimming, AOT compatibility checks"
+    "rationale": "out of scope: toolchain/scaffolding content trimmed; narrow description excludes it"
   },
   {
     "query": "pattern match on this discriminated result type with switch expression instead of nested ifs",
@@ -73,9 +73,9 @@
   },
   {
     "query": "create a new sln with classlib and xunit test project wired with project reference and dotnet test",
-    "should_trigger": true,
+    "should_trigger": false,
     "split": "train",
-    "rationale": "direct: dotnet new/sln/add/test scaffold commands"
+    "rationale": "out of scope: toolchain/scaffolding content trimmed; narrow description excludes it"
   },
   {
     "query": "review my C# library for IDisposable misuse and HttpClient lifetime in DI",
@@ -99,7 +99,7 @@
     "query": "write CMakeLists.txt with cxx_std_20 and add GoogleTest target for my engine module",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: C++ build/test setup -> cpp-testing / cpp-coding"
+    "rationale": "near-miss: C++ build/test setup -> cpp-coding"
   },
   {
     "query": "design a render graph pass ordering model API neutral for Vulkan and D3D12",

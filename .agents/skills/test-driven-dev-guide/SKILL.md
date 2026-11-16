@@ -1,6 +1,6 @@
 ---
 name: test-driven-dev-guide
-description: "Use when guiding strict test-driven development through red-green-refactor cycles with real command evidence and minimal production changes. Triggers on TDD implementation, test-first bug fixes, red/green verification, and checking whether code was written test-first. Does not trigger on post-implementation correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning guides (code-professor), or framework-specific test wiring (cpp-testing, kotlin-testing, python-coding)."
+description: "Use when guiding strict test-driven development through red-green-refactor cycles with real command evidence and minimal production changes. Triggers on TDD implementation, test-first bug fixes, red/green verification, and checking whether code was written test-first. Does not trigger on post-implementation correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning guides (code-professor), or framework-specific test wiring (cpp-coding, kotlin-coding)."
 ---
 
 # Test Driven Dev Guide
@@ -35,8 +35,8 @@ framework-specific test infrastructure.
 - **Behavior or acceptance criteria still undefined** — use
   [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) to settle what "done" means, then
   return here to write the first failing test
-- **C++ GoogleTest/CMake test setup** — use [../cpp-testing/SKILL.md](../cpp-testing/SKILL.md)
-- **Kotlin/JVM test setup** — use [../kotlin-testing/SKILL.md](../kotlin-testing/SKILL.md)
+- **C++ GoogleTest/CMake test setup** — use [../cpp-coding/SKILL.md](../cpp-coding/SKILL.md)
+- **Kotlin/JVM test setup** — use [../kotlin-coding/SKILL.md](../kotlin-coding/SKILL.md)
 
 ### Plan execution
 
@@ -163,6 +163,6 @@ not verified:
 | --- | --- |
 | Post-implementation correctness audit | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |
 | Structured diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
-| C++ GoogleTest/CMake testing | [../cpp-testing/SKILL.md](../cpp-testing/SKILL.md) |
-| Kotlin/JVM testing | [../kotlin-testing/SKILL.md](../kotlin-testing/SKILL.md) |
+| C++ GoogleTest/CMake testing | [../cpp-coding/SKILL.md](../cpp-coding/SKILL.md) |
+| Kotlin/JVM testing | [../kotlin-coding/SKILL.md](../kotlin-coding/SKILL.md) |
 | Plan execution | [../plan-executor/SKILL.md](../plan-executor/SKILL.md) |

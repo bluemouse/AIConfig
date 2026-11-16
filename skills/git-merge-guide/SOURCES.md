@@ -35,7 +35,7 @@
 
 ## dependent-skill handoffs (repository)
 
-- **Path:** `skills/debugging-guide/`, `skills/implementation-auditor/`, `skills/code-reviewer/`, `skills/plan-executor/`, `skills/agent-runner/`, `skills/pull-request-guide/`, `skills/github-guide/`
+- **Path:** `skills/debugging-guide/`, `skills/implementation-auditor/`, `skills/code-reviewer/`, `skills/plan-executor/`, `skills/agent-runner/`, `skills/github-guide/`
 - **Last reviewed:** 2026-08-08
 - **Used for:**
   - reciprocal routing sections and companion-skill tables

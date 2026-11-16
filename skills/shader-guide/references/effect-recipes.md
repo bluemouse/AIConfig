@@ -2,38 +2,38 @@
 
 ## Guideline
 
-Assemble complete visual effects by chaining technique references in a fixed order — geometry, march/trace, lighting, atmosphere, post — instead of improvising pass order each time.
+Assemble complete visual effects by chaining techniques in a fixed order — geometry, march/trace, lighting, atmosphere, post — instead of improvising pass order each time.
 
 ## Rationale
 
-Individual technique references cover one concern well (SDF primitives, soft shadows, FBM terrain). Production-looking results come from predictable pipelines that reuse the same module boundaries: build implicit geometry, trace rays, estimate normals, apply direct lighting with shadows/AO, add atmosphere, then tone-map and anti-alias.
+Individual techniques (SDF primitives, soft shadows, FBM terrain) are written directly from model knowledge. Production-looking results come from predictable pipelines that reuse the same module boundaries: build implicit geometry, trace rays, estimate normals, apply direct lighting with shadows/AO, add atmosphere, then tone-map and anti-alias.
 
 ## Photorealistic SDF Scene
 
-1. **Geometry** — [sdf-3d](sdf-3d.md) extended primitives + [csg-boolean-operations](csg-boolean-operations.md) cubic/quartic `smin`
-2. **Rendering** — [ray-marching](ray-marching.md) + [normal-estimation](normal-estimation.md) tetrahedron method
-3. **Lighting** — [lighting-model](lighting-model.md) outdoor three-light model + [shadow-techniques](shadow-techniques.md) soft shadow + [ambient-occlusion](ambient-occlusion.md)
-4. **Atmosphere** — [atmospheric-scattering](atmospheric-scattering.md) height-based fog with sun tint
-5. **Post** — [post-processing](post-processing.md) ACES tone mapping + [anti-aliasing](anti-aliasing.md) 2× SSAA + [camera-effects](camera-effects.md) vignette
+1. **Geometry** — 3D SDF primitives + CSG cubic/quartic `smin`
+2. **Rendering** — sphere tracing + tetrahedron normal estimation
+3. **Lighting** — outdoor three-light model + soft shadows + SDF AO
+4. **Atmosphere** — height-based fog with sun tint
+5. **Post** — ACES tone mapping + 2× SSAA + vignette
 
 ## Organic / Biological Forms
 
-1. **Geometry** — [sdf-3d](sdf-3d.md) twist/bend deformations + [csg-boolean-operations](csg-boolean-operations.md) gradient-aware `smin`
-2. **Detail** — [procedural-noise](procedural-noise.md) FBM with derivatives + [domain-warping](domain-warping.md)
-3. **Surface** — [lighting-model](lighting-model.md) subsurface scattering approximation via half-Lambert
+1. **Geometry** — SDF twist/bend deformations + gradient-aware `smin`
+2. **Detail** — FBM with derivatives + domain warping
+3. **Surface** — subsurface scattering approximation via half-Lambert
 
 ## Procedural Landscape
 
-1. **Terrain** — [terrain-rendering](terrain-rendering.md) + [procedural-noise](procedural-noise.md) erosion FBM with derivatives
-2. **Texturing** — [texture-mapping-advanced](texture-mapping-advanced.md) biplanar mapping + no-tile sampling
-3. **Sky** — [atmospheric-scattering](atmospheric-scattering.md) Rayleigh/Mie + height fog
-4. **Water** — [water-ocean](water-ocean.md) Gerstner waves + [lighting-model](lighting-model.md) Fresnel reflections
+1. **Terrain** — heightfield ray marching + erosion FBM with derivatives
+2. **Texturing** — biplanar mapping + no-tile sampling
+3. **Sky** — Rayleigh/Mie scattering + height fog
+4. **Water** — Gerstner waves + Fresnel reflections
 
 ## Stylized 2D Art
 
-1. **Shapes** — [sdf-2d](sdf-2d.md) extended library + [sdf-tricks](sdf-tricks.md) layered edges and hollowing
-2. **Color** — [color-palette](color-palette.md) cosine palettes + [polar-uv-manipulation](polar-uv-manipulation.md) kaleidoscope
-3. **Polish** — [anti-aliasing](anti-aliasing.md) SDF analytical AA + [post-processing](post-processing.md) bloom and chromatic aberration
+1. **Shapes** — 2D SDF library + [sdf-tricks](sdf-tricks.md) layered edges and hollowing
+2. **Color** — cosine palettes + polar/kaleidoscope UV mapping
+3. **Polish** — SDF analytical AA + bloom and chromatic aberration
 
 ## Gotchas
 

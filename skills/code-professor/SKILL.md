@@ -5,94 +5,43 @@ description: "Investigate unfamiliar repositories and produce evidence-based gui
 
 # Code Professor
 
-Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve
-paths to `references/` and `scripts/` from that directory.
-
-Investigate a codebase as a software archaeologist and teacher. Build an evidence-backed
-mental model, validate important behavior when practical, and explain the result for
-developers or coding agents.
-
-## Primary Directive
-
-Your job is to **investigate and teach with evidence**, not to review diffs, research
-product requirements, author implementation plans, execute plans, apply production fixes,
-or optimize performance. Defer those outcomes to the companion skills in
-[references/skill-boundaries.md](references/skill-boundaries.md).
-
-## When to Use
-
-- Onboarding to an unfamiliar repository or subsystem
-- Explaining a module, library, feature, algorithm, or execution path with source evidence
-- Tracing end-to-end control flow and data flow through the system
-- Documenting architecture, invariants, extension points, or a reading path
-- Investigating a failure to produce a learning guide with ranked hypotheses and an optional documented candidate fix (not an applied patch)
-- Runtime investigation with builds, tests, or temporary diagnostics when static evidence is insufficient
+Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Investigate
+a codebase as a software archaeologist and teacher: build an evidence-backed mental
+model, validate important behavior when practical, and explain it for developers or
+coding agents.
 
 ## When NOT to Use
 
 Load [references/skill-boundaries.md](references/skill-boundaries.md) when routing is ambiguous.
 
-- **Diff or commit review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-- **Product, requirements, or spec research** — use [../research-guide/SKILL.md](../research-guide/SKILL.md)
-- **Implementation plan authoring** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
-- **Plan execution** — use [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
-- **Verified defect repair** — use [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md)
-  when the user wants a minimal fix applied and verified, not a teaching document
-- **C/C++ performance optimization with profiling** — use
-  [../cpp-performance-guide/SKILL.md](../cpp-performance-guide/SKILL.md)
-
-**Boundary vs debugging-guide:** both investigate failures. This skill **documents** —
-reproduction, evidence, ranked hypotheses, optional **candidate fix** as a proposal.
-[../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) **repairs** — root cause,
-minimal patch, regression test, verified pass. Do not apply production fixes here.
-
-**Boundary vs plan-guide:** this skill produces **learning guides**; plan-guide produces
-**task breakdowns** with TDD specs. "Explore the codebase and write a plan" → plan-guide.
-"Teach me how this module works" → code-professor.
-
-**Boundary vs research-guide:** this skill explains **existing implementation**;
-research-guide agrees **product/requirements** before planning.
-
-## Companion Skills
-
-| After learning or when blocked | Skill |
-| --- | --- |
-| User wants to change or extend the code | [../plan-guide/SKILL.md](../plan-guide/SKILL.md) |
-| User wants a verified fix applied | [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) |
-| User wants diff review before or after a change | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
-| User pivots to product/requirements discovery | [../research-guide/SKILL.md](../research-guide/SKILL.md) |
-| User wants to execute an approved plan | [../plan-executor/SKILL.md](../plan-executor/SKILL.md) |
-| C/C++ performance optimization with measurements | [../cpp-performance-guide/SKILL.md](../cpp-performance-guide/SKILL.md) |
-| Stack-specific implementation work | Domain skills (e.g. [../cpp-coding/SKILL.md](../cpp-coding/SKILL.md), [../python-coding/SKILL.md](../python-coding/SKILL.md)) when the stack is identified |
-
-Full routing matrix: [references/skill-boundaries.md](references/skill-boundaries.md).
+- **Diff or commit review** — [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
+- **Product, requirements, or spec research** — [../research-guide/SKILL.md](../research-guide/SKILL.md)
+- **Implementation plan authoring** — [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
+- **Plan execution** — [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
+- **Verified defect repair** (applied fix, not a teaching document) — [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md)
+- **C/C++ performance optimization with profiling** — [../cpp-performance-guide/SKILL.md](../cpp-performance-guide/SKILL.md)
 
 ## Non-negotiable rules
 
-1. Treat the working directory as the repository root unless the user supplies another root.
-2. Read repository instructions before analyzing implementation. Check applicable `AGENTS.md`, `CLAUDE.md`, README files, contribution guides, build manifests, and local documentation.
-3. Do not infer behavior from names alone. Trace definitions, callers, implementations, configuration, tests, and runtime behavior as needed.
+1. Treat the working directory as the repository root unless the user supplies another root. Read repository instructions (`AGENTS.md`, `CLAUDE.md`, READMEs, build manifests, local docs) before analyzing implementation.
+2. Do not infer behavior from names alone. Trace definitions, callers, implementations, configuration, tests, and runtime behavior as needed.
+3. Never treat pre-existing working-tree changes as disposable; do not use destructive cleanup (`git reset --hard`, broad `git checkout`, `git clean -fd`) or attribute pre-existing changes to the investigation.
 4. Distinguish observed facts, supported inferences, hypotheses, and unknowns. Never present a hypothesis as established behavior.
 5. Support every substantive architecture, execution-flow, invariant, and debugging conclusion with repository-relative `path:line` or `path:start-end` references. Refresh line numbers after restoring temporary edits.
-6. Return the guide in the conversation by default. Create or modify Markdown files only when the user explicitly requests files — follow [references/document-output.md](references/document-output.md).
-7. Suggest improvements, extensions, or candidate fixes only after explaining current behavior and evidence. Document candidate fixes as proposals — do not apply production changes. Hand off to [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) for verified repairs.
-8. Preserve user work. Never use destructive cleanup commands such as `git reset --hard`, broad `git checkout`, `git restore .`, or `git clean -fd`.
-9. Temporary instrumentation is allowed only under the reversible experiment protocol below. Remove it and verify restoration before the final answer.
-10. If evidence is incomplete, say what remains unknown and what would establish it.
+6. Return the guide in the conversation by default; create or modify Markdown files only when the user explicitly requests files — follow [references/document-output.md](references/document-output.md). Candidate fixes are proposals only; hand off to [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) for verified repairs.
+7. Temporary instrumentation is allowed only under the reversible experiment protocol below. Remove it and verify restoration before the final answer.
+8. If evidence is incomplete, say what remains unknown and what would establish it.
 
 ## Configuration axes
 
-Every invocation resolves three inputs before investigation work starts:
+Resolve before investigation starts; all have safe defaults — do not prompt unless the
+request is genuinely ambiguous (then [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md)):
 
-- **Deliverable** — *what* document to produce. Infer from context when possible; otherwise default to the closest match below.
-- **Study depth** — *how deep* to go. Optional; defaults to `standard`. Load [references/study-depth.md](references/study-depth.md) for tier details.
-- **Interactive mode** — when the user says "guided study", "teach me interactively", or similar, follow [references/interactive-mode.md](references/interactive-mode.md).
-
-All axes have safe defaults. Do not prompt unless **Interactive mode** is triggered or the request is genuinely ambiguous. When it is genuinely ambiguous, [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) covers how to ask well; the defaults-first rule here still decides whether to ask at all.
+- **Deliverable** — *what* document; infer from context, default to the closest match below.
+- **Study depth** — *how deep*; defaults to `standard`. Details: [references/study-depth.md](references/study-depth.md).
+- **Interactive mode** — "guided study", "teach me interactively": [references/interactive-mode.md](references/interactive-mode.md).
 
 ## Select the deliverable
-
-Choose the closest primary document. Combine documents only when the request genuinely needs more than one.
 
 | Deliverable | Use when | Template |
 | --- | --- | --- |
@@ -101,106 +50,20 @@ Choose the closest primary document. Combine documents only when the request gen
 | End-to-end workflow trace | Event, request, or data item through the system | [references/workflow-trace.md](references/workflow-trace.md) |
 | Failure investigation guide | Crash, regression, hang, incorrect result, flaky behavior | [references/failure-investigation.md](references/failure-investigation.md) |
 
-**Trigger hints:** "onboarding", "reading path", "architecture map" → orientation; "explain the X module", "how to extend" → module deep dive; "trace from API to database", "follow this request" → workflow trace; "why does this fail", "investigate this crash" → failure investigation.
-
-For citation standards and evidence classification, read [references/evidence-rules.md](references/evidence-rules.md). Before editing code for observation, read [references/instrumentation-safety.md](references/instrumentation-safety.md).
+Combine documents only when the request genuinely needs more than one.
 
 ## Investigation workflow
 
-Track progress internally and adapt depth to the question. Load [references/study-depth.md](references/study-depth.md) to calibrate what to include or omit.
+Frame first (root, topic, audience, depth, requested handoff), then:
 
-### 1. Frame the question
+- Note `git status --short` and pre-existing modified/staged/untracked files before running builds, tests, or edits; identify generated, vendored, fixture, and build-output directories.
+- Inventory compactly: languages, build system, entry points, directory boundaries, manifests, test hierarchy, developer commands, existing architecture docs. Prefer targeted search over dumping trees.
+- Form a preliminary model, then challenge it: declaration → implementation → callers → configuration → tests → history (only for intent or regression questions). Follow aliases, callbacks, registration tables, DI, code generation, event dispatch, async boundaries.
+- Record findings as claim-to-evidence relationships, not file lists. Implementation and tests are primary evidence; comments and docs are claims to verify. Citation standards: [references/evidence-rules.md](references/evidence-rules.md).
+- Validate when static evidence is insufficient and execution is practical: narrowest useful command first, then broaden. Record exact commands and results — never claim a command passed if it did not.
+- Only for `deep`-depth orientation guides on large repositories: dispatch read-only per-directory exploration via [../agent-runner/SKILL.md](../agent-runner/SKILL.md); keep hypothesis formation and the final mental model in the parent context.
 
-Extract or infer:
-
-- repository root
-- requested topic, component, workflow, or failure
-- intended audience and assumed familiarity
-- requested deliverable
-- study depth (overview, standard, or deep)
-- whether the user wants a handoff to [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) or [../plan-guide/SKILL.md](../plan-guide/SKILL.md) after the guide
-
-If the prompt is broad, begin with a repository orientation guide. If it names a component, workflow, or symptom, select the corresponding focused document.
-
-### 2. Establish the baseline
-
-Before running builds, tests, or edits:
-
-- identify whether the root is a Git repository
-- inspect `git status --short` without changing it
-- note pre-existing modified, staged, and untracked files
-- identify generated, vendored, third-party, fixture, and build-output directories
-- identify repository-local instructions that apply to the target paths
-
-Never treat pre-existing changes as disposable. Do not attribute them to the investigation or list them as candidate fixes unless they are relevant to the scoped question.
-
-### 3. Inventory the system
-
-Build a compact map of:
-
-- languages and build systems
-- executable, library, service, plugin, and test entry points
-- major directories and ownership boundaries
-- configuration and dependency manifests
-- generated-code boundaries
-- test hierarchy and common developer commands
-- existing architecture or design documentation
-
-Prefer targeted listing and search over dumping entire trees. Exclude build artifacts and dependency caches unless they are directly relevant.
-
-**Parallel exploration stance:** investigate in one context by default — a single
-coherent mental model usually outranks parallel throughput. Only for `deep`-depth
-orientation guides on large repositories, dispatch read-only exploration per directory
-via [../agent-runner/SKILL.md](../agent-runner/SKILL.md), then integrate the
-evidence into your own map; keep hypothesis formation and the final mental model in
-the parent context.
-
-### 4. Form and test hypotheses
-
-Create a preliminary model, then challenge it. For each important question:
-
-1. Find the declaration or public boundary.
-2. Find the implementation.
-3. Find callers and downstream effects.
-4. Find configuration that changes behavior.
-5. Find tests that encode expected behavior.
-6. Check history only when it clarifies intent or a regression.
-7. Validate dynamically when static evidence is insufficient and execution is practical.
-
-Search semantically and structurally. Follow aliases, interfaces, callbacks, registration tables, dependency injection, code generation, event dispatch, asynchronous boundaries, and platform-specific branches.
-
-### 5. Build an evidence map
-
-Record findings as claim-to-evidence relationships rather than a list of files. Capture:
-
-- component responsibility and boundary
-- ownership and lifetime
-- incoming and outgoing dependencies
-- state transitions and invariants
-- control-flow edges
-- data transformations
-- errors, retries, fallback paths, and cleanup
-- concurrency, threading, process, or scheduling boundaries
-- extension points and compatibility constraints
-
-Use authoritative implementation and tests as primary evidence. Treat comments and documentation as claims to verify when possible.
-
-### 6. Validate behavior
-
-Use the repository's established commands and tooling. Run the narrowest useful command first, then broaden only when necessary.
-
-Possible validation includes:
-
-- focused unit or integration tests
-- type checking, static analysis, or compilation
-- a minimal reproduction
-- existing verbose or diagnostic modes
-- debugger, profiler, tracing, or log inspection
-- comparison with a known-good path
-
-Record exact commands, relevant environment assumptions, and results. Do not claim a command passed if it was not run successfully.
-
-### 7. Use temporary instrumentation only when needed
+### Use temporary instrumentation only when needed
 
 Prefer existing logs, tests, debuggers, and tracing facilities. If those cannot answer the question, perform a reversible experiment:
 
@@ -216,37 +79,10 @@ Prefer existing logs, tests, debuggers, and tracing facilities. If those cannot 
 
 If restoration or verification fails, stop and report the affected paths. Do not claim the investigation is complete.
 
-### 8. Write the document
+### Write the document
 
-Lead with the mental model, then provide evidence and operational detail. Adapt terminology to the repository. Follow the selected deliverable template and study depth. Include:
-
-- scope and assumptions
-- concise summary
-- architecture or execution explanation appropriate to the document type
-- source references close to the claims they support
-- validation commands and results
-- uncertainties and unresolved questions
-- optional improvements, extensions, or candidate fixes
-- a practical reading or next-action path
-
-Do not overwhelm the reader with every file inspected. Include files that teach the system or support a conclusion.
-
-When the user requests file output, follow [references/document-output.md](references/document-output.md).
-
-### 9. Run the quality gate
-
-Before responding, verify every item in [references/quality-gate.md](references/quality-gate.md).
-
-## Recommendations and fixes
-
-When useful, add a final section with prioritized opportunities:
-
-- **Low-risk improvement**: documentation, naming, tests, diagnostics, or localized simplification
-- **Extension point**: where and how a new behavior can be added while preserving invariants
-- **Candidate fix**: likely defect, evidence, proposed change, risk, and validation plan
-
-Label confidence and tradeoffs. A candidate fix is a proposal, not a confirmed repair. Do not apply production patches in this skill — hand off to [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) when the user wants a fix implemented and verified.
+Lead with the mental model, then evidence and operational detail. Follow the selected deliverable template and study depth — the templates in `references/` specify the required structure, including any recommendations/candidate-fix section; label confidence and tradeoffs. For file output, follow [references/document-output.md](references/document-output.md). Before responding, verify every item in [references/quality-gate.md](references/quality-gate.md).
 
 ## Evaluation
 
-Use `eval-queries.json` for description trigger testing. Use [references/evaluation-cases.md](references/evaluation-cases.md) for qualitative behavioral rubrics when refining this skill.
+Use `eval-queries.json` for trigger testing; [references/evaluation-cases.md](references/evaluation-cases.md) for behavioral rubrics when refining this skill.

@@ -100,5 +100,5 @@ fragColor = vec4(vec3(float(i) / float(MAX_STEPS)), 1.0);  // step heatmap
 
 ## Combine With
 
-- [sdf-3d](sdf-3d.md)
-- [ray-marching](ray-marching.md)
+- [shader-debugging](shader-debugging.md) — distance-band and material-ID debug views
+- [performance-budget](performance-budget.md) — bounding culls keep march loops in budget

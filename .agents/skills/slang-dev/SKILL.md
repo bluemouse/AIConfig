@@ -7,25 +7,9 @@ description: "Develop, review, port, compile, test, debug, and optimize Slang sh
 
 Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve paths to `references/` and `scripts/` from that directory.
 
-This skill covers **Slang shader authoring and C++ host integration** through SPIR-V and MSL emission, reflection-driven layout, and cross-backend portability. API-agnostic binding and shader-system architecture live in [`../gpu-rendering-guide/SKILL.md`](../gpu-rendering-guide/SKILL.md); `Vk*` pipeline and descriptor setup after SPIR-V exists live in [`../vulkan-dev/SKILL.md`](../vulkan-dev/SKILL.md).
+> Verified against Slang source docs last reviewed **2026-07-05** ([SOURCES.md](SOURCES.md)); no pinned release — confirm version-specific syntax against the installed `slangc`/C++ API before relying on it.
 
-Prioritize correctness, reflection-validated layout, and measurable performance. Do not invent syntax or target behavior — verify with `slangc` or the C++ API against the installed Slang version. For grammar disputes: [Slang spec](https://github.com/shader-slang/spec) → user guide → compiler diagnostics.
-
-## When to Use
-
-- Writing, reviewing, or porting `.slang` modules, entry points, `ParameterBlock` groupings, capabilities, generics, or interfaces
-- `slangc`, C++ compilation API (`IGlobalSession`, `ISession`, linking, specialization), or reflection (`ProgramLayout`, `IMetaData`)
-- SPIR-V/MSL emission, validation, and descriptor-set or Metal argument-buffer layout from Slang reflection
-- Debugging compile failures, SPIR-V validation, Metal compiler errors, layout/binding mismatches, or shader perf regressions
-
-## When NOT to Use
-
-- Raw `Vk*` pipeline/descriptor/swapchain setup — [`../vulkan-dev/SKILL.md`](../vulkan-dev/SKILL.md)
-- API-agnostic renderer architecture (render graph, binding model, frames-in-flight) — [`../gpu-rendering-guide/SKILL.md`](../gpu-rendering-guide/SKILL.md)
-- Raw GLSL source, layouts, and GLSL-to-SPIR-V compile issues — [`../glsl-coding/SKILL.md`](../glsl-coding/SKILL.md)
-- GLSL creative effect authoring (SDF, ray marching, procedural post) — use [`../shader-guide/SKILL.md`](../shader-guide/SKILL.md)
-- D3D12, CUDA, CPU, or WebGPU as primary targets — mention only for comparison or capability context
-- General C++20 style or CPU allocator design — [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md)
+Covers Slang shader authoring and C++ host integration through SPIR-V/MSL emission, reflection-driven layout, and cross-backend portability; D3D12, CUDA, CPU, and WebGPU are comparison context only. Do not invent syntax — verify against the installed Slang version with `slangc` or the C++ API (grammar disputes: [Slang spec](https://github.com/shader-slang/spec) → user guide → compiler diagnostics).
 
 ## Operating Principles
 
@@ -36,15 +20,11 @@ Prioritize correctness, reflection-validated layout, and measurable performance.
 - **ParameterBlock by update frequency:** each block → independent descriptor set / argument buffer; ordinary data in `T` auto-introduces a uniform buffer at binding 0 of that set.
 - **Correctness before performance:** validate both backends and reflection layout before tuning divergence, bandwidth, or specialization count.
 
-## Default Development Workflow
+## Core Workflow
 
-1. Establish constraints: Vulkan feature level, Metal platform/version, stages, entry points, matrix convention, resource model, offline vs runtime compilation.
-2. Design the shader interface: entry-point I/O, `ParameterBlock` boundaries, push constants, specialization constants, host-visible structs.
-3. Write minimal valid Slang: `[shader(...)]`, stage semantics, `[numthreads]` for compute, clear module boundaries.
-4. Compile early for both backends; keep explicit `-entry`/`-stage` in build scripts even when SPIR-V/Metal infer from attributes.
-5. Derive descriptor/argument-buffer layout from C++ reflection — do not ask the user to mirror layout manually unless unavoidable.
-6. Debug in layers: Slang diagnostics → generated target code → target validation → pipeline creation → binding → GPU capture.
-7. Optimize only after correctness.
+1. Design the interface (entry-point I/O, `ParameterBlock` boundaries, push constants, host-visible structs), then write minimal valid Slang: `[shader(...)]`, stage semantics, `[numthreads]` for compute.
+2. Compile early for both backends — keep explicit `-entry`/`-stage` in build scripts — and derive descriptor/argument-buffer layout from C++ reflection, not hand-mirroring.
+3. Debug in layers (Slang diagnostics → generated target code → target validation → pipeline creation → binding → GPU capture); optimize only after correctness.
 
 ## Hard Rules
 
@@ -66,31 +46,6 @@ Prioritize correctness, reflection-validated layout, and measurable performance.
 - Unbounded generic specialization creating pipeline/compile explosions
 - SPIR-V-only features (pointers, bindless, subgroups) without capability gating and Metal fallback
 
-## Workflow Decision Tree
-
-- **New shader / module** → [references/language-grammar.md](references/language-grammar.md), then [references/toolchain-vulkan-metal-cpp.md](references/toolchain-vulkan-metal-cpp.md)
-- **Build integration / reflection / C++ API** → [references/toolchain-vulkan-metal-cpp.md](references/toolchain-vulkan-metal-cpp.md)
-- **Review / test plan / debug / perf** → [references/workflow-debug-best-practices.md](references/workflow-debug-best-practices.md)
-- **Many entry points × backends** → [scripts/slang_compile_matrix.py](scripts/slang_compile_matrix.py) with a JSON manifest
-- **VkDescriptorSetLayout / pipeline after SPIR-V** → [`../vulkan-dev/SKILL.md`](../vulkan-dev/SKILL.md)
-
-## Reference routing
-
-| Task | Read |
-|------|------|
-| Modules, `import`/`__include`, access control, entry points, generics, capabilities, ParameterBlock layout | [references/language-grammar.md](references/language-grammar.md) |
-| `slangc`, C++ API lifecycle, reflection, precompiled modules, Vulkan/Metal backend notes | [references/toolchain-vulkan-metal-cpp.md](references/toolchain-vulkan-metal-cpp.md) |
-| Test matrix, debug tree, review checklist, perf guidance | [references/workflow-debug-best-practices.md](references/workflow-debug-best-practices.md) |
-| Repeatable SPIR-V + MSL compile matrix | [scripts/slang_compile_matrix.py](scripts/slang_compile_matrix.py) |
-
-## Answer Patterns
-
-**New code:** `.slang` with entry points and resources; compile commands or C++ API steps for Vulkan and Metal; host binding/reflection assumptions; backend-sensitive parts called out.
-
-**Reviews (in order):** correctness → Vulkan/Metal portability → layout/reflection → performance → revised code → compile/test commands.
-
-**Debugging:** infer or ask for Slang version, target descriptors, diagnostics, generated SPIR-V/MSL, validation output, pipeline state, and failure phase (compile, link, pipeline, runtime, perf).
-
 ## Gotchas
 
 - `ParameterBlock<T>` with ordinary data in `T` auto-introduces a uniform buffer at **binding 0**; resource bindings offset after it.
@@ -100,45 +55,38 @@ Prioritize correctness, reflection-validated layout, and measurable performance.
 - Metal may reject descriptor arrays, bindless patterns, or SPIR-V-specific behavior Vulkan accepts — verify generated MSL and reflection.
 - Global-scope parameters without explicit space may be wrapped in an implicit `ParameterBlock<>` — check reflection, do not assume flat globals.
 
-## Final Response Checklist
+## Routing
 
-- Slang syntax is valid or labeled pseudocode
-- Every entry point has `[shader(...)]` and stage semantics; compute has `[numthreads]` and dispatch assumptions
-- Resources have a reflection-backed host binding strategy
-- Vulkan and Metal consequences addressed or excluded with reason
-- Suggested commands/API calls target the same entry points the code declares
-- Performance advice names bottleneck and tradeoff
+Read only the row matching the task.
 
-## Progressive disclosure
-
-- [references/language-grammar.md](references/language-grammar.md) — load for modules, syntax, capabilities, ParameterBlock, entry points
-- [references/toolchain-vulkan-metal-cpp.md](references/toolchain-vulkan-metal-cpp.md) — load for `slangc`, C++ API, reflection, backend layout
-- [references/workflow-debug-best-practices.md](references/workflow-debug-best-practices.md) — load for test matrix, debug tree, review checklist
-- [scripts/slang_compile_matrix.py](scripts/slang_compile_matrix.py) — run for repeatable SPIR-V/MSL compile matrix from JSON manifest
-
-## Companion Skills
-
-| Task | Path |
+| Task | Read |
 |------|------|
-| Vk* pipeline, descriptors, swapchain after SPIR-V exists | [`../vulkan-dev/SKILL.md`](../vulkan-dev/SKILL.md) |
-| API-agnostic binding model, render graph, shader-system architecture | [`../gpu-rendering-guide/SKILL.md`](../gpu-rendering-guide/SKILL.md) |
-| C++20 style and build verification | [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md) |
+| Slang authoring or build integration: modules, `import`/`__include`, access control, entry points, generics, capabilities, ParameterBlock layout, `slangc`, C++ API, reflection, backend notes | [references/language-grammar.md](references/language-grammar.md), [references/toolchain-vulkan-metal-cpp.md](references/toolchain-vulkan-metal-cpp.md) |
+| Review / test plan / debug / perf: test matrix, debug tree, review checklist, perf guidance | [references/workflow-debug-best-practices.md](references/workflow-debug-best-practices.md) |
+| Many entry points × backends: repeatable SPIR-V + MSL compile matrix from a JSON manifest | [scripts/slang_compile_matrix.py](scripts/slang_compile_matrix.py) |
+| Raw `Vk*` pipeline/descriptor/swapchain setup | [`../vulkan-dev/SKILL.md`](../vulkan-dev/SKILL.md) |
+| API-agnostic renderer architecture (render graph, binding model, frames-in-flight) | [`../gpu-rendering-guide/SKILL.md`](../gpu-rendering-guide/SKILL.md) |
+| Raw GLSL source/layouts/compile issues; creative effect authoring (SDF, ray marching, procedural post) | [`../glsl-coding/SKILL.md`](../glsl-coding/SKILL.md) / [`../shader-guide/SKILL.md`](../shader-guide/SKILL.md) |
+| General C++20 style or CPU allocator design | [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md) |
 
-Relative paths resolve from `skills/slang-dev/` in bootstrap layout (or `.agents/skills/slang-dev/` when installed).
+## Response Contract
+
+- New code ships with compile commands/API steps for both backends and reflection-backed host binding; reviews go correctness → portability → layout → performance.
+- Every entry point has `[shader(...)]`, stage semantics, and `[numthreads]` for compute; syntax is valid or labeled pseudocode.
+- Debugging gathers Slang version, targets, diagnostics, generated code, failure phase; perf advice names bottleneck and tradeoff.
 
 ## Tool notes
 
 ### Compile matrix
 
-For repeatable SPIR-V and MSL builds across entry points, run the bundled script from the skill root:
+Run the bundled script from the skill root for repeatable SPIR-V/MSL builds across entry points:
 
 ```bash
 python .agents/skills/slang-dev/scripts/slang_compile_matrix.py manifest.json [--print-only]
 ```
 
-Use `--print-only` to emit commands without executing; `--allow-missing-slangc` when `slangc` is not on PATH.
+`--print-only` emits commands without executing; `--allow-missing-slangc` when `slangc` is not on PATH.
 
 ### Per-host notes
 
-- After installing or editing the skill, reload the coding agent (restart or reload the Claude Code session; reload the Cursor window; reload VS Code for Copilot) so the skill is rediscovered.
-- The companion table in the body ([vulkan-dev](../vulkan-dev/SKILL.md), [gpu-rendering-guide](../gpu-rendering-guide/SKILL.md), [cpp-coding](../cpp-coding/SKILL.md)) applies on every host.
+- After installing or editing the skill, reload the coding agent (Claude Code session, Cursor window, VS Code for Copilot) so the skill is rediscovered. Relative cross-links resolve on every host.

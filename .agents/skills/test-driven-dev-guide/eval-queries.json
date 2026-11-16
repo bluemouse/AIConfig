@@ -51,13 +51,13 @@
     "query": "configure GoogleTest and CMake test targets",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: C++ test setup -> cpp-testing"
+    "rationale": "near-miss: C++ test setup -> cpp-coding"
   },
   {
     "query": "set up kotlin.test and JUnit Platform for this module",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: Kotlin test setup -> kotlin-testing"
+    "rationale": "near-miss: Kotlin test setup -> kotlin-coding"
   },
   {
     "query": "write the smallest production change to make this failing test pass",

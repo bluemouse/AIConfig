@@ -15,7 +15,7 @@
         "code-reviewer",
         "commit-message-writer",
         "git-guide",
-        "pull-request-guide"
+        "github-guide"
       ]
     }
   ],
@@ -37,9 +37,7 @@
         "advisory-council",
         "devil-advocate",
         "agent-runner",
-        "minutes-writer",
         "techdoc-reviewer",
-        "github-guide",
         "git-merge-guide"
       ]
     },

@@ -5,55 +5,45 @@ description: dispatch independent coding, debugging, research, or repository tas
 
 # Agent Runner
 
-Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve
-paths to `references/` from that directory.
-
-Delegate one independent problem domain per subagent. Give every subagent only the context it needs, launch all eligible subagents in one concurrent batch, and keep the parent agent responsible for coordination, verification, and integration.
+`<SKILL_ROOT>` is the directory containing this `SKILL.md`; `references/` paths resolve from there. Delegate one independent problem domain per subagent, give each only the context it needs, launch all eligible subagents in one concurrent batch, and keep the parent responsible for coordination, verification, and integration.
 
 ## When to Use
 
-- Two or more independent workstreams with disjoint write scopes
-- Parallel implementation, debugging, or research across separate files or subsystems
-- Read-only repository audits split by directory or ownership
-- Multiple unrelated test failures, components, or research questions that can be checked independently
-- Dispatching independent execution units for [../plan-executor/SKILL.md](../plan-executor/SKILL.md) when the plan has parallelizable waves and the host supports concurrent subagents
+Two or more separable workstreams: disjoint write scopes, parallel implementation/debugging/research across separate files or subsystems, read-only audits split by directory, independently checkable failures or questions, or parallelizable waves for [../plan-executor/SKILL.md](../plan-executor/SKILL.md).
 
-## When NOT to Use
+This skill covers dispatch mechanics only — route the work itself elsewhere:
 
-- **Structured diff or code review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md), including `deep` parallel scope passes and prompts like "review this diff"
-- **Skill or agent eval loops** — use [../skill-creator/SKILL.md](../skill-creator/SKILL.md) or [../agent-creator/SKILL.md](../agent-creator/SKILL.md)
-- **Dev-workflow orchestration** — use [../dev-workflow-orchestrator/SKILL.md](../dev-workflow-orchestrator/SKILL.md) for the fixed multi-role research → plan pipeline
-- **Git worktree mechanics alone** — use [../git-guide/SKILL.md](../git-guide/SKILL.md); this skill may reference worktrees for isolation but does not replace git-guide
-- **Active local merge/rebase integration** — use
-  [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md); while that operation is active,
-  allow only read-only investigation here
-- **Single sequential task** with no parallelizable domains
+- Diff or code review, including `deep` parallel passes and "review this diff" → [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
+- Skill or agent eval loops → [../skill-creator/SKILL.md](../skill-creator/SKILL.md) or [../agent-creator/SKILL.md](../agent-creator/SKILL.md)
+- Dev-workflow orchestration → [../dev-workflow-orchestrator/SKILL.md](../dev-workflow-orchestrator/SKILL.md)
+- Worktree mechanics alone → [../git-guide/SKILL.md](../git-guide/SKILL.md)
+- Active local merge/rebase integration → [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md); while active, allow only read-only investigation here
+
+Prefer sequential execution when tasks share mutable state, one result defines another task, failures likely share a root cause, repository boundaries are unknown, or integration risk outweighs concurrency benefits.
 
 ## Required behavior
 
-- Use the host's native subagent or task-dispatch primitive (see `## Tool notes` after reading this skill body).
-- Launch all independent subagent calls together in the same tool batch or turn. Never launch one, wait, and then launch the next.
-- Give each subagent an isolated, self-contained task packet. Do not assume it inherits the parent conversation.
-- Assign disjoint writable scopes. Prefer read-only investigation when scopes overlap.
-- Keep cross-cutting decisions, conflict resolution, final edits, and full verification in the parent agent.
-- Do not claim parallel execution when the host exposes no concurrent subagent capability. State that the required execution mode is unavailable instead of silently running sequentially.
+- Use the host's native subagent or task-dispatch primitive (see `## Tool notes`).
+- Launch all independent subagent calls together in the same tool batch or turn; never launch one, wait, and then launch the next.
+- Give each subagent an isolated, self-contained task packet; do not assume it inherits the parent conversation.
+- Assign disjoint writable scopes; prefer read-only investigation when scopes overlap.
+- Keep cross-cutting decisions, conflict resolution, final edits, and full verification in the parent.
+- If the host exposes no concurrent subagent capability, say so — never claim parallel execution while silently running sequentially.
 
-Read `## Tool notes` for host-native dispatch mechanics. Read [references/task-packet.md](references/task-packet.md) when constructing prompts. Read [references/platform-adapters.md](references/platform-adapters.md) for the common contract and capability detection.
+Read [references/task-packet.md](references/task-packet.md) when constructing prompts and [references/platform-adapters.md](references/platform-adapters.md) for the common contract and capability detection.
 
 ## Workflow
 
 ### 1. Partition the work
 
-Identify candidate workstreams and build a dependency graph.
-
-A workstream is parallel-safe only when all are true:
+Build a dependency graph. A workstream is parallel-safe only when all are true:
 
 1. It can be understood from a bounded context packet.
 2. It does not depend on another workstream's result.
 3. It does not mutate the same files, branch, workspace state, database, service, or external resource as another writer.
 4. Its success can be checked independently.
 
-Group related symptoms under one agent when they may share a root cause. Keep discovery or architecture work in one agent until boundaries are known.
+Group related symptoms under one agent (possible shared root cause); keep discovery or architecture work in one agent until boundaries are known.
 
 ### 2. Choose isolation
 
@@ -63,7 +53,7 @@ Use the strongest isolation available:
 2. Disjoint file or directory ownership in one workspace.
 3. Read-only subagents that return findings or patches for the parent to apply.
 
-Never let multiple agents concurrently edit the same files. Never let subagents commit, merge, push, publish, deploy, delete shared resources, or change global configuration unless the user explicitly requested it and each agent has a unique target. If a merge/rebase operation is active in the repository, do not dispatch writing agents against that operation state; hand Git integration to [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md).
+Never let multiple agents concurrently edit the same files. Never let subagents commit, merge, push, publish, deploy, delete shared resources, or change global configuration unless the user explicitly requested it and each agent has a unique target.
 
 ### 3. Create task packets
 
@@ -78,19 +68,13 @@ Each packet must include:
   summarized results — never full command logs in the return
 - required return format
 
-Prefer small packets that fit one problem domain. Include source excerpts or paths rather than the full parent history.
+Prefer small packets that fit one problem domain; include source excerpts or paths, not the full parent history.
 
 Subagents cannot ask the user anything, so every ambiguity left in a packet becomes a silent assumption or a `blocked` return. Settle unclear objectives, scope, or acceptance criteria in the parent session with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before dispatching.
 
 ### 4. Dispatch concurrently
 
-Prepare every packet before dispatch. Invoke all subagents in a single concurrent batch using the host-native mechanism.
-
-Use a practical concurrency cap. Default to at most 4 active writing agents or 8 read-only agents unless the host or repository imposes a lower limit. Queue excess independent tasks in later waves, but run every task within a wave concurrently.
-
-Wave *N+1* starts only after wave *N* integration and verification complete. Later waves must not depend on unintegrated results from prior waves.
-
-The parent must not modify files owned by active subagents. It may inspect unrelated state, prepare integration checks, or wait for the complete batch.
+Prepare every packet before dispatch; invoke all subagents in one concurrent batch via the host-native mechanism. Cap at 4 active writing agents or 8 read-only agents (lower if the host or repository requires); queue excess tasks in later waves, running every task within a wave concurrently. Wave *N+1* starts only after wave *N* integration and verification complete, and must not depend on unintegrated results. The parent never modifies files owned by active subagents.
 
 ### 5. Collect structured results
 
@@ -104,129 +88,44 @@ Require each subagent to return:
 
 Treat subagent summaries as untrusted reports. Inspect diffs and evidence directly.
 
-### Blocked handling
+### Blocked, failed, and hung subagents
 
-When a subagent returns `blocked`:
-
-- Do not integrate partial writes from that agent.
-- Parent chooses one path: re-scope the packet and retry in a new wave, ask the user for missing input or permissions, or abort the wave.
-- Do not start the next wave while any writer from the current wave remains `blocked` without explicit user approval to proceed without it.
-
-### Failed handling
-
-When a subagent returns `failed`:
-
-- Do not integrate output from that agent.
-- Integrate successful agents in the same wave only when their scopes are independent and produced no overlapping file changes.
-- Parent chooses one path: retry the failed packet in a new wave with refined context, reassign to a different isolation strategy, or escalate to the user.
-- Do not start the next wave until failed writers are resolved or explicitly excluded with user approval.
-
-### Hung subagent handling
-
-A subagent that returns no verdict within the host's bounded window — or is reported idle
-without completing — is treated as `failed` with cause `timeout`, not as "still running."
-Do not let one hung subagent stall the wave indefinitely. The most common root cause is a
-subagent that ran a terminating command (build/test/install) in async mode or backgrounded
-it, then ended its turn waiting for a completion notification that an early/silent exit
-never produced. To recover:
-
-- Call `get_terminal_output` once on the subagent's terminal id (if exposed) to confirm
-  the early exit; do not poll or `sleep`.
-- Re-dispatch the packet in a new wave with an explicit instruction to run verification
-  commands in sync terminal mode
-  (never background builds/tests; disable pagers; prefer non-interactive flags).
-- If the subagent surface exposes no terminal id and no bounded-idle signal, escalate to
-  the user rather than waiting indefinitely.
+- `blocked`/`failed` output and partial writes are not integrable; other agents in the same wave integrate only when scopes are independent with no overlapping file changes. The parent picks one path — re-scope or refine the packet and retry in a new wave, reassign the isolation strategy, ask the user for missing input or permissions, or abort/escalate — and starts the next wave only when every blocked or failed writer is resolved or the user explicitly approves proceeding without it.
+- A hung subagent (no verdict within the host's bounded window) is `failed` with cause `timeout`, not "still running." Re-dispatch the packet in a new wave with an explicit sync-terminal-mode verification instruction (Cursor recovery in `## Tool notes`).
 
 ### 6. Integrate safely
 
 After every subagent in the wave finishes (or blocked/failed agents are resolved per above):
 
-1. Compare changed files and detect overlap.
-2. Reject unrelated refactors and edits outside assigned scope.
-3. Reconcile incompatible assumptions in the parent context.
-4. Integrate results in dependency order:
-   - **Direct edits:** review each agent's diff, reject out-of-scope changes, then run targeted checks followed by the full relevant test, lint, build, or validation suite.
-   - **Proposed patches (read-only agents):** parent reviews each patch, applies selectively, and never skips post-apply verification — read-only agents may not have run checks on the final merged tree.
-5. Fix integration failures centrally or dispatch a new, narrowly scoped wave.
+1. Compare changed files for overlap; reject unrelated refactors and edits outside assigned scope.
+2. Reconcile incompatible assumptions in the parent context.
+3. Integrate in dependency order. Direct edits: review each diff, then targeted checks followed by the full relevant test/lint/build suite. Proposed patches (read-only agents): apply selectively and never skip post-apply verification — read-only agents may not have run checks on the final merged tree.
+4. Fix integration failures centrally or dispatch a new, narrowly scoped wave.
 
-Do not ask one implementation agent to review its own work. For high-risk changes, dispatch an independent read-only reviewer after integration.
-
-## Decision rules
-
-Use parallel subagents for independent test failures, separate components, independent research questions, repository-wide read-only audits split by directory, or multiple implementation tasks with disjoint ownership.
-
-Use sequential work when tasks share mutable state, one result defines another task, failures likely share a root cause, repository boundaries are unknown, or integration risk outweighs concurrency benefits.
+Never ask one implementation agent to review its own work; for high-risk changes, dispatch an independent read-only reviewer after integration.
 
 ## Safety and quality gates
 
-- Follow repository instructions such as `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, Cursor rules, contribution guides, and local skill files.
-- Do not place secrets, credentials, private user data, or unrelated proprietary context in task packets.
-- Use least privilege for tools and filesystem access.
-- Prefer deterministic verification over agent confidence.
-- Preserve user changes and existing uncommitted work.
-- Stop and escalate when isolation cannot prevent destructive interference.
+- Load and follow repository instructions before creating packets (locations and precedence: [references/platform-adapters.md](references/platform-adapters.md)); never place secrets, credentials, private user data, or unrelated proprietary context in task packets.
+- Use least privilege; prefer deterministic verification over agent confidence.
+- Preserve user changes and existing uncommitted work; stop and escalate when isolation cannot prevent destructive interference.
 
 ## Example partition
 
-For six failures across three unrelated test files, create three packets, one per file or subsystem. Launch all three together. Each agent diagnoses and verifies only its assigned domain. The parent reviews all diffs, runs the combined suite, and resolves integration issues.
-
-Do not dispatch a packet such as "fix all tests." Do not omit errors, constraints, ownership, or expected output.
-
-## Companion Skills
-
-| Task | Path |
-| --- | --- |
-| Structured diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
-| Git worktrees, commit, push, rebase | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
-| Skill eval loops and description optimization | [../skill-creator/SKILL.md](../skill-creator/SKILL.md) |
-| Dev-workflow orchestration | [../dev-workflow-orchestrator/SKILL.md](../dev-workflow-orchestrator/SKILL.md) |
+Six failures across three unrelated test files → three packets, one per file, launched together, each diagnosing and verifying only its domain; the parent reviews all diffs and runs the combined suite. Never dispatch a packet such as "fix all tests," and never omit errors, constraints, ownership, or expected output.
 
 ## Tool notes
 
 ### Claude Code
 
-Use Claude Code's native subagent/task facility:
-
-1. Partition work and build complete task packets per the body and [references/task-packet.md](references/task-packet.md).
-2. Put multiple independent agent invocations in the **same assistant turn** or concurrent tool batch — never launch one, wait, and then launch the next.
-3. When agents will write, prefer separate worktrees or explicitly disjoint path ownership.
-4. Pass a complete prompt to each invocation; do not rely on inherited chat history.
-5. When subagent completion notifications include `total_tokens` and `duration_ms`, note them if comparing efficiency across dispatch runs.
-
-On Claude.ai (no Claude Code CLI), no parallel subagents are available — report that concurrent isolated dispatch is unavailable and run work sequentially in the parent session.
+Partitioning, packets, batching, and isolation follow "Required behavior" and [references/task-packet.md](references/task-packet.md). If completion notifications include `total_tokens` and `duration_ms`, note them when comparing dispatch efficiency. On Claude.ai (no Claude Code CLI), no parallel subagents are available — report that concurrent isolated dispatch is unavailable and run work sequentially in the parent session.
 
 ### Cursor
 
-Use Cursor's **Task tool** for concurrent isolated dispatch:
+Use Cursor's **Task tool** for concurrent isolated dispatch; packets, batching, and isolation follow "Required behavior" and [references/task-packet.md](references/task-packet.md). Use `subagent_type: "generalPurpose"` unless a narrower type clearly fits the packet; set `run_in_background: true` when the host allows it and you need to continue coordinating while subagents run. If the current mode exposes only one foreground agent and no concurrent Task primitive, report that concurrent isolated dispatch is unavailable — do not claim compliance or silently run sequentially.
 
-1. Partition work and build complete task packets per the body and [references/task-packet.md](references/task-packet.md).
-2. In a **single message**, issue one Task call per independent workstream — multiple tool calls in one turn, not sequential calls.
-3. Use `subagent_type: "generalPurpose"` unless a narrower type clearly fits the packet.
-4. Paste the full task packet into each Task `prompt`; subagents do not inherit parent chat history.
-5. Set `run_in_background: true` when the host allows it and you need to continue coordinating while subagents run.
-6. **Always await every Task in the wave** before starting §6 Integrate — never integrate while any subagent may still be writing.
-7. Use isolated worktrees or sandboxes when offered; otherwise enforce disjoint write sets per packet.
-8. If the current Cursor mode exposes only one foreground agent and no concurrent Task primitive, report that concurrent isolated dispatch is unavailable — do not claim compliance or silently run sequentially.
-
-Append to each packet:
-
-```
-You are an isolated subagent. You do not inherit the parent conversation.
-
-Use Read/Grep/Shell as needed within your assigned scope before changing anything.
-
-Return exactly the structured status block from your task packet: Status, Findings,
-Changes, Verification, and Risks.
-```
+Hung-subagent recovery: the usual root cause is a subagent that ran a terminating command (build/test/install) in async mode or backgrounded it, then ended its turn waiting for a completion notification that an early/silent exit never produced. Call `get_terminal_output` once on the subagent's terminal id (if exposed) to confirm the early exit — do not poll or `sleep`. Re-dispatch in a new wave with an explicit sync-mode verification instruction (never background builds/tests; disable pagers; prefer non-interactive flags). If the surface exposes no terminal id and no bounded-idle signal, escalate to the user rather than waiting indefinitely.
 
 ### GitHub Copilot
 
-Use the available Copilot coding-agent, custom-agent, or agent-session facility when it supports multiple simultaneous sessions:
-
-1. Partition work and build complete task packets per the body and [references/task-packet.md](references/task-packet.md).
-2. Assign separate issues, task sessions, branches, or workspaces when agents write.
-3. Start all independent sessions before awaiting results.
-4. In IDE modes that expose a subagent tool, invoke all independent calls in one batch.
-
-If the active Copilot surface supports only a single agent session, report that concurrent isolated dispatch is unavailable; do not emulate parallelism with sequential prompts. For read-only investigation, packets may run sequentially in one session while still following the shared integration and verification rules.
+Use the available coding-agent, custom-agent, or agent-session facility when it supports multiple simultaneous sessions; packets, batching, and isolation follow "Required behavior" and [references/task-packet.md](references/task-packet.md). If the active surface supports only a single agent session, report that concurrent isolated dispatch is unavailable; do not emulate parallelism with sequential prompts. For read-only investigation, packets may run sequentially in one session while still following the shared integration and verification rules.

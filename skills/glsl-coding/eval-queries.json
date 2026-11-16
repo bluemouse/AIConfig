@@ -27,7 +27,7 @@
     "query": "teach a junior what the vertex shader stage actually does and what it can see",
     "should_trigger": true,
     "split": "validation",
-    "rationale": "teaching workflow, glsl-modern-primer stage mental model"
+    "rationale": "teaching workflow: explaining what a shader stage does, its inputs/outputs, and what it can see"
   },
   {
     "query": "glslangValidator says noise is not valid when compiling to SPIR-V — what do I use instead",

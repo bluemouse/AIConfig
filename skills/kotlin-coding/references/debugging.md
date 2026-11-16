@@ -2,7 +2,7 @@
 
 Use this reference for debugging compiler errors, runtime exceptions, performance issues, and verification commands.
 
-For test design, framework choice, Kotest/MockK patterns, coroutine tests, property tests, coverage, and flaky-test triage, use [kotlin-testing](../../kotlin-testing/SKILL.md). That skill owns all test-design content; this reference covers debugging production Kotlin and choosing verification commands.
+For failing or flaky tests, use [debugging-flaky-tests.md](debugging-flaky-tests.md) for triage; for coroutine tests, use [coroutine-testing.md](coroutine-testing.md). This reference covers debugging production Kotlin and choosing verification commands.
 
 ## Table of contents
 
@@ -60,7 +60,7 @@ Stack-trace process:
 1. Find the first project-code frame after the exception type/message.
 2. Preserve the root cause; do not replace it with a generic exception.
 3. Identify the violated invariant.
-4. Add a regression test reproducing the failure — use [kotlin-testing](../../kotlin-testing/SKILL.md) for test design.
+4. Add a regression test reproducing the failure — follow the test rules in the main SKILL.md and [debugging-flaky-tests.md](debugging-flaky-tests.md) for flake triage.
 5. Fix the invariant at construction/input boundary when possible.
 
 Kotlin-specific runtime failures:
@@ -96,7 +96,7 @@ Before returning Kotlin code or a fix, verify as much as possible:
 - Code has imports and package context when needed.
 - Public APIs have explicit return types.
 - Nullability is intentional; no unjustified `!!`.
-- A regression test covers the fix when debugging a runtime bug — use [kotlin-testing](../../kotlin-testing/SKILL.md) for test design.
+- A regression test covers the fix when debugging a runtime bug — follow the test rules in the main SKILL.md and [debugging-flaky-tests.md](debugging-flaky-tests.md) for flake triage.
 - Build snippets use plain Kotlin/JVM only unless user supplied a platform context.
 - Commands are project-appropriate:
 

@@ -4,35 +4,24 @@
 
 - **URL:** https://www.conventionalcommits.org/en/v1.0.0/
 - **Last reviewed:** 2026-07-06
-- **Used for:**
-  - `references/conventional-commits.md` → format, types, breaking changes, examples
-  - `SKILL.md` → workflow phase 3, output standards
-- **Aspects extracted:**
-  - `<type>[optional scope]: <description>` structure → `references/conventional-commits.md`
-  - Types `feat`, `fix`, and extended set (`build`, `chore`, `ci`, `docs`, `perf`, `refactor`, `test`) → `references/conventional-commits.md`
-  - Breaking change via `!` or `BREAKING CHANGE:` footer → `references/conventional-commits.md`
+- **Used for:** message grammar baseline (`SKILL.md` → message rules)
+- **Aspects extracted:** `<type>[optional scope]: <description>` structure, the
+  `feat`/`fix` plus extended type set, breaking change via `!` or
+  `BREAKING CHANGE:` footer
 
 ## Cursor commit-message command (repository)
 
 - **Path:** `.cursor/commands/commit-message.md`
 - **Last reviewed:** 2026-07-06
-- **Used for:**
-  - Full workflow phases (parse, git evidence, analyze, output, commit on confirmation)
-  - `references/input-and-scope.md`, `references/git-evidence.md`, `references/output-format.md`, `references/failure-and-guardrails.md`
-  - `SKILL.md` → primary directive, workflow, guardrails
-- **Aspects extracted:**
-  - Scope modes (`--staged`, `--working`, `--commit`, `--range`) and context flags → `references/input-and-scope.md`
-  - Git command tables per scope → `references/git-evidence.md`
-  - Verbose / Suggested command output structure → `references/output-format.md`
-  - Cross-assistant style contract → `references/message-style-contract.md`
-  - Draft-first workflow with commit offer on confirmation (staged/working) → `SKILL.md`, `references/failure-and-guardrails.md`
+- **Used for:** scope modes (staged, working, commit, range), output envelope,
+  draft-first workflow with commit offer on confirmation (`SKILL.md`)
 
 ## git-guide commit reference (synthesis metadata)
 
 - **Path:** `skills/git-guide/references/commit.md`
 - **Last reviewed:** 2026-07-06
-- **Used for:**
-  - Cross-check type detection patterns; **not** copied auto-commit behavior
-- **Aspects extracted:**
-  - Conventional type list alignment → `references/conventional-commits.md`
-  - Explicit boundary: commit-message-writer drafts and commits on confirmation; git-guide handles commit when the user already supplied a message or needs push/staging mechanics
+- **Used for:** cross-check type detection patterns; **not** copied
+  auto-commit behavior
+- **Aspects extracted:** explicit boundary — commit-message-writer drafts and
+  commits on confirmation; git-guide handles commit when the user already
+  supplied a message or needs push/staging mechanics

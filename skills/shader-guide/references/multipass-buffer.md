@@ -48,7 +48,7 @@ texel (x,1)-(x,12) = brick grid state
 ## Example
 
 ```glsl
-// Helpers: use hashNoise/FBM from procedural-noise.md; GLSL builtin noise() is invalid for SPIR-V
+// Helpers: hash-based value noise / FBM (authored inline); GLSL builtin noise() is invalid for SPIR-V
 void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
 
@@ -145,8 +145,8 @@ void main() {
 - Pass N reading pass N output without ping-pong feeds back instantly — alternate `uChannel0`/`uChannel1` each frame.
 - Buffer resolution mismatch with display UVs misaligns simulation — match sim buffer size or scale sample UVs.
 - First-frame uninitialized buffer shows garbage — seed with `uFrame < N` init pass or clear texture on create.
+- Simulation state buffers accumulating velocity/positions across frames need float internal formats (RG32F/RGBA32F) — RGBA8 velocity buffers drift within seconds; avoid sin-hash random in precision-sensitive paths (use PCG/integer-hash).
 
 ## Combine With
 
-- [fluid-simulation](fluid-simulation.md)
-- [cellular-automata](cellular-automata.md)
+- [performance-budget](performance-budget.md) — move heavy solvers to lower-resolution passes

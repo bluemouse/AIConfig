@@ -48,4 +48,4 @@ On 32-bit or memory-tight embedded targets, large reservations trade away scarce
 
 ## Related
 
-[references/arenas-and-pools.md](./arenas-and-pools.md), [references/ownership-and-lifetimes.md](./ownership-and-lifetimes.md), [references/raii-and-smart-pointers.md](./raii-and-smart-pointers.md)
+[references/arenas-and-pools.md](./arenas-and-pools.md), [references/ownership-and-lifetimes.md](./ownership-and-lifetimes.md)

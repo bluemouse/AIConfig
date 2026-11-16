@@ -11,13 +11,7 @@ Convene a structured council whose members reason from different responsibilitie
 
 ## Scope and Boundaries
 
-Use this skill when a single answer would be weaker than disciplined disagreement:
-
-- consequential decisions with several viable options;
-- plans, strategies, designs, policies, or proposals with meaningful trade-offs;
-- disputes where disagreement may be about facts, values, forecasts, constraints, or execution;
-- ambiguous problems where reframing and option generation are part of the work;
-- requests for a "council", "panel", "think tank", "debate", "multiple expert views", or "minority report".
+Use this skill when a single answer would be weaker than disciplined disagreement: consequential decisions with several viable options; plans, strategies, designs, or proposals with meaningful trade-offs; disputes about facts, values, forecasts, constraints, or execution; ambiguous problems where reframing and option generation are part of the work; or requests for a "council", "panel", "think tank", "debate", or "minority report".
 
 Use the domain skill first when correctness requires specialized procedure, then use this skill only for the decision synthesis around that material.
 
@@ -40,6 +34,11 @@ Use the domain skill first when correctness requires specialized procedure, then
 - End with a conclusion, ranked options, resolution, plan, or conditional decision. Do not stop at debate notes.
 - Use the minimum council size and number of rounds needed for the stakes and ambiguity.
 - Never claim that independent agents, tools, specialists, or live experts participated unless they actually did.
+- Do not impersonate living or historical people. Use role-based perspectives rather than fabricated quotations or personal voice imitation.
+- Do not produce false consensus. Label unresolved disagreement precisely.
+- Do not let one member dominate through verbosity, status, or rhetorical confidence; do not count repeated arguments as independent evidence or settle factual questions by majority vote — verify them.
+- Expect belief updating: at least one argument should be conceded, refined, or conditionally accepted when warranted.
+- Keep the council proportional — no larger or longer than the stakes require, and stop once new rounds stop producing material information.
 
 Read `references/council-protocol.md` for the full deliberation, evidence, scoring, convergence, and fallback protocol. Read `references/output-formats.md` when producing the final deliverable. Read `references/examples.md` when role selection or council behavior is unclear.
 
@@ -48,7 +47,7 @@ Read `references/council-protocol.md` for the full deliberation, evidence, scori
 Select the strongest available mode without blocking the task:
 
 1. **Native council:** When independent worker or agent tools are available, dispatch council members independently, preserve their separate outputs, and run cross-review rounds.
-2. **Delegated council:** When only sequential worker calls are available, call each member separately and keep later members blind to earlier answers during the independent round. In every later round, collect all members' round-N position updates before any round-N+1 critique begins, and rotate the per-member call order each round so no member is always called last.
+2. **Delegated council:** When only sequential worker calls are available, call each member separately and keep Round 1 members blind to earlier answers; apply the round-collection and call-order fairness rules in `references/council-protocol.md`.
 3. **Simulated council:** When no independent execution mechanism exists, simulate distinct council members in one context. Explicitly label the result as a simulated council, write all independent Round 1 positions before exposing peer positions, and enforce the same debate and convergence rules.
 
 Use simulated mode by default when the environment does not expose independent execution. Honesty about the mode matters more than the mode itself.
@@ -57,187 +56,53 @@ Use simulated mode by default when the environment does not expose independent e
 
 ### 1. Frame the Council Charter
 
-Restate the decision or problem in one sentence. Extract or infer:
-
-- desired outcome and decision to be made;
-- scope and exclusions;
-- hard constraints and non-negotiables;
-- evaluation criteria and their relative importance;
-- current options, prior work, deadlines, and affected stakeholders;
-- evidence already supplied and evidence still needed.
-
-Ask a question only when a missing fact could reverse the recommendation, make the task unsafe, or make the final decision meaningless. Otherwise state the working assumption and proceed.
-
-Choose a deliberation mode:
-
-- **Explore:** discover approaches and reframe the problem.
-- **Decide:** compare options and select a recommendation.
-- **Plan:** construct an executable approach and sequencing.
-- **Resolve:** reconcile conflicting positions or requirements.
-- **Review:** evaluate and improve an existing proposal.
+Restate the decision in one sentence and extract the desired outcome, scope and exclusions, hard constraints, evaluation criteria and their weights, current options and prior work, deadlines, affected stakeholders, and evidence held or still needed. Ask a question only when a missing fact could reverse the recommendation, make the task unsafe, or make the final decision meaningless; otherwise state the working assumption and proceed. Pick a deliberation mode: **Explore**, **Decide**, **Plan**, **Resolve**, or **Review**.
 
 ### 2. Choose Deliberation Depth
 
-Match the council to the stakes:
-
-- **Lean:** 3 members, 2 rounds, for bounded and reversible choices.
-- **Standard:** 4-5 members, 3 rounds, for meaningful trade-offs.
-- **Rigorous:** 6-7 members, 3 rounds plus verification, for costly, irreversible, regulated, safety-sensitive, or broad-impact decisions.
-
-Do not expand the council merely because more roles can be imagined. Add a member only when their perspective could change the decision.
+Scale from Lean (3 members, 2 rounds) through Standard to Rigorous (3 rounds plus verification) with the stakes; tier definitions, depth criteria, and role-construction fields: `references/council-protocol.md`. Add a member only when their perspective could change the decision.
 
 ### 3. Assemble a Non-Redundant Council
 
-Use 3-7 voting members plus a non-voting chair. Select roles dynamically from the topic; do not use every role automatically.
-
-Ensure coverage of these functions when relevant:
-
-- **Domain authority:** correctness, standards, and deep subject knowledge.
-- **Operator or practitioner:** feasibility, delivery, maintenance, and real-world friction.
-- **Stakeholder advocate:** user, customer, employee, community, or business impact.
-- **Risk and dissent lead:** failure modes, hidden assumptions, downside, and reversibility.
-- **Systems integrator:** dependencies, second-order effects, interfaces, and long-term coherence.
-- **Evidence auditor:** source quality, uncertainty, missing data, and falsifiability.
-- **Alternative architect:** reframing, unconventional options, simplification, and hybrids.
-
-The chair must explain in one line why each selected perspective is necessary. Replace overlapping members until each has a meaningfully different attack surface.
+Use 3-7 voting members plus a non-voting chair. Select roles dynamically from the topic — not every role automatically — covering, when relevant: domain authority (correctness and standards), operator or practitioner (feasibility and delivery), stakeholder advocate (impact), risk and dissent lead (failure modes and reversibility), systems integrator (dependencies and second-order effects), evidence auditor (source quality and falsifiability), and alternative architect (reframing and hybrids). Replace overlapping members until each has a meaningfully different attack surface, and have the chair justify each selection in one line. Worked role examples: `references/examples.md`.
 
 ### 4. Build the Evidence Ledger
 
-Before debate, create a compact shared record:
-
-- `F#` verified facts with sources or supplied evidence;
-- `I#` inferences and their reasoning chains;
-- `A#` assumptions that require validation;
-- `P#` preferences or value choices attributed to the decision owner or stakeholders;
-- `U#` unresolved unknowns;
-- `C#` decision criteria and weights when ranking options.
-
-Research externally when the answer depends on current, niche, technical, legal, medical, financial, or otherwise high-stakes facts and suitable tools are available. Prefer primary sources. Never invent citations or upgrade an assumption into a fact.
+Before debate, create a claim-indexed shared record of verified facts, inferences, assumptions, preferences, unknowns, and decision criteria with weights (notation: `references/council-protocol.md`). Research externally when the answer depends on current, niche, technical, legal, medical, financial, or otherwise high-stakes facts and suitable tools are available. Prefer primary sources. Never invent citations or upgrade an assumption into a fact.
 
 ### 5. Run Round 1: Independent Positions
 
-Give every member the same charter and evidence ledger, but not other members' conclusions. Require each member to return:
-
-- position or proposed approach;
-- strongest supporting evidence and reasoning;
-- assumptions and uncertainties;
-- strongest argument against their own position;
-- expected failure mode;
-- what evidence would change their mind;
-- confidence level.
-
-Independence is mandatory. Do not let the first answer anchor the rest.
+Give every member the same charter and evidence ledger, but not other members' conclusions. Each member returns a position, its strongest supporting evidence, assumptions and uncertainties, the strongest argument against their own position, a failure mode, mind-changing evidence, and a confidence level. Independence is mandatory — do not let the first answer anchor the rest.
 
 ### 6. Run Round 2: Cross-Examination
 
-Expose the Round 1 positions to the full council. Require every member to:
-
-- challenge at least one material claim from another member;
-- identify one point from another member that improves their own view;
-- distinguish disagreement about facts, values, forecasts, constraints, or implementation;
-- mark each challenged claim as `STANDS`, `REFINE`, `REJECT`, or `NEEDS EVIDENCE`;
-- update their recommendation when an objection succeeds.
-
-The chair must probe vague language, hidden trade-offs, missing baselines, and claims that lack decision relevance.
+Expose the Round 1 positions to the full council: each member challenges at least one material claim from another member, names a point that improves their own view, distinguishes whether the disagreement is about facts, values, forecasts, constraints, or implementation, and updates their recommendation when an objection succeeds. The chair probes vague language, hidden trade-offs, and claims lacking decision relevance. Claim dispositions (`STANDS`/`REFINE`/`REJECT`/`NEEDS EVIDENCE`) and concession rules: `references/council-protocol.md`.
 
 ### 7. Run Round 3: Options and Convergence
 
-Create 2-5 viable options, including a hybrid or staged option only when it is genuinely coherent. For each option, specify:
-
-- mechanism and scope;
-- benefits and costs;
-- risks and mitigations;
-- preconditions and disqualifiers;
-- reversibility and exit path;
-- validation experiment or evidence gate.
-
-Score options against explicit criteria using `references/council-protocol.md` when ranking matters. Use scores to expose trade-offs, not to disguise judgment as precision.
-
-Convergence is reached only when:
-
-- the leading recommendation satisfies all hard constraints;
-- no unresolved objection has a credible path to catastrophic or unacceptable failure;
-- its causal reasoning is evidence-backed or clearly conditional;
-- the council can explain why it outranks the alternatives;
-- remaining dissent is documented with a trigger that would make it decisive.
-
-Do not require unanimity. If convergence fails, return ranked conditional options and the smallest evidence-gathering step that can resolve the deadlock.
+Build 2-5 viable options — a hybrid or staged option only when genuinely coherent — each with mechanism and scope, costs and benefits, risks and mitigations, preconditions and disqualifiers, reversibility and exit path, and a validation evidence gate. Score against the charter criteria to expose trade-offs, never to disguise judgment as precision. Converge only when the leading option satisfies all hard constraints, no unresolved objection has a credible path to unacceptable failure, and remaining dissent is documented with a trigger that would make it decisive; otherwise return ranked conditional options plus the smallest resolving evidence step. Scoring, consensus levels, and stop rules: `references/council-protocol.md`.
 
 ### 8. Produce the Council Decision
 
-Use the relevant template in `references/output-formats.md`. Always include:
-
-- the council charter and selected perspectives;
-- evidence quality and important assumptions;
-- decisive arguments and meaningful concessions;
-- the recommended option with confidence and rationale;
-- ranked alternatives and conditions under which they become preferable;
-- risks, mitigations, and unresolved dissent;
-- an executable next-step plan or decision gates;
-- triggers for revisiting the decision.
-
-For a plan, include owner roles, dependencies, checkpoints, success criteria, and stop conditions. For a recommendation, explicitly state what not to do and why when that prevents a likely failure.
-
-## Quality Gates
-
-Before answering, verify:
-
-- **Perspective distinctness:** Could each member plausibly disagree because their objectives or evidence differ?
-- **Evidence discipline:** Are facts cited or supplied, and are assumptions visibly labeled?
-- **Actual debate:** Did members respond to one another instead of delivering parallel monologues?
-- **Belief updating:** Did at least one argument get conceded, refined, or conditionally accepted when warranted?
-- **Decision usefulness:** Is the output actionable, ranked, and tied to criteria?
-- **Dissent integrity:** Are material minority objections retained instead of averaged away?
-- **Proportionality:** Was the council no larger or longer than necessary?
-
-If any gate fails, repair the deliberation before presenting the result.
-
-## Guardrails
-
-- Do not impersonate living or historical people. Use role-based perspectives rather than fabricated quotations or personal voice imitation.
-- Do not let one member dominate because of verbosity, status, or rhetorical confidence.
-- Do not count repeated arguments as independent evidence.
-- Do not use majority vote to settle factual questions; verify them.
-- Do not produce false consensus. Label unresolved disagreement precisely.
-- Do not continue debating after new rounds stop producing material information.
-- Do not delegate final accountability to the council. The synthesis must make a clear recommendation or explain the exact decision gate preventing one.
+Use the template in `references/output-formats.md` matching the deliverable. Always preserve evidence quality, decisive arguments and concessions, ranked options with the conditions under which alternatives become preferable, unresolved dissent, an executable next-step plan or decision gates, and revisit triggers. For a recommendation, explicitly state what not to do and why when that prevents a likely failure.
 
 ## Tool notes
 
-### Claude Code
+### Claude Code and Cursor
 
 Use subagents only when the decision is large enough to benefit from independent work:
 
 1. Run the charter, evidence ledger, role selection, and depth choice yourself first.
-2. In a single turn, spawn one subagent per selected Round 1 council member when parallel independence matters.
+2. In a single turn (Claude Code) or single message (Cursor), spawn one subagent per selected Round 1 council member when parallel independence matters.
 3. Give every subagent the same charter and evidence ledger, plus only its own role brief. Do not include peer conclusions in Round 1.
-4. Ask each subagent to return the shared Round 1 fields: position, evidence, assumptions, self-critique, expected failure mode, mind-changing evidence, and confidence. When subagent completion notifications include `total_tokens` and `duration_ms`, note them only if comparing council efficiency across runs.
+4. Ask each subagent to return the Round 1 fields from Workflow step 5.
 5. Collect final replies, normalize claims, then run cross-examination and synthesis yourself. Dispatch a second round only for rigorous or high-stakes councils.
 
-On Claude.ai (no Claude Code CLI), no parallel subagents are available — use simulated council mode, label it honestly, write all independent Round 1 positions before cross-examination, and keep the final decision proportional to the prompt.
+Tool-specific differences:
 
-### Cursor
-
-Use Cursor subagents only when the decision is large enough to benefit from independent work:
-
-1. Run the charter, evidence ledger, role selection, and depth choice yourself first.
-2. In a single message, launch one subagent per selected Round 1 council member when parallel independence matters.
-3. Use `subagent_type: "generalPurpose"` for broad analysis, or `explore` for repository discovery roles when the role is read-only and codebase-focused.
-4. Give every subagent the same charter and evidence ledger, plus only its own role brief. Do not include peer conclusions in Round 1.
-5. Ask each subagent to return the shared Round 1 fields: position, evidence, assumptions, self-critique, expected failure mode, mind-changing evidence, and confidence.
-6. Collect final replies, normalize claims, then run cross-examination and synthesis yourself. Dispatch a second round only for rigorous or high-stakes councils.
-
-If the decision is lean or subagents are unavailable, use simulated council mode and explicitly label it. Use `AskQuestion` only for a small number of blocking user decisions, such as criteria weights or whether a value trade-off is acceptable — do not ask for facts discoverable from the workspace or supplied context. When the council depends on current external facts and web or MCP tools are available, gather those facts before treating a claim as evidence, and cite the source in the evidence ledger.
+- **Claude Code:** On Claude.ai (no Claude Code CLI), no parallel subagents are available — use simulated council mode, label it honestly, write all independent Round 1 positions before cross-examination, and keep the final decision proportional to the prompt.
+- **Cursor:** Use `subagent_type: "generalPurpose"` for broad analysis, or `explore` for read-only, codebase-focused discovery roles. Use `AskQuestion` only for a small number of blocking user decisions (e.g. criteria weights or value trade-offs) — not for facts discoverable from the workspace or supplied context. When the council depends on current external facts and web or MCP tools are available, gather those facts before treating a claim as evidence, and cite the source in the evidence ledger.
 
 ### GitHub Copilot
 
-Copilot Chat usually has no parallel subagent API, so preserve independence through disciplined sequential or simulated rounds:
-
-1. State that the council is simulated unless a real independent worker mechanism is available.
-2. Write all Round 1 positions before writing any cross-examination.
-3. Keep notes claim-indexed so later concessions and refinements are visible.
-4. Run cross-examination and convergence in the same chat, applying the shared quality gates.
-5. Use concise output for low-stakes decisions; avoid dumping raw debate when the user needs the recommendation.
-
-If Copilot is running as a non-interactive coding agent, do not wait for user answers unless the missing decision is unsafe to assume. Record assumptions and decision gates in the final report or pull request text.
+Copilot Chat usually has no parallel subagent API, so preserve independence through disciplined simulated rounds: state that the council is simulated, write all Round 1 positions before any cross-examination, keep notes claim-indexed so concessions stay visible, run cross-examination and convergence in the same chat, and use concise output for low-stakes decisions. As a non-interactive coding agent, do not wait for user answers unless the missing decision is unsafe to assume; record assumptions and decision gates in the final report or pull request text.

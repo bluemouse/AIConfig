@@ -93,7 +93,7 @@
     "query": "write TEST_F and EXPECT_EQ tests for my parser class using GoogleMock",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: GTest/GMock source code -> cpp-testing"
+    "rationale": "near-miss: GTest/GMock source code -> cpp-coding"
   },
   {
     "query": "fix this C++20 concept constraint and enum class refactor in header.h",
@@ -105,7 +105,7 @@
     "query": "add AddressSanitizer and coverage flags to my gtest target in CI",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: sanitizer/coverage test builds -> cpp-testing"
+    "rationale": "near-miss: sanitizer/coverage test builds -> cpp-coding"
   },
   {
     "query": "configure dotnet test and xunit filter for this net8 solution",
@@ -135,7 +135,7 @@
     "query": "debug flaky gtest timing assertion and fix TEST body sleep",
     "should_trigger": false,
     "split": "validation",
-    "rationale": "validation negative: flaky test source/debug -> cpp-testing"
+    "rationale": "validation negative: flaky test source/debug -> cpp-coding"
   },
   {
     "query": "explain std::span lifetime rules when returning subviews from a vector",

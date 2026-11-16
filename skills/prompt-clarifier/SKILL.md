@@ -7,13 +7,11 @@ description: Iteratively clarify ambiguous requirements, definitions, intent, sc
 
 Clarify only what materially affects the result. Use a short adaptive dialogue instead of a static questionnaire, then proceed as soon as the task is actionable.
 
+The dialogue is a simple loop — INSPECT (read what is available before asking), ASK (the section below), UPDATE (map each answer into the ledger and detect contradictions), CHECK (apply the stopping rules) — named here only because the Tool notes refer to these states.
+
 ## Scope and boundaries
 
-This skill owns the clarification dialogue itself: deciding what is unresolved, what to ask, when to stop asking, and how to record the resulting interpretation. It applies to any task type and runs before or during the work.
-
-It does not own the work that follows — see **When NOT to Use** for deferrals.
-
-Use this skill to settle blocking decisions, then hand the settled requirement ledger to the skill that performs the work (see **When NOT to Use**).
+This skill owns the clarification dialogue: deciding what is unresolved, what to ask, when to stop asking, and how to record the resulting interpretation. Settle blocking decisions, then hand the settled requirement ledger to the skill that performs the work (see **When NOT to Use**).
 
 The requirement ledger is this skill's terminal output. Its shape is defined in
 [references/requirement-ledger.md](references/requirement-ledger.md) — read it before writing a
@@ -29,49 +27,9 @@ confirmation summary you carry into the handoff.
 - **Multi-perspective council deliberation with ranked synthesis and dissent** — use [../advisory-council/SKILL.md](../advisory-council/SKILL.md) after clarifying the decision framing when needed
 - **Adversarial stress-test of a settled proposal with a proceed/rework/reject verdict** — use [../devil-advocate/SKILL.md](../devil-advocate/SKILL.md)
 
-## Core contract
+## What to clarify
 
-1. Inspect the prompt, conversation, available files, and low-risk sources before asking.
-2. Identify unresolved decisions that could change the approach, output, safety, cost, or definition of success.
-3. Ask the smallest high-value question set.
-4. Incorporate the answers into a working requirement ledger.
-5. Detect new ambiguity, contradictions, or dependencies revealed by the answers.
-6. Repeat while material blockers remain and each next question has useful information value.
-7. Confirm the final interpretation briefly, then perform the task or hand off to the owning skill per **When NOT to Use**, carrying the requirement ledger.
-
-Do not confuse complete knowledge with sufficient specification. Stop asking when remaining uncertainty is low-impact, safely reversible, or covered by an explicit default.
-
-## Clarification state machine
-
-Move through these states:
-
-`INSPECT -> ASSESS -> ASK -> UPDATE -> CHECK -> {ASK | CONFIRM | PROCEED | STOP}`
-
-### INSPECT
-
-Gather context that is already available without committing to a solution:
-
-- Read the current prompt and relevant conversation history.
-- Inspect provided files, configs, examples, schemas, or existing conventions.
-- Use available read/search tools when a quick, low-risk lookup can resolve the question.
-- Preserve facts already supplied by the user; never ask for them again.
-
-### ASSESS
-
-Create or update a private requirement ledger. Track only dimensions relevant to the task:
-
-- **Outcome:** What change, answer, decision, or artifact is wanted?
-- **Intent:** Why is it needed, and what decision or action should it support?
-- **Audience:** Who will consume or use the result?
-- **Deliverable:** What form, format, length, level of detail, or interface is expected?
-- **Scope:** What is included, excluded, or explicitly unchanged?
-- **Definitions:** What do vague, overloaded, domain-specific, or subjective terms mean here?
-- **Inputs and sources:** What data, files, systems, or evidence may be used?
-- **Constraints:** What technical, legal, policy, compatibility, performance, cost, time, style, or dependency limits apply?
-- **Environment:** What runtime, platform, versions, tools, repository, or deployment context matters?
-- **Acceptance criteria:** What observable conditions make the result correct or complete?
-- **Risk and reversibility:** What could cause harm, data loss, publication, spending, or difficult rollback?
-- **Authority:** What may the AI decide, change, send, publish, delete, or execute without further approval?
+Read the prompt, conversation, provided files, and other low-risk sources before asking; never re-ask for facts already supplied or answerable with a quick, low-risk lookup. Track unresolved decisions that could change the approach, output, safety, cost, or definition of success. After each answer, map it into the ledger, mark unanswered items unresolved rather than silently guessing, and detect contradictions or newly revealed dependent questions; when an answer conflicts with an earlier requirement, name the conflict and ask for a single resolution instead of inventing a compromise silently.
 
 Classify each unresolved item:
 
@@ -81,7 +39,16 @@ Classify each unresolved item:
 
 Ask about blockers first. Usually defer useful items to defaults and omit optional items.
 
-### ASK
+Track only dimensions relevant to the task; typical ones:
+
+- **Outcome:** What change, answer, decision, or artifact is wanted, and what downstream decision should it support?
+- **Definitions:** What do vague, overloaded, domain-specific, or subjective terms mean here?
+- **Scope and constraints:** What is included, excluded, or explicitly unchanged; what technical, policy, cost, or dependency limits apply?
+- **Acceptance criteria:** What observable conditions make the result correct or complete?
+
+Turn subjective language into observable criteria: ask for a measurable threshold, a concrete example and non-example, or the domain-specific meaning among plausible alternatives. Prioritize decisions that alter architecture or workload — must-have versus preferred behavior, in- and out-of-scope cases, compatibility targets, expected inputs and outputs, failure behavior, acceptance tests.
+
+## Asking
 
 Ask one to three questions per turn by default. Ask up to five only when they are independent, easy to answer together, and delaying them would create extra rounds.
 
@@ -133,125 +100,9 @@ Do not ask:
 - "Anything else?" when no material ambiguity remains.
 - Questions whose answers would not change the work.
 
-### UPDATE
+## Handling user responses
 
-After each response:
-
-1. Map every answer to the requirement ledger.
-2. Preserve exact user language for critical definitions, constraints, and acceptance criteria.
-3. Resolve explicit choices and defaults.
-4. Mark unanswered items as unresolved rather than silently guessing.
-5. Detect contradictions with earlier answers or supplied artifacts.
-6. Identify new dependent questions revealed by the answer.
-7. Restate only what is necessary when the user's reply is ambiguous.
-
-When the user gives a partial answer, acknowledge the resolved part and ask only the remaining blocker. Do not repeat the full questionnaire.
-
-When an answer conflicts with an earlier requirement, present the conflict neutrally and ask for a single resolution:
-
-```text
-These two requirements conflict: support OpenGL 3.3 only, and use compute shaders, which require a later version. Which requirement should take priority?
-```
-
-### CHECK
-
-Proceed when all of the following are true:
-
-- The intended outcome is unambiguous enough to act on.
-- The deliverable and relevant scope are known.
-- Critical terms have operational meanings.
-- Material constraints and environment assumptions are known or safely defaulted.
-- Success can be evaluated.
-- Safety-sensitive or irreversible actions have the required authorization.
-- No unresolved contradiction changes the chosen path.
-
-Continue asking when at least one blocker remains and the answer would materially change the result.
-
-Stop the loop when:
-
-- The task is actionable.
-- The user explicitly accepts stated assumptions or recommended defaults.
-- Further questions have diminishing value and a reversible path is available.
-- The user cannot provide more detail; propose a concrete default or a small exploratory step.
-- The task cannot be performed safely without missing information; explain the specific blocker.
-
-There is no fixed round limit. Do not continue merely to make the specification exhaustive.
-
-### CONFIRM
-
-Before substantial execution, summarize the interpretation in one to three sentences. Include:
-
-- The requested outcome and deliverable.
-- The most important scope or constraint.
-- The definition of success or accepted assumptions.
-
-For small tasks, combine confirmation with immediate execution. Do not require another approval unless the action is destructive, externally visible, expensive, safety-sensitive, or the user requested confirmation.
-
-### PROCEED
-
-If **When NOT to Use** applies, hand off to that skill with the requirement ledger — do not perform that work here.
-
-Otherwise, start all unblocked, reversible work. If only one branch is blocked, continue other independent work and ask about the blocked branch rather than freezing the entire task.
-
-During execution, re-enter the state machine when new evidence reveals:
-
-- A hidden requirement or dependency.
-- A contradiction between the requested outcome and the environment.
-- A decision with materially different tradeoffs.
-- A safety, authorization, cost, or irreversible-action concern.
-- Acceptance criteria that cannot be tested as stated.
-
-Do not reopen settled decisions without new evidence.
-
-### STOP
-
-If safe progress is impossible, state:
-
-1. The exact missing or conflicting requirement.
-2. Why it blocks the task.
-3. The smallest decision needed to continue.
-
-## Handling common ambiguity types
-
-### Ambiguous intent
-
-Ask what outcome or downstream decision the user wants, not merely what topic they are interested in.
-
-Weak: `What do you mean?`
-
-Strong: `Should the result help you choose an API, implement it, or explain it to reviewers?`
-
-### Ambiguous definitions
-
-Turn subjective or overloaded language into observable criteria.
-
-Ask for:
-
-- A measurable threshold.
-- A concrete example and non-example.
-- The domain-specific meaning among plausible alternatives.
-- The authority or standard that defines the term.
-
-Example: `By "fast," do you mean under 16 ms per frame, faster than the current build, or another target?`
-
-### Ambiguous requirements
-
-Prioritize the decisions that alter architecture or workload:
-
-- Must-have behavior versus preferred behavior.
-- In-scope and out-of-scope cases.
-- Compatibility and platform targets.
-- Expected inputs and outputs.
-- Failure behavior and edge cases.
-- Acceptance tests.
-
-### Conflicting requirements
-
-Do not invent a compromise silently. Name the conflict, explain the practical consequence briefly, and ask which priority wins. Offer a feasible alternative when one is obvious.
-
-### Unknown user preference
-
-Use the existing project or conversation convention when low-risk. State the default only if it materially affects the result.
+When the user gives a partial answer, acknowledge the resolved part and ask only the remaining blocker.
 
 ### User says "use your judgment"
 
@@ -265,19 +116,23 @@ Proceed with explicit, minimal assumptions for reversible low-risk work. For des
 
 Offer two or three concrete choices, recommend one, and explain the decisive tradeoff in one sentence. When possible, propose a reversible exploratory step that produces information.
 
-## Question quality test
+## Stopping
 
-Before sending a question, verify:
+Proceed when the intended outcome, deliverable, critical definitions, and success criteria are known, safely defaulted, and authorized. Do not confuse complete knowledge with sufficient specification — stop asking when remaining uncertainty is low-impact, safely reversible, or covered by an explicit default.
 
-- **Materiality:** Would different answers change the result?
-- **Answerability:** Can the user answer without doing your work for you?
-- **Specificity:** Does it request one concrete decision or fact?
-- **Novelty:** Is the answer absent from available context?
-- **Timing:** Is this the earliest point at which the decision is needed?
-- **Efficiency:** Is this the highest-value unresolved question now?
-- **Neutrality:** Does it avoid forcing the user toward an unstated assumption?
+Stop the loop when:
 
-Rewrite or omit any question that fails this test.
+- The task is actionable.
+- The user explicitly accepts stated assumptions or recommended defaults.
+- Further questions have diminishing value and a reversible path is available.
+- The user cannot provide more detail; propose a concrete default or a small exploratory step.
+- The task cannot be performed safely without missing information; explain the specific blocker.
+
+If safe progress is impossible, state the exact missing or conflicting requirement, why it blocks the task, and the smallest decision needed to continue.
+
+Before substantial execution, summarize the interpretation in one to three sentences — the requested outcome, the most important scope or constraint, and the definition of success or accepted assumptions. For small tasks, combine confirmation with immediate execution.
+
+During execution, re-open clarification when new evidence reveals a hidden requirement, a contradiction with the environment, or a safety, authorization, or irreversible-action concern. Do not reopen settled decisions without new evidence.
 
 ## Interaction examples
 

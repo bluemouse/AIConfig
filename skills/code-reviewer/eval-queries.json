@@ -39,7 +39,7 @@
     "query": "write a PR description for this change",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: PR description craft -> pull-request-guide"
+    "rationale": "near-miss: PR description craft -> github-guide"
   },
   {
     "query": "rebase my branch onto main",

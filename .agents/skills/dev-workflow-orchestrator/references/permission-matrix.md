@@ -26,9 +26,9 @@ When `Run mode: staged` (declared in plan §10 and confirmed at the plan gate), 
 **Terminology note:** "per-stage commit" and "staged-mode commit" refer to commits produced at the end of each stage in staged mode. This is distinct from the existing "staged only" in the Commit phase row above, which refers to git's staging area (`git add`). The two concepts are unrelated.
 
 **Terminal delivery mode (staged mode only).** After the final deep review is accepted, the
-orchestrator runs delivery as a distinct, non-writing step: `pull-request-guide` drafts the PR
-narrative and `github-guide` opens the PR on GitHub-hosted repos. Neither edits source and neither
-writes run artifacts, so no `4x-*.md`/`5x-*.md` file is produced. The delivery step is permitted to
+orchestrator runs delivery as a distinct, non-writing step: `github-guide` drafts the PR
+narrative from its PR authoring defaults and opens the PR on GitHub-hosted repos. It edits no source and
+writes no run artifacts, so no `4x-*.md`/`5x-*.md` file is produced. The delivery step is permitted to
 push the PR branch; it is never permitted to amend, rebase, or force-push. `mode_checks.py` treats
 `implement` and `code-review` as commit-permitted phases in staged mode; delivery happens outside a
 phase boundary and is gated on explicit user authorization instead.

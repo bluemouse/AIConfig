@@ -100,4 +100,4 @@ Research feature → implement:
 | Execute plan | [plan-executor](../../plan-executor/SKILL.md) |
 | Diff review | [code-reviewer](../../code-reviewer/SKILL.md) |
 | Product/requirements research | [research-guide](../../research-guide/SKILL.md) |
-| Stack-specific implementation | Domain skills (e.g. [cpp-coding](../../cpp-coding/SKILL.md), [python-coding](../../python-coding/SKILL.md)) |
+| Stack-specific implementation | Domain skills (e.g. [cpp-coding](../../cpp-coding/SKILL.md)) |

@@ -11,40 +11,30 @@ Optimize by evidence, not intuition. Preserve correctness first, then improve th
 
 Target **C++20** unless the project explicitly uses another standard. Load bundled references on demand — do not read every reference file unless the task needs it.
 
-For general C++20 style, see [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md). For allocation and ownership design, see [`../cpp-memory-guide/SKILL.md`](../cpp-memory-guide/SKILL.md). For regression tests and Google Benchmark targets, see [`../cpp-testing/SKILL.md`](../cpp-testing/SKILL.md). For root-cause diagnosis before optimizing, see [`../debugging-guide/SKILL.md`](../debugging-guide/SKILL.md). For learning how performance-related code paths work without optimizing, see [`../code-professor/SKILL.md`](../code-professor/SKILL.md).
+For general C++20 style, see [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md). For allocation and ownership design, see [`../cpp-memory-guide/SKILL.md`](../cpp-memory-guide/SKILL.md). For regression tests and Google Benchmark targets, see [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md). For root-cause diagnosis before optimizing, see [`../debugging-guide/SKILL.md`](../debugging-guide/SKILL.md). For learning how performance-related code paths work without optimizing, see [`../code-professor/SKILL.md`](../code-professor/SKILL.md).
 
-## Grounding
+## Hotspot index
 
-C++ performance is usually limited by one of: doing too much work, touching too much memory, waiting on synchronization or I/O, or blocking the CPU/compiler from executing efficiently. Measure first, then fix the limiting factor — not the code that merely looks slow.
+C++ performance is usually limited by one of: doing too much work, touching too much memory, waiting on synchronization or I/O, or blocking the CPU/compiler from executing efficiently. Measure first, then fix the limiting factor — not the code that merely looks slow. New to performance work — follow the default workflow and this table; for diff review without running code, see [review-checklist.md](references/review-checklist.md).
 
-| Limiting factor | Typical evidence | First reference |
+| Evidence in profile or measurement | Likely cause | Read |
 |---|---|---|
-| Excess work / algorithm | time grows faster than input; high instruction count | [cpp-language-patterns.md](references/cpp-language-patterns.md) |
-| Memory / locality | cache misses; Backend Bound → Memory | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md) |
-| Allocations | `malloc`/`new` in flamegraph or heap profile | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md), [cpp-memory-guide](../cpp-memory-guide/SKILL.md) |
-| Branch prediction | high branch-miss rate; Bad Speculation in top-down | [cpp-language-patterns.md](references/cpp-language-patterns.md#branch-prediction), [measurement-and-benchmarking.md](references/measurement-and-benchmarking.md) |
-| Contention / scaling | poor thread scaling; mutex/atomics in profile | [parallelism-and-contention.md](references/parallelism-and-contention.md) |
-| False sharing | poor scaling with little logical sharing; `perf c2c` hits | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md#false-sharing) |
-| I/O / syscalls | per-item open/close, logging, DB in profile | [cpp-language-patterns.md](references/cpp-language-patterns.md#io-and-syscalls) |
-| Codegen / vectorization | missed vectorization; low IPC on compute-bound loops | [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md) |
-
-**Experience routing:** new to performance work — follow the default workflow and grounding table; use the hotspot index and [review-checklist.md](references/review-checklist.md) for diff review. Experienced — start at measurement or compiler references when the bottleneck class is already known.
-
-## When to Use
-
-- Profiling, benchmarking, or triaging C/C++ runtime performance regressions
-- Investigating latency, throughput, cache misses, allocations, contention, or scaling
-- Reviewing hot paths for measured or hypothesized bottlenecks
-- Tuning build flags, codegen, vectorization, or parallelization with before/after evidence
+| Time grows faster than input; high instruction count; repeated sort/parse/query in loops | Excess work / algorithmic complexity | [cpp-language-patterns.md](references/cpp-language-patterns.md) |
+| Cache misses; Backend Bound → Memory; `std::map` / `std::list` / scattered pointers | Layout, working set, poor-locality containers, pointer chasing | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md) |
+| `malloc` / `new` / allocator locks | Allocation churn | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md), [cpp-memory-guide](../cpp-memory-guide/SKILL.md) |
+| High branch-miss rate; Bad Speculation in top-down | Unpredictable branches | [cpp-language-patterns.md](references/cpp-language-patterns.md#branch-prediction), [measurement-and-benchmarking.md](references/measurement-and-benchmarking.md) |
+| Mutex / atomics / poor thread scaling | Lock contention | [parallelism-and-contention.md](references/parallelism-and-contention.md) |
+| Poor scaling with little logical sharing; `perf c2c` hits; cache-line bouncing | False sharing from adjacent mutable fields | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md#false-sharing) |
+| Per-item open/close, logging, DB in profile | Syscall or sync overhead | [cpp-language-patterns.md](references/cpp-language-patterns.md#io-and-syscalls) |
+| Missed vectorization; low IPC on compute-bound loops; unexpected calls in loops | Codegen | [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md) |
+| `std::function` / virtual / `shared_ptr` in inner loops | Type erasure or dispatch | [cpp-language-patterns.md](references/cpp-language-patterns.md) |
+| Large binary / slow startup | Static init, link bloat, cold-start stalls | [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md#binary-size-and-startup) |
 
 ## When NOT to Use
 
-- Non-C++ code — use a language-specific skill
-- Web-only performance (Core Web Vitals, frontend bundle size) — out of scope
+- Non-C++ code or web-only performance (Core Web Vitals, frontend bundle size) — out of scope
 - Active defect triage without a performance target — use **debugging-guide** first
-- Understanding why code is slow without optimizing — use [../code-professor/SKILL.md](../code-professor/SKILL.md)
-- Memory leak or ownership design without a performance focus — use **cpp-memory-guide**
-- Adding or fixing tests without a performance investigation — use **cpp-testing**
+- Memory leak, ownership design, or test-only work without a performance investigation — use **cpp-memory-guide** or **cpp-coding**
 
 ## Completion rule
 
@@ -93,7 +83,7 @@ If benchmarks or profilers cannot run in the environment, state that plainly and
    - Use flamegraphs or profiler timelines to locate hotspots before editing.
    - For long-running or frame-based programs, consider Tracy zones and native timeline profilers.
 
-6. **Load only the relevant reference** — see [Reference routing](#reference-routing) or the [hotspot index](#hotspot-index).
+6. **Load only the relevant reference** — see the [hotspot index](#hotspot-index).
 
 7. **Choose the least invasive fix in this order**
    1. remove unnecessary work
@@ -132,24 +122,6 @@ If benchmarks or profilers cannot run in the environment, state that plainly and
 - Do not use sanitizer timings as final performance numbers.
 - Do not replace readable code with clever code unless the measured gain matters.
 
-## Hotspot index
-
-Quick map from profile evidence to references — apply fixes only after measurement.
-
-| Evidence in profile | Likely cause | Read |
-|---|---|---|
-| `malloc` / `new` / allocator locks | allocation churn | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md) |
-| cache misses; memory-bound top-down | layout, working set, pointer chasing | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md) |
-| branch misses; Bad Speculation | unpredictable branches | [cpp-language-patterns.md](references/cpp-language-patterns.md#branch-prediction) |
-| `std::map` / `std::list` / scattered pointers | poor locality containers | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md), [cpp-language-patterns.md](references/cpp-language-patterns.md) |
-| repeated sort/parse/query in loops | excess work | [cpp-language-patterns.md](references/cpp-language-patterns.md) |
-| `std::function` / virtual / `shared_ptr` in inner loops | type erasure or dispatch | [cpp-language-patterns.md](references/cpp-language-patterns.md) |
-| mutex / atomics / poor thread scaling | lock contention | [parallelism-and-contention.md](references/parallelism-and-contention.md) |
-| false sharing; cache-line bouncing | adjacent mutable fields | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md#false-sharing) |
-| I/O / logging / DB per item | syscall or sync overhead | [cpp-language-patterns.md](references/cpp-language-patterns.md#io-and-syscalls) |
-| missed vectorization / unexpected calls in loops | codegen | [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md) |
-| large binary / slow startup | static init, link bloat, cold-start stalls | [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md#binary-size-and-startup) |
-
 ## Bundled scripts
 
 Execute scripts with `bash`; do not inline their contents.
@@ -162,16 +134,3 @@ Execute scripts with `bash`; do not inline their contents.
 | `scripts/run-google-benchmark.sh <bench-binary> [args]` | Google Benchmark JSON run with repetitions and warmup; env: `BENCH_REPS`, `BENCH_WARMUP`, `BENCH_FILTER`, `BENCH_OUT` |
 | `scripts/collect-compiler-remarks.sh <clang|gcc> <out-dir> -- <compile-cmd>` | collect optimization/vectorization remarks for one compile command |
 | `scripts/compare_benchmark_json.py before.json after.json` | compare Google Benchmark JSON or simple metric JSON files; prefer `*_mean` aggregate rows when using repetitions (see [measurement-and-benchmarking.md](references/measurement-and-benchmarking.md)) |
-
-## Reference routing
-
-| Task | Read |
-|---|---|
-| Baseline, benchmarks, perf counters, noise | [measurement-and-benchmarking.md](references/measurement-and-benchmarking.md) |
-| Platform profiler commands | [tool-recipes.md](references/tool-recipes.md) |
-| Build flags, remarks, vectorization, PGO/LTO/BOLT, binary size | [compiler-build-and-remarks.md](references/compiler-build-and-remarks.md) |
-| Layout, SoA/AoS, allocations, false sharing | [memory-layout-and-allocations.md](references/memory-layout-and-allocations.md) |
-| Threads, atomics, NUMA, scaling | [parallelism-and-contention.md](references/parallelism-and-contention.md) |
-| Source smells and fixes | [cpp-language-patterns.md](references/cpp-language-patterns.md) |
-| Diff review without running code | [review-checklist.md](references/review-checklist.md) |
-| Final report | [performance-report.md](references/performance-report.md) |

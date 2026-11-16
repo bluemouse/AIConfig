@@ -151,7 +151,8 @@ GITHUB_AGENT_FILE = ".github/agents/{name}.agent.md"
 
 SHARED_SCRIPTS_DIR = ".agents/tools/{name}"
 
-SHARED_GUIDELINE_FILE = ".agents/guidelines/{name}.md"
+SHARED_GUIDELINES_DIR = ".agents/guidelines"
+SHARED_GUIDELINE_FILE = SHARED_GUIDELINES_DIR + "/{name}.md"
 
 # The pre-single-root guideline path: citation variants still match lines the
 # old installer wrote so an upgraded target re-cites/removes cleanly.
@@ -167,7 +168,17 @@ INSTALLABLE_GUIDELINES = (
     "coding-behavior-guidelines",
     "response-guidelines",
     "code-comment-guidelines",
+    "minutes-guidelines",
 )
+
+# Companion directories a guideline cites and therefore ships with (guideline
+# name → directory under guidelines/). minutes-guidelines points readers at
+# guidelines/minutes/minutes-template.md and worked-example.md, so a target
+# install must carry the directory or the citation dangles; uninstall treats
+# the guideline plus its companion dir as one provenance unit.
+GUIDELINE_COMPANION_DIRS = {
+    "minutes-guidelines": "minutes",
+}
 
 # Scripts are directory trees under .agents/tools/<name>/.
 TOOL_SCRIPTS_SCAN_REL_DIRS = (".agents/tools",)
@@ -1096,15 +1107,41 @@ def scripts_remove_paths(target_root: Path, name: str) -> list[Path]:
     return [target_root / SHARED_SCRIPTS_DIR.format(name=name)]
 
 
+def guideline_companion_dir_name(name: str) -> str | None:
+    """Return the companion directory name a guideline ships with, or None."""
+    return GUIDELINE_COMPANION_DIRS.get(name)
+
+
 def guideline_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
-    """Return (src, dest) pairs for a behavioral guideline."""
-    src = source_root / "guidelines" / f"{name}.md"
-    dest = target_root / SHARED_GUIDELINE_FILE.format(name=name)
-    return [(src, dest)]
+    """Return (src, dest) pairs for a behavioral guideline.
+
+    The guideline file always installs; a guideline with a registered
+    companion directory (e.g. minutes-guidelines → guidelines/minutes/)
+    also installs that directory so in-body references resolve in targets.
+    """
+    pairs = [
+        (
+            source_root / "guidelines" / f"{name}.md",
+            target_root / SHARED_GUIDELINE_FILE.format(name=name),
+        )
+    ]
+    companion = guideline_companion_dir_name(name)
+    if companion is not None:
+        pairs.append(
+            (
+                source_root / "guidelines" / companion,
+                target_root / SHARED_GUIDELINES_DIR / companion,
+            )
+        )
+    return pairs
 
 
 def guideline_remove_paths(target_root: Path, name: str) -> list[Path]:
-    return [target_root / SHARED_GUIDELINE_FILE.format(name=name)]
+    paths = [target_root / SHARED_GUIDELINE_FILE.format(name=name)]
+    companion = guideline_companion_dir_name(name)
+    if companion is not None:
+        paths.append(target_root / SHARED_GUIDELINES_DIR / companion)
+    return paths
 
 
 def guideline_is_installer_written(source_root: Path, target_root: Path, name: str) -> bool:
@@ -1116,12 +1153,34 @@ def guideline_is_installer_written(source_root: Path, target_root: Path, name: s
     adding frontmatter) after a target installed it makes the older installed
     copy read as user-modified; uninstall then keeps it (reported under
     `skipped`) until a `--override` reinstall or manual delete.
+
+    A companion directory counts as installer-written only when every regular
+    file inside is byte-identical to the source tree AND the source has no
+    file the target lacks — a target-side edit, extra file, or stale file
+    reads as user-modified and the whole directory is kept.
     """
     src = source_root / "guidelines" / f"{name}.md"
     dest = target_root / SHARED_GUIDELINE_FILE.format(name=name)
     if not src.is_file() or not dest.is_file():
         return False
-    return file_sha256(src) == file_sha256(dest)
+    if file_sha256(src) != file_sha256(dest):
+        return False
+
+    companion = guideline_companion_dir_name(name)
+    if companion is None:
+        return True
+    src_dir = source_root / "guidelines" / companion
+    dest_dir = target_root / SHARED_GUIDELINES_DIR / companion
+    if not src_dir.is_dir() or not dest_dir.is_dir():
+        return False
+    src_files = {rel for rel, _ in iter_source_files(src_dir)}
+    dest_files = {rel for rel, _ in iter_source_files(dest_dir)}
+    if src_files != dest_files:
+        return False
+    return all(
+        file_sha256(src_dir / rel) == file_sha256(dest_dir / rel)
+        for rel in src_files
+    )
 
 
 def parse_guideline_citation_description(source_root: Path, name: str) -> str | None:
@@ -1680,6 +1739,23 @@ def run_agents_md_removal_offer(
     return f"No installer-written guideline citations found in {AGENTS_MD_FILENAME}."
 
 
+def iter_source_files(root: Path) -> Iterable[tuple[str, Path]]:
+    """Yield (relative-posix-path, absolute-path) for regular files under root.
+
+    The same walker runs over source and installed companion directories in
+    the guideline provenance check, so both sides are compared with identical
+    traversal rules. Excludes nothing here — the installer never writes
+    __pycache__/.pyc (copy_path filters them at copy time), but an installed
+    directory containing such a stale entry reads as user-modified and is
+    kept, matching the conservative provenance stance.
+    """
+    if not root.is_dir():
+        return
+    for path in sorted(root.rglob("*")):
+        if path.is_file():
+            yield (path.relative_to(root).as_posix(), path)
+
+
 def file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -1906,15 +1982,26 @@ def install_items(
     for name in guidelines:
         slug = slugify_name(name)
         pairs = guideline_copy_pairs(source_root, target_root, slug)
+        # The guideline file is the anchor; a registered companion directory
+        # is also required (a missing one would leave the body's citations
+        # dangling), but the companion gate never masks the file error.
         shared_src = pairs[0][0]
-        if not shared_src.is_file():
+        missing_src = next(
+            (
+                src
+                for src, _ in pairs
+                if not (src.is_file() if src == shared_src else src.is_dir())
+            ),
+            None,
+        )
+        if missing_src is not None:
             available = sorted(
                 guideline_name
                 for guideline_name in INSTALLABLE_GUIDELINES
                 if (source_root / "guidelines" / f"{guideline_name}.md").is_file()
             )
             result.errors.append(
-                f"guideline {slug}: missing source {format_rel(shared_src, source_root)} "
+                f"guideline {slug}: missing source {format_rel(missing_src, source_root)} "
                 f"(available guidelines: {', '.join(available) or 'none'})"
             )
             continue
@@ -2056,12 +2143,20 @@ def uninstall_items(
 
     for name in guidelines:
         slug = slugify_name(name)
-        for path in guideline_remove_paths(target_root, slug):
+        # The guideline file and its companion directory are one provenance
+        # unit: verify once against the source (removing the file first would
+        # make the companion check see a half-removed install), then remove.
+        remove_paths = guideline_remove_paths(target_root, slug)
+        if not any(path.exists() for path in remove_paths):
+            continue
+        if not guideline_is_installer_written(REPO_ROOT, target_root, slug):
+            # Provenance-safe: a user-modified or stale copy is left in place.
+            for path in remove_paths:
+                if path.exists():
+                    result.skipped.append(format_rel(path, target_root))
+            continue
+        for path in remove_paths:
             if not path.exists():
-                continue
-            if not guideline_is_installer_written(REPO_ROOT, target_root, slug):
-                # Provenance-safe: a user-modified or stale copy is left in place.
-                result.skipped.append(format_rel(path, target_root))
                 continue
             try:
                 remove_path(path)

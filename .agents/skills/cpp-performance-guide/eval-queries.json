@@ -87,7 +87,7 @@
     "query": "add GoogleTest coverage for the parser edge cases we fixed last week",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: test authoring -> cpp-testing"
+    "rationale": "near-miss: test authoring -> cpp-coding"
   },
   {
     "query": "design a per-frame arena allocator so temporaries reset every tick instead of hitting the heap",

@@ -76,4 +76,4 @@
   - Invalid mixed-visibility `target_link_libraries` example removed from
     `references/visibility-specifiers.md`
   - `find_package` PATHS/HINTS behavior refined per official search order
-  - Testing reference scoped to CTest wiring; GTest authoring routed to `cpp-testing`
+  - Testing reference scoped to CTest wiring; GTest authoring routed to `cpp-coding`

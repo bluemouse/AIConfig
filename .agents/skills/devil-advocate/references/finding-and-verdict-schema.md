@@ -1,6 +1,6 @@
-# Finding and Verdict Schema
+# Finding, Verdict, and Challenge-Lens Reference
 
-Use this reference when assigning severity, evidence strength, confidence, fixability, or a final verdict.
+Use this reference for the challenge-lens prompts and the severity, evidence, confidence, fixability, and verdict rules.
 
 ## Severity Rubric
 
@@ -18,43 +18,9 @@ Do not calculate severity mechanically. Consider impact, likelihood, detectabili
 
 ## Disposition Rubric
 
-### Fixable
-
-Use when a resolution is technically, economically, organizationally, and temporally feasible under existing constraints.
-
-Required fields:
-
-- repair mechanism;
-- trade-off;
-- validation step;
-- residual risk.
-
-### Conditionally Fixable
-
-Use when a repair exists but depends on one or more explicit conditions:
-
-- new evidence;
-- additional budget, time, skills, authority, or access;
-- a changed constraint;
-- stakeholder agreement;
-- a prototype or experiment meeting a threshold.
-
-State the condition as a decision gate, not a vague recommendation.
-
-### Not Fixable
-
-Use only with `S4 - Show-stopper` after testing all reasonable repair classes:
-
-1. repair the mechanism;
-2. add controls or guardrails;
-3. change sequence or rollout;
-4. reduce scope;
-5. substitute a component or stakeholder model;
-6. run a reversible experiment;
-7. accept or transfer residual risk;
-8. change a negotiable constraint.
-
-If one of these preserves the essential proposal and yields acceptable risk, the finding is not `Not fixable`.
+- **Fixable:** a repair is technically, economically, organizationally, and temporally feasible under existing constraints. State the repair, its trade-off, a validation step, and the residual risk.
+- **Conditionally fixable:** a repair exists but depends on an explicit condition — new evidence, budget, time, skills, authority, a changed constraint, stakeholder agreement, or a prototype meeting a threshold. State the condition as a decision gate, not a vague recommendation.
+- **Not fixable:** use only with `S4 - Show-stopper`, after testing all reasonable repair classes: repair the mechanism; add controls or guardrails; change sequence or rollout; reduce scope; substitute a component or stakeholder model; run a reversible experiment; accept or transfer residual risk; change a negotiable constraint. If one of these preserves the essential proposal at acceptable risk, the finding is not `Not fixable`.
 
 ## Evidence Strength
 
@@ -70,45 +36,31 @@ Evidence strength is not the same as confidence. A strong deductive constraint c
 
 ## Confidence Rubric
 
-- **High:** The causal mechanism is clear, major assumptions are verified, and plausible alternatives do not materially change the conclusion.
-- **Medium:** The mechanism is credible but one or more material assumptions or estimates remain uncertain.
-- **Low:** The finding is plausible but highly sensitive to missing facts, interpretation, or scenario selection.
+- **High:** the causal mechanism is clear, major assumptions are verified, and plausible alternatives do not materially change the conclusion.
+- **Medium:** the mechanism is credible but one or more material assumptions or estimates remain uncertain.
+- **Low:** the finding is plausible but highly sensitive to missing facts, interpretation, or scenario selection.
 
 Low confidence can still justify a decision gate when impact is severe and commitment is irreversible.
 
-## Finding Completeness Test
-
-A complete finding answers:
-
-1. What exact claim or dependency is weak?
-2. What condition triggers failure?
-3. Through what mechanism does it fail?
-4. What is the direct and second-order impact?
-5. What evidence supports the finding, and how confident are we?
-6. Why do existing controls not solve it?
-7. What are the credible resolution paths?
-8. What trade-offs and residual risks remain?
-9. What test or threshold resolves the decision?
-10. Is it fixable, conditionally fixable, or not fixable?
-
 ## Verdict Rules
 
-### PROCEED
+- **PROCEED:** no unresolved S3 or S4 findings remain, S2 risks have routine mitigations, and the proposal is sufficiently evidenced or reversible.
+- **PROCEED WITH CONDITIONS:** the core proposal is sound but one or more S2 or repaired S3 findings require explicit owners, thresholds, sequencing, or controls before or during execution.
+- **REWORK:** one or more S3 findings require material changes to scope, architecture, sequence, governance, economics, evidence, or operating model, while the core objective and much of the approach remain viable.
+- **REPLACE:** the objective is valid but a materially different alternative dominates the current proposal after risk, cost, reversibility, and opportunity cost are considered.
+- **REJECT:** only when at least one S4 finding is marked `Not fixable`, or when several interacting S3 findings collectively create an effectively unrepairable proposal — in that case, explain why no integrated rework reduces the combined risk to an acceptable level and elevate the combination to an explicit S4 finding.
 
-Use when no unresolved S3 or S4 findings remain, S2 risks have routine mitigations, and the proposal is sufficiently evidenced or reversible.
+## Challenge Lenses
 
-### PROCEED WITH CONDITIONS
+Use these prompts selectively. Do not mechanically answer every question.
 
-Use when the core proposal is sound but one or more S2 or repaired S3 findings require explicit owners, thresholds, sequencing, or controls before or during execution.
-
-### REWORK
-
-Use when one or more S3 findings require material changes to scope, architecture, sequence, governance, economics, evidence, or operating model, while the core objective and much of the approach remain viable.
-
-### REPLACE
-
-Use when the objective is valid but a materially different alternative dominates the current proposal after risk, cost, reversibility, and opportunity cost are considered.
-
-### REJECT
-
-Use only when at least one S4 finding is marked `Not fixable`, or when several interacting S3 findings collectively create an effectively unrepairable proposal. When using interacting S3 findings, explain why no integrated rework can reduce the combined risk to an acceptable level and elevate the combination to an explicit S4 finding.
+1. **Assumptions and Socratic:** What must be true for the proposal to create value? Which assumption is treated as fact without evidence? Which hidden dependency has no owner? What belief, if false, collapses the rest of the proposal? Convert major assumptions into observable tests.
+2. **Evidence and falsification:** For each major claim, is the cited evidence representative of the intended environment, scale, and time horizon? What result would disprove it? Is the evidence independent or produced by a party with incentives? Does it confuse correlation or survivorship with causation? Flag unfalsifiable claims as decision-quality defects; repair them with measurable success and failure thresholds.
+3. **Strongest counter-case:** What would a smart, informed skeptic argue? Which alternative explains the same facts with fewer assumptions? What trade-off is understated? Attack the most defensible version, not weak objections.
+4. **Pre-mortem:** Set a concrete future scene where the proposal clearly failed. Build failure narratives with a specific trigger, a threshold or boundary condition, first- through third-order effects, the detection point, why detection came too late, the assumption that proved false, and an early warning signal. Ask what would guarantee failure, then check whether those conditions already exist.
+5. **Adversarial stakeholders:** Adopt perspectives relevant to the proposal — user or customer, operator, sponsor, regulator, competitor, supplier or platform owner, misaligned internal team, attacker (within safe conceptual boundaries), novice. For each, identify incentives, objections, exploit paths, refusal conditions, and likely workarounds.
+6. **Execution and operations:** Who owns each critical dependency? Where are all-or-nothing transitions? What happens during migration, rollback, degraded mode, or partial adoption? Which estimates assume best-case coordination? What becomes difficult to change after commitment? Prefer staged, reversible transitions when uncertainty is high.
+7. **Systems and second-order effects:** Trace feedback loops that amplify success or failure, local optimization that degrades the larger system, bottlenecks moved rather than removed, externalities shifted to others, behavior induced by metrics or incentives, lock-in and path dependence, and effects at 10x scale or under stress. Ask what workaround users will invent and how it changes future requirements.
+8. **Incentives and governance:** Who receives benefits and who bears costs? Who can block or silently undermine? Are decision rights aligned with accountability? Does the metric invite gaming? Is success dependent on voluntary behavior against incentives? What happens when the sponsor or budget changes? Repair with ownership, authority, incentives, escalation, and auditability — not appeals to cooperation.
+9. **Alternatives and opportunity cost:** Generate structurally different options, not cosmetic variants: do nothing or delay, narrower scope, manual before automated, buy/partner/reuse/standardize, reversible pilot versus full commitment, eliminate the need rather than satisfy it. Compare total cost, time to evidence, reversibility, operational burden, and strategic fit.
+10. **Edge cases and boundaries:** Vary scale (smallest, typical, peak, 10x), time (launch, steady state, end-of-life), actors (novice, expert, hostile, constrained), data (missing, stale, biased, sensitive), environment (degraded, cross-region, regulated), and adoption (partial, forced, resisted, misused). An edge case becomes a finding only when plausible and material.
