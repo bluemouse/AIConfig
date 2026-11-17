@@ -49,7 +49,7 @@ import unittest
 from pathlib import Path
 
 # Allow importing checks/ whether run as a script or module.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / ".agents" / "tools" / "dev-workflow"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "dev-workflow"))
 
 from checks import artifact_checks  # type: ignore[import-not-found]
 from checks import handoff_checks  # type: ignore[import-not-found]
