@@ -341,7 +341,7 @@ The core bundle is always available. The extended-bundle gates are optional by d
 | Data or schema migration | [research-reviewer](../../research-reviewer/SKILL.md) (when a research report exists), [plan-reviewer](../../plan-reviewer/SKILL.md), [implementation-auditor](../../implementation-auditor/SKILL.md) | Hard to roll back |
 | Public API or contract change | [plan-reviewer](../../plan-reviewer/SKILL.md), `deep` [code-reviewer](../../code-reviewer/SKILL.md), [techdoc-reviewer](../../techdoc-reviewer/SKILL.md) | Cross-team impact and reader-visible contracts |
 | Refactor across 3+ modules | [plan-reviewer](../../plan-reviewer/SKILL.md), `standard`+ [code-reviewer](../../code-reviewer/SKILL.md) | Cascade risk |
-| Production incident follow-up | [debugging-guide](../../debugging-guide/SKILL.md), [implementation-auditor](../../implementation-auditor/SKILL.md), `minutes-guidelines` guideline | Defect prevention and record |
+| Production incident follow-up | [debugging-guide](../../debugging-guide/SKILL.md), [implementation-auditor](../../implementation-auditor/SKILL.md), `guidelines-minutes` guideline-skill | Defect prevention and record |
 
 [agent-runner](../../agent-runner/SKILL.md) is never mandatory; use it only when independent workstreams exist and the host supports subagents.
 
@@ -353,11 +353,11 @@ When a defect is found in merged or deployed code, re-enter the lifecycle:
 2. [test-driven-dev-guide](../../test-driven-dev-guide/SKILL.md) to write a regression test before the fix (required for production bugs).
 3. [plan-guide](../../plan-guide/SKILL.md) if the fix needs coordinated changes; otherwise a direct scoped fix.
 4. [implementation-auditor](../../implementation-auditor/SKILL.md) then [code-reviewer](../../code-reviewer/SKILL.md), then [techdoc-reviewer](../../techdoc-reviewer/SKILL.md) when reader-visible contracts or docs are in scope, then the delivery chain.
-5. The `minutes-guidelines` behavioral guideline for the post-incident record when the impact warrants it.
+5. The `guidelines-minutes` guideline-skill for the post-incident record when the impact warrants it.
 
 ## Decision Traceability
 
-Decisions made in meetings should not be lost between phases. After applying the `minutes-guidelines` behavioral guideline to record decisions and action items:
+Decisions made in meetings should not be lost between phases. After applying the `guidelines-minutes` guideline-skill to record decisions and action items:
 
 - Feed product or scope decisions into the [research-guide](../../research-guide/SKILL.md) report.
 - Feed constraints and action items into the [plan-guide](../../plan-guide/SKILL.md) plan as assumptions or tasks.
@@ -438,7 +438,7 @@ Do not use [plan-executor](../../plan-executor/SKILL.md) without an implementati
 - If the question is "perform the git operation", use [git-guide](../../git-guide/SKILL.md).
 - If the question is "what should the PR say?", use [github-guide](../../github-guide/SKILL.md).
 - If the question is "post this to GitHub or manage GitHub review threads", use [github-guide](../../github-guide/SKILL.md).
-- If the question is "summarize the meeting decisions", apply the `minutes-guidelines` behavioral guideline.
+- If the question is "summarize the meeting decisions", apply the `guidelines-minutes` guideline-skill.
 - If the question is "can independent work happen in parallel?", use [agent-runner](../../agent-runner/SKILL.md).
 - If plan execution hits an unexpected verification failure, use [debugging-guide](../../debugging-guide/SKILL.md), then resume execution.
 - If the plan is unsafe, impossible, or contradicts the repo mid-execution, return to [plan-guide](../../plan-guide/SKILL.md).

@@ -174,7 +174,7 @@ Several installed skills cross-link as companions — install related skills tog
 | Android | `android-dev`, `android-ndk-dev`, `android-vulkan-dev`, `kotlin-coding`, `gradle-android-dev`, `vulkan-dev`, `gpu-rendering-guide` | App Kotlin/Compose → NDK/JNI → Android Vulkan → language/tests/AGP → generic Vulkan API → renderer architecture |
 | Git workflow | `commit-message-writer`, `git-guide`, `git-merge-guide`, `code-reviewer`, `techdoc-reviewer`, `github-guide` | Draft commit messages → git mechanics (commit/push/rebase/worktrees) → deep local merge/rebase integration → structured diff review → documentation truth/sync when reader-visible contracts change → GitHub delivery (`gh pr create`, PR authoring defaults, post review, resolve threads). PR authoring defaults are GitHub-delivery-scoped; GitLab/Azure DevOps MRs are host tooling outside the catalog |
 | Codebase learning | `code-professor`, `tutorial-writer`, `plan-guide`, `debugging-guide`, `code-reviewer` | Evidence-backed codebase onboarding → example-driven tutorials and user guides → implementation planning → verified defect repair → diff review |
-| Meeting notes | `minutes-guidelines` (guideline), `github-guide`, `commit-message-writer` | Source-grounded minutes from transcripts via the guideline → PR authoring (github-guide's PR authoring defaults) → commit messages (does not create tickets or publish unless asked) |
+| Meeting notes | `minutes` (guideline), `github-guide`, `commit-message-writer` | Source-grounded minutes from transcripts via the guideline → PR authoring (github-guide's PR authoring defaults) → commit messages (does not create tickets or publish unless asked) |
 | Requirement clarification | `prompt-clarifier`, `research-guide`, `plan-guide`, `debugging-guide` | Resolve blocking ambiguity in the request → open-ended discovery when the idea itself is unformed → implementation plan → root-cause work on defects |
 | Decision deliberation | `advisory-council`, `devil-advocate`, `prompt-clarifier`, `research-guide`, `plan-reviewer` | Clarify ambiguous decisions → council debate for multi-perspective synthesis → adversarial stress-test with proceed/rework/reject verdict → research and plan-audit companions |
 | Research workflow | `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor` | Interactive discovery and research report → readiness audit → implementation plan → plan audit → execution |
@@ -411,7 +411,7 @@ When adding assets to this repo or another project, use these locations:
 
 - `.agents/skills/<skill-name>/` — installed skill or command-skill (the one real copy)
 - `.agents/tools/<name>/` — installed script trees
-- `.agents/guidelines/<name>.md` — guidelines installed into target projects
+- `.agents/skills/guidelines-<name>/` — guideline skill packages installed into target projects
 
 ### Cursor
 
@@ -433,7 +433,7 @@ Copilot reads `.agents/skills/` directly; reload VS Code after changes so Copilo
 
 ## Distribute to another project
 
-Use **`tools/installer.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.agents/skills/<name>/` trees (skills and command-skills), the dual-target agent files (`.claude/agents/<name>.md` + `.github/agents/<name>.agent.md`), and script trees under `.agents/tools/` to the target project root, creating the `.claude/skills` bridge symlink there. It also installs behavioral guidelines from `guidelines/` to `.agents/guidelines/<name>.md` when explicitly selected — guidelines are inert until the target loads them, so the installer prints integration instructions and offers to cite them under a `## AI guidelines` section in the target's `AGENTS.md` (the section is created when missing, and an installer-appended section is dropped again on uninstall once its citations are gone). A target whose `AGENTS.md` carries a legacy `.ai/guidelines/` citation is upgraded cleanly via `--purge-legacy --guidelines <name> --update-agents-md`: the stale legacy-path citation is treated as stale (not "already cited"), removed, and re-cited under `.agents/guidelines/` (exact-match provenance: a hand-edited legacy citation is left in place — only installer-written wordings are removed — and the new `.agents/` line is appended alongside it). It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
+Use **`tools/installer.py`** to copy the **installed portable layout** from this repo into another project root. This copies `.agents/skills/<name>/` trees (skills and command-skills), the dual-target agent files (`.claude/agents/<name>.md` + `.github/agents/<name>.agent.md`), and script trees under `.agents/tools/` to the target project root, creating the `.claude/skills` bridge symlink there. It also installs behavioral guidelines from `guidelines/` as skill packages at `.agents/skills/guidelines-<name>/SKILL.md` when explicitly selected (the installer injects `name: guidelines-<name>` frontmatter at install time), so guidelines load through ordinary skill discovery in the target — no AGENTS.md citation needed. It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
 
 **CLI** (from this repository root):
 
@@ -455,13 +455,12 @@ python tools/installer.py /path/to/other-project --dev-workflow
 python tools/installer.py /path/to/other-project --bundles dev-workflow-harness
 python tools/installer.py /path/to/other-project --scripts dev-workflow --uninstall
 
-# Install behavioral guidelines (explicit-only; lands in .agents/guidelines/)
-python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines
-python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines --update-agents-md
+# Install behavioral guidelines (explicit-only; installs as .agents/skills/guidelines-<name>/)
+python tools/installer.py /path/to/other-project --guidelines coding-behavior
 
 # Remove legacy-layout leftovers from an older install of this repo's tooling
 # (.ai/, .cursor/{skills,commands,agents}/, .github/prompts/, .github/skills/,
-# .claude/commands/, and .claude/skills/ when it is a real directory)
+# .claude/commands/, .agents/guidelines/, and .claude/skills/ when it is a real directory)
 python tools/installer.py /path/to/other-project --purge-legacy
 
 # Replace existing installs in the target
@@ -471,7 +470,7 @@ python tools/installer.py /path/to/other-project --skills cpp-coding --override
 python tools/installer.py /path/to/other-project --skills cpp-coding --uninstall
 python tools/installer.py /path/to/other-project --agents my-agent --uninstall
 python tools/installer.py /path/to/other-project --commands git-commit --uninstall
-python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines --uninstall
+python tools/installer.py /path/to/other-project --guidelines coding-behavior --uninstall
 ```
 
 | Flag | Behavior |
@@ -482,11 +481,9 @@ python tools/installer.py /path/to/other-project --guidelines coding-behavior-gu
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
 | `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered); commands install as command-skills under `.agents/skills/<name>/` with `disable-model-invocation: true` |
 | `--scripts NAME ...` | Scripts directory names (under `.agents/tools/`) to install or uninstall (default: all discovered) |
-| `--guidelines NAME ...` | Behavioral guideline names (under `guidelines/`) to install or uninstall. Explicit-only — never part of the default install or bundles. Installed to `.agents/guidelines/<name>.md` in the target |
-| `--update-agents-md` | Update the target's `AGENTS.md` to cite newly installed guidelines under a `## AI guidelines` section (or remove installer-written citations on uninstall) without asking |
-| `--no-update-agents-md` | Never modify the target's `AGENTS.md` during guidelines install/uninstall |
+| `--guidelines NAME ...` | Behavioral guideline names (under `guidelines/`) to install or uninstall. Explicit-only — never part of the default install or bundles. Installed as the skill package `.agents/skills/guidelines-<name>/` in the target (loads via skill discovery) |
 | `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (orchestrator, phase skills, commands, and validation scripts — see [tools/bundles.md](tools/bundles.md) for full membership) as a unit |
-| `--purge-legacy` | Remove the target's pre-single-root install leftovers (`.ai/`, `.cursor/skills|commands|agents/`, `.github/prompts/`, `.github/skills/`, `.claude/commands/`, and `.claude/skills/` only when it is a real directory — the bridge symlink is left alone). Composes with the kind selectors or runs standalone |
+| `--purge-legacy` | Remove the target's pre-single-root install leftovers (`.ai/`, `.cursor/skills|commands|agents/`, `.github/prompts/`, `.github/skills/`, `.claude/commands/`, `.agents/guidelines/`, and `.claude/skills/` only when it is a real directory — the bridge symlink is left alone). Composes with the kind selectors or runs standalone |
 | `--override` | Replace existing paths in the target; without it, skip and report |
 | `--uninstall` | Remove the selected skills, agents, commands, scripts, and guidelines from the target project |
 | *(no arguments)* | Open a tkinter GUI with skill/agent/command/scripts checkboxes and a **Bundles** panel for workflow batch selection |
@@ -597,9 +594,9 @@ Reload Claude Code after install so custom agents are rediscovered (Cursor and V
 ## Further reading
 
 - `AGENTS.md` — architecture, common commands, and editing conventions for all coding agents
-- `guidelines/coding-behavior-guidelines.md` — Karpathy-inspired behavioral guidelines for coding agents
-- `guidelines/response-guidelines.md` — chat-output shaping rules for agent responses (result-first updates, structured questions, no preamble/recap)
-- `guidelines/code-comment-guidelines.md` — code comment rules for coding agents (why-not-what, contract docs, staleness, no session narration)
-- `guidelines/minutes-guidelines.md` — source-grounded meeting-minutes rules for coding agents (never invent, decisions vs discussion, `not specified`)
+- `guidelines/coding-behavior.md` — Karpathy-inspired behavioral guidelines for coding agents
+- `guidelines/response.md` — chat-output shaping rules for agent responses (result-first updates, structured questions, no preamble/recap)
+- `guidelines/code-comment.md` — code comment rules for coding agents (why-not-what, contract docs, staleness, no session narration)
+- `guidelines/minutes.md` — source-grounded meeting-minutes rules for coding agents (never invent, decisions vs discussion, `not specified`)
 - `skills/skill-creator/references/` — portable skill layout, JSON schemas, workflow and output patterns
 - `skills/agent-creator/references/` — portable agent layout

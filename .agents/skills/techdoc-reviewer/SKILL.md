@@ -30,7 +30,7 @@ workflow findings over prose polish; do not turn a review into copy editing unle
 - **PR description, commit message, or meeting minutes** — use
   [../github-guide/SKILL.md](../github-guide/SKILL.md),
   [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md), or the
-  `minutes-guidelines` behavioral guideline respectively.
+  `guidelines-minutes` guideline-skill respectively.
 - **Pure copy editing** — grammar, tone, or style without technical verification, unless the
   user explicitly requests it alongside factual review.
 

@@ -26,7 +26,7 @@ A bundle (or base) may include any combination of four member kinds:
 | `commands` | Command slugs (installed as command-skills under `.agents/skills/<name>/` with `disable-model-invocation: true`) |
 | `scripts` | Scripts directory names under `.agents/tools/` (copied verbatim as directory trees) |
 
-Guidelines are a fifth installer member kind but are **never bundle-carried**: they are selected explicitly via `--guidelines` (CLI) or the Guidelines panel (GUI) only. A guideline changes agent behavior in the target, so installing one is always a deliberate choice, and the installer offers a consent-driven `AGENTS.md` citation append to activate it.
+Guidelines are a fifth installer member kind but are **never bundle-carried**: they are selected explicitly via `--guidelines` (CLI) or the Guidelines panel (GUI) only. A guideline changes agent behavior in the target, so installing one is always a deliberate choice. Guidelines install as skill packages (`.agents/skills/guidelines-<name>/SKILL.md`) and activate through ordinary skill discovery.
 
 Resolved membership for tooling is:
 
@@ -85,19 +85,19 @@ python tools/installer.py /path/to/project --dev-workflow
 - **Validation scripts:** the `.agents/tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/.agents/tools/dev-workflow/`.
 - **Guide:** the `dev-workflow.md` governance guide travels inside the orchestrator skill as `references/dev-workflow.md` — installing the skill installs the guide.
 
-The orchestrator formats escalations per the `response-guidelines` guideline, which is **opt-in** (`--guidelines response-guidelines`; guidelines are never bundle-carried). The escalation rules are restated inline in the orchestrator, so the harness works without it; install the guideline alongside when every-message output shaping is wanted in the target — the installer's AGENTS.md citation offer wires the always-on loading automatically.
+The orchestrator formats escalations per the `guidelines-response` guideline-skill, which is **opt-in** (`--guidelines response`; guidelines are never bundle-carried). The escalation rules are restated inline in the orchestrator, so the harness works without it; install the guideline alongside when every-message output shaping is wanted in the target — it loads through ordinary skill discovery once installed.
 
 The bundle composes with `--skills`, `--agents`, `--commands`, and other `--bundles` in a single invocation. Use `--override` to replace existing harness paths in the target.
 
 ## Personal output preferences
 
-Chat-output shaping is distributed as the **`response-guidelines` guideline**, not a bundle: guidelines are explicit-only and never bundle-carried, because a guideline changes agent behavior in the target and installing one is always a deliberate choice. Install it with:
+Chat-output shaping is distributed as the **`response` guideline** (installed as the `guidelines-response` skill), not a bundle: guidelines are explicit-only and never bundle-carried, because a guideline changes agent behavior in the target and installing one is always a deliberate choice. Install it with:
 
 ```bash
-python tools/installer.py /path/to/project --guidelines response-guidelines
+python tools/installer.py /path/to/project --guidelines response
 ```
 
-The installer then offers to cite the guideline in the target's `AGENTS.md` — the accepted citation is the always-on load channel, so every agent session in the target loads the rules (no hand-built `.cursor/rules` files or instruction-file lines needed).
+It installs as a skill package and loads through ordinary skill discovery in the target.
 
 ## Core dev workflow bundle
 

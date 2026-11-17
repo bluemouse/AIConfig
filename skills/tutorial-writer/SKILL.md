@@ -25,8 +25,7 @@ fix bugs, create tickets, publish docs, or post reviews unless requested.
   [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) when the user cannot
   say what guide they need or what outcome matters
 - **Git diff / code review** — [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-- **Meeting minutes / decision records** — the `minutes-guidelines` behavioral
-  guideline
+- **Meeting minutes / decision records** — the `guidelines-minutes` guideline-skill
 - **API reference with no learning path** — this skill needs a reader outcome and
   progressive examples
 - **Marketing copy, release notes, generic summaries** — out of scope

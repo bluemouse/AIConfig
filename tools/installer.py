@@ -9,12 +9,14 @@ share the .agents/skills/ namespace; commands carry
 disable-model-invocation: true), and each skill install creates the Claude
 Code bridge symlink .claude/skills -> ../.agents/skills. Agents distribute as
 two real copies (.claude/agents/<name>.md and .github/agents/<name>.agent.md).
-Behavioral guidelines install to .agents/guidelines/ with a consent-driven
-AGENTS.md citation offer — citations land under a '## AI guidelines' section.
+Behavioral guidelines install as skills: the source guidelines/<name>.md is
+wrapped into the skill package .agents/skills/guidelines-<name>/SKILL.md with
+`name: guidelines-<name>` frontmatter injected at install time, so guidelines
+load through ordinary skill discovery in the target.
 --purge-legacy removes a target's pre-single-root leftovers (.ai/, the
 .cursor/ skills/commands/agents wrapper dirs, .github/prompts/, .github/skills/,
-.claude/commands/, and .claude/skills/ when it is a real directory) before
-installing.
+.claude/commands/, .agents/guidelines/ (pre-skill-layout guideline files), and
+.claude/skills/ when it is a real directory) before installing.
 
 Examples:
     python tools/installer.py /path/to/other-project
@@ -24,8 +26,7 @@ Examples:
     python tools/installer.py /path/to/other-project --bundles extended-dev-workflow --override
     python tools/installer.py /path/to/other-project --bundles core-dev-workflow --skills cpp-coding
     python tools/installer.py /path/to/other-project --bundles target-bundle
-    python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines
-    python tools/installer.py /path/to/other-project --guidelines coding-behavior-guidelines --update-agents-md
+    python tools/installer.py /path/to/other-project --guidelines coding-behavior
     python tools/installer.py /path/to/other-project --dev-workflow
     python tools/installer.py /path/to/other-project --dev-workflow --uninstall
     python tools/installer.py /path/to/other-project --agents my-agent --uninstall
@@ -37,7 +38,6 @@ Examples:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import importlib.util
 import json
 import os
@@ -151,34 +151,19 @@ GITHUB_AGENT_FILE = ".github/agents/{name}.agent.md"
 
 SHARED_SCRIPTS_DIR = ".agents/tools/{name}"
 
-SHARED_GUIDELINES_DIR = ".agents/guidelines"
-SHARED_GUIDELINE_FILE = SHARED_GUIDELINES_DIR + "/{name}.md"
-
-# The pre-single-root guideline path: citation variants still match lines the
-# old installer wrote so an upgraded target re-cites/removes cleanly.
-LEGACY_GUIDELINE_FILE = ".ai/guidelines/{name}.md"
-
 # Behavioral guidelines installable to target projects (explicit selection only —
-# never part of the no-selector default or bundles). A guideline is inert until
-# the target project loads it: cited from its AGENTS.md or included manually in
-# a prompt. A guideline "name" is the filename stem; the file lives at
-# guidelines/<name>.md in this repo and installs to .agents/guidelines/<name>.md
-# in the target (installer-owned namespace, not the target root).
+# never part of the no-selector default or bundles). A guideline installs as a
+# skill package: the source guidelines/<name>.md is wrapped into
+# .agents/skills/guidelines-<name>/SKILL.md with `name: guidelines-<name>`
+# frontmatter injected at install time, so guidelines load through ordinary
+# skill discovery in the target.
+GUIDELINE_SKILL_PREFIX = "guidelines-"
 INSTALLABLE_GUIDELINES = (
-    "coding-behavior-guidelines",
-    "response-guidelines",
-    "code-comment-guidelines",
-    "minutes-guidelines",
+    "coding-behavior",
+    "response",
+    "code-comment",
+    "minutes",
 )
-
-# Companion directories a guideline cites and therefore ships with (guideline
-# name → directory under guidelines/). minutes-guidelines points readers at
-# guidelines/minutes/minutes-template.md and worked-example.md, so a target
-# install must carry the directory or the citation dangles; uninstall treats
-# the guideline plus its companion dir as one provenance unit.
-GUIDELINE_COMPANION_DIRS = {
-    "minutes-guidelines": "minutes",
-}
 
 # Scripts are directory trees under .agents/tools/<name>/.
 TOOL_SCRIPTS_SCAN_REL_DIRS = (".agents/tools",)
@@ -205,6 +190,9 @@ LEGACY_PURGE_REL_PATHS = (
     ".github/prompts",
     ".github/skills",
     ".claude/commands",
+    # Pre-skill-layout guideline files (guidelines now install as
+    # .agents/skills/guidelines-<name>/ skill packages).
+    ".agents/guidelines",
 )
 
 # Scripts are discovered as subdirectories of tools/ in the repo root.
@@ -686,14 +674,20 @@ def resolve_cli_selection(
         selection.dedupe()
         return selection
     # No explicit selection: default to all discovered items. Guidelines are
-    # explicit-only — they change agent behavior in the target, so they are
-    # never part of the default install. discover_skills() has no
+    # explicit-only — they change agent behavior in the target, so the
+    # guidelines-<name> skill packages this repo carries are filtered out of
+    # the default install (and out of target-bundle membership, which uses
+    # the same catalog intersection). discover_skills() has no
     # command-skill filter, so a command-skill name lands in BOTH lists and
     # must run through the same dedupe as the explicit-selection path (fd-019)
     # — without it, the default uninstall hits the cr-004 cross-kind guard for
     # every command-skill and false-fails with exit 1 on a clean teardown.
     default_selection = BundleSelection(
-        skills=discover_skills(),
+        skills=[
+            name
+            for name in discover_skills()
+            if not name.startswith(GUIDELINE_SKILL_PREFIX)
+        ],
         agents=discover_agents(),
         commands=discover_commands(),
         scripts=discover_scripts(),
@@ -862,7 +856,16 @@ def build_target_bundle(
         id=TARGET_BUNDLE_ID,
         name=TARGET_BUNDLE_NAME,
         description=TARGET_BUNDLE_DESCRIPTION,
-        skills=_intersect(discover_skills_in_project(target_root), available_skills),
+        # Guidelines are explicit-only and never bundle-carried: their
+        # guidelines-<name> skill packages are excluded from target-bundle
+        # membership even when installed in the target.
+        skills=frozenset(
+            name
+            for name in _intersect(
+                discover_skills_in_project(target_root), available_skills
+            )
+            if not name.startswith(GUIDELINE_SKILL_PREFIX)
+        ),
         agents=_intersect(discover_agents_in_project(target_root), available_agents),
         commands=_intersect(discover_commands_in_project(target_root), available_commands),
         scripts=_intersect(discover_scripts_in_project(target_root), available_scripts),
@@ -1107,661 +1110,99 @@ def scripts_remove_paths(target_root: Path, name: str) -> list[Path]:
     return [target_root / SHARED_SCRIPTS_DIR.format(name=name)]
 
 
-def guideline_companion_dir_name(name: str) -> str | None:
-    """Return the companion directory name a guideline ships with, or None."""
-    return GUIDELINE_COMPANION_DIRS.get(name)
+def guideline_skill_name(name: str) -> str:
+    """Return the installed skill name for a guideline (guidelines-<stem>)."""
+    return f"{GUIDELINE_SKILL_PREFIX}{slugify_name(name)}"
 
 
-def guideline_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
-    """Return (src, dest) pairs for a behavioral guideline.
+def guideline_skill_content(source_root: Path, name: str) -> str:
+    """Build the SKILL.md content for a guideline.
 
-    The guideline file always installs; a guideline with a registered
-    companion directory (e.g. minutes-guidelines → guidelines/minutes/)
-    also installs that directory so in-body references resolve in targets.
-    """
-    pairs = [
-        (
-            source_root / "guidelines" / f"{name}.md",
-            target_root / SHARED_GUIDELINE_FILE.format(name=name),
-        )
-    ]
-    companion = guideline_companion_dir_name(name)
-    if companion is not None:
-        pairs.append(
-            (
-                source_root / "guidelines" / companion,
-                target_root / SHARED_GUIDELINES_DIR / companion,
-            )
-        )
-    return pairs
-
-
-def guideline_remove_paths(target_root: Path, name: str) -> list[Path]:
-    paths = [target_root / SHARED_GUIDELINE_FILE.format(name=name)]
-    companion = guideline_companion_dir_name(name)
-    if companion is not None:
-        paths.append(target_root / SHARED_GUIDELINES_DIR / companion)
-    return paths
-
-
-def guideline_is_installer_written(source_root: Path, target_root: Path, name: str) -> bool:
-    """Return True only when the installed guideline matches the installer's source.
-
-    A user-modified or stale copy must never be silently deleted on uninstall —
-    removal requires a byte-identical match, mirroring the provenance rule the
-    docs kind used before its removal. Note: editing a guideline source (e.g.
-    adding frontmatter) after a target installed it makes the older installed
-    copy read as user-modified; uninstall then keeps it (reported under
-    `skipped`) until a `--override` reinstall or manual delete.
-
-    A companion directory counts as installer-written only when every regular
-    file inside is byte-identical to the source tree AND the source has no
-    file the target lacks — a target-side edit, extra file, or stale file
-    reads as user-modified and the whole directory is kept.
+    The source guidelines/<name>.md carries only a frontmatter `description`;
+    the skill `name` is injected here (prefixed with GUIDELINE_SKILL_PREFIX)
+    so the source stays clean and the installed name is installer-owned. The
+    body transfers verbatim. Raises InstallerError on unreadable frontmatter
+    (guideline sources must always carry a single-line description).
     """
     src = source_root / "guidelines" / f"{name}.md"
-    dest = target_root / SHARED_GUIDELINE_FILE.format(name=name)
-    if not src.is_file() or not dest.is_file():
-        return False
-    if file_sha256(src) != file_sha256(dest):
-        return False
-
-    companion = guideline_companion_dir_name(name)
-    if companion is None:
-        return True
-    src_dir = source_root / "guidelines" / companion
-    dest_dir = target_root / SHARED_GUIDELINES_DIR / companion
-    if not src_dir.is_dir() or not dest_dir.is_dir():
-        return False
-    src_files = {rel for rel, _ in iter_source_files(src_dir)}
-    dest_files = {rel for rel, _ in iter_source_files(dest_dir)}
-    if src_files != dest_files:
-        return False
-    return all(
-        file_sha256(src_dir / rel) == file_sha256(dest_dir / rel)
-        for rel in src_files
-    )
-
-
-def parse_guideline_citation_description(source_root: Path, name: str) -> str | None:
-    """Return the guideline's frontmatter load-trigger description, or None.
-
-    Reads ``<source_root>/guidelines/<name>.md`` and parses a leading YAML
-    frontmatter block (``---`` delimited) for a scalar string ``description``.
-    Every unreadable shape — missing file, unreadable or non-UTF-8 file,
-    missing frontmatter, unclosed block, malformed YAML, non-string, empty,
-    or multi-line value (a newline would corrupt the single-line citation) —
-    degrades to None so the citation line falls back to the bare wording;
-    this never raises.
-
-    Distinct from ``load_guidelines_descriptions`` (GUI labels taken from the
-    first markdown heading); this helper feeds AGENTS.md citation lines.
-    """
-    path = source_root / "guidelines" / f"{name}.md"
-    if not path.is_file():
-        return None
-    try:
-        lines = path.read_text(encoding="utf-8").splitlines()
-    except (OSError, UnicodeDecodeError):
-        return None
+    content = src.read_text(encoding="utf-8")
+    lines = content.splitlines(keepends=True)
     if not lines or lines[0].strip() != "---":
-        return None
+        raise InstallerError(f"guideline {name}: missing frontmatter in {src}")
     end = None
     for idx in range(1, len(lines)):
         if lines[idx].strip() == "---":
             end = idx
             break
     if end is None:
-        return None
+        raise InstallerError(f"guideline {name}: unclosed frontmatter in {src}")
     try:
-        data = yaml.safe_load("\n".join(lines[1:end]))
-    except yaml.YAMLError:
-        return None
-    if not isinstance(data, dict):
-        return None
-    description = data.get("description")
-    if not isinstance(description, str):
-        return None
-    description = description.strip()
-    # Any line break — not just \n/\r — would corrupt the single-line citation
-    # (and make it unremovable), so require exactly one line.
-    if not description or len(description.splitlines()) != 1:
-        return None
-    return description
-
-
-AGENTS_MD_FILENAME = "AGENTS.md"
-
-
-def build_guideline_citation_line(name: str, description: str | None = None) -> str:
-    """Return the AGENTS.md citation line for an installed guideline.
-
-    With a load-trigger description (from the guideline's frontmatter), the
-    line carries it after an em dash so an agent can decide when to load the
-    guideline without opening it; without one, the bare wording is used.
-    """
-    rel = SHARED_GUIDELINE_FILE.format(name=name)
-    if description:
-        return f"- Follow [{rel}]({rel}) — {description}"
-    return f"- Follow [{rel}]({rel}) in this repo."
-
-
-def _legacy_guideline_citation_line(name: str, description: str | None = None) -> str:
-    """Return a citation wording the pre-upgrade installer once wrote.
-
-    These are the OLD `.ai/guidelines/` path forms: a target upgraded from the
-    pre-single-root layout may still carry these lines, so removal keeps
-    matching them. The pre-upgrade installer (b91f932..893f6f3) wrote all
-    three wordings — pre-generalization, bare, and described — with the
-    legacy path, mirroring build_guideline_citation_line's templates.
-    """
-    rel = LEGACY_GUIDELINE_FILE.format(name=name)
-    if description:
-        return f"- Follow [{rel}]({rel}) — {description}"
-    if description is None:
-        return f"- Follow [{rel}]({rel}) when generating or editing any code in this repo."
-    return f"- Follow [{rel}]({rel}) in this repo."
-
-
-def guideline_citation_variants(
-    name: str, description: str | None = None
-) -> set[str]:
-    """Return every citation-line wording the installer has written for a guideline.
-
-    Covers both layouts: the current `.agents/guidelines/` wordings (described
-    and bare) and all three legacy `.ai/guidelines/` wordings
-    (pre-generalization, bare, and described), so an upgraded target's old
-    citations are still recognized. Exact-match set only (no prefix
-    matching): removal stays provenance-safe — a user-edited variant is kept.
-    A described line whose source description later drifted is kept too
-    (safe direction).
-    """
-    return {
-        build_guideline_citation_line(name, description),
-        build_guideline_citation_line(name),
-        _legacy_guideline_citation_line(name),
-        _legacy_guideline_citation_line(name, description),
-        _legacy_guideline_citation_line(name, ""),
-    }
-
-
-def guideline_is_cited(text: str, name: str) -> bool:
-    """Return True when any line of an AGENTS.md body references the guideline.
-
-    Loose path-based citedness check, kept as a documented helper for callers
-    and tests (cr-103): any line referencing the guideline's installed path
-    counts — under the current `.agents/guidelines/` path or the legacy
-    `.ai/guidelines/` path. NOT the append gate: agents_md_append_lines
-    computes path-aware citedness inline (current path → already cited;
-    legacy-only → stale rewrite), so this helper's loose both-path match is
-    not consulted by the append flow.
-    """
-    rels = (
-        SHARED_GUIDELINE_FILE.format(name=name),
-        LEGACY_GUIDELINE_FILE.format(name=name),
-    )
-    return any(rel in line for rel in rels for line in text.splitlines())
-
-
-def _read_agents_md_raw(path: Path) -> str:
-    """Read AGENTS.md without newline translation, preserving CRLF/LF as-is."""
-    with path.open("r", encoding="utf-8", newline="") as handle:
-        return handle.read()
-
-
-def _write_agents_md_raw(path: Path, text: str) -> None:
-    """Write AGENTS.md without newline translation."""
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
-
-
-def _agents_md_newline(text: str) -> str:
-    """Return the dominant line ending of an AGENTS.md body."""
-    return "\r\n" if "\r\n" in text else "\n"
-
-
-AGENTS_MD_GUIDELINES_HEADING = "## AI guidelines"
-
-_SECTION_BOUNDARY_RE = re.compile(r"^#{1,2}(?:\s|$)")
-_FENCE_OPEN_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})")
-_FENCE_CLOSE_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})[ \t]*$")
-
-
-def _is_guidelines_heading(line: str) -> bool:
-    """Return True when a line is the '## AI guidelines' section heading."""
-    return (
-        line.rstrip("\r\n").strip().lower() == AGENTS_MD_GUIDELINES_HEADING.lower()
-    )
-
-
-def _is_section_boundary(line: str) -> bool:
-    """Return True for h1/h2 heading lines that terminate a '##' section.
-
-    Deeper headings (h3+) belong to the section and do not end it.
-    """
-    return bool(_SECTION_BOUNDARY_RE.match(line.rstrip("\r\n")))
-
-
-def _find_guidelines_section(lines: Sequence[str]) -> tuple[int | None, int]:
-    """Return (heading_index, section_end_index) for '## AI guidelines'.
-
-    section_end is the index of the first h1/h2 heading after the section
-    heading, or len(lines) when the section runs to end-of-file. The heading
-    index is None (and section_end is 0) when the file has no such section.
-    Fenced code blocks are transparent to the scan: a '## AI guidelines'
-    or other '##' line inside a ``` or ~~~ fence is content, not a heading
-    or section boundary.
-    """
-    heading_idx: int | None = None
-    fence_char: str | None = None
-    fence_len = 0
-    for idx, line in enumerate(lines):
-        body = line.rstrip("\r\n")
-        if fence_char is not None:
-            close = _FENCE_CLOSE_RE.match(body)
-            if (
-                close is not None
-                and close.group(1)[0] == fence_char
-                and len(close.group(1)) >= fence_len
-            ):
-                fence_char = None
-            continue
-        if heading_idx is None:
-            if _is_guidelines_heading(body):
-                heading_idx = idx
-                continue
-        elif _is_section_boundary(body):
-            return (heading_idx, idx)
-        open_match = _FENCE_OPEN_RE.match(body)
-        if open_match is not None:
-            fence_char = open_match.group(1)[0]
-            fence_len = len(open_match.group(1))
-    if heading_idx is None:
-        return (None, 0)
-    return (heading_idx, len(lines))
-
-
-def _append_guidelines_section(
-    text: str, citation_lines: Sequence[str], newline: str
-) -> str:
-    """Append a new '## AI guidelines' section holding the citation lines."""
-    section = (
-        AGENTS_MD_GUIDELINES_HEADING
-        + newline
-        + newline
-        + newline.join(citation_lines)
-        + newline
-    )
-    if not text:
-        return section
-    if not text.endswith(("\n", "\r\n")):
-        text += newline
-    return text + newline + section
-
-
-def _insert_citations_into_agents_md(
-    text: str, citation_lines: Sequence[str], newline: str
-) -> str:
-    """Insert citation lines under the target's '## AI guidelines' section.
-
-    The section is created at the end of the file when missing. Existing
-    lines keep their original endings byte-for-byte; inserted lines use the
-    file's dominant line ending.
-    """
-    lines = text.splitlines(keepends=True)
-    heading_idx, section_end = _find_guidelines_section(lines)
-    if heading_idx is None:
-        return _append_guidelines_section(text, citation_lines, newline)
-    block = [line + newline for line in citation_lines]
-    last_content = None
-    for idx in range(heading_idx + 1, section_end):
-        if lines[idx].strip():
-            last_content = idx
-    if last_content is None:
-        # Empty section: normalize to heading + blank line + citations.
-        block.insert(0, newline)
-        if section_end < len(lines):
-            block.append(newline)
-        lines[heading_idx + 1 : section_end] = block
-    else:
-        insert_at = last_content + 1
-        if insert_at == section_end and section_end < len(lines):
-            # Citations land directly before the next heading — keep the
-            # heading separated by a blank line.
-            block.append(newline)
-        lines[insert_at:insert_at] = block
-    return "".join(lines)
-
-
-def _drop_appended_guidelines_section(lines: list[str]) -> list[str]:
-    """Drop an end-of-file '## AI guidelines' section the installer appended.
-
-    The installer only ever creates the section at end of file, preceded by a
-    single blank separator line (or at the start of an empty file), so the
-    drop is gated on that exact shape: a mid-file section, a section that
-    still holds content, or a heading with no blank line before it is
-    user-created and kept. One edge is unavoidable without state: a
-    user-created empty section at end of file with a separator blank is
-    byte-identical to an installer append and is dropped too — it carries no
-    content.
-    """
-    heading_idx, section_end = _find_guidelines_section(lines)
-    if heading_idx is None or section_end != len(lines):
-        return lines
-    if any(line.strip() for line in lines[heading_idx + 1 : section_end]):
-        return lines
-    start = heading_idx
-    if heading_idx > 0:
-        if lines[heading_idx - 1].strip():
-            return lines
-        start = heading_idx - 1
-    return lines[:start] + lines[section_end:]
-
-
-def agents_md_append_lines(
-    target_root: Path,
-    names: Sequence[str],
-    source_root: Path | None = None,
-) -> tuple[list[str], list[str]]:
-    """Insert citation lines for each guideline under the target's AGENTS.md
-    '## AI guidelines' section.
-
-    Each citation carries the guideline's frontmatter load-trigger description
-    when the source provides one (bare wording otherwise). `source_root`
-    defaults to this repo at call time — resolved inside the body, never as a
-    def-time default, so tests can patch the module's REPO_ROOT.
-
-    Returns (appended, already_present) name lists. Idempotent for a
-    guideline cited under the CURRENT `.agents/guidelines/` path — via the
-    installer's exact citation line or any hand-written line referencing it —
-    reported as already_present and not duplicated. A citation under the
-    legacy `.ai/guidelines/` path ONLY (no current-path reference) is stale,
-    not already-cited (cr-002): the legacy file is gone after a
-    `--purge-legacy` upgrade, so the old citation line is removed
-    (exact-match provenance, via the removal machinery) and the new
-    `.agents/` line is appended, with the name reported as appended. The
-    section is created at the end of the file when missing. Never creates
-    AGENTS.md — a missing file is a no-op. Line endings are preserved: a
-    CRLF file stays CRLF, and only the new lines are added.
-    """
-    if source_root is None:
-        source_root = REPO_ROOT
-    path = target_root / AGENTS_MD_FILENAME
-    if not path.is_file():
-        return ([], [])
-    text = _read_agents_md_raw(path)
-    appended: list[str] = []
-    already: list[str] = []
-    new_lines: list[str] = []
-    stale_names: list[str] = []
-    for name in names:
-        lines = text.splitlines()
-        cites_current = any(
-            SHARED_GUIDELINE_FILE.format(name=name) in line for line in lines
-        )
-        cites_legacy = any(
-            LEGACY_GUIDELINE_FILE.format(name=name) in line for line in lines
-        )
-        if cites_current:
-            already.append(name)
-            continue
-        # Not cited under the current path. A legacy-path-only citation is
-        # stale, not already-cited (cr-002): the .ai/ tree is gone after a
-        # --purge-legacy upgrade, so the dead citation line is removed
-        # (exact-match provenance, via the removal machinery) and the new
-        # .agents/ line appended, with the name reported as appended.
-        if cites_legacy:
-            stale_names.append(name)
-        appended.append(name)
-        description = parse_guideline_citation_description(source_root, name)
-        new_lines.append(build_guideline_citation_line(name, description))
-    if stale_names:
-        # Reuse the removal machinery: exact-match installer wordings plus
-        # empty-section cleanup, provenance-safe for user-edited lines.
-        _, kept_stale = agents_md_remove_lines(
-            target_root, stale_names, source_root=source_root
-        )
-        if kept_stale:
-            # fd-021: a drifted legacy citation did not exact-match any
-            # installer wording, so it survives as a stray .ai/ line — the
-            # new .agents/ citation is appended alongside it. Surface the
-            # names so the caller's report does not read as a fully clean
-            # upgrade.
-            print(
-                "warning: legacy .ai/guidelines/ citation(s) left in place "
-                f"(not installer-written wordings, kept as user content): "
-                f"{', '.join(kept_stale)}",
-                file=sys.stderr,
-            )
-        text = _read_agents_md_raw(path)
-    if new_lines:
-        newline = _agents_md_newline(text)
-        text = _insert_citations_into_agents_md(text, new_lines, newline)
-        _write_agents_md_raw(path, text)
-    return (appended, already)
-
-
-def agents_md_remove_lines(
-    target_root: Path,
-    names: Sequence[str],
-    source_root: Path | None = None,
-) -> tuple[list[str], list[str]]:
-    """Remove installer-written citation lines from the target's AGENTS.md.
-
-    `source_root` defaults to this repo at call time (see
-    `agents_md_append_lines`); the current source description seeds the
-    described-wording variant, so a line whose description drifted after
-    install is kept rather than matched away.
-
-    Returns (removed, kept) name lists. Only lines the installer itself
-    wrote are removed — the current template wordings (bare and described)
-    and the legacy pre-generalization wording; a user-edited variant is kept. An
-    end-of-file '## AI guidelines' section the installer appended is
-    dropped again — heading and separator blank — once its installer-written
-    citations are gone; mid-file or content-bearing sections are kept. Line
-    endings and all other content are preserved byte-for-byte.
-    """
-    if source_root is None:
-        source_root = REPO_ROOT
-    path = target_root / AGENTS_MD_FILENAME
-    if not path.is_file():
-        return ([], [])
-    text = _read_agents_md_raw(path)
-    lines = text.splitlines(keepends=True)
-    stripped = {line.rstrip("\r\n") for line in lines}
-    variants = {
-        name: guideline_citation_variants(
-            name, parse_guideline_citation_description(source_root, name)
-        )
-        for name in names
-    }
-    removed = [name for name in names if variants[name] & stripped]
-    kept = [name for name in names if not (variants[name] & stripped)]
-    if removed:
-        remove_set = set().union(*variants.values())
-        heading_idx, section_end = _find_guidelines_section(lines)
-        removed_in_section = heading_idx is not None and any(
-            line.rstrip("\r\n") in remove_set
-            for line in lines[heading_idx + 1 : section_end]
-        )
-        kept_lines = [line for line in lines if line.rstrip("\r\n") not in remove_set]
-        if removed_in_section:
-            kept_lines = _drop_appended_guidelines_section(kept_lines)
-        _write_agents_md_raw(path, "".join(kept_lines))
-    return (removed, kept)
-
-
-def resolve_agents_md_action(
-    *,
-    update_flag: bool,
-    no_update_flag: bool,
-    is_tty: bool,
-) -> Literal["ask", "append", "skip"]:
-    """Decide whether the AGENTS.md offer asks, appends, or skips.
-
-    Non-interactive runs (stdin not a TTY) never block on a prompt: they skip
-    unless a flag forces the decision.
-    """
-    if update_flag and no_update_flag:
+        frontmatter = yaml.safe_load("".join(lines[1:end])) or {}
+    except yaml.YAMLError as exc:
+        raise InstallerError(f"guideline {name}: malformed frontmatter in {src}: {exc}")
+    if not isinstance(frontmatter, dict):
+        raise InstallerError(f"guideline {name}: frontmatter must be a mapping in {src}")
+    description = frontmatter.get("description")
+    if not isinstance(description, str) or not description.strip():
+        raise InstallerError(f"guideline {name}: missing description in {src} frontmatter")
+    # Skill trigger descriptions are single-line (the repo's description and
+    # eval conventions assume one line); a multi-line value would also fold
+    # through yaml.dump into a block scalar in the generated frontmatter.
+    if len(description.splitlines()) != 1:
         raise InstallerError(
-            "--update-agents-md and --no-update-agents-md are mutually exclusive."
+            f"guideline {name}: description must be a single line in {src} frontmatter"
         )
-    if update_flag:
-        return "append"
-    if no_update_flag:
-        return "skip"
-    if is_tty:
-        return "ask"
-    return "skip"
+    # Re-emit the frontmatter with the injected name; other keys transfer
+    # verbatim so a future guideline can carry extra fields without an
+    # installer change.
+    injected = dict(frontmatter)
+    injected["name"] = guideline_skill_name(name)
+    fm_block = yaml.dump(
+        injected,
+        default_flow_style=False,
+        allow_unicode=True,
+        sort_keys=False,
+        width=4096,
+    ).strip()
+    body = "".join(lines[end + 1 :])
+    return f"---\n{fm_block}\n---\n{body}"
 
 
-def format_guidelines_integration_message(names: Sequence[str]) -> str:
-    """Return the post-install message explaining how to activate guidelines."""
-    lines = [
-        "Guidelines installed:",
-        *(f"  - {SHARED_GUIDELINE_FILE.format(name=name)}" for name in names),
-        "",
-        "Guidelines are inert until loaded. To activate them:",
-        "  - Automatic: cite them under a '## AI guidelines' section in the target's",
-        "    AGENTS.md so every agent session loads them (the installer can do",
-        "    this for you).",
-        "  - Manual: include the guideline content in a prompt when needed.",
+def guideline_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
+    """Return the (src, dest) pair for a behavioral guideline skill package."""
+    skill_name = guideline_skill_name(name)
+    return [
+        (
+            source_root / "guidelines" / f"{name}.md",
+            target_root / SHARED_SKILL_DIR.format(name=skill_name) / "SKILL.md",
+        )
     ]
-    return "\n".join(lines)
 
 
-def _default_cli_prompt(question: str) -> bool:
-    answer = input(f"{question} [y/N]: ").strip().lower()
-    return answer in ("y", "yes")
+def guideline_remove_paths(target_root: Path, name: str) -> list[Path]:
+    return [target_root / SHARED_SKILL_DIR.format(name=guideline_skill_name(name))]
 
 
-def run_agents_md_append_offer(
-    target_root: Path,
-    guideline_names: Sequence[str],
-    *,
-    update_flag: bool = False,
-    no_update_flag: bool = False,
-    is_tty: bool = False,
-    prompt: Callable[[str], bool] | None = None,
-    source_root: Path | None = None,
-) -> str:
-    """Offer to append guideline citation lines to the target's AGENTS.md.
+def guideline_is_installer_written(source_root: Path, target_root: Path, name: str) -> bool:
+    """Return True only when the installed guideline skill matches the installer's source.
 
-    Consent-gated: appends only when the user accepts the interactive offer or
-    when the update flag forces it. Never creates AGENTS.md — a missing file
-    yields creation instructions instead. `source_root` defaults to this repo
-    at call time (where the guidelines' frontmatter descriptions are read).
+    A user-modified or stale copy must never be silently deleted on uninstall —
+    removal requires a byte-identical match against the content the installer
+    would regenerate, mirroring the provenance rule the docs kind used before
+    its removal. Note: editing a guideline source after a target installed it
+    makes the older installed copy read as user-modified; uninstall then keeps
+    it (reported under `skipped`) until a `--override` reinstall or manual
+    delete.
     """
-    action = resolve_agents_md_action(
-        update_flag=update_flag, no_update_flag=no_update_flag, is_tty=is_tty
+    src = source_root / "guidelines" / f"{name}.md"
+    dest = guideline_copy_pairs(source_root, target_root, name)[0][1]
+    if not src.is_file() or not dest.is_file():
+        return False
+    return guideline_skill_content(source_root, name) == dest.read_text(
+        encoding="utf-8"
     )
-    agents_md = target_root / AGENTS_MD_FILENAME
-    if not agents_md.is_file():
-        return (
-            f"No {AGENTS_MD_FILENAME} found in the target project. To load the "
-            f"guidelines automatically, create an {AGENTS_MD_FILENAME} and cite the "
-            "installed guideline paths under a '## AI guidelines' section; to load "
-            "them ad hoc, include the guideline content in a prompt."
-        )
-    if action == "skip":
-        return (
-            f"Left {AGENTS_MD_FILENAME} unchanged. To load the guidelines "
-            f"automatically, cite the installed guideline paths under a "
-            f"'{AGENTS_MD_GUIDELINES_HEADING}' section in {AGENTS_MD_FILENAME}; "
-            "to load them ad hoc, include the guideline content in a prompt."
-        )
-    if action == "ask":
-        if prompt is None:
-            prompt = _default_cli_prompt
-        if not prompt(
-            f"Update {agents_md} to cite the installed guidelines under "
-            f"'{AGENTS_MD_GUIDELINES_HEADING}'?"
-        ):
-            return f"Declined — {AGENTS_MD_FILENAME} left unchanged."
-    appended, already = agents_md_append_lines(
-        target_root, guideline_names, source_root=source_root
-    )
-    if appended and already:
-        return (
-            f"Updated {AGENTS_MD_FILENAME}: cited {', '.join(appended)} under "
-            f"'{AGENTS_MD_GUIDELINES_HEADING}' (already cited: {', '.join(already)})."
-        )
-    if appended:
-        return (
-            f"Updated {AGENTS_MD_FILENAME}: cited {', '.join(appended)} under "
-            f"'{AGENTS_MD_GUIDELINES_HEADING}'."
-        )
-    return f"All guidelines were already cited in {AGENTS_MD_FILENAME}."
 
 
-def run_agents_md_removal_offer(
-    target_root: Path,
-    guideline_names: Sequence[str],
-    *,
-    update_flag: bool = False,
-    no_update_flag: bool = False,
-    is_tty: bool = False,
-    prompt: Callable[[str], bool] | None = None,
-    source_root: Path | None = None,
-) -> str:
-    """Offer to remove installer-written citation lines from the target's AGENTS.md.
-
-    Provenance-safe: only the exact citation line is removed; user-edited
-    variants are kept. `source_root` defaults to this repo at call time (where
-    the current guideline descriptions seed the described-wording variant).
-    """
-    action = resolve_agents_md_action(
-        update_flag=update_flag, no_update_flag=no_update_flag, is_tty=is_tty
-    )
-    agents_md = target_root / AGENTS_MD_FILENAME
-    if not agents_md.is_file():
-        return f"No {AGENTS_MD_FILENAME} found in the target project — nothing to remove."
-    if action == "skip":
-        return (
-            f"Left {AGENTS_MD_FILENAME} unchanged. Remove the guideline citation "
-            "lines manually if you no longer want them."
-        )
-    if action == "ask":
-        if prompt is None:
-            prompt = _default_cli_prompt
-        if not prompt(f"Remove the guideline citations the installer added to {agents_md}?"):
-            return f"Declined — {AGENTS_MD_FILENAME} left unchanged."
-    removed, kept = agents_md_remove_lines(
-        target_root, guideline_names, source_root=source_root
-    )
-    if removed and kept:
-        return (
-            f"Updated {AGENTS_MD_FILENAME}: removed citations for {', '.join(removed)} "
-            f"(kept user-edited citations for: {', '.join(kept)})."
-        )
-    if removed:
-        return f"Updated {AGENTS_MD_FILENAME}: removed citations for {', '.join(removed)}."
-    return f"No installer-written guideline citations found in {AGENTS_MD_FILENAME}."
-
-
-def iter_source_files(root: Path) -> Iterable[tuple[str, Path]]:
-    """Yield (relative-posix-path, absolute-path) for regular files under root.
-
-    The same walker runs over source and installed companion directories in
-    the guideline provenance check, so both sides are compared with identical
-    traversal rules. Excludes nothing here — the installer never writes
-    __pycache__/.pyc (copy_path filters them at copy time), but an installed
-    directory containing such a stale entry reads as user-modified and is
-    kept, matching the conservative provenance stance.
-    """
-    if not root.is_dir():
-        return
-    for path in sorted(root.rglob("*")):
-        if path.is_file():
-            yield (path.relative_to(root).as_posix(), path)
-
-
-def file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(65536), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def remove_path(path: Path) -> None:
@@ -1982,16 +1423,9 @@ def install_items(
     for name in guidelines:
         slug = slugify_name(name)
         pairs = guideline_copy_pairs(source_root, target_root, slug)
-        # The guideline file is the anchor; a registered companion directory
-        # is also required (a missing one would leave the body's citations
-        # dangling), but the companion gate never masks the file error.
         shared_src = pairs[0][0]
         missing_src = next(
-            (
-                src
-                for src, _ in pairs
-                if not (src.is_file() if src == shared_src else src.is_dir())
-            ),
+            (src for src, _ in pairs if not src.is_file()),
             None,
         )
         if missing_src is not None:
@@ -2006,18 +1440,29 @@ def install_items(
             )
             continue
 
-        for src, dest in pairs:
-            rel_dest = format_rel(dest, target_root)
-            if dest.exists():
-                if not override:
-                    result.skipped.append(rel_dest)
-                    continue
-                remove_path(dest)
-            try:
-                copy_path(src, dest)
-                result.installed.append(rel_dest)
-            except OSError as exc:
-                result.errors.append(f"{rel_dest}: {exc}")
+        # Generate the skill package from the guideline source (name injection
+        # happens in guideline_skill_content), then write it like any skill.
+        # Frontmatter defects surface as InstallerError, reported per-name
+        # (cr-005) instead of aborting the whole run and losing the report.
+        src, dest = pairs[0]
+        rel_dest = format_rel(dest, target_root)
+        if dest.exists():
+            if not override:
+                result.skipped.append(rel_dest)
+                continue
+            remove_path(dest)
+        try:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(guideline_skill_content(source_root, slug), encoding="utf-8")
+            result.installed.append(rel_dest)
+        except OSError as exc:
+            result.errors.append(f"{rel_dest}: {exc}")
+        except InstallerError as exc:
+            result.errors.append(str(exc))
+        # Guidelines install into .agents/skills/ — they need the same Claude
+        # Code bridge as skills (a guidelines-only install must still create
+        # it, or Claude Code never discovers the new packages).
+        ensure_bridge_symlink(target_root)
 
     return result
 
@@ -2073,6 +1518,18 @@ def format_purge_result(result: OperationResult) -> str:
     return "\n".join(lines)
 
 
+def is_guideline_skill(skill_dir: Path) -> bool:
+    """Return True when the skill dir at this path is a guideline skill package.
+
+    Guideline packages are installer-generated under the guidelines- prefix;
+    a name reaching uninstall through --skills must be refused there (use
+    --uninstall --guidelines instead, which applies the byte-identical
+    provenance check) — the same cross-kind guard cr-004 applies to
+    command-skills.
+    """
+    return skill_dir.name.startswith(GUIDELINE_SKILL_PREFIX)
+
+
 def uninstall_items(
     *,
     target_root: Path,
@@ -2093,6 +1550,9 @@ def uninstall_items(
         # command-skill is refused — removing it here would delete a
         # slash-command install. --uninstall --commands remains the removal
         # path for command-skills (command_remove_paths is unchanged).
+        # Guideline skill packages get the same guard: --uninstall --skills
+        # must not bypass the guideline provenance check (--guidelines is
+        # the removal path, and it verifies a byte-identical match first).
         for path in skill_remove_paths(target_root, slug):
             if path.exists() and is_command_skill(path / COMMAND_SKILL_SKILL_MD):
                 result.errors.append(
@@ -2101,8 +1561,17 @@ def uninstall_items(
                     "(use --uninstall --commands instead)"
                 )
                 break
+            if path.exists() and is_guideline_skill(path):
+                result.errors.append(
+                    f"skill {slug}: refusing to uninstall guideline skill "
+                    f"{format_rel(path, target_root)} via --skills "
+                    "(use --uninstall --guidelines instead)"
+                )
+                break
         for path in skill_remove_paths(target_root, slug):
-            if path.exists() and is_command_skill(path / COMMAND_SKILL_SKILL_MD):
+            if path.exists() and (
+                is_command_skill(path / COMMAND_SKILL_SKILL_MD) or is_guideline_skill(path)
+            ):
                 continue
             if path.exists():
                 try:
@@ -2143,13 +1612,21 @@ def uninstall_items(
 
     for name in guidelines:
         slug = slugify_name(name)
-        # The guideline file and its companion directory are one provenance
-        # unit: verify once against the source (removing the file first would
-        # make the companion check see a half-removed install), then remove.
+        # Provenance-safe uninstall: verify the installed copy matches the
+        # installer's source before removing it.
         remove_paths = guideline_remove_paths(target_root, slug)
         if not any(path.exists() for path in remove_paths):
             continue
-        if not guideline_is_installer_written(REPO_ROOT, target_root, slug):
+        try:
+            installer_written = guideline_is_installer_written(
+                REPO_ROOT, target_root, slug
+            )
+        except InstallerError as exc:
+            # Unreadable source frontmatter reports per-name (cr-005) rather
+            # than aborting the run and losing the partial report.
+            result.errors.append(str(exc))
+            continue
+        if not installer_written:
             # Provenance-safe: a user-modified or stale copy is left in place.
             for path in remove_paths:
                 if path.exists():
@@ -2314,23 +1791,8 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help=(
             "Behavioral guideline names (under guidelines/) to install or uninstall. "
             "Explicit-only: guidelines are never part of the default install or bundles. "
-            "Installed to .agents/guidelines/<name>.md in the target."
+            "Installed as the skill package .agents/skills/guidelines-<name>/ in the target."
         ),
-    )
-    agents_md_group = parser.add_mutually_exclusive_group()
-    agents_md_group.add_argument(
-        "--update-agents-md",
-        action="store_true",
-        help=(
-            "Update the target's AGENTS.md to cite newly installed guidelines "
-            "under a '## AI guidelines' section (or remove installer-written "
-            "citations on uninstall) without asking."
-        ),
-    )
-    agents_md_group.add_argument(
-        "--no-update-agents-md",
-        action="store_true",
-        help="Never modify the target's AGENTS.md during guidelines install/uninstall.",
     )
     parser.add_argument(
         "--dev-workflow",
@@ -2447,33 +1909,6 @@ def run_cli(argv: Sequence[str]) -> int:
         print()
 
     print(message)
-    if selection.guidelines and code == 0:
-        print()
-        try:
-            if args.uninstall:
-                print(
-                    run_agents_md_removal_offer(
-                        target,
-                        selection.guidelines,
-                        update_flag=args.update_agents_md,
-                        no_update_flag=args.no_update_agents_md,
-                        is_tty=sys.stdin.isatty(),
-                    )
-                )
-            else:
-                print(format_guidelines_integration_message(selection.guidelines))
-                print()
-                print(
-                    run_agents_md_append_offer(
-                        target,
-                        selection.guidelines,
-                        update_flag=args.update_agents_md,
-                        no_update_flag=args.no_update_agents_md,
-                        is_tty=sys.stdin.isatty(),
-                    )
-                )
-        except OSError as exc:
-            print(f"warning: could not update {AGENTS_MD_FILENAME}: {exc}", file=sys.stderr)
     # cr-101: a purge composed with an install/uninstall must not let a
     # successful operation mask purge errors — the exit code reports the
     # whole run (1 when either recorded errors).
@@ -2552,7 +1987,13 @@ class InstallerApp:
         self.root.title("AIConfig Installer")
         self.root.minsize(720, 520)
 
-        self.skills = discover_skills()
+        # Guideline skill packages are explicit-only and stay on their own
+        # Guidelines panel — the Skills panel lists ordinary skills only.
+        self.skills = [
+            name
+            for name in discover_skills()
+            if not name.startswith(GUIDELINE_SKILL_PREFIX)
+        ]
         self.agents = discover_agents()
         self.commands = discover_commands()
         self.scripts = discover_scripts()
@@ -3127,25 +2568,6 @@ class InstallerApp:
         if code != 0:
             messagebox.showwarning("Completed with errors", "See output for details.")
             return
-
-        if guidelines:
-            # The GUI is interactive: route the consent-gated offer through the
-            # same helpers the CLI uses, with a dialog-based prompt.
-            prompt = lambda question: messagebox.askyesno("Guidelines", question)  # noqa: E731
-            try:
-                if uninstall:
-                    offer = run_agents_md_removal_offer(
-                        target, guidelines, is_tty=True, prompt=prompt
-                    )
-                else:
-                    self._append_log(format_guidelines_integration_message(guidelines))
-                    offer = run_agents_md_append_offer(
-                        target, guidelines, is_tty=True, prompt=prompt
-                    )
-            except OSError as exc:
-                offer = f"warning: could not update {AGENTS_MD_FILENAME}: {exc}"
-            self._append_log("")
-            self._append_log(offer)
 
 
 def run_gui() -> int:

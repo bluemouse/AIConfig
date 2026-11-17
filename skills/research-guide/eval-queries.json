@@ -87,7 +87,7 @@
     "query": "write meeting minutes from this design review transcript",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: meeting minutes -> minutes-guidelines guideline"
+    "rationale": "near-miss: meeting minutes -> guidelines-minutes guideline-skill"
   },
   {
     "query": "let's explore options for the checkout redesign iteratively",
