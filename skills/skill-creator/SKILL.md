@@ -131,8 +131,11 @@ Each eval directory holds `eval_metadata.json` (eval_id, eval_name, prompt, asse
 
 ```bash
 cd <SKILL_CREATOR_ROOT>
-python -m scripts.aggregate_benchmark <workspace>/iteration-N --skill-name <name>
+python -m scripts.aggregate_benchmark <workspace>/iteration-N --skill-name <name> \
+    --primary with_skill --baseline without_skill   # or old_skill
 ```
+
+Pass `--primary/--baseline` explicitly whenever more than two arm directories exist — unselected multi-arm input is rejected rather than guessed. `run_status.json` (`{"status": "completed"|"errored"|"timeout"}`) in a run directory marks infrastructure failures, which are excluded from deltas and listed in `comparisons[].failed_runs`.
 
 **Review viewer:**
 
@@ -162,6 +165,19 @@ After edits: rerun evals into `iteration-<N+1>/`, regenerate the viewer, collect
 ## Advanced: Blind comparison
 
 Optional rigor when comparing two skill versions. Read `agents/comparator.md` and `agents/analyzer.md`. Requires independent parallel runs — see the skill's `## Tool notes`.
+
+---
+
+## Simplification and retirement decisions
+
+A skill or guideline earns its place. When trimming, simplifying, or retiring guidance, do not argue from instruction length or compliance alone — compare arms:
+
+1. **Arms**: `baseline` (target guidance removed, everything else identical), `current` (today's bytes), `candidate` (the simplification). Freeze each arm's bytes and hash them before running anything.
+2. **Grade correctness and safety first**; efficiency only after correctness holds on the same paired cases. A baseline with worse efficiency but equal correctness says the guidance is process overhead; a baseline failing safety or task checks says it is load-bearing.
+3. **Pair runs** by task and repeat number. Missing, errored, or mismatched runs are incomplete results — never a pass or a free efficiency win. Record uncertainty: a tie in a small sample is not equivalence.
+4. **Report scope honestly**: the exact tested host/model. No cross-host or cross-model claim without testing them.
+
+Retirement (removing a skill from the catalog) requires the same representative evidence plus a compatibility assessment of its consumers (cross-links, installed copies, docs). Trigger this review on each major frontier-model release, recording the tested model version and date with the decision.
 
 ---
 

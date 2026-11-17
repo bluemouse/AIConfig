@@ -321,16 +321,20 @@ Output from Benchmark mode. Located at `benchmarks/<timestamp>/benchmark.json`.
   - `skill_name`: Name of the skill
   - `timestamp`: When the benchmark was run
   - `evals_run`: List of eval names or IDs
-  - `runs_per_configuration`: Number of runs per config (e.g. 3)
-- `runs[]`: Individual run results
+  - `runs_per_configuration`: Integer; the minimum graded run count across arms
+  - `executor_model`: Model id, or `"unavailable"` when not recorded
+- `runs[]`: Individual run results (graded runs only; infrastructure-failed runs appear in `comparisons[].failed_runs`)
   - `eval_id`: Numeric eval identifier
   - `eval_name`: Human-readable eval name (used as section header in the viewer)
-  - `configuration`: Must be `"with_skill"` or `"without_skill"` (the viewer uses this exact string for grouping and color coding)
+  - `configuration`: Any arm name (e.g. `with_skill`, `without_skill`, `baseline`, `current`, `candidate`). The viewer's colored badge applies only to `with_skill`/`without_skill`; its summary table shows only the first two `run_summary` arms.
   - `run_number`: Integer run number (1, 2, 3...)
-  - `result`: Nested object with `pass_rate`, `passed`, `total`, `time_seconds`, `tokens`, `errors`
+  - `result`: Nested object with `pass_rate`, `passed`, `total`, `time_seconds`, `tokens`, `output_chars`, `errors`. `tokens`/`time_seconds` are `null` when unmeasured — never a character count or zero substitute.
 - `run_summary`: Statistical aggregates per configuration
-  - `with_skill` / `without_skill`: Each contains `pass_rate`, `time_seconds`, `tokens` objects with `mean` and `stddev` fields
-  - `delta`: Difference strings like `"+0.50"`, `"+13.0"`, `"+1700"`
+  - `<arm>`: Each contains `pass_rate` always, plus `time_seconds` and `tokens` stats objects **only when that arm has at least one measured sample**. Never a null `mean`/`stddev`; consumers render a missing stats object as "—".
+  - `delta`: Difference strings like `"+0.50"`, `"+13.0"`, `"+1700"` — primary minus baseline. With `--primary/--baseline` selected, arm order is primary first, baseline second. A metric either selected arm lacks is omitted from `delta`.
+- `comparisons` (optional): Named pairwise comparisons (`"<a>_vs_<b>"`) over matched `(eval_id, run_number)` pairs only, each with `matched_pairs`, `unmatched`, `duplicates`, `failed_runs`, and paired deltas. Never placed inside `run_summary`.
+- `metric_availability` (optional): `{<arm>: {tokens/time_seconds: {measured: n, total: m}}}` — disclosed sample counts; unavailable is not zero.
+- `run_counts` (optional): graded run count per arm
 - `notes`: Freeform observations from the analyzer
 
 **Important:** The viewer reads these field names exactly. Using `config` instead of `configuration`, or putting `pass_rate` at the top level of a run instead of nested under `result`, will cause the viewer to show empty/zero values. Always reference this schema when generating benchmark.json manually.
