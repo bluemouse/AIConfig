@@ -24,7 +24,7 @@ A bundle (or base) may include any combination of four member kinds:
 | `skills` | Skill slugs (installed as single-root copies under `.agents/skills/<name>/`) |
 | `agents` | Agent slugs (installed as dual-target copies: `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md`) |
 | `commands` | Command slugs (installed as command-skills under `.agents/skills/<name>/` with `disable-model-invocation: true`) |
-| `scripts` | Scripts directory names under `.agents/tools/` (copied verbatim as directory trees) |
+| `scripts` | Scripts directory names under `tools/` (tracked source; copied verbatim as directory trees) |
 
 Guidelines are a fifth installer member kind but are **never bundle-carried**: they are selected explicitly via `--guidelines` (CLI) or the Guidelines panel (GUI) only. A guideline changes agent behavior in the target, so installing one is always a deliberate choice. Guidelines install as skill packages (`.agents/skills/guidelines-<name>/SKILL.md`) and activate through ordinary skill discovery.
 

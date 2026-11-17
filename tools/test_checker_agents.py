@@ -220,23 +220,35 @@ class InstalledPathTests(unittest.TestCase):
     `.claude/agents/<name>.md` and `.github/agents/<name>.agent.md`.
     """
 
+    # Installed agent files (.claude/agents/, .github/agents/) are generated
+    # by install_portable_agent.py and untracked in this repo — these guards
+    # apply only when the checkout carries a local install (skip-when-absent
+    # so a fresh clone passes before anything is installed).
+
     def test_all_installed_claude_agent_copies_exist(self):
         """Each checker has a .claude/agents/<name>.md installed copy."""
         for name in CHECKER_AGENTS:
             path = REPO_ROOT / ".claude" / "agents" / f"{name}.md"
+            if not (REPO_ROOT / ".claude" / "agents").is_dir():
+                self.skipTest("no local agent install in this checkout")
             self.assertTrue(path.is_file(), f"Missing installed Claude agent: {path}")
 
     def test_all_installed_github_agent_copies_exist(self):
         """Each checker has a .github/agents/<name>.agent.md installed copy."""
         for name in CHECKER_AGENTS:
             path = REPO_ROOT / ".github" / "agents" / f"{name}.agent.md"
+            if not (REPO_ROOT / ".github" / "agents").is_dir():
+                self.skipTest("no local agent install in this checkout")
             self.assertTrue(path.is_file(), f"Missing installed GitHub agent: {path}")
 
     def test_installed_copies_are_verbatim_of_bootstrap(self):
         """Installed .claude/agents/<name>.md matches bootstrap AGENT.md verbatim."""
         for name in CHECKER_AGENTS:
             bootstrap = (REPO_ROOT / "agents" / name / "AGENT.md").read_text(encoding="utf-8")
-            installed = (REPO_ROOT / ".claude" / "agents" / f"{name}.md").read_text(encoding="utf-8")
+            installed_path = REPO_ROOT / ".claude" / "agents" / f"{name}.md"
+            if not installed_path.is_file():
+                self.skipTest("no local agent install in this checkout")
+            installed = installed_path.read_text(encoding="utf-8")
             self.assertEqual(
                 installed,
                 bootstrap,

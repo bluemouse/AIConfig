@@ -57,7 +57,7 @@ def write_source_command(root: Path, name: str) -> None:
 
 def write_source_scripts(root: Path, name: str = "dev-workflow") -> None:
     """Write a minimal tools/<name>/ scripts tree with a checks/ subpackage."""
-    scripts = root / ".agents" / "tools" / name
+    scripts = root / "tools" / name
     scripts.mkdir(parents=True, exist_ok=True)
     (scripts / "validate_phase.py").write_text("# validate_phase\n", encoding="utf-8")
     (scripts / "check_pre_phase.py").write_text("# check_pre_phase\n", encoding="utf-8")
@@ -237,7 +237,7 @@ class ScriptsInstallTests(unittest.TestCase):
             target = Path(tmp) / "target"
             write_source_scripts(source)
             cache = (
-                source / ".agents" / "tools" / "dev-workflow" / "checks" / "__pycache__"
+                source / "tools" / "dev-workflow" / "checks" / "__pycache__"
             )
             cache.mkdir()
             (cache / "mode_checks.cpython-312.pyc").write_bytes(b"\x80\x04stale")

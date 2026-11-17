@@ -342,11 +342,11 @@ class CliSkillResolutionTests(unittest.TestCase):
             self.assertEqual(commands, ["git-commit"])
             self.assertEqual(selection.commands, ["git-commit"])
 
-    def test_discover_scripts_scans_agents_tools(self) -> None:
-        """t-014a: scripts are discovered from .agents/tools/."""
+    def test_discover_scripts_scans_tools_root(self) -> None:
+        """t-014a: scripts are discovered from the tracked tools/ root."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            tools_dir = root / ".agents" / "tools" / "dev-workflow"
+            tools_dir = root / "tools" / "dev-workflow"
             tools_dir.mkdir(parents=True)
             (tools_dir / "README.md").write_text("# dev-workflow\n", encoding="utf-8")
             original_root = mod.REPO_ROOT

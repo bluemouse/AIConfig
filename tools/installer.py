@@ -149,7 +149,11 @@ SHARED_SKILL_DIR = ".agents/skills/{name}"
 CLAUDE_AGENT_FILE = ".claude/agents/{name}.md"
 GITHUB_AGENT_FILE = ".github/agents/{name}.agent.md"
 
+# Scripts install as directory trees: the bootstrap source lives under
+# tools/<name>/ in this repo (tracked) and installs to .agents/tools/<name>/
+# in the target (generated; the repo's own .agents/ copy is untracked).
 SHARED_SCRIPTS_DIR = ".agents/tools/{name}"
+SCRIPTS_SOURCE_DIR = "tools/{name}"
 
 # Behavioral guidelines installable to target projects (explicit selection only —
 # never part of the no-selector default or bundles). A guideline installs as a
@@ -165,8 +169,8 @@ INSTALLABLE_GUIDELINES = (
     "minutes",
 )
 
-# Scripts are directory trees under .agents/tools/<name>/.
-TOOL_SCRIPTS_SCAN_REL_DIRS = (".agents/tools",)
+# Scripts are discovered as subdirectories of tools/ in the repo root.
+TOOL_SCRIPTS_SCAN_REL_DIRS = ("tools",)
 
 # Skills (including command-skills) are discovered under .agents/skills/.
 TOOL_SKILL_SCAN_REL_DIRS = (".agents/skills",)
@@ -197,6 +201,9 @@ LEGACY_PURGE_REL_PATHS = (
 
 # Scripts are discovered as subdirectories of tools/ in the repo root.
 # A scripts "name" is the directory name under tools/.
+# tools/ also carries the installer, bundles config, and the test suite —
+# those never count as script packages.
+NON_SCRIPT_TOOL_DIRS = frozenset({"__pycache__"})
 
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -998,15 +1005,25 @@ def load_command_descriptions(names: Sequence[str]) -> dict[str, str]:
 
 
 def discover_scripts() -> list[str]:
-    """Return scripts directory names discovered under REPO_ROOT/.agents/tools/."""
+    """Return scripts directory names discovered under REPO_ROOT/tools/.
+
+    tools/ also holds installer.py, bundles.*, and the test suite — only
+    the exclude-filtered subdirectories that carry a scripts payload are
+    script names (currently dev-workflow/).
+    """
     names: set[str] = set()
     for rel_dir in TOOL_SCRIPTS_SCAN_REL_DIRS:
         scan_root = REPO_ROOT / rel_dir
         if not scan_root.is_dir():
             continue
         for child in scan_root.iterdir():
-            if child.is_dir() and not child.name.startswith(".") and not child.name.startswith("__"):
-                names.add(child.name)
+            if not child.is_dir() or child.name.startswith((".", "__")):
+                continue
+            # tools/ is a mixed directory: only subdirectories that are NOT
+            # tracked installer/test/tooling files count as script packages.
+            if rel_dir == "tools" and child.name in NON_SCRIPT_TOOL_DIRS:
+                continue
+            names.add(child.name)
     return sorted(names)
 
 
@@ -1018,7 +1035,7 @@ def load_scripts_descriptions(names: Sequence[str]) -> dict[str, str]:
     """
     descriptions: dict[str, str] = {}
     for name in names:
-        readme = REPO_ROOT / ".agents" / "tools" / name / "README.md"
+        readme = REPO_ROOT / SCRIPTS_SOURCE_DIR.format(name=name) / "README.md"
         if readme.is_file():
             try:
                 text = readme.read_text(encoding="utf-8").strip()
@@ -1100,8 +1117,12 @@ command_remove_paths = skill_remove_paths
 
 
 def scripts_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
-    """Return (src, dest) pairs for a scripts directory tree under tools/<name>/."""
-    src = source_root / SHARED_SCRIPTS_DIR.format(name=name)
+    """Return (src, dest) pairs for a scripts directory tree.
+
+    The tracked source lives at tools/<name>/; the target receives a copy at
+    .agents/tools/<name>/.
+    """
+    src = source_root / SCRIPTS_SOURCE_DIR.format(name=name)
     dest = target_root / SHARED_SCRIPTS_DIR.format(name=name)
     return [(src, dest)]
 

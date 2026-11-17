@@ -431,22 +431,19 @@ class GuiGuidelinesPanelTests(unittest.TestCase):
                         pass
 
 
-class CommittedGuidelinePackageTests(unittest.TestCase):
-    """The committed .agents/skills/guidelines-<name>/ packages must not drift.
+class LocalGuidelinePackageTests(unittest.TestCase):
+    """A local .agents/skills/guidelines-<name>/ install must not drift.
 
-    AGENTS.md cites the committed packages as this repo's always-on load
-    mechanism, so they must be byte-identical to what the installer's
-    transform regenerates from guidelines/<name>.md. Editing a guideline
-    source without regenerating makes this test fail.
+    The packages are generated and untracked (AGENTS.md cites the tracked
+    guidelines/ sources), so this guard applies only when the checkout
+    carries a local install; it skips on a fresh clone before installation.
     """
 
-    def test_committed_packages_match_regenerated_content(self) -> None:
+    def test_local_packages_match_regenerated_content(self) -> None:
         for name in mod.INSTALLABLE_GUIDELINES:
             skill_md = REPO_ROOT / ".agents" / "skills" / f"guidelines-{name}" / "SKILL.md"
-            self.assertTrue(
-                skill_md.is_file(),
-                f"{skill_md} is missing — regenerate the guideline skill packages",
-            )
+            if not skill_md.is_file():
+                self.skipTest("no local guideline install in this checkout")
             expected = mod.guideline_skill_content(REPO_ROOT, name)
             actual = skill_md.read_text(encoding="utf-8")
             self.assertEqual(
