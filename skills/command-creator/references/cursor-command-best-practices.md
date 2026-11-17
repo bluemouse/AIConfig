@@ -1,6 +1,6 @@
 # Cursor Command Best Practices
 
-Reference for Cursor slash commands — host-format background. command-creator installs commands as command-skills at `.agents/skills/<name>/SKILL.md` (frontmatter preserved, `disable-model-invocation: true`), which Cursor invokes as `/command-name`; the native `.cursor/commands/` format below is reference for hand-authored commands.
+Reference for Cursor slash commands — host-format background. command-creator installs commands as command-skills at `.agents/skills/cmd-<name>/SKILL.md` (frontmatter preserved, `disable-model-invocation: true`), which Cursor invokes as `/command-name`; the native `.cursor/commands/` format below is reference for hand-authored commands.
 
 **Official docs:** [Cursor Commands](https://docs.cursor.com/en/agent/chat/commands)
 

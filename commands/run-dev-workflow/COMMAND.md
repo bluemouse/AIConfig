@@ -1,6 +1,6 @@
 ---
-name: dev-workflow
-description: Run the full dev-workflow pipeline when the user explicitly invokes /dev-workflow.
+name: run-dev-workflow
+description: Full dev-workflow pipeline when the user explicitly invokes /run-dev-workflow.
 ---
 
 # Dev Workflow
@@ -14,11 +14,11 @@ edges for upstream root causes, artifact contracts, and mode enforcement.
 
 1. Read and follow the **dev-workflow-orchestrator** skill
    (`.agents/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill). Treat
-   `/dev-workflow` as the explicit start signal — proceed to orchestrate the workflow
+   `/run-dev-workflow` as the explicit start signal — proceed to orchestrate the workflow
    without asking for a second confirmation.
 
 2. Accept the requirement or feature description from the user's message (the text after
-   `/dev-workflow`). If no requirement is provided, ask the user to describe what they want
+   `/run-dev-workflow`). If no requirement is provided, ask the user to describe what they want
    to build.
 
 3. Follow the orchestrator skill's **Starting a run** procedure:
@@ -44,7 +44,7 @@ edges for upstream root causes, artifact contracts, and mode enforcement.
 
 ## Optional arguments
 
-If the user adds text after `/dev-workflow`, treat it as the requirement or feature
+If the user adds text after `/run-dev-workflow`, treat it as the requirement or feature
 description. If they mention a specific phase to resume from (e.g., "resume from plan"),
 read the existing run manifest and continue from that phase.
 

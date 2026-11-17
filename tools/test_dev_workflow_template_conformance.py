@@ -12,7 +12,7 @@ Covers:
   (bracketed placeholder lines are stripped to a single value)
 - dw-016: pre-flight runs handoff consumer-ready checks transitively
   (check_pre_phase PRE_FLIGHT_HANDOFF_CHECKS)
-- dw-017: /dev-workflow-review round-1 ordering is checker-first (prose
+- dw-017: /review round-1 ordering is checker-first (prose
   contract; asserted as text to keep the command file in sync with the
   orchestrator's Code Review exception)
 
@@ -179,7 +179,7 @@ class CommandContractTests(unittest.TestCase):
     """dw-017: the review phase command keeps the orchestrator's round-1 ordering."""
 
     def test_review_command_checker_first_on_round_one(self) -> None:
-        text = (REPO_ROOT / "commands" / "dev-workflow-review" / "COMMAND.md").read_text(encoding="utf-8")
+        text = (REPO_ROOT / "commands" / "review" / "COMMAND.md").read_text(encoding="utf-8")
         self.assertIn("Round-1 ordering (Code Review exception)", text)
         checker_pos = text.find("**Checker pass (round 1)**")
         doer_pos = text.find("**Doer pass**")

@@ -7,7 +7,7 @@ Use this guide when creating or reviewing portable slash commands that should wo
 Portable commands use **two phases**:
 
 1. **Bootstrap** — Author tool-neutral content under `commands/<name>/`. This is the source of truth when bootstrap exists.
-2. **Install** — Run `install_portable_command.py` to write the command-skill at `.agents/skills/<name>/SKILL.md` with `disable-model-invocation: true`.
+2. **Install** — Run `install_portable_command.py` to write the command-skill at `.agents/skills/cmd-<name>/SKILL.md` with `disable-model-invocation: true`.
 
 Do not hand-edit installed command-skills for bootstrapped commands — edit bootstrap and reinstall.
 
@@ -15,7 +15,7 @@ For one-off commands without bootstrap source, use `create_command.py` to scaffo
 
 ## Command-skills
 
-A command installs as a single **command-skill**: `.agents/skills/<name>/SKILL.md` with frontmatter
+A command installs as a single **command-skill**: `.agents/skills/cmd-<name>/SKILL.md` with frontmatter
 
 ```yaml
 name: <name>
@@ -30,7 +30,7 @@ plus the command body. Every coding agent exposes it as `/<name>`; the model nev
 | | Skills | Agents | Commands |
 | --- | --- | --- | --- |
 | Discovery | Passive (description triggers load) | Passive (description triggers load) | Explicit (`/command-name`) |
-| Install output | `.agents/skills/<name>/` directory | `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md` | `.agents/skills/<name>/SKILL.md` (flagged) |
+| Install output | `.agents/skills/<name>/` directory | `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md` | `.agents/skills/cmd-<name>/SKILL.md` (flagged) |
 | Model self-invocation | Allowed | Allowed | Blocked (`disable-model-invocation: true`) |
 | Bootstrap file | `SKILL.md` | `AGENT.md` | `COMMAND.md` |
 
@@ -55,7 +55,7 @@ repo/
       COMMAND.md
 ```
 
-`.agents/skills/<name>/SKILL.md` is the install output. Install builds the command-skill frontmatter from the bootstrap `COMMAND.md` and copies the body verbatim; `allowed-tools`, when declared in bootstrap frontmatter, transfers verbatim.
+`.agents/skills/cmd-<name>/SKILL.md` is the install output. Install builds the command-skill frontmatter from the bootstrap `COMMAND.md` and copies the body verbatim; `allowed-tools`, when declared in bootstrap frontmatter, transfers verbatim.
 
 ## Shared command template
 
@@ -122,7 +122,7 @@ python skills/command-creator/scripts/create_command.py \
 ```bash
 python skills/command-creator/scripts/quick_validate.py --bootstrap-source commands/<command-name>
 python skills/command-creator/scripts/quick_validate.py --root . --name <command-name>
-python skills/command-creator/scripts/quick_validate.py .agents/skills/<command-name>/SKILL.md
+python skills/command-creator/scripts/quick_validate.py .agents/skills/cmd-<command-name>/SKILL.md
 ```
 
 ## Reload requirements

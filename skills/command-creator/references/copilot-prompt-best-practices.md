@@ -1,6 +1,6 @@
 # GitHub Copilot Prompt Best Practices
 
-Reference for Copilot prompt files (VS Code, Visual Studio, JetBrains) — host-format background. command-creator installs commands as command-skills at `.agents/skills/<name>/SKILL.md` (invoked as `/name` in Copilot Chat); the native `.github/prompts/` format below is reference for hand-authored prompt files.
+Reference for Copilot prompt files (VS Code, Visual Studio, JetBrains) — host-format background. command-creator installs commands as command-skills at `.agents/skills/cmd-<name>/SKILL.md` (invoked as `/name` in Copilot Chat); the native `.github/prompts/` format below is reference for hand-authored prompt files.
 
 **Official docs:** [Use prompt files in VS Code](https://code.visualstudio.com/docs/agent-customization/prompt-files)
 

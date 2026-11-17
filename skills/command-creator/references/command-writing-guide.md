@@ -4,7 +4,7 @@ Cross-tool best practices for portable slash commands (command-skills).
 
 ## Purpose
 
-Commands are **explicitly invoked** with `/command-name`. Optimize for clarity, repeatability, and a single focused task — not passive discovery. Commands install as **command-skills** (`.agents/skills/<name>/SKILL.md` with `disable-model-invocation: true`), so every coding agent exposes them as `/<name>` and the model never self-invokes them.
+Commands are **explicitly invoked** with `/command-name`. Optimize for clarity, repeatability, and a single focused task — not passive discovery. Commands install as **command-skills** (`.agents/skills/cmd-<name>/SKILL.md` with `disable-model-invocation: true`), so every coding agent exposes them as `/<name>` and the model never self-invokes them.
 
 Use commands when:
 

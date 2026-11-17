@@ -1,6 +1,6 @@
 # Claude Code Command Best Practices
 
-Reference for Claude Code slash commands — host-format background. command-creator installs commands as command-skills at `.agents/skills/<name>/SKILL.md` (with `disable-model-invocation: true` and optional `allowed-tools` frontmatter), which Claude Code invokes as `/<name>`; the native `.claude/commands/` format below is reference for hand-authored commands.
+Reference for Claude Code slash commands — host-format background. command-creator installs commands as command-skills at `.agents/skills/cmd-<name>/SKILL.md` (with `disable-model-invocation: true` and optional `allowed-tools` frontmatter), which Claude Code invokes as `/<name>`; the native `.claude/commands/` format below is reference for hand-authored commands.
 
 **Official docs:** [Slash Commands](https://code.claude.com/docs/en/slash-commands)
 

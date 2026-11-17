@@ -31,7 +31,7 @@ Agents that ship bootstrap source use the same two-phase pattern as skills. Othe
 ### Commands: bootstrap → command-skill
 
 1. **Bootstrap** (`commands/<name>/`, source-of-truth) — author `COMMAND.md` here.
-2. **Installed** (`.agents/skills/<name>/SKILL.md`, generated) — a **command-skill**: the command body with `disable-model-invocation: true` in frontmatter, produced by `install_portable_command.py`.
+2. **Installed** (`.agents/skills/cmd-<name>/SKILL.md`, generated) — a **command-skill**: the command body with `disable-model-invocation: true` in frontmatter, produced by `install_portable_command.py`.
 
 **Never hand-edit installed command-skills for bootstrapped commands.** Edit `commands/<name>/` and re-run `install_portable_command.py`.
 
@@ -42,7 +42,7 @@ Commands are **explicitly invoked** with `/command-name`, unlike skills and agen
 | Authoritative source | `skills/<name>/` | `agents/<name>/` | `.claude/agents/<name>.md` | `commands/<name>/` |
 | Install / scaffold | `install_portable_skill.py` | `install_portable_agent.py` | `create_agent.py` | `install_portable_command.py` |
 | Direct scaffold | `create_skill.py` | — | `create_agent.py` | `create_command.py` |
-| Install output | `.agents/skills/<name>/` | `.claude/agents/` + `.github/agents/` | same | `.agents/skills/<name>/SKILL.md` (flagged) |
+| Install output | `.agents/skills/<name>/` | `.claude/agents/` + `.github/agents/` | same | `.agents/skills/cmd-<name>/SKILL.md` (flagged) |
 | Distribute to another project | `tools/installer.py` (copies the installed single-root/dual-target files) | same | same | same |
 | Hand-edit install output? | No (regenerated from bootstrap) | No (regenerated from bootstrap) | Yes (canonical) | No (regenerated from bootstrap) |
 
@@ -67,7 +67,7 @@ Some skills cross-link as companions — install and edit them together when tas
 - **Decision deliberation:** `advisory-council`, `devil-advocate` (with `prompt-clarifier` when the decision framing is ambiguous, `research-guide` for open-ended discovery, and `plan-reviewer` for plan audit — council for multi-perspective synthesis with dissent; devil-advocate for single-proposal adversarial review with proceed/rework/reject verdict)
 - **Research workflow:** `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor` (interactive discovery and research report → readiness audit → implementation plan with concrete per-task verification — strict TDD where mandated, stated alternative verification otherwise → plan audit → execution; defers correctness audit to `implementation-auditor` and diff review to `code-reviewer`)
 - **Implementation quality:** `test-driven-dev-guide`, `debugging-guide`, `implementation-auditor`, `code-reviewer`, `techdoc-reviewer` (concrete per-task verification planned by `plan-guide`/`plan-reviewer` — strict TDD for `mandatory` tasks via `test-driven-dev-guide` during execution, stated alternative verification for `verification-led` tasks → systematic root-cause debugging → evidence-based correctness audit → structured diff review → documentation verification and synchronization when behavior or contracts change)
-- **Dev-workflow harness:** `dev-workflow-orchestrator` plus the phase doer/checker skills (`prompt-clarifier`, `research-guide`/`research-reviewer`, `plan-guide`/`plan-reviewer`, `plan-executor`/`implementation-auditor`, `code-review-resolver`/`code-reviewer`, `commit-message-writer`) and the `/dev-workflow` + `/dev-workflow-{research,plan,implement,review}` commands — full pipeline via `/dev-workflow` or individual phase loops via the per-phase commands; installed/uninstalled as a unit via `--dev-workflow` (`dev-workflow-harness` bundle)
+- **Dev-workflow harness:** `dev-workflow-orchestrator` plus the phase doer/checker skills (`prompt-clarifier`, `research-guide`/`research-reviewer`, `plan-guide`/`plan-reviewer`, `plan-executor`/`implementation-auditor`, `code-review-resolver`/`code-reviewer`, `commit-message-writer`) and the `/run-dev-workflow` + `/research`/`/plan`/`/implement`/`/review` commands — full pipeline via `/run-dev-workflow` or individual phase loops via the per-phase commands; installed/uninstalled as a unit via `--dev-workflow` (`dev-workflow-harness` bundle)
 - **Presentation layer:** `guidelines-response` guideline-skill (cross-cutting chat-output shaping — result-first updates, structured questions at escalations, no preamble/recap, matter-of-fact errors, state restatement; installs as a skill package, explicit-only via `--guidelines`; artifact files are exempt)
 - **Parallel execution:** `agent-runner` (with `code-reviewer`, `git-guide`, `skill-creator`, and `dev-workflow-orchestrator` as near-misses — defers diff review, git mechanics, skill evals, and harness orchestration respectively)
 
@@ -162,13 +162,13 @@ python skills/skill-creator/scripts/package_skill.py .agents/skills/my-skill
 ```bash
 python tools/installer.py /path/to/other-project
 python tools/installer.py /path/to/other-project --skills cpp-coding vulkan-dev --override
-python tools/installer.py /path/to/other-project --commands git-commit --override
+python tools/installer.py /path/to/other-project --commands commit --override
 python tools/installer.py /path/to/other-project --bundles core-dev-workflow
 python tools/installer.py /path/to/other-project --bundles target-bundle
 python tools/installer.py /path/to/other-project --guidelines coding-behavior
 python tools/installer.py /path/to/other-project --purge-legacy
 python tools/installer.py /path/to/other-project --agents my-agent --uninstall
-python tools/installer.py /path/to/other-project --commands git-commit --uninstall
+python tools/installer.py /path/to/other-project --commands commit --uninstall
 python tools/installer.py   # GUI when no arguments
 ```
 

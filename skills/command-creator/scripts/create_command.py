@@ -20,6 +20,7 @@ from pathlib import Path
 from quick_validate import (
     COMMAND_SKILL_DIR_PARTS,
     COMMAND_SKILL_FILENAME,
+    command_skill_dir_name,
     validate_command_skill,
 )
 from scaffold_command import (
@@ -43,7 +44,9 @@ def create_command(
     if not description.strip():
         raise CommandCreatorError("Description cannot be empty.")
 
-    skill_dir = root.joinpath(*COMMAND_SKILL_DIR_PARTS) / command_name
+    # Install dir = cmd- prefix + command name; the slash command stays
+    # /<name> (frontmatter name is the invocation identity).
+    skill_dir = root.joinpath(*COMMAND_SKILL_DIR_PARTS) / command_skill_dir_name(command_name)
     skill_path = skill_dir / COMMAND_SKILL_FILENAME
 
     assert_command_skill_target_available(skill_dir, skill_path, overwrite)

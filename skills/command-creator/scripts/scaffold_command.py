@@ -2,7 +2,7 @@
 """
 Shared scaffolding helpers for portable command-skills.
 
-Commands install as command-skills: a single .agents/skills/<name>/SKILL.md
+Commands install as command-skills: a single .agents/skills/cmd-<name>/SKILL.md
 with `disable-model-invocation: true`, so every coding agent exposes them as
 /<name> and the model never self-invokes them.
 """
@@ -98,7 +98,7 @@ def assert_command_skill_target_available(
     skill_md: Path,
     overwrite: bool,
 ) -> None:
-    """Guard the .agents/skills/<name>/ target before any write.
+    """Guard the .agents/skills/cmd-<name>/ target before any write.
 
     Commands and skills share one namespace. An existing directory that is
     not a prior command-skill install is a collision and is rejected

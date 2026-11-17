@@ -21,7 +21,7 @@ load through ordinary skill discovery in the target.
 Examples:
     python tools/installer.py /path/to/other-project
     python tools/installer.py /path/to/other-project --skills cpp-coding vulkan-dev
-    python tools/installer.py /path/to/other-project --commands git-commit
+    python tools/installer.py /path/to/other-project --commands commit
     python tools/installer.py /path/to/other-project --bundles core-dev-workflow
     python tools/installer.py /path/to/other-project --bundles extended-dev-workflow --override
     python tools/installer.py /path/to/other-project --bundles core-dev-workflow --skills cpp-coding
@@ -30,7 +30,7 @@ Examples:
     python tools/installer.py /path/to/other-project --dev-workflow
     python tools/installer.py /path/to/other-project --dev-workflow --uninstall
     python tools/installer.py /path/to/other-project --agents my-agent --uninstall
-    python tools/installer.py /path/to/other-project --commands git-commit --uninstall
+    python tools/installer.py /path/to/other-project --commands commit --uninstall
     python tools/installer.py /path/to/other-project --purge-legacy
     python tools/installer.py   # GUI when no arguments
 """
@@ -144,6 +144,13 @@ def ensure_bridge_symlink(root: Path) -> bool:
 # .agents/skills/ root; change them together.
 SHARED_SKILL_DIR = ".agents/skills/{name}"
 
+# Installed command-skills live at .agents/skills/cmd-<name>/ while the slash
+# command stays /<name> (frontmatter name is the invocation identity; the
+# directory is storage). Twin site (cr-010): skills/command-creator/scripts/
+# quick_validate.py:COMMAND_SKILL_DIR_PREFIX — change both.
+COMMAND_SKILL_DIR_PREFIX = "cmd-"
+COMMAND_SKILL_DIR = ".agents/skills/" + COMMAND_SKILL_DIR_PREFIX + "{name}"
+
 # Agents distribute from two real copies (dual-target layout): the verbatim
 # Claude/Cursor copy and the Copilot .agent.md transform.
 CLAUDE_AGENT_FILE = ".claude/agents/{name}.md"
@@ -244,11 +251,11 @@ DEV_WORKFLOW_SKILLS = (
     "commit-message-writer",
 )
 DEV_WORKFLOW_COMMANDS = (
-    "dev-workflow",
-    "dev-workflow-research",
-    "dev-workflow-plan",
-    "dev-workflow-implement",
-    "dev-workflow-review",
+    "run-dev-workflow",
+    "research",
+    "plan",
+    "implement",
+    "review",
 )
 DEV_WORKFLOW_SCRIPTS = ("dev-workflow",)
 DEV_WORKFLOW_AGENTS = (
@@ -693,7 +700,11 @@ def resolve_cli_selection(
         skills=[
             name
             for name in discover_skills()
+            # Guidelines are explicit-only; command-skill dirs (cmd-<name>)
+            # are commands, not plain skills — filter both out of the
+            # default skill list.
             if not name.startswith(GUIDELINE_SKILL_PREFIX)
+            and not name.startswith(COMMAND_SKILL_DIR_PREFIX)
         ],
         agents=discover_agents(),
         commands=discover_commands(),
@@ -783,14 +794,20 @@ def discover_commands_in_project(project_root: Path) -> list[str]:
 
     Commands share the .agents/skills/ namespace with skills; only
     flag-bearing (disable-model-invocation: true) entries are commands.
+    Command-skills install into the cmd-<name> dir; the returned slug is the
+    command name (prefix stripped).
     """
     names: set[str] = set()
     shared_root = project_root / ".agents" / "skills"
     if not shared_root.is_dir():
         return []
     for child in shared_root.iterdir():
-        if child.is_dir() and is_command_skill(child / COMMAND_SKILL_SKILL_MD):
-            names.add(child.name)
+        if (
+            child.is_dir()
+            and child.name.startswith(COMMAND_SKILL_DIR_PREFIX)
+            and is_command_skill(child / COMMAND_SKILL_SKILL_MD)
+        ):
+            names.add(child.name[len(COMMAND_SKILL_DIR_PREFIX):])
     return sorted(names)
 
 
@@ -864,14 +881,18 @@ def build_target_bundle(
         name=TARGET_BUNDLE_NAME,
         description=TARGET_BUNDLE_DESCRIPTION,
         # Guidelines are explicit-only and never bundle-carried: their
+        # Guidelines are explicit-only and never bundle-carried: their
         # guidelines-<name> skill packages are excluded from target-bundle
-        # membership even when installed in the target.
+        # membership even when installed in the target. Command-skill dirs
+        # (cmd-<name>) are commands, not plain skills — excluded here so the
+        # target bundle does not carry them through the skills pass.
         skills=frozenset(
             name
             for name in _intersect(
                 discover_skills_in_project(target_root), available_skills
             )
             if not name.startswith(GUIDELINE_SKILL_PREFIX)
+            and not name.startswith(COMMAND_SKILL_DIR_PREFIX)
         ),
         agents=_intersect(discover_agents_in_project(target_root), available_agents),
         commands=_intersect(discover_commands_in_project(target_root), available_commands),
@@ -916,7 +937,9 @@ def discover_commands() -> list[str]:
     """Return command-skill slugs in this repo's .agents/skills/ catalog.
 
     Commands are skills whose SKILL.md frontmatter carries
-    disable-model-invocation: true (see is_command_skill).
+    disable-model-invocation: true (see is_command_skill) and whose install
+    dir carries the cmd- prefix; the returned slug is the command name
+    (prefix stripped).
     """
     names: set[str] = set()
     for rel_dir in TOOL_SKILL_SCAN_REL_DIRS:
@@ -924,8 +947,12 @@ def discover_commands() -> list[str]:
         if not scan_root.is_dir():
             continue
         for child in scan_root.iterdir():
-            if child.is_dir() and is_command_skill(child / COMMAND_SKILL_SKILL_MD):
-                names.add(child.name)
+            if (
+                child.is_dir()
+                and child.name.startswith(COMMAND_SKILL_DIR_PREFIX)
+                and is_command_skill(child / COMMAND_SKILL_SKILL_MD)
+            ):
+                names.add(child.name[len(COMMAND_SKILL_DIR_PREFIX):])
     return sorted(names)
 
 
@@ -997,7 +1024,7 @@ def load_command_descriptions(names: Sequence[str]) -> dict[str, str]:
     """Map command-skill slugs to descriptions from their SKILL.md frontmatter."""
     descriptions: dict[str, str] = {}
     for name in names:
-        path = REPO_ROOT / ".agents" / "skills" / name / "SKILL.md"
+        path = REPO_ROOT / COMMAND_SKILL_DIR.format(name=name) / "SKILL.md"
         description = read_description_from_markdown(path)
         if description is not None:
             descriptions[name] = description
@@ -1110,10 +1137,31 @@ def agent_remove_paths(target_root: Path, name: str) -> list[Path]:
     ]
 
 
-# Commands are command-skills under .agents/skills/ — they share the skill
+# Commands are command-skills under .agents/skills/ — but in the cmd-<name>
+# install dir (COMMAND_SKILL_DIR), unlike plain skills. They get dedicated
 # copy/remove paths; no separate tool files exist.
-command_copy_pairs = skill_copy_pairs
-command_remove_paths = skill_remove_paths
+def command_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
+    """Return (src, dest) pairs for a command-skill directory tree."""
+    shared_src = source_root / COMMAND_SKILL_DIR.format(name=name)
+    shared_dest = target_root / COMMAND_SKILL_DIR.format(name=name)
+    return [(shared_src, shared_dest)]
+
+
+def command_remove_paths(target_root: Path, name: str) -> list[Path]:
+    """Return paths a command uninstall removes, oldest first.
+
+    The first entry is the pre-dir-prefix install (.agents/skills/<name>),
+    left behind when this repo (or a target) upgraded from the unprefixed
+    layout — a stale slash-command install the host still reads. It is
+    only actually removed when it is flag-bearing (a prior command-skill,
+    not a user-authored plain skill): the uninstall pass checks
+    is_command_skill before removing it. The second entry is the current
+    cmd-<name> install.
+    """
+    return [
+        target_root / SHARED_SKILL_DIR.format(name=name),
+        target_root / COMMAND_SKILL_DIR.format(name=name),
+    ]
 
 
 def scripts_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
@@ -1267,7 +1315,10 @@ def install_items(
 
     # Skills and command-skills share .agents/skills/: a name passed as both
     # installs once (the command pass would otherwise see the skill pass's
-    # fresh copy as an existing dest and skip/error).
+    # fresh copy as an existing dest and skip/error). With the cmd- dir
+    # prefix the two kinds no longer collide on the directory name, but the
+    # dedupe still applies: a name selected as both would install two
+    # trees (plain + cmd-) for one conceptual member.
     # Twin rule (cr-010): BundleSelection.dedupe applies the same drop at
     # selection time — change both.
     command_names = {slugify_name(name) for name in commands}
@@ -1614,12 +1665,22 @@ def uninstall_items(
     for name in commands:
         slug = slugify_name(name)
         for path in command_remove_paths(target_root, slug):
-            if path.exists():
-                try:
-                    remove_path(path)
-                    result.removed.append(format_rel(path, target_root))
-                except OSError as exc:
-                    result.errors.append(f"{format_rel(path, target_root)}: {exc}")
+            if not path.exists():
+                continue
+            # The unprefixed legacy path (.agents/skills/<name>) predates the
+            # cmd- dir prefix. Only a flag-bearing SKILL.md there is a prior
+            # command-skill install — a plain skill squatting on the name
+            # must survive a commands-only uninstall (cr-004 semantics).
+            if (
+                not path.name.startswith(COMMAND_SKILL_DIR_PREFIX)
+                and not is_command_skill(path / COMMAND_SKILL_SKILL_MD)
+            ):
+                continue
+            try:
+                remove_path(path)
+                result.removed.append(format_rel(path, target_root))
+            except OSError as exc:
+                result.errors.append(f"{format_rel(path, target_root)}: {exc}")
 
     for name in scripts:
         slug = slugify_name(name)
@@ -1749,7 +1810,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
             "Examples:\n"
             "  python tools/installer.py /path/to/project\n"
             "  python tools/installer.py /path/to/project --skills cpp-coding\n"
-            "  python tools/installer.py /path/to/project --commands git-commit\n"
+            "  python tools/installer.py /path/to/project --commands commit\n"
             "  python tools/installer.py /path/to/project --bundles core-dev-workflow\n"
             "  python tools/installer.py /path/to/project --bundles extended-dev-workflow --override\n"
             "  python tools/installer.py /path/to/project --bundles core-dev-workflow --skills cpp-coding\n"
@@ -1758,7 +1819,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
             "  python tools/installer.py /path/to/project --dev-workflow\n"
             "  python tools/installer.py /path/to/project --scripts dev-workflow\n"
             "  python tools/installer.py /path/to/project --uninstall --agents my-agent\n"
-            "  python tools/installer.py /path/to/project --uninstall --commands git-commit\n"
+            "  python tools/installer.py /path/to/project --uninstall --commands commit\n"
             "\n"
             "Run without arguments to open the GUI."
         ),
@@ -2010,10 +2071,12 @@ class InstallerApp:
 
         # Guideline skill packages are explicit-only and stay on their own
         # Guidelines panel — the Skills panel lists ordinary skills only.
+        # Command-skill dirs (cmd-<name>) belong to the Commands panel.
         self.skills = [
             name
             for name in discover_skills()
             if not name.startswith(GUIDELINE_SKILL_PREFIX)
+            and not name.startswith(COMMAND_SKILL_DIR_PREFIX)
         ]
         self.agents = discover_agents()
         self.commands = discover_commands()

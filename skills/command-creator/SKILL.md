@@ -18,7 +18,7 @@ At a high level, creating a command goes like this:
 - Rewrite bootstrap content based on feedback, then reinstall
 - Repeat until satisfied
 
-Commands install as **command-skills**: one `.agents/skills/<name>/SKILL.md` with `disable-model-invocation: true` and an invocation-gated description (≤120 chars, states the user explicitly invokes `/<name>`). Every coding agent exposes it as `/<name>`; the model never self-invokes it.
+Commands install as **command-skills**: one `.agents/skills/cmd-<name>/SKILL.md` (install dir carries the `cmd-` prefix; the slash command stays `/<name>`) with `disable-model-invocation: true` and an invocation-gated description (≤120 chars, states the user explicitly invokes `/<name>`). Every coding agent exposes it as `/<name>`; the model never self-invokes it.
 
 Your job is to figure out where the user is in this process and help them progress. If they already have a draft command, go straight to review and iterate.
 
@@ -78,7 +78,7 @@ Pick **one** path before writing files. Do not hand-edit installed command-skill
 | Path | When to use | Author here | Install / scaffold |
 | --- | --- | --- | --- |
 | **Bootstrap** | Repo-maintained command; repo uses or wants `commands/<name>/`; command will be revised and reinstalled | `commands/<name>/COMMAND.md` | `install_portable_command.py` |
-| **Direct** | One-off command without `commands/` bootstrap; quick scaffold into installed layout | `.agents/skills/<name>/SKILL.md` (via script) | `create_command.py` |
+| **Direct** | One-off command without `commands/` bootstrap; quick scaffold into installed layout | `.agents/skills/cmd-<name>/SKILL.md` (via script) | `create_command.py` |
 
 **Prefer bootstrap when:**
 
@@ -94,8 +94,8 @@ Pick **one** path before writing files. Do not hand-edit installed command-skill
 
 | Concern | Bootstrap path | Direct path |
 | --- | --- | --- |
-| Command behavior | `commands/<name>/COMMAND.md` → reinstall | `.agents/skills/<name>/SKILL.md` |
-| Runtime read target | `.agents/skills/<name>/SKILL.md` (install output; do not hand-edit) | Same |
+| Command behavior | `commands/<name>/COMMAND.md` → reinstall | `.agents/skills/cmd-<name>/SKILL.md` |
+| Runtime read target | `.agents/skills/cmd-<name>/SKILL.md` (install output; do not hand-edit) | Same |
 
 After bootstrap edits, run `install_portable_command.py` before testing in the IDE.
 
@@ -119,9 +119,11 @@ Bootstrap source for this meta-skill may live at `skills/command-creator/`; inst
 
 ```
 repo/
-└── .agents/skills/<command-name>/
+└── .agents/skills/cmd-<command-name>/
     └── SKILL.md       # disable-model-invocation: true; invocation-gated description
 ```
+
+The install directory carries the `cmd-` prefix so command-skills stay visually distinct from plain skills in the shared `.agents/skills/` namespace; the slash command remains `/<command-name>` (the frontmatter `name` is the invocation identity).
 
 **Bootstrap layout** (when the command ships bootstrap source):
 
@@ -169,7 +171,7 @@ The body file should contain tool-neutral Markdown **without** frontmatter.
 - Bootstrap `COMMAND.md` frontmatter: required `name`, `description`; optional `allowed-tools` (transfers to the installed command-skill verbatim)
 - Bootstrap body must be tool-neutral — no host UI mechanics or host names (the validator rejects them)
 - Description: ≤120 chars, invocation-gated ("... when the user explicitly invokes /<name>.")
-- Install writes `.agents/skills/<name>/SKILL.md` with `disable-model-invocation: true` — the model never self-invokes a command
+- Install writes `.agents/skills/cmd-<name>/SKILL.md` with `disable-model-invocation: true` — the model never self-invokes a command; the slash command stays `/<name>`
 
 ### Command writing guide
 
@@ -223,7 +225,7 @@ Capture intent → choose bootstrap vs direct → author tool-neutral `COMMAND.m
 
 ## Tool notes
 
-Commands install as command-skills at `.agents/skills/<name>/SKILL.md` with `disable-model-invocation: true` — every host exposes them as `/<name>` and the model never self-invokes them. After install, restart or reload the coding agent session so `/<name>` is rediscovered.
+Commands install as command-skills at `.agents/skills/cmd-<name>/SKILL.md` with `disable-model-invocation: true` — every host exposes them as `/<name>` and the model never self-invokes them. After install, restart or reload the coding agent session so `/<name>` is rediscovered.
 
 ### Claude Code
 

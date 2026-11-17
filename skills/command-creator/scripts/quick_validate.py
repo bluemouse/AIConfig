@@ -3,10 +3,12 @@
 Quick validation for portable commands — bootstrap sources and command-skills.
 
 A bootstrap command lives at commands/<name>/COMMAND.md. Installing it writes
-a command-skill: .agents/skills/<name>/SKILL.md with
-`disable-model-invocation: true` and an invocation-gated description, so
-every coding agent can invoke it as /<name> and the model never self-invokes
-it.
+a command-skill: .agents/skills/<install-dir>/SKILL.md (install dir =
+COMMAND_SKILL_DIR_PREFIX + <name>) with `disable-model-invocation: true`
+and an invocation-gated description, so every coding agent can invoke it
+as /<name> and the model never self-invokes it. The dir prefix keeps
+command-skills visually distinct from plain skills in the shared
+.agents/skills/ namespace without lengthening the slash name.
 """
 
 from __future__ import annotations
@@ -21,6 +23,12 @@ import yaml
 BOOTSTRAP_COMMAND_FILENAME = "COMMAND.md"
 COMMAND_SKILL_FILENAME = "SKILL.md"
 COMMAND_SKILL_DIR_PARTS = (".agents", "skills")
+
+# Installed command-skills live at .agents/skills/<prefix><name>/ while the
+# slash command stays /<name>: the frontmatter name is the invocation
+# identity, the directory is just storage. Twin sites (cr-010): tools/
+# installer.py:COMMAND_SKILL_DIR_PREFIX mirrors this constant — change both.
+COMMAND_SKILL_DIR_PREFIX = "cmd-"
 
 MAX_DESCRIPTION_LENGTH = 120
 INVOCATION_GATE_PATTERN = re.compile(r"explicitly invokes", re.IGNORECASE)
@@ -83,6 +91,11 @@ def validate_name(name: str) -> str | None:
     if len(name) > 64:
         return f"Name is too long ({len(name)} characters). Maximum is 64 characters."
     return None
+
+
+def command_skill_dir_name(name: str) -> str:
+    """Return the .agents/skills/ directory name for a command's install."""
+    return f"{COMMAND_SKILL_DIR_PREFIX}{name}"
 
 
 def validate_description(description: str) -> str | None:
@@ -215,10 +228,11 @@ def validate_command_skill(command_path: Path) -> tuple[bool, str]:
         return False, f"Filename '{command_path.name}' must be '{COMMAND_SKILL_FILENAME}'"
 
     parent_name = command_path.parent.name
-    if parent_name != name:
+    if parent_name != command_skill_dir_name(name):
         return (
             False,
-            f"Command skill directory '{parent_name}' must match the skill name '{name}'",
+            f"Command skill directory '{parent_name}' must be "
+            f"'{command_skill_dir_name(name)}' (command dir prefix + name '{name}')",
         )
 
     body = body_after_frontmatter(content)
@@ -265,7 +279,9 @@ def validate_portable_command(root: Path, name: str) -> tuple[bool, list[str]]:
     root = root.resolve()
     command_name = name.strip()
     skill_path = (
-        root.joinpath(*COMMAND_SKILL_DIR_PARTS) / command_name / COMMAND_SKILL_FILENAME
+        root.joinpath(*COMMAND_SKILL_DIR_PARTS)
+        / command_skill_dir_name(command_name)
+        / COMMAND_SKILL_FILENAME
     )
     valid, message = validate_command_skill(skill_path)
     messages = [f"{skill_path}: {message}"]

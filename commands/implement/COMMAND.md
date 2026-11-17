@@ -1,6 +1,6 @@
 ---
-name: dev-workflow-implement
-description: Run the Implement phase loop when the user explicitly invokes /dev-workflow-implement.
+name: implement
+description: Implement phase loop when the user explicitly invokes /implement.
 ---
 
 # Dev Workflow Implement
@@ -14,7 +14,7 @@ skill's Phase 3 procedure and the `plan-executor` / `implementation-auditor` ski
 1. Read and follow the **dev-workflow-orchestrator** skill
    (`.agents/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill), specifically
    the **Within a phase (the loop)** procedure for Phase 3 (Implement). Treat
-   `/dev-workflow-implement` as the explicit start signal — proceed without asking for a
+   `/implement` as the explicit start signal — proceed without asking for a
    second confirmation.
 
 2. **Resolve the run directory** (one of):
@@ -42,7 +42,7 @@ skill's Phase 3 procedure and the `plan-executor` / `implementation-auditor` ski
 
 4. **Run the Phase 3 loop** (doer → checker → revise) per the orchestrator skill.
    This procedure mirrors the orchestrator skill's `Within a phase (the loop)` — if the
-   orchestrator's procedure changes, update all four `/dev-workflow-*` commands:
+   orchestrator's procedure changes, update all four per-phase commands (`/research`, `/plan`, `/implement`, `/review`):
    - **Record baseline**: `python .agents/tools/dev-workflow/record_baseline.py --phase implement --run-dir .agents/workflow/<slug>`
    - **Pre-flight**: `python .agents/tools/dev-workflow/check_pre_phase.py --phase implement --run-dir .agents/workflow/<slug>`. If it fails, stop and report.
    - **Doer pass**: invoke `plan-executor` as a named pass with input `20-implementation-plan.md` and output `30-implementation-report.md`.
@@ -52,7 +52,7 @@ skill's Phase 3 procedure and the `plan-executor` / `implementation-auditor` ski
    - **Route**:
      - `pass` or `pass with risks` → run `python .agents/tools/dev-workflow/validate_phase.py --phase implement --run-dir .agents/workflow/<slug>`. If validation passes, update manifest (phase status `accepted`) and stop with a summary. If validation fails, handle per the orchestrator's validation rules.
      - `fail` with `root-cause-phase: local` → increment round counter. On round > 1, copy `31-implementation-audit.md` to `31-implementation-audit-r<N>.md` where N is the round just completed (round 2 → `-r1`, round 3 → `-r2`) so the fresh-context checker sees prior findings and preserves finding ids, and include all prior `-r1`, `-r2`, … paths in the next round's context. Loop back to the doer pass. Round cap is 3; on cap, escalate.
-     - `fail` with `root-cause-phase: upstream` (plan or research) → write a backward handoff packet `back-implement-to-<target>-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.agents/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .agents/workflow/<slug>`, update manifest (target phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (instruct the user to run `/dev-workflow-plan <slug>` for plan issues or `/dev-workflow-research <slug>` for research issues), then stop. Backward edge cap is 2 per phase.
+     - `fail` with `root-cause-phase: upstream` (plan or research) → write a backward handoff packet `back-implement-to-<target>-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.agents/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .agents/workflow/<slug>`, update manifest (target phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (instruct the user to run `/plan <slug>` for plan issues or `/research <slug>` for research issues), then stop. Backward edge cap is 2 per phase.
      - `blocked` → escalate immediately with a blocker summary and stop.
    - **Update manifest** after every step.
 

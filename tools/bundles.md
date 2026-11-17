@@ -23,7 +23,7 @@ A bundle (or base) may include any combination of four member kinds:
 | --- | --- |
 | `skills` | Skill slugs (installed as single-root copies under `.agents/skills/<name>/`) |
 | `agents` | Agent slugs (installed as dual-target copies: `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md`) |
-| `commands` | Command slugs (installed as command-skills under `.agents/skills/<name>/` with `disable-model-invocation: true`) |
+| `commands` | Command slugs (installed as command-skills under `.agents/skills/cmd-<name>/` with `disable-model-invocation: true`) |
 | `scripts` | Scripts directory names under `tools/` (tracked source; copied verbatim as directory trees) |
 
 Guidelines are a fifth installer member kind but are **never bundle-carried**: they are selected explicitly via `--guidelines` (CLI) or the Guidelines panel (GUI) only. A guideline changes agent behavior in the target, so installing one is always a deliberate choice. Guidelines install as skill packages (`.agents/skills/guidelines-<name>/SKILL.md`) and activate through ordinary skill discovery.
@@ -81,7 +81,7 @@ python tools/installer.py /path/to/project --dev-workflow
 
 - **Skills (11):** `dev-workflow-orchestrator` (the orchestrator) plus the phase doers and checkers — `prompt-clarifier`, `research-guide` / `research-reviewer`, `plan-guide` / `plan-reviewer`, `plan-executor` / `implementation-auditor`, `code-review-resolver` / `code-reviewer`, and `commit-message-writer`.
 - **Agents (4):** the four checker agents — `research-reviewer`, `plan-reviewer`, `implementation-auditor`, `code-reviewer` — installed as dual-target copies (`.claude/agents/<name>.md` verbatim from AGENT.md + `.github/agents/<name>.agent.md`). These run the checker skills with fresh-context isolation; read-only behavior is instruction-level (the agent body's Boundaries plus the harness's `check_post_phase.py` detection), not host-enforced frontmatter.
-- **Command (1):** `dev-workflow` — installed as a command-skill (`.agents/skills/dev-workflow/SKILL.md` with `disable-model-invocation: true`). Four per-phase commands — `dev-workflow-research`, `dev-workflow-plan`, `dev-workflow-implement`, `dev-workflow-review` — are also installed; each runs a single phase's doer/checker loop to acceptance or escalation without driving the full pipeline.
+- **Command (1):** `run-dev-workflow` — installed as a command-skill (`.agents/skills/cmd-run-dev-workflow/SKILL.md` with `disable-model-invocation: true`). Four per-phase commands — `research`, `plan`, `implement`, `review` — are also installed; each runs a single phase's doer/checker loop to acceptance or escalation without driving the full pipeline.
 - **Validation scripts:** the `.agents/tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/.agents/tools/dev-workflow/`.
 - **Guide:** the `dev-workflow.md` governance guide travels inside the orchestrator skill as `references/dev-workflow.md` — installing the skill installs the guide.
 

@@ -59,6 +59,6 @@ timing.json
 #   scripts -> python tools/installer.py <target> --scripts dev-workflow
 #   guidelines -> python tools/installer.py <target> --guidelines <name>
 .agents/
-.claude/skills
-.claude/agents/
-.github/agents/
+.claude/
+.claude/
+.github/

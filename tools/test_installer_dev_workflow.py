@@ -40,9 +40,10 @@ def write_source_skill(root: Path, name: str) -> None:
 
 
 def write_source_command(root: Path, name: str) -> None:
-    """Write a minimal command-skill: .agents/skills/<name>/SKILL.md with the
-    disable-model-invocation flag (commands share the skill namespace)."""
-    skill_md = root / ".agents" / "skills" / name / "SKILL.md"
+    """Write a minimal command-skill: .agents/skills/cmd-<name>/SKILL.md with
+    the disable-model-invocation flag (commands share the skill namespace,
+    but install into the cmd- prefixed dir)."""
+    skill_md = root / ".agents" / "skills" / f"cmd-{name}" / "SKILL.md"
     skill_md.parent.mkdir(parents=True, exist_ok=True)
     skill_md.write_text(
         "---\n"
@@ -117,11 +118,11 @@ class DevWorkflowConstantsTests(unittest.TestCase):
         self.assertEqual(
             mod.DEV_WORKFLOW_COMMANDS,
             (
-                "dev-workflow",
-                "dev-workflow-research",
-                "dev-workflow-plan",
-                "dev-workflow-implement",
-                "dev-workflow-review",
+                "run-dev-workflow",
+                "research",
+                "plan",
+                "implement",
+                "review",
             ),
         )
         self.assertEqual(mod.DEV_WORKFLOW_SCRIPTS, ("dev-workflow",))
@@ -326,11 +327,11 @@ class DevWorkflowBundleTests(unittest.TestCase):
         self.assertEqual(
             selection.commands,
             [
-                "dev-workflow",
-                "dev-workflow-implement",
-                "dev-workflow-plan",
-                "dev-workflow-research",
-                "dev-workflow-review",
+                "implement",
+                "plan",
+                "research",
+                "review",
+                "run-dev-workflow",
             ],
         )
         self.assertEqual(selection.scripts, ["dev-workflow"])
@@ -378,7 +379,7 @@ class DevWorkflowBundleTests(unittest.TestCase):
             self.assertTrue(result.ok, result.errors)
             for skill in mod.DEV_WORKFLOW_SKILLS:
                 self.assertTrue((target / ".agents" / "skills" / skill / "SKILL.md").is_file())
-            self.assertTrue((target / ".agents" / "skills" / "dev-workflow" / "SKILL.md").is_file())
+            self.assertTrue((target / ".agents" / "skills" / "cmd-run-dev-workflow" / "SKILL.md").is_file())
             self.assertTrue((target / ".agents" / "tools" / "dev-workflow" / "validate_phase.py").is_file())
             # t-014: agents are installed via --dev-workflow
             for agent in mod.DEV_WORKFLOW_AGENTS:
@@ -556,11 +557,11 @@ class BundlesJsonPhaseCommandsTests(unittest.TestCase):
         self.assertEqual(
             harness["commands"],
             [
-                "dev-workflow",
-                "dev-workflow-research",
-                "dev-workflow-plan",
-                "dev-workflow-implement",
-                "dev-workflow-review",
+                "run-dev-workflow",
+                "research",
+                "plan",
+                "implement",
+                "review",
             ],
         )
 
@@ -586,7 +587,7 @@ class PhaseCommandsInstallTests(unittest.TestCase):
 
             self.assertTrue(result.ok, result.errors)
             for name in mod.DEV_WORKFLOW_COMMANDS:
-                skill_md = target / ".agents" / "skills" / name / "SKILL.md"
+                skill_md = target / ".agents" / "skills" / f"cmd-{name}" / "SKILL.md"
                 self.assertTrue(
                     skill_md.is_file(),
                     f"Expected installed command-skill missing: {skill_md}",
@@ -645,7 +646,7 @@ class PhaseCommandsInstallTests(unittest.TestCase):
             )
 
             # Write a stale marker into one of the command-skill paths.
-            stale = target / ".agents" / "skills" / "dev-workflow-research" / "SKILL.md"
+            stale = target / ".agents" / "skills" / "cmd-research" / "SKILL.md"
             stale.write_text("stale content", encoding="utf-8")
 
             result = mod.install_items(

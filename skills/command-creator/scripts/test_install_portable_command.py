@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Tests for command-skill installs (install_portable_command.py) and validation.
 
-Commands install as command-skills: a single .agents/skills/<name>/SKILL.md
+Commands install as command-skills: a single .agents/skills/cmd-<name>/SKILL.md
 with `disable-model-invocation: true`, a <=120-char invocation-gated
 description, and `allowed-tools` transferred when the source declares it.
+The slash command stays /<name>; only the install dir carries the prefix.
 """
 
 from __future__ import annotations
@@ -103,7 +104,7 @@ class InstallCommandSkillTests(unittest.TestCase):
 
             written, removed = install_portable_command(root, source, COMMAND_NAME, overwrite=True)
 
-            skill_path = root / ".agents" / "skills" / COMMAND_NAME / "SKILL.md"
+            skill_path = root / ".agents" / "skills" / f"cmd-{COMMAND_NAME}" / "SKILL.md"
             self.assertEqual(written, [skill_path])
             self.assertEqual(removed, [])
             self.assertTrue(skill_path.is_file())
@@ -133,7 +134,7 @@ class InstallCommandSkillTests(unittest.TestCase):
             write_bootstrap(source)
             existing_skill = write_skill(
                 root,
-                COMMAND_NAME,
+                f"cmd-{COMMAND_NAME}",
                 skill_md(
                     description="A plain model-invocable skill.",
                     disable_model_invocation=None,
@@ -242,7 +243,7 @@ class InstallCommandSkillTests(unittest.TestCase):
 
             install_portable_command(root, source, COMMAND_NAME, overwrite=True)
 
-            skill_path = root / ".agents" / "skills" / COMMAND_NAME / "SKILL.md"
+            skill_path = root / ".agents" / "skills" / f"cmd-{COMMAND_NAME}" / "SKILL.md"
             raw = skill_path.read_text(encoding="utf-8")
             self.assertIn("allowed-tools: Bash, Read, Grep, Glob", raw)
             frontmatter, _ = parse_frontmatter(raw)
@@ -257,7 +258,7 @@ class InstallCommandSkillTests(unittest.TestCase):
 
             install_portable_command(root, source, COMMAND_NAME, overwrite=True)
 
-            skill_path = root / ".agents" / "skills" / COMMAND_NAME / "SKILL.md"
+            skill_path = root / ".agents" / "skills" / f"cmd-{COMMAND_NAME}" / "SKILL.md"
             raw = skill_path.read_text(encoding="utf-8")
             self.assertNotIn("allowed-tools", raw)
             frontmatter, _ = parse_frontmatter(raw)
@@ -325,7 +326,7 @@ class CommandSkillValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
 
-            valid_path = write_skill(root, COMMAND_NAME, skill_md())
+            valid_path = write_skill(root, f"cmd-{COMMAND_NAME}", skill_md())
             valid, message = validate_command(valid_path)
             self.assertTrue(valid, message)
 
@@ -361,10 +362,10 @@ class CommandSkillValidationTests(unittest.TestCase):
     def test_command_skill_rejects_dirname_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            path = write_skill(root, "other-name", skill_md())
+            path = write_skill(root, "cmd-other-name", skill_md())
             valid, message = validate_command(path)
             self.assertFalse(valid)
-            self.assertIn("must match", message)
+            self.assertIn("must be", message)
 
     def test_command_skill_rejects_false_flag(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -462,7 +463,7 @@ class CreateCommandTests(unittest.TestCase):
                 overwrite=True,
             )
 
-            skill_path = root / ".agents" / "skills" / COMMAND_NAME / "SKILL.md"
+            skill_path = root / ".agents" / "skills" / f"cmd-{COMMAND_NAME}" / "SKILL.md"
             self.assertEqual(written, [skill_path])
             self.assertTrue(skill_path.is_file())
             frontmatter, _ = parse_frontmatter(skill_path.read_text(encoding="utf-8"))
@@ -493,7 +494,7 @@ class CreateCommandTests(unittest.TestCase):
             root = Path(tmp)
             write_skill(
                 root,
-                COMMAND_NAME,
+                f"cmd-{COMMAND_NAME}",
                 skill_md(description="A plain skill.", disable_model_invocation=None),
             )
             with self.assertRaises(CommandCreatorError) as ctx:

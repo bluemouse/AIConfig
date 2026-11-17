@@ -1,6 +1,6 @@
 ---
 name: code-review-resolver
-description: "Use when resolving, fixing, or addressing code review findings classified as local — applying targeted code fixes only to the specific findings, running verification, and producing a fix report for re-review. Also classifies findings as upstream and emits backward handoff packets when the root cause traces to an earlier phase. Triggers on prompts to fix review findings, resolve code review issues, address review comments, or apply review fixes — even when the user doesn't say 'code review resolver'. Does not trigger on code review itself (code-reviewer), plan execution (plan-executor), debugging a reproducible defect (debugging-guide), or git commit (git-commit)."
+description: "Use when resolving, fixing, or addressing code review findings classified as local — applying targeted code fixes only to the specific findings, running verification, and producing a fix report for re-review. Also classifies findings as upstream and emits backward handoff packets when the root cause traces to an earlier phase. Triggers on prompts to fix review findings, resolve code review issues, address review comments, or apply review fixes — even when the user doesn't say 'code review resolver'. Does not trigger on code review itself (code-reviewer), plan execution (plan-executor), debugging a reproducible defect (debugging-guide), or git commit (/commit)."
 ---
 
 # Code Review Resolver
@@ -26,7 +26,7 @@ packet instead.
 - **Debugging a reproducible defect with unknown root cause** — use
   [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md)
 - **Committing changes** — use [../git-guide/SKILL.md](../git-guide/SKILL.md) or the
-  `/git-commit` command
+  `/commit` command
 - **Auditing an implementation for requirement coverage** — use
   [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md)
 - **Authoring or repairing an implementation plan** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
@@ -49,7 +49,7 @@ Non-negotiable; violating them produces unreviewable diffs and breaks the review
 4. **Match existing style.** Match the surrounding code's conventions; do not introduce
    new patterns.
 5. **No commits.** This skill does not commit, push, stage, or deploy. Hand off to
-   code-reviewer for re-review, then to git-guide or `/git-commit`.
+   code-reviewer for re-review, then to git-guide or `/commit`.
 6. **Surface failures.** Run verification after each fix or batch, record ambiguities and
    failures in the fix report, and never hide a scope violation in a long diff.
 

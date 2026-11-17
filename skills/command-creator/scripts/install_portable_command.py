@@ -17,6 +17,7 @@ Example:
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -26,6 +27,7 @@ from quick_validate import (
     COMMAND_SKILL_DIR_PARTS,
     COMMAND_SKILL_FILENAME,
     body_after_frontmatter,
+    command_skill_dir_name,
     parse_frontmatter,
     validate_command_skill,
 )
@@ -33,6 +35,7 @@ from scaffold_command import (
     CommandCreatorError,
     assert_command_skill_target_available,
     command_skill_content,
+    is_command_skill,
     slugify_name,
     write_file,
 )
@@ -86,6 +89,15 @@ def remove_legacy_outputs(root: Path, command_name: str) -> list[Path]:
         if stale_path.is_file():
             stale_path.unlink()
             removed.append(stale_path)
+    # Pre-dir-prefix install: .agents/skills/<name>/ was the command-skill
+    # home before the cmd- prefix. Only a flag-bearing SKILL.md there is a
+    # prior command-skill install — a plain skill squatting on the name is
+    # a collision the caller's target guard already refused.
+    stale_dir = root.joinpath(*COMMAND_SKILL_DIR_PARTS) / command_name
+    stale_md = stale_dir / COMMAND_SKILL_FILENAME
+    if stale_dir.is_dir() and is_command_skill(stale_md):
+        shutil.rmtree(stale_dir)
+        removed.append(stale_md)
     return removed
 
 
@@ -109,7 +121,9 @@ def install_portable_command(
             f"Command name '{command_name}' does not match source frontmatter name '{source_name}'."
         )
 
-    skill_dir = root.joinpath(*COMMAND_SKILL_DIR_PARTS) / command_name
+    # Install dir = cmd- prefix + command name; the slash command stays
+    # /<name> (frontmatter name is the invocation identity).
+    skill_dir = root.joinpath(*COMMAND_SKILL_DIR_PARTS) / command_skill_dir_name(command_name)
     skill_path = skill_dir / COMMAND_SKILL_FILENAME
 
     assert_command_skill_target_available(skill_dir, skill_path, overwrite)

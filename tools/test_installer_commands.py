@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Tests for command install/uninstall in installer.py.
 
-Commands are command-skills: skills under .agents/skills/<name>/ whose
-SKILL.md carries `disable-model-invocation: true`. They share one
-namespace with skills and install as a directory tree, not tool files.
+Commands are command-skills: skills under .agents/skills/cmd-<name>/ whose
+SKILL.md carries `disable-model-invocation: true` (the slash command stays
+/<name>). They share the .agents/skills/ namespace with plain skills and
+install as a directory tree, not tool files.
 """
 
 from __future__ import annotations
@@ -60,8 +61,8 @@ def write_command_skill(
     disable_model_invocation: bool = True,
     description: str | None = None,
 ) -> Path:
-    """Write a command-skill under <root>/.agents/skills/<name>/SKILL.md."""
-    skill_dir = root / ".agents" / "skills" / name
+    """Write a command-skill under <root>/.agents/skills/cmd-<name>/SKILL.md."""
+    skill_dir = root / ".agents" / "skills" / f"cmd-{name}"
     skill_dir.mkdir(parents=True, exist_ok=True)
     if description is None:
         description = (
@@ -84,10 +85,10 @@ def write_command_skill(
 
 class CommandDiscoveryTests(unittest.TestCase):
     def test_discover_commands_includes_flag_command_skill(self) -> None:
-        """The git-commit command is discovered via its invocation flag."""
+        """The commit command is discovered via its invocation flag."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            write_command_skill(root, "git-commit")
+            write_command_skill(root, "commit")
             original_root = mod.REPO_ROOT
             mod.REPO_ROOT = root
             try:
@@ -95,7 +96,7 @@ class CommandDiscoveryTests(unittest.TestCase):
             finally:
                 mod.REPO_ROOT = original_root
 
-            self.assertIn("git-commit", commands)
+            self.assertIn("commit", commands)
 
     def test_discover_commands_excludes_plain_skills(self) -> None:
         """Commands are command-skills: only flag-bearing skills are commands."""
@@ -118,16 +119,16 @@ class CommandDiscoveryTests(unittest.TestCase):
     def test_load_command_descriptions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            write_command_skill(root, "git-commit")
+            write_command_skill(root, "commit")
             original_root = mod.REPO_ROOT
             mod.REPO_ROOT = root
             try:
-                descriptions = mod.load_command_descriptions(["git-commit"])
+                descriptions = mod.load_command_descriptions(["commit"])
             finally:
                 mod.REPO_ROOT = original_root
 
-            self.assertIn("git-commit", descriptions)
-            self.assertIn("commit-message-writer", descriptions["git-commit"])
+            self.assertIn("commit", descriptions)
+            self.assertIn("commit-message-writer", descriptions["commit"])
 
     def test_discover_commands_in_project_filters_by_flag(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -158,19 +159,17 @@ class CommandInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            installed = target / ".agents" / "skills" / "demo-command" / "SKILL.md"
+            installed = target / ".agents" / "skills" / "cmd-demo-command" / "SKILL.md"
             self.assertTrue(installed.is_file())
             content = installed.read_text(encoding="utf-8")
             self.assertIn("disable-model-invocation: true", content)
-            self.assertIn(".agents/skills/demo-command", result.installed[0])
+            self.assertIn(".agents/skills/cmd-demo-command", result.installed[0])
 
-    def test_install_skill_refuses_command_skill_dest_even_with_override(self) -> None:
-        """cr-004: a skill install must never silently convert a command-skill.
-
-        The command pass drops disable-model-invocation: true from its source;
-        rmtree'ing an existing command-skill with --override would turn a
-        slash-command into a model-invocable skill. The reverse collision is
-        refused and the destination is left untouched.
+    def test_install_skill_never_touches_command_skill_install(self) -> None:
+        """cr-004 (structural, cmd- dir prefix): a plain skill and a
+        command-skill of the same name install to different directories
+        (.agents/skills/<name>/ vs .agents/skills/cmd-<name>/), so a skill
+        install can no longer clobber or flip a command-skill install.
         """
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
@@ -188,23 +187,19 @@ class CommandInstallTests(unittest.TestCase):
                 override=True,
             )
 
-            self.assertFalse(result.ok)
-            self.assertTrue(
-                any("command-skill" in msg for msg in result.errors), result.errors
-            )
-            self.assertTrue(
-                any("demo-command" in msg for msg in result.errors), result.errors
-            )
-            # Destination untouched, flag intact.
+            self.assertTrue(result.ok, result.errors)
+            # Command-skill install untouched, flag intact.
             self.assertEqual(existing.read_text(encoding="utf-8"), original)
             self.assertIn("disable-model-invocation: true", original)
+            # Plain skill installed at its own, unprefixed directory.
+            self.assertTrue(
+                (target / ".agents" / "skills" / "demo-command" / "SKILL.md").is_file()
+            )
 
-    def test_uninstall_skills_refuses_command_skill(self) -> None:
-        """cr-004: --uninstall --skills refuses a command-skill destination.
-
-        The name shares .agents/skills/; removing a command-skill through the
-        skills selector would delete a slash-command install. The command
-        selector (--uninstall --commands) remains the supported removal path.
+    def test_uninstall_skills_leaves_command_skill_alone(self) -> None:
+        """cr-004 (structural, cmd- dir prefix): --uninstall --skills cannot
+        reach the command-skill install at .agents/skills/cmd-<name>/; the
+        command selector (--uninstall --commands) remains the removal path.
         """
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / "target"
@@ -217,11 +212,8 @@ class CommandInstallTests(unittest.TestCase):
                 commands=[],
             )
 
-            self.assertFalse(result.ok)
-            self.assertTrue(
-                any("command-skill" in msg for msg in result.errors), result.errors
-            )
-            self.assertTrue(existing.is_file())
+            self.assertTrue(result.ok, result.errors)
+            self.assertTrue(existing.is_file(), "command-skill must survive a skills-only uninstall")
             self.assertIn("disable-model-invocation: true", existing.read_text(encoding="utf-8"))
 
     def test_uninstall_commands_still_removes_command_skill(self) -> None:
@@ -239,18 +231,18 @@ class CommandInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertFalse((target / ".agents" / "skills" / "demo-command").exists())
+            self.assertFalse((target / ".agents" / "skills" / "cmd-demo-command").exists())
 
     def test_commands_selector_rejects_plain_skill(self) -> None:
-        """cr-006: --commands <plain-skill> errors instead of installing it.
-
-        Command sources share skill_copy_pairs, so without a kind check any
-        .agents/skills/<name> source would satisfy the command pass.
+        """cr-006: --commands errors when the cmd-<name> source lacks the
+        invocation flag instead of installing a plain skill as a command.
         """
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
-            write_plain_skill(source, "plain-name")
+            # Plain skill planted in the command install dir — the only way
+            # a flagless source can now reach the command pass.
+            write_plain_skill(source, "cmd-plain-name")
 
             result = mod.install_items(
                 source_root=source,
@@ -266,7 +258,7 @@ class CommandInstallTests(unittest.TestCase):
                 any("not a command-skill" in msg for msg in result.errors),
                 result.errors,
             )
-            self.assertFalse((target / ".agents" / "skills" / "plain-name").exists())
+            self.assertFalse((target / ".agents" / "skills" / "cmd-plain-name").exists())
 
     def test_command_refuses_to_replace_plain_skill_dest(self) -> None:
         """cr-105: --commands over an existing plain-skill dest is refused.
@@ -281,8 +273,9 @@ class CommandInstallTests(unittest.TestCase):
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
             write_command_skill(source, "shared-name")
-            # Dest: an existing plain skill with user-authored content.
-            dest_md = write_plain_skill(target, "shared-name")
+            # Dest: an existing plain skill with user-authored content,
+            # squatting on the command install dir cmd-shared-name.
+            dest_md = write_plain_skill(target, "cmd-shared-name")
             dest_md.write_text(
                 "---\nname: shared-name\ndescription: user-authored\n---\n\n"
                 "# User content\n\nDo not delete me.\n",
@@ -325,7 +318,7 @@ class CommandInstallTests(unittest.TestCase):
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
             write_command_skill(source, "broken-dest")
-            dest_dir = target / ".agents" / "skills" / "broken-dest"
+            dest_dir = target / ".agents" / "skills" / "cmd-broken-dest"
             dest_dir.mkdir(parents=True)
             (dest_dir / "SKILL.md").write_bytes(b"\x80\xff not utf-8")
 
@@ -364,7 +357,7 @@ class CommandInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertIn(".agents/skills/demo-command", result.skipped)
+            self.assertIn(".agents/skills/cmd-demo-command", result.skipped)
             self.assertEqual(stale.read_text(encoding="utf-8"), "stale")
 
     def test_uninstall_command_removes_skill_tree(self) -> None:
@@ -380,7 +373,7 @@ class CommandInstallTests(unittest.TestCase):
             )
 
             self.assertTrue(result.ok, result.errors)
-            self.assertFalse((target / ".agents" / "skills" / "demo-command").exists())
+            self.assertFalse((target / ".agents" / "skills" / "cmd-demo-command").exists())
 
     def test_run_operation_requires_selection(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -428,7 +421,7 @@ class BridgeCreationTests(unittest.TestCase):
             self.assertTrue(bridge.is_symlink(), "commands-only install must bridge")
             self.assertEqual(os.readlink(bridge), "../.agents/skills")
             self.assertTrue(
-                (bridge / "demo-command" / "SKILL.md").is_file(),
+                (bridge / "cmd-demo-command" / "SKILL.md").is_file(),
                 "the command-skill must be reachable through the bridge",
             )
 
@@ -473,6 +466,29 @@ class BridgeCreationTests(unittest.TestCase):
             self.assertTrue(marker.is_file(), "the real dir must not be clobbered")
             self.assertIn("warning", stderr.getvalue().lower())
 
+    def test_uninstall_commands_removes_legacy_unprefixed_install(self) -> None:
+        """F2 regression: --uninstall --commands also removes a pre-dir-prefix
+        install (.agents/skills/<name> with the invocation flag) so the host
+        stops exposing the stale slash command; a plain skill on the same
+        name must survive (cr-004 semantics).
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "target"
+            legacy = write_command_skill(target, "old-style")
+            # Plain skill with the same name must survive the legacy sweep.
+            plain = write_plain_skill(target, "plain-style")
+
+            result = mod.uninstall_items(
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=["old-style", "plain-style"],
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            self.assertFalse(legacy.exists(), "legacy unprefixed command-skill must be removed")
+            self.assertTrue(plain.is_file(), "plain skill must survive the legacy sweep")
+
     def test_default_uninstall_of_command_skill_exits_zero(self) -> None:
         """fd-019: default no-selector uninstall dedupes like explicit paths.
 
@@ -502,7 +518,7 @@ class BridgeCreationTests(unittest.TestCase):
                 mod.REPO_ROOT = original_root
 
             self.assertEqual(code, 0, "default uninstall of a clean target must exit 0")
-            self.assertFalse((target / ".agents" / "skills" / "demo-command").exists())
+            self.assertFalse((target / ".agents" / "skills" / "cmd-demo-command").exists())
             self.assertFalse((target / ".agents" / "skills" / "plain-skill").exists())
 
 
@@ -809,32 +825,32 @@ class PurgeLegacyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
             target = Path(tmp) / "target"
-            write_command_skill(source, "git-commit")
+            write_command_skill(source, "commit")
 
             result = mod.install_items(
                 source_root=source,
                 target_root=target,
-                skills=["git-commit"],
+                skills=["commit"],
                 agents=[],
-                commands=["git-commit"],
+                commands=["commit"],
                 override=False,
             )
 
             self.assertTrue(result.ok, result.errors)
             self.assertEqual(
-                result.installed.count(".agents/skills/git-commit"), 1,
+                result.installed.count(".agents/skills/cmd-commit"), 1,
                 result.installed,
             )
-            self.assertNotIn(".agents/skills/git-commit", result.skipped)
+            self.assertNotIn(".agents/skills/cmd-commit", result.skipped)
 
     def test_bundle_selection_dedupe_drops_skill_duplicate_of_command(self) -> None:
         selection = mod.BundleSelection(
-            skills=["git-commit", "research-guide"],
-            commands=["git-commit"],
+            skills=["commit", "research-guide"],
+            commands=["commit"],
         )
         selection.dedupe()
         self.assertEqual(selection.skills, ["research-guide"])
-        self.assertEqual(selection.commands, ["git-commit"])
+        self.assertEqual(selection.commands, ["commit"])
 
     def test_run_cli_purge_legacy_composes_with_skills(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

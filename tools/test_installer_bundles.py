@@ -69,11 +69,11 @@ class BundleLoadingTests(unittest.TestCase):
         self.assertEqual(
             harness.commands,
             frozenset({
-                "dev-workflow",
-                "dev-workflow-research",
-                "dev-workflow-plan",
-                "dev-workflow-implement",
-                "dev-workflow-review",
+                "run-dev-workflow",
+                "research",
+                "plan",
+                "implement",
+                "review",
             }),
         )
         self.assertEqual(harness.scripts, frozenset({"dev-workflow"}))
@@ -203,8 +203,9 @@ class CliSkillResolutionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             original_root = mod.REPO_ROOT
             root = Path(tmp)
-            # A command-skill and a plain skill sharing the discovered tree.
-            skill_dir = root / ".agents" / "skills" / "demo"
+            # A command-skill (cmd- dir) and a plain skill in the same
+            # discovered tree.
+            skill_dir = root / ".agents" / "skills" / "cmd-demo"
             skill_dir.mkdir(parents=True)
             (skill_dir / "SKILL.md").write_text(
                 "---\nname: demo\ndescription: d\ndisable-model-invocation: true\n---\n\n# demo\n",
@@ -308,11 +309,11 @@ class CliSkillResolutionTests(unittest.TestCase):
         .agents/skills/ — so the --commands selector keeps functioning."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            command_dir = root / ".agents" / "skills" / "git-commit"
+            command_dir = root / ".agents" / "skills" / "cmd-commit"
             command_dir.mkdir(parents=True)
             (command_dir / "SKILL.md").write_text(
                 "---\n"
-                "name: git-commit\n"
+                "name: commit\n"
                 "description: Write commit messages\n"
                 "disable-model-invocation: true\n"
                 "---\n",
@@ -333,14 +334,14 @@ class CliSkillResolutionTests(unittest.TestCase):
                     bundle_ids=None,
                     skill_names=None,
                     agent_names=None,
-                    command_names=["git-commit"],
+                    command_names=["commit"],
                     script_names=None,
                 )
             finally:
                 mod.REPO_ROOT = original_root
 
-            self.assertEqual(commands, ["git-commit"])
-            self.assertEqual(selection.commands, ["git-commit"])
+            self.assertEqual(commands, ["commit"])
+            self.assertEqual(selection.commands, ["commit"])
 
     def test_discover_scripts_scans_tools_root(self) -> None:
         """t-014a: scripts are discovered from the tracked tools/ root."""
@@ -442,7 +443,7 @@ class TargetBundleTests(unittest.TestCase):
         )
 
     def _write_target_command(self, root: Path, name: str) -> None:
-        skill_dir = root / ".agents" / "skills" / name
+        skill_dir = root / ".agents" / "skills" / f"cmd-{name}"
         skill_dir.mkdir(parents=True, exist_ok=True)
         (skill_dir / "SKILL.md").write_text(
             f"---\n"
@@ -604,11 +605,11 @@ class TargetBundleTests(unittest.TestCase):
             root = Path(tmp)
             self._write_target_skill(root, "research-guide")
             self._write_target_agent(root, "alpha")
-            self._write_target_command(root, "git-commit")
+            self._write_target_command(root, "commit")
             self._write_target_scripts(root, "dev-workflow")
             with mock.patch.object(mod, "discover_skills", return_value=["research-guide"]), \
                  mock.patch.object(mod, "discover_agents", return_value=["alpha"]), \
-                 mock.patch.object(mod, "discover_commands", return_value=["git-commit"]), \
+                 mock.patch.object(mod, "discover_commands", return_value=["commit"]), \
                  mock.patch.object(mod, "discover_scripts", return_value=["dev-workflow"]):
                 selection = mod.resolve_bundle(
                     [mod.TARGET_BUNDLE_ID],
@@ -616,8 +617,25 @@ class TargetBundleTests(unittest.TestCase):
                 )
             self.assertIn("research-guide", selection.skills)
             self.assertIn("alpha", selection.agents)
-            self.assertIn("git-commit", selection.commands)
+            self.assertIn("commit", selection.commands)
             self.assertIn("dev-workflow", selection.scripts)
+
+    def test_target_bundle_excludes_command_skill_dirs_from_skills(self) -> None:
+        """F1 regression: cmd-<name> dirs are commands, never plain skills.
+
+        Target-bundle membership must not carry command-skills through the
+        skills pass (the commands pass owns them; a leak would install each
+        command-skill twice — once as .agents/skills/cmd-<name> via skills,
+        once via commands).
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_target_skill(root, "research-guide")
+            self._write_target_command(root, "commit")
+
+            bundle = mod.build_target_bundle(root)
+            self.assertNotIn("cmd-commit", bundle.skills)
+            self.assertIn("commit", bundle.commands)
 
     def test_resolve_cli_skills_target_bundle_with_other_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -26,7 +26,7 @@ Install a bootstrap agent with `install_portable_agent.py`. Re-run after edits t
 | Term | Location | Role |
 | --- | --- | --- |
 | **Bootstrap command** | `commands/<name>/` | Authoritative source. Edit `COMMAND.md` here. |
-| **Command-skill** | `.agents/skills/<name>/SKILL.md` | Single install output with `disable-model-invocation: true` — every tool exposes it as `/<name>`, and the model never self-invokes it. |
+| **Command-skill** | `.agents/skills/cmd-<name>/SKILL.md` | Single install output with `disable-model-invocation: true` — every tool exposes it as `/<name>`, and the model never self-invokes it. The install dir carries the `cmd-` prefix; the slash name does not. |
 
 Install a bootstrap command with `install_portable_command.py`. Re-run after edits to `commands/<name>/`. Invoke as `/command-name` in each IDE.
 
@@ -169,7 +169,7 @@ Several installed skills cross-link as companions — install related skills tog
 | Decision deliberation | `advisory-council`, `devil-advocate`, `prompt-clarifier`, `research-guide`, `plan-reviewer` | Clarify ambiguous decisions → council debate for multi-perspective synthesis → adversarial stress-test with proceed/rework/reject verdict → research and plan-audit companions |
 | Research workflow | `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor` | Interactive discovery and research report → readiness audit → implementation plan → plan audit → execution |
 | Implementation quality | `test-driven-dev-guide`, `debugging-guide`, `implementation-auditor`, `code-reviewer`, `techdoc-reviewer` | TDD during implementation → systematic root-cause debugging → evidence-based correctness audit → structured diff review → documentation verification and synchronization when behavior or contracts change |
-| Dev-workflow harness | `dev-workflow-orchestrator`, `prompt-clarifier`, `research-guide`/`research-reviewer`, `plan-guide`/`plan-reviewer`, `plan-executor`/`implementation-auditor`, `code-review-resolver`/`code-reviewer`, `commit-message-writer` | Full pipeline via `/dev-workflow` or individual phase loops via `/dev-workflow-{research,plan,implement,review}`; installed/uninstalled as a unit via `--dev-workflow` |
+| Dev-workflow harness | `dev-workflow-orchestrator`, `prompt-clarifier`, `research-guide`/`research-reviewer`, `plan-guide`/`plan-reviewer`, `plan-executor`/`implementation-auditor`, `code-review-resolver`/`code-reviewer`, `commit-message-writer` | Full pipeline via `/run-dev-workflow` or individual phase loops via `/research`, `/plan`, `/implement`, `/review`; installed/uninstalled as a unit via `--dev-workflow` |
 | Parallel execution | `agent-runner` | Dispatch independent workstreams to isolated subagents; defers diff review to `code-reviewer`, git mechanics to `git-guide`, skill evals to `skill-creator`, harness orchestration to `dev-workflow-orchestrator` |
 
 Per-skill deferrals, companion links, and boundary rules live in each installed skill's body and in the cluster tables above. For step-by-step workflow sequencing and intake routing, see [dev-workflow.md](skills/dev-workflow-orchestrator/references/dev-workflow.md) (it travels inside the `dev-workflow-orchestrator` skill).
@@ -399,7 +399,7 @@ When adding assets to this repo or another project, use these locations:
 
 ### Single root (all tools)
 
-- `.agents/skills/<skill-name>/` — installed skill or command-skill (the one real copy)
+- `.agents/skills/<skill-name>/` — installed skill (the one real copy); command-skills install at `.agents/skills/cmd-<name>/` (invoked as `/<name>`)
 - `.agents/tools/<name>/` — installed script trees
 - `.agents/skills/guidelines-<name>/` — guideline skill packages installed into target projects
 
@@ -434,7 +434,7 @@ python tools/installer.py /path/to/other-project
 # Install selected skills, agents, or commands
 python tools/installer.py /path/to/other-project --skills cpp-coding vulkan-dev
 python tools/installer.py /path/to/other-project --agents my-agent
-python tools/installer.py /path/to/other-project --commands git-commit
+python tools/installer.py /path/to/other-project --commands commit
 
 # Install workflow bundles (see tools/bundles.md and tools/bundles.json)
 python tools/installer.py /path/to/other-project --bundles core-dev-workflow
@@ -459,7 +459,7 @@ python tools/installer.py /path/to/other-project --skills cpp-coding --override
 # Remove from the target
 python tools/installer.py /path/to/other-project --skills cpp-coding --uninstall
 python tools/installer.py /path/to/other-project --agents my-agent --uninstall
-python tools/installer.py /path/to/other-project --commands git-commit --uninstall
+python tools/installer.py /path/to/other-project --commands commit --uninstall
 python tools/installer.py /path/to/other-project --guidelines coding-behavior --uninstall
 ```
 
@@ -469,7 +469,7 @@ python tools/installer.py /path/to/other-project --guidelines coding-behavior --
 | `--bundles ID ...` | Bundle ids from [tools/bundles.json](tools/bundles.json) or `target-bundle`; a bundle may include skills, agents, commands, and scripts (see [tools/bundles.md](tools/bundles.md)) |
 | `--skills NAME ...` | Skill slugs to install or uninstall (default: all discovered unless `--bundles` is set) |
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered) |
-| `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered); commands install as command-skills under `.agents/skills/<name>/` with `disable-model-invocation: true` |
+| `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered); commands install as command-skills under `.agents/skills/cmd-<name>/` with `disable-model-invocation: true` |
 | `--scripts NAME ...` | Scripts directory names (under `.agents/tools/`) to install or uninstall (default: all discovered) |
 | `--guidelines NAME ...` | Behavioral guideline names (under `guidelines/`) to install or uninstall. Explicit-only — never part of the default install or bundles. Installed as the skill package `.agents/skills/guidelines-<name>/` in the target (loads via skill discovery) |
 | `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (orchestrator, phase skills, commands, and validation scripts — see [tools/bundles.md](tools/bundles.md) for full membership) as a unit |

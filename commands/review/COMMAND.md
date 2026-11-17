@@ -1,6 +1,6 @@
 ---
-name: dev-workflow-review
-description: Run the Code Review phase loop when the user explicitly invokes /dev-workflow-review.
+name: review
+description: Code Review phase loop when the user explicitly invokes /review.
 ---
 
 # Dev Workflow Review
@@ -14,7 +14,7 @@ skill's Phase 4 procedure and the `code-review-resolver` / `code-reviewer` skill
 1. Read and follow the **dev-workflow-orchestrator** skill
    (`.agents/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill), specifically
    the **Within a phase (the loop)** procedure for Phase 4 (Code Review). Treat
-   `/dev-workflow-review` as the explicit start signal — proceed without asking for a
+   `/review` as the explicit start signal — proceed without asking for a
    second confirmation.
 
 2. **Resolve the run directory** (one of):
@@ -44,7 +44,7 @@ skill's Phase 4 procedure and the `code-review-resolver` / `code-reviewer` skill
 
 4. **Run the Phase 4 loop** (doer → checker → revise) per the orchestrator skill.
    This procedure mirrors the orchestrator skill's `Within a phase (the loop)` — if the
-   orchestrator's procedure changes, update all four `/dev-workflow-*` commands:
+   orchestrator's procedure changes, update all four per-phase commands (`/research`, `/plan`, `/implement`, `/review`):
    - **Round-1 ordering (Code Review exception):** on round 1 the checker runs
      first — there are no findings to resolve on a clean first pass. On round > 1 the
      doer runs first (applying the prior round's fixes), then the checker re-reviews.
@@ -57,7 +57,7 @@ skill's Phase 4 procedure and the `code-review-resolver` / `code-reviewer` skill
    - **Route**:
      - `ready to commit` or `ready with notes` → run `python .agents/tools/dev-workflow/validate_phase.py --phase code-review --run-dir .agents/workflow/<slug>`. If validation passes, update manifest (phase status `accepted`) and stop with a summary. If validation fails, handle per the orchestrator's validation rules.
      - `needs revision` with `root-cause-phase: local` → increment round counter. On round > 1, copy `40-code-review.md` to `40-code-review-r<N>.md` where N is the round just completed (round 2 → `-r1`, round 3 → `-r2`) so the fresh-context checker sees prior findings and preserves finding ids, and include all prior `-r1`, `-r2`, … paths in the next round's context. Loop back to the doer pass. Round cap is 5; on cap, escalate.
-     - `needs revision` with `root-cause-phase: upstream` (plan or research) → write a backward handoff packet `back-code-review-to-<target>-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.agents/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .agents/workflow/<slug>`, update manifest (target phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (instruct the user to run `/dev-workflow-plan <slug>` for plan issues or `/dev-workflow-research <slug>` for research issues), then stop. Backward edge cap is 2 per phase.
+     - `needs revision` with `root-cause-phase: upstream` (plan or research) → write a backward handoff packet `back-code-review-to-<target>-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.agents/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .agents/workflow/<slug>`, update manifest (target phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (instruct the user to run `/plan <slug>` for plan issues or `/research <slug>` for research issues), then stop. Backward edge cap is 2 per phase.
      - `blocked` → escalate immediately with a blocker summary and stop.
    - **Update manifest** after every step.
 

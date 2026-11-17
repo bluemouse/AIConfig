@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Tests for the per-phase dev-workflow command bootstrap sources.
 
-Validates that the four `/dev-workflow-<phase>` commands exist as bootstrap
-sources under `commands/dev-workflow-<phase>/COMMAND.md`, have valid
-frontmatter, and contain no tool-specific content in the shared body.
+Validates that the four per-phase commands (`/research`, `/plan`,
+`/implement`, `/review`) exist as bootstrap sources under
+`commands/<phase>/COMMAND.md`, have valid frontmatter, and contain no
+tool-specific content in the shared body.
 """
 
 from __future__ import annotations
@@ -29,10 +30,10 @@ _spec.loader.exec_module(quick_validate)
 
 
 PHASE_COMMANDS = (
-    "dev-workflow-research",
-    "dev-workflow-plan",
-    "dev-workflow-implement",
-    "dev-workflow-review",
+    "research",
+    "plan",
+    "implement",
+    "review",
 )
 
 
@@ -106,7 +107,7 @@ HARDCODED_R1_COPY = re.compile(
 
 
 class CommandConformanceTests(unittest.TestCase):
-    """Conformance between the four /dev-workflow-<phase> commands and the
+    """Conformance between the four per-phase commands and the
     dev-workflow-orchestrator skill they mirror (plan §7 pg-003, tests t-001..t-005)."""
 
     def _command_body(self, name: str) -> str:
@@ -156,13 +157,13 @@ class CommandConformanceTests(unittest.TestCase):
     def test_command_conformance_caps_verdicts_ordering(self) -> None:
         """t-003: round caps, verdict sets, and checker-first round-1 ordering
         in the review command match the orchestrator's loop contracts."""
-        review_body = self._command_body("dev-workflow-review")
+        review_body = self._command_body("review")
         self.assertIn("Round cap is 5", review_body)
         self.assertRegex(review_body, r"checker runs\s+first")
         for name, cap in (
-            ("dev-workflow-research", "Round cap is 5"),
-            ("dev-workflow-plan", "Round cap is 3"),
-            ("dev-workflow-implement", "Round cap is 3"),
+            ("research", "Round cap is 5"),
+            ("plan", "Round cap is 3"),
+            ("implement", "Round cap is 3"),
         ):
             body = self._command_body(name)
             self.assertIn(cap, body, f"{name}: round cap missing")
