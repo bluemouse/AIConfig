@@ -157,7 +157,7 @@ python skills/command-creator/scripts/quick_validate.py --root . --name my-comma
 python skills/skill-creator/scripts/package_skill.py .agents/skills/my-skill
 ```
 
-**Copy installed skills, agents, commands, and scripts to another project** (from this repo root; copies the installed `.agents/` + dual-target agent files — not bootstrap sources):
+**Copy skills, agents, commands, and scripts to another project** (reads this checkout's generated `.agents/skills/` install and dual-target agent files, plus the tracked `tools/<name>/` script sources — not bootstrap sources; regenerate the local install first on a fresh clone):
 
 ```bash
 python tools/installer.py /path/to/other-project
