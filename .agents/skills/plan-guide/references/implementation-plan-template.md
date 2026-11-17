@@ -55,10 +55,10 @@ Use this structure for a plan that should be executable by a developer, engineer
 - Data model or migration notes:
 - Compatibility and rollout approach:
 - Observability and support approach:
-- TDD execution discipline: mandatory for all code-producing tasks via red-green-refactor
+- Test discipline: `mandatory` (strict red-green-refactor) when the requirement, the plan, or the task's risk profile calls for it; `verification-led` for code tasks with a stated alternative verification strategy (e.g. fixture-gated check, schema conformance, build+run evidence); `n/a` for non-code/check-only work with concrete checks. Every task needs concrete verification either way.
 - Alternatives rejected:
 
-## 6. Test design (TDD-first)
+## 6. Test design
 
 | test id | type | requirement ids | test file | test name / scenario | red-phase expected failure | fixtures / notes |
 |---|---|---|---|---|---|---|
@@ -88,7 +88,7 @@ Collaboration notes: [How Tests Designer aligned with Requirements Mapper, Archi
   - [Exact test file, test name, scenario, expected failure.]
 - Supplementary checks:
   - [Manual, integration, or observability check when needed.]
-- Test discipline: mandatory | n/a (non-code or config/infra verified by checks only — justify)
+- Test discipline: mandatory | verification-led (code with a stated alternative verification strategy) | n/a (non-code or config/infra verified by checks only — justify)
 - Verification:
   - Command/check: `[exact command or manual check]`
   - Expected result: [observable result]
@@ -122,7 +122,7 @@ Collaboration notes: [How Tests Designer aligned with Requirements Mapper, Archi
 - Critical path:
 - Required preflight checks:
 - Stop conditions:
-- TDD evidence the implementer must collect: failing test output before production code, passing test after each task
+- Verification evidence the implementer must collect: for `mandatory` tasks, failing test output before production code and passing test after each task; for `verification-led` and `n/a` tasks, the stated verification command and its observed result
 - Review checkpoints:
 - Post-implementation validation:
 

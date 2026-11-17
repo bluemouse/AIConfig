@@ -12,7 +12,7 @@ Use this skill to turn an approved research-report, spec, requirement set, bug r
 
 ## Primary Directive
 
-Your job is to **author and repair implementation plans**, not to implement code, audit research reports, or review code diffs. Every ready-to-execute plan **mandates test-driven development (TDD)** for code-producing work: each task specifies failing tests to write before production changes. Do not claim a plan is ready when source context, requirements, decisions, planned tests, or verification criteria are missing.
+Your job is to **author and repair implementation plans**, not to implement code, audit research reports, or review code diffs. Every ready-to-execute plan gives each task concrete verification: strict test-driven development (TDD) with failing tests written before production changes when the requirement, the plan, or the task's risk profile calls for it, and a stated alternative verification strategy otherwise. Do not claim a plan is ready when source context, requirements, decisions, planned tests, or verification criteria are missing.
 
 ## When to Use
 
@@ -51,7 +51,7 @@ Always:
 - Ask one material question at a time when a missing decision blocks a correct plan.
 - Prefer a blocked planning report over a false-ready plan.
 - Make every must-have requirement traceable to at least one task, at least one planned failing test or verification check (verification check for check-only requirements), and one verification step.
-- Plan TDD-first: for every code-producing task, specify the failing test(s) to write before any production change.
+- Plan verification concretely: for every code-producing task, specify the failing test(s) to write before any production change when its discipline is `mandatory`, or the stated alternative verification when it is `verification-led`.
 - Make every task independently understandable by a fresh implementer.
 - Include exact file paths, interfaces, commands, and expected outcomes when the repository or execution context is available.
 - If exact codebase details are unavailable, mark the plan as draft or discovery-gated rather than pretending paths or commands are known.
@@ -59,9 +59,9 @@ Always:
 
 ## Planning depth
 
-Choose the lightest depth that preserves traceability, TDD, verification, and readiness:
+Choose the lightest depth that preserves traceability, verification, and readiness:
 
-- **Focused**: low-risk work in one subsystem or a small bug fix — roughly five or fewer tasks, no migration, production-data, security/privacy cross-cutting, or multi-system integration concerns. Keep the plan compact, but still include red-phase tests for every code task, concrete verification, and blocker handling. Still required: goal and scope, source traceability, test design, task breakdown, verification per task, and execution class (default `sequential` when work is not parallelizable); lengthy architecture alternatives, risk/rollout matrix detail, and domain specialists may be shortened or omitted.
+- **Focused**: low-risk work in one subsystem or a small bug fix — roughly five or fewer tasks, no migration, production-data, security/privacy cross-cutting, or multi-system integration concerns. Keep the plan compact, but still include concrete verification for every task (red-phase tests where the task's discipline is `mandatory`), and blocker handling. Still required: goal and scope, source traceability, test design, task breakdown, verification per task, and execution class (default `sequential` when work is not parallelizable); lengthy architecture alternatives, risk/rollout matrix detail, and domain specialists may be shortened or omitted.
 - **Standard**: default for most feature, refactor, integration, or multi-file work. Use the full template with proportional detail.
 - **Rigorous**: high-risk, cross-cutting, security/privacy-sensitive, migration-heavy, performance-sensitive, user-visible, production-data, or reviewer-blocked work. Preserve all template sections and strengthen risk, rollout, rollback, observability, and domain-specialist coverage.
 
@@ -78,7 +78,7 @@ Choose one input mode:
 - **Research handoff**: user provides a finalized or conditionally ready research-guide report. Start from its implementation-planning handoff and preserve upstream readiness.
 - **Direct spec**: user provides a spec, requirements, bug report, issue, design note, or acceptance criteria without an upstream research report.
 - **Codebase-led**: user provides a rough feature or fix request and repository exploration is the primary source of planning facts.
-- **Plan normalization**: user provides a thin, informal, external, or previously generated plan and asks to expand it into this skill's executable, TDD-first format.
+- **Plan normalization**: user provides a thin, informal, external, or previously generated plan and asks to expand it into this skill's executable format.
 - **Review repair loop**: user provides a plan-reviewer report, reviewer findings, a Guide handoff packet, or asks whether the plan needs another iteration.
 
 If the input mode is **codebase-led**, **direct spec** without explicit upstream readiness, or **plan normalization** from a thin plan, default the artifact status to `draft` or `ready for review`; do not mark it `validated` without a plan-reviewer result or explicit user acceptance. If plan-reviewer feedback is present, follow [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md) before rewriting the plan.
@@ -140,11 +140,11 @@ Define the approach before tasks:
 - Boundaries between modules, components, services, or phases.
 - Interface contracts that later tasks rely on.
 - Data, migration, compatibility, and rollout strategy when applicable.
-- TDD execution discipline: all code-producing tasks use strict red-green-refactor via [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md). Mark test discipline `n/a` only when a task has no production code to test — for example pure documentation, or config/infra changes verified by command/check-based validation (lint, parse, plan dry-run, schema validate) rather than unit tests — and state why.
+- Test discipline: strict red-green-refactor via [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md) when the user explicitly requests TDD or the task's risk profile calls for it; `verification-led` for other code tasks with a stated alternative verification strategy (fixture-gated check, schema conformance, build+run evidence); `n/a` only when a task has no production code to test — for example pure documentation, or config/infra changes verified by command/check-based validation (lint, parse, plan dry-run, schema validate) — and state why. Explicit user-requested TDD is never downgraded.
 
 If multiple approaches are viable and the choice materially affects cost, risk, UX, architecture, or compatibility, present the decision and ask before finalizing the plan.
 
-### 6. Design tests iteratively (TDD-first)
+### 6. Design tests and verification iteratively
 
 Use the planning roles as analytical lenses, not theatrical personas — **Tests Designer** is always active for implementation plans; add **Domain Specialist** lenses when the domain requires them. Before finalizing tasks, design tests from the requirements, interfaces, and the planned decomposition: failing tests, scenarios, fixtures, and edge cases mapped from acceptance criteria and must-have requirements, with test slices and red-phase specs informing task boundaries and sequencing, and automated tests aligned with manual checks, commands, observability validation, and the verification matrix. Iterate with **Requirements Mapper**, **Architecture Planner**, **Task Decomposer**, and **Verification Planner** across steps 5–7 until every must-have requirement has at least one planned failing test or verification check (check-only requirements by verification check), task boundaries support independent red-green cycles, and verification coverage is complete. See [references/planning-roles.md](references/planning-roles.md) for role details and collaboration rules.
 
@@ -205,7 +205,7 @@ When invoked **outside the dev-workflow-orchestrator** (i.e., no orchestrator as
 
 When invoked **inside the orchestrator**, the orchestrator assigns the output path (typically `.agents/workflow/<slug>/20-implementation-plan.md`); use that path instead.
 
-Include planning readiness and review status, source traceability, architecture and execution strategy, test design (TDD-first scenarios and red-phase specs), task breakdown, requirement-to-task and verification matrices, risk/rollout/rollback/observability notes, and an execution handoff with execution waves, parallelizable work, file ownership, stop conditions, and TDD evidence requirements.
+Include planning readiness and review status, source traceability, architecture and execution strategy, test design (red-phase specs for `mandatory` tasks, verification specs for `verification-led`), task breakdown, requirement-to-task and verification matrices, risk/rollout/rollback/observability notes, and an execution handoff with execution waves, parallelizable work, file ownership, stop conditions, and verification evidence requirements.
 
 ### 9. Self-review before handoff
 

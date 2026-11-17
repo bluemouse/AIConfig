@@ -42,9 +42,10 @@ Reject or revise the plan if it contains:
 - A ready status while blocker questions remain.
 - A `validated` or `conditionally validated` status without plan-reviewer approval or explicit user acceptance.
 
-## Test design and TDD quality
+## Test design and verification quality
 
-- TDD is mandatory for every code-producing task: red-phase failing test(s) are specified before production implementation steps.
+- Every code-producing task states its discipline: `mandatory` (strict red-green, red-phase failing tests specified before production steps), `verification-led` (code with a stated alternative verification strategy — the strategy and the command must be concrete), or `n/a` (non-code, justified, with concrete checks). Explicitly user-requested TDD is always `mandatory`.
+- For `verification-led` tasks, the alternative verification is stated in the plan and its expected result is observable; it is never a vague "tests will cover it".
 - Tests Designer collaboration with Requirements Mapper, Architecture Planner, Task Decomposer, and Verification Planner is reflected in the plan — not implied.
 - Every must-have requirement maps to at least one planned failing test or verification check and at least one verification step.
 - Planned tests name test file paths, test identifiers, scenarios, and expected failure or assertion intent when the repository context allows.

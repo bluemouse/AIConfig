@@ -5,7 +5,7 @@ Run this checklist before presenting a plan-reviewer report.
 ## Verdict and severity
 
 - The verdict matches the highest-impact unresolved finding.
-- `validated` has no blocker or major findings and no missing mandatory TDD, traceability, or verification gates.
+- `validated` has no blocker or major findings and no missing mandatory verification gates (TDD where the task's discipline is `mandatory`, traceability, per-task verification).
 - `conditionally validated` has no blockers, and every remaining major risk is explicit, narrow, and accepted or acceptably deferrable.
 - `needs revision` is used when targeted repairs can make the plan executable.
 - `blocked` is used when execution would be unsafe, impossible, or likely to build the wrong thing.
@@ -13,7 +13,7 @@ Run this checklist before presenting a plan-reviewer report.
 ## Scope and depth
 
 - Review depth is recorded as focused, standard, or rigorous.
-- Focused review does not relax TDD, source traceability, blocker handling, task actionability, or verification.
+- Focused review does not relax verification, source traceability, blocker handling, task actionability, or explicit mandatory-TDD tasks.
 - Rigorous review covers relevant domain, risk, rollout, rollback, migration, security/privacy, performance, observability, and execution-handoff concerns.
 - Input mode and planning depth are reflected in the verdict rationale.
 

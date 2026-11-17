@@ -115,7 +115,7 @@ If concurrent subagents are unavailable, execute the units directly in dependenc
 
 ### 5. Implement and integrate
 
-Before implementing a unit, read the plan's test discipline for its tasks. For tasks marked `mandatory` (the default for all code-producing work from [../plan-guide/SKILL.md](../plan-guide/SKILL.md)), apply strict red-green-refactor by following [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md): write and observe a failing test before the production change. For `n/a` tasks (non-code or check-only config/infra with justification), follow the plan's verification steps without TDD. If the plan omits test discipline on a code task, treat it as `mandatory` and note the assumption in the report.
+Before implementing a unit, read the plan's test discipline for its tasks. For tasks marked `mandatory` (explicitly user-requested TDD, or code work whose risk profile calls for it), apply strict red-green-refactor by following [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md): write and observe a failing test before the production change. For `verification-led` tasks, follow the plan's stated verification strategy and record the command and its observed result — do not silently substitute TDD for it, and do not skip verification. For `n/a` tasks (non-code or check-only config/infra with justification), follow the plan's verification steps without TDD. If the plan omits test discipline on a code task, treat it as `mandatory` and note the assumption in the report.
 
 For direct or parent-led work:
 

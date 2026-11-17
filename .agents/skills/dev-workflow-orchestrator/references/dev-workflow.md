@@ -105,7 +105,7 @@ During implementation:
 - Run targeted checks after each meaningful unit of work.
 - Record assumptions, skipped checks, and verification results.
 
-Use [test-driven-dev-guide](../../test-driven-dev-guide/SKILL.md) when the work should be test-first. This is especially useful for behavior changes, regression fixes, library code, business rules, and any area where a focused test can express the expected behavior. The required loop is red, verify red, green, verify green, refactor, and repeat.
+Use [test-driven-dev-guide](../../test-driven-dev-guide/SKILL.md) when the work should be test-first — especially behavior changes, regression fixes, library code, business rules, and any area where a focused test can express the expected behavior. Follow the plan's per-task test discipline: `mandatory` tasks drive the red, verify red, green, verify green, refactor loop; `verification-led` tasks follow the plan's stated verification strategy with the same evidence bar; `n/a` tasks use the plan's checks. Explicitly user-requested TDD is always `mandatory`.
 
 Use [agent-runner](../../agent-runner/SKILL.md) only when there are two or more independent workstreams and the host supports concurrent subagents. Work is "genuinely independent" only when all of these hold:
 

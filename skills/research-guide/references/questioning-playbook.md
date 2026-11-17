@@ -1,6 +1,6 @@
 # Questioning Playbook
 
-Use these prompts selectively. Ask one high-leverage question or present one decision at a time.
+Use these prompts selectively, in the interactive research workflow. Ask one high-leverage question or present one decision at a time — and only when the answer would change the research direction or the final recommendation. A question the user would answer with "use your judgment" is a stated assumption, not a question.
 
 ## Scope and decomposition
 - Is this one feature, or does it contain separable products, services, or workflows?
