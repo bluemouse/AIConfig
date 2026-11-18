@@ -39,7 +39,7 @@
     "query": "grill this research report and help us resolve its planning decisions",
     "should_trigger": true,
     "split": "train",
-    "rationale": "direct: interactive report grilling"
+    "rationale": "direct: interrogate material uncertainty per the Interrogate step"
   },
   {
     "query": "hard review of the architecture research — compliance-sensitive domain",

@@ -75,9 +75,9 @@ Use this structure for the final review-report. Adapt only when sections are irr
 ### Optional cleanup
 1. [Minor improvement]
 
-## 7. Grilling decision record
-[Include only when Grilling Mode was used.]
-- Grilling status: completed | stopped by user
+## 7. Interrogation decision record
+[Include only when material uncertainty was interrogated.]
+- Interrogation status: completed | stopped by user
 | question | chosen option | recommendation | rationale | accepted risk or follow-up |
 |----------|---------------|----------------|-----------|----------------------------|
 | Q1 |  |  |  |  |

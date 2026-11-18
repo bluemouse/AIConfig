@@ -85,8 +85,10 @@ gap-sweep.
 **Cursor** — use the Task tool with `subagent_type: "generalPurpose"` (it has
 Read/Grep/Shell access to inspect surrounding code): one Task call per *selected* scope
 in a single message, using the prompt template above with real diff content. You
-receive only each subagent's **final text reply**, not its tool calls. Append to each
-scope pass prompt:
+receive only each subagent's **final text reply**, not its tool calls — append the
+ReportFindings block below to each scope-pass prompt. For a quick native GitHub post you
+may suggest the built-in `/code-review --comment`, but prefer github-guide for
+`REQUEST_CHANGES`, multi-comment batching, or thread resolution via `gh api`.
 
 ```
 Use Read/Grep/Shell as needed to inspect call sites, related tests, and existing patterns

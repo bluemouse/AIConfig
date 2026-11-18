@@ -14,11 +14,11 @@ Audit a research report and produce a review-report identifying readiness, gaps,
 
 Default to a balanced audit posture: fair, direct, and specific. Use an aggressive posture when the user asks for a hard review, the work is expensive or safety/security/compliance-sensitive, the evidence is weak, or the report appears over-converged.
 
-Always review the report as an implementation-readiness artifact, not as prose; prefer material gaps over style rewrites and assign severity to each finding; use domain-specific reviewers when the report implies a domain (see [references/domain-lenses.md](references/domain-lenses.md)); cite provided report sections when possible and the source of any external or project-specific fact used.
+Always review the report as an implementation-readiness artifact, not as prose; prefer material gaps over style rewrites and assign severity to each finding; use domain-specific reviewers when the report implies a domain (see [../dev-workflow-orchestrator/references/reviewer-core/domain-lenses.md](../dev-workflow-orchestrator/references/reviewer-core/domain-lenses.md)); cite provided report sections when possible and the source of any external or project-specific fact used.
 
 ## Input handling
 
-If no research report is provided, ask for it or the relevant sections. Infer an unstated domain and state the assumption; ask for clarification only when the missing context would materially change the verdict. Treat reports from [../research-guide/SKILL.md](../research-guide/SKILL.md) as first-class input. If the user provides a prior `research-reviewer` report or asks for re-review, follow [references/re-review-protocol.md](references/re-review-protocol.md); preserve prior finding ids and include finding dispositions in the new report.
+If no research report is provided, ask for it or the relevant sections. Infer an unstated domain and state the assumption; ask for clarification only when the missing context would materially change the verdict. Treat reports from [../research-guide/SKILL.md](../research-guide/SKILL.md) as first-class input. If the user provides a prior `research-reviewer` report or asks for re-review, follow [../dev-workflow-orchestrator/references/reviewer-core/re-review-protocol.md](../dev-workflow-orchestrator/references/reviewer-core/re-review-protocol.md); preserve prior finding ids and include finding dispositions in the new report.
 
 When repository access is available, spot-check a high-risk sample of project-specific claims before assigning `ready`; record inspected paths or the limitation, and lower confidence with a finding if verification is impossible.
 
@@ -36,7 +36,7 @@ Choose the lightest review depth that can safely judge implementation-planning r
 - **Standard**: default for most reports. Apply the full rubric with proportional detail.
 - **Rigorous**: high-risk, cross-system, security/privacy/compliance-sensitive, migration-heavy, performance-sensitive, regulated, expensive, aggressive-posture, or previously blocked work. Apply all relevant domain lenses, source/evidence checks, risk/rollout scrutiny, and re-review discipline.
 
-Select reviewer roles as analytical lenses, not theatrical personas, per [references/reviewer-roles.md](references/reviewer-roles.md); include a Domain Specialist whenever the domain is stated, implied, or requested. State the active roles near the start of the review.
+Select reviewer roles as analytical lenses, not theatrical personas, per [../dev-workflow-orchestrator/references/reviewer-core/reviewer-roles.md](../dev-workflow-orchestrator/references/reviewer-core/reviewer-roles.md); include a Domain Specialist whenever the domain is stated, implied, or requested. State the active roles near the start of the review.
 
 ### 2. Parse and audit the report
 
@@ -53,7 +53,7 @@ Core lenses:
 - Domain readiness: specialized constraints and best practices are considered.
 - Handoff readiness: an implementation planner can turn the report into a plan without inventing missing decisions.
 
-Use [references/validation-rubric.md](references/validation-rubric.md) for severity and verdict rules; use [references/domain-lenses.md](references/domain-lenses.md) when specialized domain review is requested or implied.
+Use [references/validation-rubric.md](references/validation-rubric.md) for severity and verdict rules; use [../dev-workflow-orchestrator/references/reviewer-core/domain-lenses.md](../dev-workflow-orchestrator/references/reviewer-core/domain-lenses.md) when specialized domain review is requested or implied.
 
 ### 3. Assign findings and verdict
 
@@ -69,13 +69,13 @@ Every material finding must include:
 
 Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `ready`, `conditionally ready`, `needs revision`, or `blocked`. Never rubber-stamp a ready verdict — the rubric lists the sections whose absence or contradiction blocks `ready`.
 
-### 4. Run Grilling Mode
+### 4. Interrogate material uncertainty
 
-Run Grilling Mode for standard and rigorous reviews by default; skip it for focused reviews unless explicitly requested, and at any depth on an explicit no-grilling request. It supplements — never replaces — evidence gathering, severity assignment, and the verdict. Build a decision tree from blocker and major findings, material questions, contradictions, and high-impact assumptions, and work it per [references/grilling-protocol.md](references/grilling-protocol.md), which defines rounds, question format, option limits, Recommended marking, stop-grilling semantics, and completion criteria.
+For standard and rigorous reviews by default (skip for focused reviews unless requested, and at any depth on an explicit request not to): interrogate blocker and major findings, material questions, contradictions, and high-impact assumptions directly in the review report, and record challengeable assumptions as such. Resolve from the report, repository, or cited sources whatever can be established as fact before raising anything to the user; what remains is a user decision — present it as a small, answerable question with the defensible options and their trade-offs, marking the evidence-favored one as Recommended. Never infer an answer from silence: preserve unanswered questions as findings or open questions. This supplements — never replaces — evidence gathering, severity assignment, and the verdict.
 
 ### 5. Self-review and produce the review-report
 
-Run [references/review-quality-checklist.md](references/review-quality-checklist.md) and fix inline any severity, verdict, gate, or handoff mismatch. Then produce the review-report using [references/review-report-template.md](references/review-report-template.md) — concise but specific enough for the author to revise the research report.
+Run [../dev-workflow-orchestrator/references/reviewer-core/review-quality-checklist.md](../dev-workflow-orchestrator/references/reviewer-core/review-quality-checklist.md) and fix inline any severity, verdict, gate, or handoff mismatch. Then produce the review-report using [references/review-report-template.md](references/review-report-template.md) — concise but specific enough for the author to revise the research report.
 
 #### Artifact output path
 

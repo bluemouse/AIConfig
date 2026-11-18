@@ -36,7 +36,7 @@ Read the plan as given — status, input mode, planning depth, execution recomme
 
 ### 2. Select reviewer roles
 
-Use roles as review lenses, not a staged debate; state active roles near the start. Select roles via [references/reviewer-roles.md](references/reviewer-roles.md) and specialized checks via [references/domain-lenses.md](references/domain-lenses.md), adding a Domain Specialist when the domain warrants. Use fewer lenses for focused review only when the omitted lenses cannot affect execution readiness; use all relevant domain lenses for rigorous review.
+Use roles as review lenses, not a staged debate; state active roles near the start. Select roles via [../dev-workflow-orchestrator/references/reviewer-core/reviewer-roles.md](../dev-workflow-orchestrator/references/reviewer-core/reviewer-roles.md) and specialized checks via [../dev-workflow-orchestrator/references/reviewer-core/domain-lenses.md](../dev-workflow-orchestrator/references/reviewer-core/domain-lenses.md), adding a Domain Specialist when the domain warrants. Use fewer lenses for focused review only when the omitted lenses cannot affect execution readiness; use all relevant domain lenses for rigorous review.
 
 ### 3. Audit the plan from multiple angles
 
@@ -50,7 +50,7 @@ Apply input-mode-specific emphasis:
 | Direct spec | Verify the plan does not invent product, architecture, or acceptance decisions absent from the spec; mark source-alignment confidence accordingly. |
 | Codebase-led | Spot-check named files, interfaces, tests, commands, and repository conventions when tools are available; flag invented paths or unsupported assumptions. |
 | Plan normalization | Confirm the thin/external plan was expanded into traceability, TDD-first tests, task-level verification, readiness status, and no placeholders. |
-| Review repair loop | Preserve finding ids, audit dispositions before adding new findings, and use [references/re-review-protocol.md](references/re-review-protocol.md). |
+| Review repair loop | Preserve finding ids, audit dispositions before adding new findings, and use [../dev-workflow-orchestrator/references/reviewer-core/re-review-protocol.md](../dev-workflow-orchestrator/references/reviewer-core/re-review-protocol.md). |
 | Stage-exit review | Compare completed stage artifacts (implementation report + audit + code review) against plan §4 assumptions and §10 stage breakdown for remaining stages. Emit `plan-current` (light refinement) or `plan-stale` (full re-plan). See [references/stage-exit-review-contract.md](references/stage-exit-review-contract.md) for the input contract, comparison surface, verdict semantics, and evidence threshold. |
 
 ### 4. Assign findings and verdict
@@ -63,7 +63,7 @@ Assign one verdict per [references/validation-rubric.md](references/validation-r
 
 ### 5. Self-review before handoff
 
-Before presenting the report, run [references/review-quality-checklist.md](references/review-quality-checklist.md). Fix the report inline when the checklist catches a mismatch between severity, verdict, gate, or Guide handoff content.
+Before presenting the report, run [../dev-workflow-orchestrator/references/reviewer-core/review-quality-checklist.md](../dev-workflow-orchestrator/references/reviewer-core/review-quality-checklist.md). Fix the report inline when the checklist catches a mismatch between severity, verdict, gate, or Guide handoff content.
 
 ### 6. Produce the review-report
 
@@ -86,7 +86,7 @@ Review gate: choose one:
 
 If the verdict is blocked or needs revision, do not offer accept or execute as executable-ready options. Offer `execute` only when the verdict is `validated`, or when the verdict is `conditionally validated` and the user explicitly accepts the conditions as execution risks.
 
-For updated plans, follow [references/re-review-protocol.md](references/re-review-protocol.md): after a `blocked` verdict, the repaired plan must be re-reviewed before execution. After `needs revision`, re-review the updated plan unless every finding was trivial and self-evidently fixed. After `conditionally validated`, re-review only if the conditions changed the plan's structure or risk; otherwise proceed with the accepted risks recorded.
+For updated plans, follow [../dev-workflow-orchestrator/references/reviewer-core/re-review-protocol.md](../dev-workflow-orchestrator/references/reviewer-core/re-review-protocol.md): after a `blocked` verdict, the repaired plan must be re-reviewed before execution. After `needs revision`, re-review the updated plan unless every finding was trivial and self-evidently fixed. After `conditionally validated`, re-review only if the conditions changed the plan's structure or risk; otherwise proceed with the accepted risks recorded.
 
 ## Stage-exit review mode
 

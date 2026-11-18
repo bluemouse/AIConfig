@@ -30,60 +30,35 @@ afterward for an optional read-only final diff review); with no change set to re
 
 ## Resolving The Source (Review Target)
 
-| # | Target | Command |
-|---|--------|---------|
-| 1 | Staged changes | `git --no-pager diff --staged` |
-| 2 | Unstaged changes | `git --no-pager diff` |
-| 3 | All working tree changes | `git --no-pager diff HEAD` (staged + unstaged vs HEAD), plus `git status --porcelain` to surface any new untracked files — `git diff` never shows untracked content |
-| 4 | Last commit (HEAD) | `git --no-pager show HEAD` (equivalently `git --no-pager diff HEAD~1..HEAD`) |
-| 5 | Specific commit | `git --no-pager show <sha-or-ref>` |
-| 6 | Range of commits | see below |
-| 7 | Branch changes (pre-push) | see below |
-
-**Run all git commands in sync terminal mode.** `git diff`, `git show`, and `git log` all
-invoke the default pager (`less`) when stdout is a TTY and **must** use `--no-pager` (or
-`GIT_PAGER=cat`) so they do not block on stdin and stall the review.
-
-**Branch changes (pre-push)** — everything on the current branch since it diverged from a
-base ref, **plus** all local uncommitted edits (staged and unstaged). This is the usual
-"review before I push" or "review my branch" target.
-
-1. Resolve `<base>`: use a base the user named (e.g. `main`); otherwise infer the repo's
-   default branch (`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null`, or
-   `origin/main` / `origin/master`, or local `main` / `master`).
-2. Compute merge-base: `MB=$(git merge-base HEAD <base>)`.
-3. Gather the patch: `git --no-pager diff "$MB"` — diff from merge-base to the current
-   working tree (includes committed branch commits and local index/worktree changes).
-4. Surface untracked files: `git status --porcelain` (same as other targets — diff never
-   shows untracked content).
-5. Record in the report: target `branch changes`, base ref, merge-base sha, and the
-   resolved command `git --no-pager diff $(git merge-base HEAD <base>)`.
-
-**Range of commits** (#6): two-dot `A..B` is a literal tree-to-tree diff; three-dot
-`A...B` (the usual "my branch vs main") diffs from the merge-base so post-divergence
-base commits don't pollute it — prefer `git --no-pager diff A...B` there. "Last N
-commits": one cumulative `git --no-pager diff HEAD~N..HEAD`, or per-commit via
-`git --no-pager log --oneline -n N` then `git --no-pager show <sha>`. If genuinely
-unclear which is meant, ask one line: `A...B` (since divergence) or `A..B`?
-
-**Resolution rule**: if the source is unspecified and cannot be inferred from context
-(e.g. "review my branch against main" → branch changes; explicit `A..B` / `A...B` →
-range), default to **staged changes** (`git --no-pager diff --staged`) and proceed —
-state the assumed target in the **Review Target** section of the output; do not ask
+Resolve one of: **staged** (`git --no-pager diff --staged`, the default when unspecified
+and uninferable), **unstaged** (`git --no-pager diff`), **all working tree**
+(`git --no-pager diff HEAD`), **last commit** (`git --no-pager show HEAD`), **specific
+commit** (`git --no-pager show <sha-or-ref>`), **commit range**, or **branch changes**
+(pre-push). State the assumed target in the **Review Target** section; do not ask
 unless **Interactive Mode** is triggered.
 
-## Empty Or Blocked Diff
+Durable git gotchas for every target:
 
-Handle before scope passes. **Empty diff** (no hunks, no relevant untracked files): stop
-— tell the user in one sentence what target was checked (state the resolved command); no
-report. **Blocked diff** (git fails, or status shows changes but the patch is unusable):
-state the blocker, then fall back to **natural-language review** — build a change list
-from `git status --porcelain`, `git --no-pager diff --name-only`, recent log, or
-user-named paths, read those files, review against a per-file `Change description` block,
-and mark the report target `natural-language fallback`; never pretend a diff succeeded.
-**Untracked-only changes**: read the untracked files (ask once whether to include them if
-the set is large) and note in **Review target** that coverage is untracked-file review,
-not a git patch.
+- Run all git commands in sync terminal mode with `--no-pager` (or `GIT_PAGER=cat`) —
+  `git diff`/`show`/`log` block on the pager when stdout is a TTY.
+- `git diff` never shows untracked content: run `git status --porcelain` alongside and
+  read any untracked files.
+- **Branch changes**: resolve the base (user-named, else the repo default branch),
+  compute the merge-base, and diff from it — `git --no-pager diff $(git merge-base HEAD
+  <base>)` — so post-divergence base commits don't pollute the patch; it also includes
+  local uncommitted edits. **Range**: prefer three-dot `A...B` (merge-base diff, the
+  usual "my branch vs main") over two-dot `A..B` (literal tree-to-tree); if genuinely
+  unclear which is meant, ask one line.
+
+**Empty diff** (no hunks, no relevant untracked files): stop — tell the user in one
+sentence what target was checked; no report. **Blocked diff** (git fails or the patch
+is unusable): state the blocker, then fall back to **natural-language review** — build
+a change list from `git status --porcelain`, `git --no-pager diff --name-only`, recent
+log, or user-named paths, read those files, review against a per-file `Change
+description` block, and mark the report target `natural-language fallback`; never
+pretend a diff succeeded. **Untracked-only changes**: read the untracked files (ask
+once whether to include them if the set is large) and note in **Review target** that
+coverage is untracked-file review, not a git patch.
 
 ## Large-Diff Handling
 
@@ -128,21 +103,12 @@ cross-scope dedup → adversarial verify → final gap sweep. Cap at **15–20**
 
 Trigger phrases: "review interactively," "ask me first," "guided review," "walk me
 through it," or equivalent. When triggered, ask about all three axes together in one
-message — even overriding anything already stated, to confirm — before starting:
-
-```
-Let's set this up:
-1. What should I review? (staged / unstaged / all changes / last commit / specific
-   commit / commit range / branch changes)
-2. Which scopes? (design, correctness, maintainability, security, performance, tests —
-   default: all six)
-3. How deep? (basic / standard / deep — default: standard)
-```
-
-Follow-ups: specific commit → ask for the SHA or ref; range → ask for base and tip
-(e.g. `main..my-branch` / `main...my-branch`) or how many recent commits; branch changes
-→ ask for the base ref only when it isn't obvious (default: repo default branch). Outside
-interactive mode, all three axes default silently per the rules above.
+message — even overriding anything already stated, to confirm — before starting: (1)
+the review target (staged / unstaged / all changes / last commit / specific commit /
+commit range / branch changes), (2) the scopes (default: all six), and (3) the effort
+(default: standard). Ask for the SHA/ref, range endpoints, or base ref only when not
+already supplied. Outside interactive mode, all three axes default silently per the
+rules above.
 
 ## Review Workflow
 
@@ -150,7 +116,7 @@ interactive mode, all three axes default silently per the rules above.
    determined.
 2. **Resolve scope & effort** — defaults, or the interactive menu if triggered.
 3. **Gather context and the diff** — per `review-principles.md` (**Context to gather
-   first**): run the resolved git command(s); apply **Empty Or Blocked Diff** and
+   first**): run the resolved git command(s); apply **empty-or-blocked-diff rules** and
    **Large-Diff Handling** as triggered; run focused automated checks when feasible and
    record results; read surrounding code, call sites, and existing tests as needed. Chat
    context (requirements, decisions, known bugs, risk tolerance discussed earlier)
@@ -194,7 +160,7 @@ Return a findings-first report in chat using
 `<SKILL_ROOT>/references/review-report-template.md` as the **single source of truth**
 for section order, field names, severity labels, and formatting — unless the user
 requested a different format; keep process narration brief and do not duplicate the
-template body here. When git diff was empty, follow **Empty Or Blocked Diff** instead of
+template body here. When git diff was empty, follow **empty-or-blocked-diff rules** instead of
 emitting a full template; when large-diff mode truncated coverage, fill in the
 template's coverage fields. Apply the **Finding quality bar** and **Constructive
 feedback** sections of `review-principles.md` to every finding; state explicitly when no
@@ -263,32 +229,6 @@ not skip the in-chat report unless the user explicitly asks to post silently.
   before running any scope's pass, and required verbatim in parallel pass prompts at
   `deep` effort.
 - `<SKILL_ROOT>/references/parallel-scope-passes.md` — deep-effort dispatch: scope-pass
-  prompt template, reconciliation/verify/gap-sweep detail, and per-environment dispatch
-  mechanics.
-
-## Tool notes
-
-Deep-effort dispatch mechanics per environment live in
-`<SKILL_ROOT>/references/parallel-scope-passes.md` (**Environment dispatch**); these are
-the per-tool deltas only.
-
-### Claude Code
-
-One subagent per *selected* scope in a single turn; each prompt carries the full
-resolved diff (or exact git commands), the intent summary, and verbatim checklist
-bullets. On Claude.ai (no Claude Code CLI), run scope passes sequentially yourself.
-
-### Cursor
-
-Same flow via the **Task tool** with `subagent_type: "generalPurpose"` (Read/Grep/Shell
-access). You receive only each subagent's **final text reply**, not its tool calls — see
-the references file for the required ReportFindings append block. For a quick native
-GitHub post you may suggest the built-in `/code-review --comment`, but prefer
-`github-guide` for `REQUEST_CHANGES`, multi-comment batching, or thread resolution via
-`gh api`.
-
-### GitHub Copilot
-
-No parallel subagents — run scope passes **sequentially** in one session, notes separate
-per scope. Do not skip the verify or gap-sweep stages — they are what separate `deep`
-from `standard`.
+  prompt template, reconciliation/verify/gap-sweep detail, and **per-environment
+  dispatch mechanics, including the per-tool deltas (Claude Code, Claude.ai, Cursor,
+  GitHub Copilot)**.
