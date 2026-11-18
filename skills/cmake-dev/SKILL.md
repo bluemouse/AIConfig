@@ -105,9 +105,7 @@ Verified against [cmake.org](https://cmake.org/cmake/help/latest/) — see [SOUR
 
 | Task | Read |
 |------|------|
-| Library/executable/object/interface target choice | [target-types.md](references/target-types.md) |
-| PUBLIC / PRIVATE / INTERFACE on includes, links, defs, options | [visibility-specifiers.md](references/visibility-specifiers.md) |
-| `target_compile_options`, definitions, `cxx_std_*` features | [compile-options.md](references/compile-options.md) |
+| Target types, visibility, compile options — non-obvious rules | [non-obvious-cmake-facts.md](references/non-obvious-cmake-facts.md) |
 | System packages, CONFIG vs MODULE, optional deps | [find-package.md](references/find-package.md) |
 | Vendored deps, `FetchContent_Declare` / `MakeAvailable` | [fetchcontent.md](references/fetchcontent.md) |
 | `enable_testing`, `add_test`, labels, CTest properties | [testing.md](references/testing.md) |

@@ -51,9 +51,9 @@ kotlinc file.kt -include-runtime -d app.jar && java -jar app.jar
 | Task | Read |
 |------|------|
 | Extension static resolution, sealed `when` exhaustiveness | [patterns.md](references/patterns.md) |
-| Project layout, `kotlinc`, compiler options, ktlint/detekt, KDoc | [tooling.md](references/tooling.md) |
+| Toolchain rules, `kotlinc` repros, dependency hygiene, check script | [tooling.md](references/tooling.md) |
 | Compiler/runtime/performance debugging | [debugging.md](references/debugging.md) |
-| Style, correctness, efficiency, API design, review checklist | [best-practices.md](references/best-practices.md) |
+| Non-obvious null-safety, coroutine, collection, and validation rules | [best-practices.md](references/best-practices.md) |
 | `runTest`, virtual time, dispatchers, Flow tests, coroutine flakes | [coroutine-testing.md](references/coroutine-testing.md) |
 | Failed-test diagnosis, flake triage | [debugging-flaky-tests.md](references/debugging-flaky-tests.md) |
 | Gradle build files, catalogs, task wiring, CI, caches | [gradle-dev](../gradle-dev/SKILL.md) |
@@ -68,9 +68,9 @@ kotlinc file.kt -include-runtime -d app.jar && java -jar app.jar
 ## References
 
 - [patterns.md](references/patterns.md): non-obvious gotchas — extension static resolution and sealed `when` exhaustiveness.
-- [tooling.md](references/tooling.md): project layout, `kotlinc`, compiler options, lint/static analysis, KDoc/Dokka, and dependency hygiene pointers.
+- [tooling.md](references/tooling.md): toolchain rules, `kotlinc` repros, dependency hygiene, and the local check script.
 - [debugging.md](references/debugging.md): compiler/runtime/performance debugging and verification commands.
-- [best-practices.md](references/best-practices.md): style, correctness, efficiency, API design, concurrency, documentation, and review checklist.
+- [best-practices.md](references/best-practices.md): non-obvious null-safety, coroutine, collection, and validation rules.
 - [coroutine-testing.md](references/coroutine-testing.md): `runTest`, dispatchers, virtual time, cancellation, Flow tests, and flaky coroutine triage.
 - [debugging-flaky-tests.md](references/debugging-flaky-tests.md): failed-test diagnosis, flake triage, concurrency/time/random/global-state failure modes, and stabilization checklist.
 - [source-notes.md](references/source-notes.md): source synthesis and scope notes.

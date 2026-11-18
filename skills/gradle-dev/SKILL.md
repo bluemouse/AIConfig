@@ -23,7 +23,7 @@ This skill may explain general Gradle concepts that Android builds inherit, but 
 
 1. Load only the needed references (see **Reference routing** below).
 2. Prefer project-local truth over generic snippets. Preserve the existing DSL, plugin versions, repository policy, version catalog, and module structure unless the user asks to modernize them.
-3. Make the smallest safe build change. Avoid broad `allprojects`, `subprojects`, `afterEvaluate`, eager task lookup, dynamic versions, hidden repository additions, and global mutable build state.
+3. Make the smallest safe build change. Prefer target-scoped lazy configuration; reach for global hooks (`allprojects`, `subprojects`, `afterEvaluate`, eager task lookup, dynamic versions, hidden repository additions, global mutable build state) only when no supported lazy alternative exists, and note the maintenance cost in the build.
 4. Validate with the wrapper. Prefer `./gradlew help` for configuration validation, then the smallest relevant task, then `./gradlew check` or CI-equivalent tasks.
 5. Explain the Gradle-specific reason for changes: lifecycle phase, lazy provider, configuration/cache behavior, variant/attribute resolution, toolchain, or task graph impact.
 

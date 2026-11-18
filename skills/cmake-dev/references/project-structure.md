@@ -64,6 +64,6 @@ project/
 
 ## See also
 
-- [target-types.md](target-types.md) — libraries and executables in subdirs
+- [non-obvious-cmake-facts.md](non-obvious-cmake-facts.md) — target-type and visibility non-obvious rules
 - [generator-expressions.md](generator-expressions.md) — BUILD/INSTALL interfaces
 - [installation.md](installation.md) — exporting installed layouts

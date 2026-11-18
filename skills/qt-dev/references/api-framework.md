@@ -3,13 +3,11 @@
 ## Table of contents
 
 1. Required scope
-2. Core object model
-3. Event loop and threading model
-4. Widgets application framework
-5. Designer and `.ui` files
-6. Model/view for graphics tools
-7. QWindow and render-surface APIs
-8. API selection checklist
+2. Widgets application framework
+3. Designer and `.ui` files
+4. Model/view for graphics tools
+5. QWindow and render-surface APIs
+6. API selection checklist
 
 ## 1. Required scope
 
@@ -25,37 +23,11 @@ Minimum module map (aligned with official Qt 6 module overviews):
 
 Link each module with `find_package(Qt6 REQUIRED COMPONENTS ...)` and `target_link_libraries(... Qt6::Core|Gui|Widgets|Test)` per the [Build with CMake](https://doc.qt.io/qt-6/cmake-manual.html) overview.
 
-## 2. Core object model
+The object model (parent ownership, `Q_OBJECT`, `Q_DISABLE_COPY_MOVE`, function-pointer
+`connect()`), the GUI-thread rule, and the queued-connection boundary are covered in the
+skill `SKILL.md` **Rules** section — they are not repeated here.
 
-Use `QObject` for objects that need signals/slots, dynamic properties, timers, events, or parent-child ownership. Key rules:
-
-- Add `Q_OBJECT` to QObject subclasses with signals, slots, properties, or invokable methods.
-- Prefer parent ownership for QObject trees: parent widgets own child widgets; windows/dialogs own their UI objects.
-- Use RAII (`std::unique_ptr`, stack objects, custom deleters) for non-QObject resources and native graphics handles.
-- Use `QPointer<T>` when observing a QObject that may be deleted elsewhere.
-- Disable copying/moving of QObject subclasses with `Q_DISABLE_COPY_MOVE(ClassName)`.
-- Use function-pointer connects, not string macros, unless dynamically resolving signals by name.
-
-Canonical connection pattern:
-
-```cpp
-connect(action, &QAction::triggered, this, &MainWindow::openScene);
-connect(model, &SceneModel::selectionChanged,
-        this, &PropertiesPanel::setSelection,
-        Qt::QueuedConnection); // required when crossing threads
-```
-
-## 3. Event loop and threading model
-
-Qt widgets and windows belong to the GUI thread. Never create, mutate, paint, show, or delete widgets from worker threads. Keep rendering engine work behind a thread-safe boundary:
-
-- GUI thread: widgets, actions, menus, docking, event routing, `QWindow`/container ownership, user-facing state.
-- Render thread or engine thread: GPU command preparation, resource uploads, asynchronous shader/asset work.
-- Boundary: queued signals/slots, immutable command messages, lock-free queues, mutex-protected state, or atomics.
-
-Do not block the GUI event loop with file I/O, shader compilation, scene import, GPU waits, or synchronous network/IPC. Use progress signals and cancellation.
-
-## 4. Widgets application framework
+## 2. Widgets application framework
 
 Prefer a standard desktop graphics-tool shell:
 
@@ -86,7 +58,7 @@ private:
 };
 ```
 
-## 5. Designer and `.ui` files
+## 3. Designer and `.ui` files
 
 Use Qt Widgets Designer for stable form layout, not for application architecture.
 
@@ -99,7 +71,7 @@ Rules:
 - Use Designer layouts, size policies, tab order, buddies, object names, and widget promotion for custom widgets.
 - Promote custom viewport placeholder widgets only when the final widget is a `QWidget`. For a `QWindow`-based renderer, create a container in C++ with `QWidget::createWindowContainer()`.
 
-## 6. Model/view for graphics tools
+## 4. Model/view for graphics tools
 
 Use model/view for scene graphs, asset browsers, render passes, resource tables, diagnostics, and property lists.
 
@@ -109,7 +81,7 @@ Use model/view for scene graphs, asset browsers, render passes, resource tables,
 - Keep model data independent from GPU object lifetime. Store stable IDs/handles, not raw pointers to short-lived resources.
 - Avoid expensive queries in `data()`; cache derived display values and invalidate deliberately.
 
-## 7. QWindow and render-surface APIs
+## 5. QWindow and render-surface APIs
 
 Use `QWindow` for native rendering surfaces and `QWidget` for surrounding UI. A `QWindow` can be embedded in a widget hierarchy with `QWidget::createWindowContainer()`, but this creates native child-window behavior with limitations.
 
@@ -122,7 +94,7 @@ Important APIs:
 - `QWindow::devicePixelRatio()` and `QEvent::DevicePixelRatioChange` for high-DPI render target resizing.
 - `QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed` for releasing swapchain/surface-bound resources.
 
-## 8. API selection checklist
+## 6. API selection checklist
 
 - Need normal desktop controls: Widgets.
 - Need a form: Designer `.ui` + wrapper class.

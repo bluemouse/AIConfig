@@ -70,12 +70,11 @@ Writing/modernizing: start at [references/capabilities-and-setup.md](references/
 
 ## Anti-patterns
 
-- per-draw descriptor allocation/update; per-resource `vkAllocateMemory`
-- frame-loop `vkDeviceWaitIdle`/`vkQueueWaitIdle`; `ALL_COMMANDS`→`ALL_COMMANDS` as a permanent barrier
-- `VK_IMAGE_LAYOUT_GENERAL` for convenience; updating/freeing resources still read by in-flight frames
-- creating pipelines during gameplay without cache/warmup/fallback
-- too many queues or tiny async-compute tasks; ignoring `OUT_OF_DATE`/`SUBOPTIMAL`
-- inferring feature/extension support from API version instead of querying
+The full list and the performance-triage workflow live in
+[best-practices.md](references/best-practices.md) (§12 "Anti-patterns to flag
+aggressively"); the short form — per-draw descriptor updates, per-resource
+`vkAllocateMemory`, frame-loop wait-idle, global-barrier-as-permanent-sync, gameplay
+pipeline creation, unbounded frames-in-flight, mobile-tiler-as-desktop assumptions.
 
 ## Gotchas
 

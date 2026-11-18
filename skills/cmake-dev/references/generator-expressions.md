@@ -51,6 +51,6 @@ target_compile_definitions(mylib PRIVATE
 
 ## See also
 
-- [compile-options.md](compile-options.md) — genex on compile flags
+- [non-obvious-cmake-facts.md](non-obvious-cmake-facts.md) — genex-gated flags and visibility rules
 - [installation.md](installation.md) — INSTALL_INTERFACE for relocatable exports
 - [cmake-buildsystem(7)](https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html)

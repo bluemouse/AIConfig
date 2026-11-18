@@ -38,9 +38,6 @@ broaden: build, CTest, renderer validation when graphics code changed.
 Default to these unless project conventions contradict them:
 
 - Qt 6 + CMake + Widgets only; reject qmake, QML, and Qt 5 compatibility paths.
-- CMake: `find_package(Qt6 REQUIRED COMPONENTS ...)`, `qt_standard_project_setup()`,
-  `qt_add_executable()`, target-based linking, CTest for tests.
-- `QApplication` for widget apps; `QGuiApplication` only when there are no widgets.
 - QObject parent ownership for QObject trees; RAII for native graphics handles; document who
   owns every QWidget, QWindow, surface, and Vulkan/Metal handle at each Qt boundary.
 - Function-pointer `connect()`; `Qt::QueuedConnection` across threads; widgets and models stay

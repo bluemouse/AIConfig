@@ -8,15 +8,16 @@ description: Write, review, and refactor modern C++20 code following C++ Core Gu
 Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve
 paths to `references/` from that directory.
 
-Write and review C++ code against the **C++ Core Guidelines**, using **C++20** as the
-baseline language standard. Read bundled references on demand — do not load all reference
-files unless the task requires them.
+Write and review C++ code against the **C++ Core Guidelines**
+([full rules](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)), using
+**C++20** as the baseline language standard. Read bundled references on demand — do not
+load all reference files unless the task requires them.
 
 ## Language Standard
 
 - Target **C++20** (`-std=c++20` or CMake `cxx_std_20`).
-- Prefer C++20 features from [modern-cpp20.md](references/modern-cpp20.md) over older
-  idioms.
+- Version gates and non-obvious C++20 rules:
+  [modern-cpp20.md](references/modern-cpp20.md)
 - Do **not** use C++23-only features (e.g. `std::expected`, `std::print`) unless the
   project explicitly targets a newer standard.
 
@@ -46,9 +47,8 @@ These themes apply to every C++ change:
 5. **Value semantics** — return by value; smart pointers for ownership; raw pointers as
    non-owning observers
 6. **Minimize complexity** — KISS, DRY, YAGNI; simple code is correct code
-   (F.2/F.3, ES.5)
-7. **Measure before optimizing** — profile first; see [Per.*](references/core-guidelines.md#performance-per)
-   in core-guidelines
+7. **Measure before optimizing** — profile first; see
+   [cpp-performance-guide](../cpp-performance-guide/SKILL.md)
 
 ## Workflow
 
@@ -65,10 +65,10 @@ Before writing or reviewing:
 
 ### 2. Implement
 
-- Apply [core-guidelines.md](references/core-guidelines.md) for classes, functions, RAII,
-  error handling, and naming rules (NL.*)
-- Apply [modern-cpp20.md](references/modern-cpp20.md) for concepts, ranges, concurrency,
-  and modern idioms
+- Apply the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
+  for classes, functions, RAII, error handling, and naming rules (NL.*)
+- Apply [modern-cpp20.md](references/modern-cpp20.md) for version gates and non-obvious
+  C++20 rules
 - Match existing project style when it conflicts with defaults — document intentional
   deviations
 
@@ -110,13 +110,11 @@ rules:
 
 | Task | Read |
 |------|------|
-| Classes, RAII, ownership, functions, error handling | [core-guidelines.md](references/core-guidelines.md) |
-| Naming rules (NL.*), file/header conventions (SF.*) | [core-guidelines.md](references/core-guidelines.md) |
-| Concepts, ranges, coroutines, threading, STL choices | [modern-cpp20.md](references/modern-cpp20.md) |
-| Performance rules (Per.*) | [core-guidelines.md](references/core-guidelines.md#performance-per) |
+| Version gates, concurrency and coroutine pitfalls | [modern-cpp20.md](references/modern-cpp20.md) |
 | CMake, sanitizers, clang-tidy, coverage | [build-and-verification.md](references/build-and-verification.md) |
 | GoogleTest/CTest test targets, flaky tests, pitfalls | **Testing** section + [debugging-flakiness.md](references/debugging-flakiness.md) |
 | Allocators, ownership APIs, move semantics, memory bugs | [cpp-memory-guide](../cpp-memory-guide/SKILL.md) |
+| Performance rules (Per.*) and profiling | [cpp-performance-guide](../cpp-performance-guide/SKILL.md) |
 | Structured debugging method, repro, bisect, debug report | [debugging-guide](../debugging-guide/SKILL.md) |
 
 Read a routing row only when you are about to act on that area with uncertain ground —
@@ -128,9 +126,9 @@ areas you are about to touch.
 
 Complete **both** parts before marking ordinary C++ work done:
 
-1. **Core Guidelines** — rule checklist in
-   [core-guidelines.md](references/core-guidelines.md#quick-reference-checklist)
-   (ownership, types, headers, concurrency, exceptions)
+1. **Core Guidelines** — self-check the diff against the guideline areas it touches
+   (ownership R.*, types ES.*, concurrency CP.*, error handling E.*; full rule text at
+   the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines))
 2. **Build and verification** — toolchain checklist in
    [build-and-verification.md](references/build-and-verification.md#verification-checklist)
    (C++20 build, warnings, static analysis, sanitizers, tests, coverage)
@@ -140,9 +138,8 @@ crash or UB fix, also satisfy debugging-guide's verification discipline before c
 
 ## Resources
 
-- [core-guidelines.md](references/core-guidelines.md) — C++ Core Guidelines rule-ID
-  checklist (P, I, F, C, R, ES, E, Con, CP, T, SL, Enum, SF, NL, Per)
-- [modern-cpp20.md](references/modern-cpp20.md) — C++20 language and library idioms
+- [modern-cpp20.md](references/modern-cpp20.md) — C++20 version gates and non-obvious
+  concurrency/coroutine rules
 - [build-and-verification.md](references/build-and-verification.md) — Toolchain and quality
   gates
 - [debugging-flakiness.md](references/debugging-flakiness.md) — Test failure triage,

@@ -137,27 +137,6 @@ python <SKILL_ROOT>/scripts/krita_source_probe.py --root <krita-root>
 
 If no checkout is available, use the bundled references as a high-confidence map, but phrase source-specific claims as path guidance rather than guaranteed current truth.
 
-## Design posture for new painting applications
-
-When the user is building a new painting application or stroke engine, reuse Krita's architectural lessons without cloning its exact structure blindly:
-
-- Keep document pixels, stroke scheduling, paint operations, resource snapshots, and UI display as separate subsystems.
-- Model strokes as queued jobs with cancellation, undo, dirty-region collection, and optional preview/LOD paths.
-- Use sparse tiled storage or another chunked backing store for large canvases.
-- Separate dab generation from final compositing when dab generation is expensive.
-- Treat GPU acceleration as an explicit design choice with synchronization costs, not a universal replacement for the CPU image model.
-- Define resource lifetime and snapshot semantics before adding complex brush presets.
-
-## Output quality rules
-
-When writing implementation advice:
-
-- Prefer class/file names and concrete state flows.
-- Include edge cases that typically break brush engines.
-- Include a small test matrix for non-trivial changes.
-- Avoid vague statements like "optimize the brush" without naming the hot path: dab generation, postprocess, blit/composite, tile access, dirty update, texture upload, or UI throttling.
-- Distinguish artist-facing terms such as "brush preset" from engine terms such as paintop id, settings object, linked brush resource, texture option, and runtime `KisPaintOp`.
-
 ## Resources
 
 - [SOURCES.md](SOURCES.md) — provenance and external references (read for attribution only)
