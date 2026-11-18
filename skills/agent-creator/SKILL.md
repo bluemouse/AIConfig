@@ -7,6 +7,8 @@ description: Create portable custom agents for GitHub Copilot, Cursor, and Claud
 
 Flow: capture intent → **choose an authoring path** (bootstrap under `agents/<name>/`, preferred, or direct scaffold with `create_agent.py`) → write a tool-neutral body with tool-specific guidance in `## Tool notes` → validate → install (bootstrap) or expand the scaffold (direct) → test with realistic prompts and iterate. Tool-specific execution (spawn mechanics, reload steps, frontmatter fields such as `model` or `readonly`, subagents) lives in the agent file's `## Tool notes` — do not assume subagents, a particular CLI, or a browser unless documented there.
 
+The shared creation skeleton — authoring-path decision, authoritative-edit rule, capture-intake flow, description-tuning loop, output summary, and the generic test-and-iterate loop — lives in [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md); this body holds only the agent-specific delta.
+
 ## When NOT to Use
 
 - **Creating a skill** — use [../skill-creator/SKILL.md](../skill-creator/SKILL.md)
@@ -18,30 +20,18 @@ Flow: capture intent → **choose an authoring path** (bootstrap under `agents/<
 
 ### Capture intent
 
-If the conversation already contains an agent role, extract the name, description, instructions, and success criteria from history; use user-supplied wording **verbatim**. Match the target repository's existing agent conventions (`agents/`, `.claude/agents/`, `.github/agents/`). When the request is ambiguous — agent vs skill vs command unclear, boundaries conflict with the stated role, or nobody can yet say what a good result looks like — run the clarification loop in [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before authoring, and carry its requirement ledger into the instructions and `description`.
+Per [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md). Agent-specific intake: extract name, description, instructions, and success criteria; match the target repository's existing agent conventions (`agents/`, `.claude/agents/`, `.github/agents/`).
 
 ### Choose authoring path
 
-Pick **one** path before writing files.
+Pick **one** path before writing files, per creation-common.md. For agents:
 
-| Path | When to use | Author here | Install / scaffold |
-| --- | --- | --- | --- |
-| **Bootstrap** | Repo-maintained agent shipped like a product; agent will be revised and reinstalled over time | `agents/<name>/AGENT.md` | `install_portable_agent.py` |
-| **Direct** | One-off agent in a project without `agents/` bootstrap; quick first draft before deciding on bootstrap | `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md` (via script) | `create_agent.py` |
-
-**Authoritative edit rule (applies everywhere below):**
-
-- **Bootstrap agents:** edit `agents/<name>/AGENT.md`, then validate and reinstall. **Never hand-edit installed files** (`.claude/agents/`, `.github/agents/`) for bootstrapped agents.
-- **Direct-scaffold agents:** the installed files are canonical; edit them directly.
-- **Always validate before install and after substantive edits** — fix validation errors before handing off.
-
-### Where to edit (by path)
-
-| Concern | Bootstrap path | Direct path |
+| Path | Author here | Install / scaffold |
 | --- | --- | --- |
-| Tool-neutral behavior | `agents/<name>/AGENT.md` → reinstall | `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md` |
-| Tool-only notes (`## Tool notes`) | Same file, `## Tool notes` section → reinstall | `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md` |
-| Runtime read target | `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md` (install output; do not hand-edit) | Same |
+| **Bootstrap** | `agents/<name>/AGENT.md` | `install_portable_agent.py` |
+| **Direct** | `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md` (via script) | `create_agent.py` |
+
+Authoritative-edit rule and validation flow: [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md). For agents: bootstrap edits go in `agents/<name>/AGENT.md` then reinstall (never hand-edit `.claude/agents/` or `.github/agents/`); direct-scaffold installed files are canonical.
 
 ### Bundled scripts
 
@@ -144,19 +134,20 @@ Tool-neutral above `## Tool notes`: role, workflows, output formats, success cri
 
 ### Iterating
 
-Test with 2–3 realistic prompts on the target tool (spawn mechanics per **Tool notes** below); review runs for correctness, completeness, and efficiency — read transcripts, not just final outputs. Improve at the authoritative edit location, reinstall if bootstrap, re-validate, and repeat until the user is satisfied. Decline requests for misleading, covert, or unauthorized-access agents.
+Test-and-iterate loop: [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md), with spawn mechanics per **Tool notes** below.
 
 ### Description optimization
 
-To tune triggering: draft ~10–20 realistic should-trigger / should-not-trigger queries, mark false positives and false negatives with the user, apply the revised `description` at the authoritative edit location, and reinstall if bootstrap. Unlike skill-creator, there is **no automated description-eval loop for agents** — this process is manual on every tool.
+Per creation-common.md's manual tuning loop — unlike skill-creator, there is **no automated description-eval loop for agents**.
 
 ### Output summary
 
-After creating or installing files, summarize the authoritative edit path, the installed paths, and any assumptions made about instructions or triggers.
+Per [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md).
 
 ### Reference files
 
 - `references/portable-agent-layout.md` — path conventions, layouts, portability notes, and a worked example
+- [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md) — shared authoring skeleton
 
 ---
 

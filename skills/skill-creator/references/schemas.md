@@ -463,3 +463,58 @@ Output from post-hoc analyzer. Located at `<grading-dir>/analysis.json`.
   }
 }
 ```
+
+---
+
+## Eval workspace layout and run loop
+
+The shared workspace layout used when running full evals. Workspace: `<skill-name>-workspace/` sibling to `.agents/skills/`, organized by `iteration-N/` and per-eval directories — create directories as you go.
+
+```
+<skill-name>-workspace/
+└── iteration-N/
+    ├── eval-<ID>/
+    │   ├── eval_metadata.json
+    │   ├── with_skill/outputs/          # run under the skill
+    │   ├── without_skill/outputs/       # baseline for new skills
+    │   ├── old_skill/outputs/           # baseline when comparing versions
+    │   │                                #  (snapshot the prior skill to skill-snapshot/ first)
+    │   │                                #  per run: timing.json, grading.json, optional run_status.json
+    │   └── benchmark.json               # per-iteration aggregate (from aggregate_benchmark)
+    └── feedback.json                    # after user review
+```
+
+Run loop (tools with subagents):
+
+1. **Spawn all runs in one turn** — for each test case, spawn with-skill + baseline subagents together; do not run with-skill first and baselines later. With-skill prompt:
+
+   ```
+   Execute this task:
+   - Skill path: .agents/skills/<skill-name>/
+   - Task: <eval prompt>
+   - Input files: <eval files or "none">
+   - Save outputs to: <workspace>/iteration-<N>/eval-<ID>/with_skill/outputs/
+   - Outputs to save: <artifacts to keep>
+   ```
+
+2. **Assertions while runs execute** — draft objective, descriptively named assertions (skip forced assertions for subjective skills); update `eval_metadata.json` and `evals/evals.json`.
+3. **Capture timing** — when completion notifications include `total_tokens` and `duration_ms`, write `timing.json` in each run directory immediately.
+4. **Grade, aggregate, viewer** — grade with `agents/grader.md` → `grading.json` per run; aggregate:
+
+   ```bash
+   cd <SKILL_CREATOR_ROOT>
+   python -m scripts.aggregate_benchmark <workspace>/iteration-N --skill-name <name> \
+       --primary with_skill --baseline without_skill   # or old_skill
+   ```
+
+   Then an analyst pass with `agents/analyzer.md`, launch the eval viewer, and show results to the human **before** revising the skill. Review viewer:
+
+   ```bash
+   python <SKILL_CREATOR_ROOT>/eval-viewer/generate_review.py \
+     <workspace>/iteration-N \
+     --skill-name "<name>" \
+     --benchmark <workspace>/iteration-N/benchmark.json
+   ```
+
+   Use `--previous-workspace` for iteration 2+; `--static <path>` when no browser is available.
+5. **Feedback loop** — read `feedback.json` when the user is done; empty feedback means accepted. Kill any background viewer server when finished.

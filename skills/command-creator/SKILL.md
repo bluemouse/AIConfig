@@ -18,6 +18,8 @@ At a high level, creating a command goes like this:
 - Rewrite bootstrap content based on feedback, then reinstall
 - Repeat until satisfied
 
+The shared creation skeleton — authoring-path decision, authoritative-edit rule, capture-intake flow, description-tuning loop, output summary, and the generic test-and-iterate loop — lives in [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md); this body holds only the command-specific delta.
+
 Commands install as **command-skills**: one `.agents/skills/cmd-<name>/SKILL.md` (install dir carries the `cmd-` prefix; the slash command stays `/<name>`) with `disable-model-invocation: true` and an invocation-gated description (≤120 chars, states the user explicitly invokes `/<name>`). Every coding agent exposes it as `/<name>`; the model never self-invokes it.
 
 Your job is to figure out where the user is in this process and help them progress. If they already have a draft command, go straight to review and iterate.
@@ -29,21 +31,11 @@ Your job is to figure out where the user is in this process and help them progre
 
 ---
 
-## Communicating with the user
-
-Users may range from experts to people new to slash commands. Match their vocabulary. Briefly explain terms like "bootstrap", "frontmatter", "command-skill", or "kebab-case" when unsure they know them.
-
-If the user provides exact wording for command instructions or the description, use it **verbatim** in generated files.
-
----
-
 ## Creating a command
 
 ### Capture intent
 
-Start by understanding intent. If the conversation already contains a workflow to capture, extract the command name, description, steps, output format, and guardrails from history first. Confirm gaps with the user.
-
-Ask:
+Per [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md). Command-specific intake — ask:
 
 1. What should `/command-name` do when invoked?
 2. Does the user pass arguments after the command? How should they be interpreted?
@@ -53,51 +45,20 @@ Ask:
 6. What must the command **not** do?
 7. Is this a command (explicit `/` invocation) or should it be a **skill** (passive discovery)?
 
-### Interview and research
-
-Ask about edge cases, success criteria, examples, and boundaries before writing files.
-
-The questions above are a fixed intake. When the request is ambiguous beyond them — question 7 does not settle command versus skill, the requested guardrails conflict with the workflow, or one request hides several commands — run the clarification loop in [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before authoring files, and carry its requirement ledger into the command body and `description`.
-
 Check the target repository for existing command conventions. If `commands/` or `.agents/skills/` already exist, match their style.
 
-Read bundled references for tool format rules:
-
-- [portable-command-layout.md](references/portable-command-layout.md)
-- [command-writing-guide.md](references/command-writing-guide.md)
-- [cursor-command-best-practices.md](references/cursor-command-best-practices.md)
-- [claude-command-best-practices.md](references/claude-command-best-practices.md)
-- [copilot-prompt-best-practices.md](references/copilot-prompt-best-practices.md)
-
-Use available research tools (MCP, docs search, similar commands in the repo) when helpful — in parallel when your environment allows.
+Read bundled references for tool format rules (also listed under **Reference files** below).
 
 ### Choose authoring path
 
-Pick **one** path before writing files. Do not hand-edit installed command-skills (`.agents/skills/<name>/`) when bootstrap source exists — edit bootstrap and reinstall.
+Pick **one** path before writing files, per creation-common.md. For commands:
 
-| Path | When to use | Author here | Install / scaffold |
-| --- | --- | --- | --- |
-| **Bootstrap** | Repo-maintained command; repo uses or wants `commands/<name>/`; command will be revised and reinstalled | `commands/<name>/COMMAND.md` | `install_portable_command.py` |
-| **Direct** | One-off command without `commands/` bootstrap; quick scaffold into installed layout | `.agents/skills/cmd-<name>/SKILL.md` (via script) | `create_command.py` |
-
-**Prefer bootstrap when:**
-
-- The command is part of this repo's portable config
-- The user asks to bootstrap, migrate, or reinstall from `commands/<name>/`
-
-**Prefer direct scaffold when:**
-
-- The target project has no `commands/` directory and no plan to add bootstrap source
-- The user wants a fast first draft before adopting bootstrap later
-
-### Where to edit (by path)
-
-| Concern | Bootstrap path | Direct path |
+| Path | Author here | Install / scaffold |
 | --- | --- | --- |
-| Command behavior | `commands/<name>/COMMAND.md` → reinstall | `.agents/skills/cmd-<name>/SKILL.md` |
-| Runtime read target | `.agents/skills/cmd-<name>/SKILL.md` (install output; do not hand-edit) | Same |
+| **Bootstrap** | `commands/<name>/COMMAND.md` | `install_portable_command.py` |
+| **Direct** | `.agents/skills/cmd-<name>/SKILL.md` (via script) | `create_command.py` |
 
-After bootstrap edits, run `install_portable_command.py` before testing in the IDE.
+Authoritative-edit rule and validation flow: [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md). For commands: bootstrap edits go in `commands/<name>/COMMAND.md` then reinstall (never hand-edit `.agents/skills/cmd-<name>/`); direct-path edits go in the installed command-skill. After bootstrap edits, run `install_portable_command.py` before testing in the IDE.
 
 ### Bundled scripts
 
@@ -182,25 +143,9 @@ Follow [command-writing-guide.md](references/command-writing-guide.md):
 - Use `$ARGUMENTS` (the invoking host substitutes it) when the command accepts user input
 - Migrate to skill-creator when the workflow needs passive discovery or bundled resources
 
-### Test and iterate
+### Test and iterate / review and improve
 
-After install:
-
-1. Restart or reload the coding agent session so `/<name>` is rediscovered
-2. Invoke `/command-name` with a realistic prompt
-3. Check output against the stated format and guardrails
-4. Edit bootstrap (or direct paths), reinstall, and retest
-
-Objective commands (fixed workflows, checklists) benefit from concrete test invocations. Subjective commands (tone, design taste) rely on qualitative review.
-
-### Review and improve
-
-When reviewing an existing command:
-
-1. Read bootstrap `COMMAND.md` if present; otherwise read the installed command-skill
-2. Check format rules (frontmatter keys, description length, invocation gating, body neutrality)
-3. Evaluate correctness, completeness, and efficiency
-4. Prefer editing bootstrap and reinstalling over patching installed files
+Test-and-iterate loop: [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md), plus the reload step — after install, restart or reload the coding agent session so `/<name>` is rediscovered before invoking it. When reviewing an existing command, check format rules (frontmatter keys, description length, invocation gating, body neutrality) alongside correctness, completeness, and efficiency; prefer editing bootstrap and reinstalling over patching installed files. Objective commands (fixed workflows, checklists) benefit from concrete test invocations; subjective commands rely on qualitative review.
 
 ### Related skills
 
@@ -218,10 +163,7 @@ When reviewing an existing command:
 - [cursor-command-best-practices.md](references/cursor-command-best-practices.md)
 - [claude-command-best-practices.md](references/claude-command-best-practices.md)
 - [copilot-prompt-best-practices.md](references/copilot-prompt-best-practices.md)
-
-### Core loop summary
-
-Capture intent → choose bootstrap vs direct → author tool-neutral `COMMAND.md` → validate → install as command-skill → reload → test `/command-name` → iterate → expand test cases when stable.
+- [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md) — shared authoring skeleton
 
 ## Tool notes
 

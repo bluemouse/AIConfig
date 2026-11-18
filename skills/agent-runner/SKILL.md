@@ -57,18 +57,7 @@ Never let multiple agents concurrently edit the same files. Never let subagents 
 
 ### 3. Create task packets
 
-Each packet must include:
-
-- objective and exact scope
-- relevant files, symbols, errors, commands, and constraints
-- permitted write set or explicit read-only status
-- forbidden changes and non-goals
-- verification command or acceptance criteria
-- an instruction to run verification with output-limiting flags and return
-  summarized results — never full command logs in the return
-- required return format
-
-Prefer small packets that fit one problem domain; include source excerpts or paths, not the full parent history.
+Build each packet per the template in [references/task-packet.md](references/task-packet.md): objective and exact scope, relevant files/symbols/errors/commands/constraints, permitted write set or read-only status, forbidden changes and non-goals, verification command or acceptance criteria, an instruction to run verification with output-limiting flags and return summarized results (never full command logs), and the required return format. Prefer small packets that fit one problem domain; include source excerpts or paths, not the full parent history.
 
 Subagents cannot ask the user anything, so every ambiguity left in a packet becomes a silent assumption or a `blocked` return. Settle unclear objectives, scope, or acceptance criteria in the parent session with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) before dispatching.
 
@@ -110,9 +99,7 @@ Never ask one implementation agent to review its own work; for high-risk changes
 - Use least privilege; prefer deterministic verification over agent confidence.
 - Preserve user changes and existing uncommitted work; stop and escalate when isolation cannot prevent destructive interference.
 
-## Example partition
-
-Six failures across three unrelated test files → three packets, one per file, launched together, each diagnosing and verifying only its domain; the parent reviews all diffs and runs the combined suite. Never dispatch a packet such as "fix all tests," and never omit errors, constraints, ownership, or expected output.
+Never dispatch a packet such as "fix all tests," and never omit errors, constraints, ownership, or expected output.
 
 ## Tool notes
 

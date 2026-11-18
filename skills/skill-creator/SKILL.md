@@ -7,6 +7,8 @@ description: Create portable skills for GitHub Copilot, Cursor, and Claude Code 
 
 At a high level: capture intent → **choose an authoring path** (bootstrap under `skills/<name>/`, preferred, or direct scaffold with `create_skill.py`) → write a tool-neutral `SKILL.md` body with tool-specific guidance in `## Tool notes` → install when bootstrapping → run realistic test prompts with an agent that has the skill → evaluate results (qualitatively, and quantitatively when supported) → rewrite based on feedback → repeat, then expand the test set.
 
+The shared creation skeleton — authoring-path decision, authoritative-edit rule, capture-intake flow, description-tuning loop, output summary, and the generic test-and-iterate loop — lives in [references/creation-common.md](references/creation-common.md); this body holds only the skill-specific delta.
+
 **Tool-specific execution** (how to spawn eval runs, baselines, description optimization, and reload steps) lives in the `## Tool notes` section of the skill — read it after the tool-neutral body. Do not assume subagents, a particular CLI, or a browser unless the Tool notes document them.
 
 Figure out where the user is in this process and help them progress. If they already have a draft skill, go straight to eval/iterate. If they prefer a lightweight pass without formal evals, follow their lead.
@@ -28,25 +30,11 @@ Match the user's vocabulary; briefly explain terms like "Tool notes", "eval", or
 
 ### Capture intent
 
-If the conversation already contains a workflow to capture, extract tools, steps, corrections, and formats from history first; confirm gaps with the user. Ask: what the skill enables, when it should trigger, where files are written, expected output format, tool-specific notes (eval mechanics, reload steps) per tool, and whether to set up test cases (objective outputs benefit; subjective outputs often don't). When ambiguity exceeds this intake — skill vs agent vs command, conflicting requirements, no shared picture of success — run the clarification loop in [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) first and carry its requirement ledger into the skill's scope and `description`. Match existing conventions in the target repo; use research tools (MCP, docs search, similar skills) when helpful.
-
-### Choose authoring path
-
-Pick **one** path before writing files. **Bootstrap** (`skills/<name>/SKILL.md` + optional `references/`, `scripts/`, `assets/`, installed by `install_portable_skill.py`) for repo-maintained skills revised over time. **Direct** (`create_skill.py` scaffolds `.agents/skills/<name>/`) for one-offs or quick first drafts without `skills/` bootstrap.
+Per [references/creation-common.md](references/creation-common.md). Skill-specific intake: what the skill enables, when it should trigger, where files are written, expected output format, tool-specific notes (eval mechanics, reload steps) per tool, and whether to set up test cases (objective outputs benefit; subjective outputs often don't).
 
 ### Where to edit (by path)
 
-| Concern | Bootstrap path | Direct path |
-| --- | --- | --- |
-| Tool-neutral behavior | `skills/<name>/SKILL.md` → reinstall | `.agents/skills/<name>/SKILL.md` |
-| Tool-only notes (`## Tool notes`) | Same file, `## Tool notes` section → reinstall | `.agents/skills/<name>/SKILL.md` |
-| Bundled resources | `skills/<name>/scripts/`, `references/`, `assets/` → reinstall | Same under `.agents/skills/<name>/` |
-| Runtime read target | `.agents/skills/<name>/` (install output) | Same |
-
-Two rules govern every edit — stated once here, applying everywhere below:
-
-1. **Never hand-edit `.agents/skills/` when bootstrap source exists.** Edit `skills/<name>/` and reinstall with `install_portable_skill.py` (reinstall before testing in the IDE). Only on the direct path (no bootstrap source) is `.agents/skills/<name>/SKILL.md` the canonical file to edit directly.
-2. **Validate after every substantive edit:** `quick_validate.py` against the bootstrap path before install, and against the installed path after install or direct scaffold. Fix errors before handing off.
+Per the authoritative-edit rule in [references/creation-common.md](references/creation-common.md). For skills: bootstrap edits go in `skills/<name>/SKILL.md` (+ `references/`, `scripts/`, `assets/`) and reinstall with `install_portable_skill.py`; direct-path edits go in `.agents/skills/<name>/SKILL.md`. Runtime read target is always `.agents/skills/<name>/`.
 
 ### Bundled scripts
 
@@ -54,9 +42,9 @@ Two rules govern every edit — stated once here, applying everywhere below:
 
 ### Anatomy and authoring
 
-Installed layout (single root): `.agents/skills/<skill-name>/` — SKILL.md plus optional `scripts/`, `references/`, `assets/`; one real copy, no per-tool wrappers. Claude Code discovers skills through the `.claude/skills -> ../.agents/skills` bridge symlink (auto-created on install); Cursor and GitHub Copilot read `.agents/skills/` directly.
+Installed layout (single root): `.agents/skills/<skill-name>/` — SKILL.md plus optional `scripts/`, `references/`, `assets/`; one real copy, no per-tool wrappers. Claude Code discovers skills through the `.claude/skills -> ../.agents/skills` bridge symlink (auto-created on install; install refuses and asks you to purge it first if `.claude/skills` is a real legacy directory); Cursor and GitHub Copilot read `.agents/skills/` directly.
 
-**Progressive disclosure:** metadata (frontmatter) → `SKILL.md` body → bundled resources on demand. The body must be **tool-neutral** above `## Tool notes` — no subagent product names, single-vendor CLI assumptions, or reload instructions for one IDE; tool-native mechanics (eval spawn commands, reload steps, description-optimization limits) live in the `## Tool notes` H2 at the end, with `### <Tool>` H3 subsections as needed, omitted entirely when the skill has none. Bootstrap layout, worked install/scaffold/packaging examples, and a quality checklist: `references/portable-skill-layout.md`.
+**Progressive disclosure:** metadata (frontmatter) → `SKILL.md` body → bundled resources on demand. The body must be **tool-neutral** above `## Tool notes`, with tool-native mechanics in that `## Tool notes` H2. Bootstrap layout, worked install/scaffold/packaging examples, and a quality checklist: `references/portable-skill-layout.md`.
 
 **Frontmatter:** `name` — kebab-case (lowercase letters, digits, hyphens; max 64 chars). `description` — primary trigger mechanism: what the skill does **and** when to use it, specific and slightly expansive to avoid under-triggering; keep all "when to use" phrasing here, not the body. `compatibility` — optional, rarely needed.
 
@@ -70,11 +58,9 @@ python <SKILL_CREATOR_ROOT>/scripts/install_portable_skill.py \
   --root <repo_root> --name <skill-name> --source skills/<skill-name> --overwrite
 ```
 
-Install creates the bridge symlink when it does not yet exist; if `.claude/skills` is a real directory (legacy install), install refuses and asks you to purge it first.
+**Direct scaffold:** `create_skill.py --root <repo_root> --name <skill-name> --overwrite` — do **not** hand-create `.agents/skills/` directories. **Standalone copy** outside the single-root layout: `init_skill.py <skill-name> --path <install-path>` — the parent must be a skills root; the validator rejects category subfolders. Both commands in full: worked examples in `references/portable-skill-layout.md`.
 
-**Direct scaffold:** `create_skill.py --root <repo_root> --name <skill-name> --overwrite` — do **not** hand-create `.agents/skills/` directories; use `--overwrite` only when regenerating and the user confirms. **Standalone copy** outside the single-root layout: `init_skill.py <skill-name> --path <install-path>` — the parent must be a skills root (a directory named `skills`); the validator rejects category subfolders. Both commands in full: worked examples in `references/portable-skill-layout.md`.
-
-**Updating an existing skill:** preserve the original `name` unless the user wants a rename; edit at the authoritative location per **Where to edit**. **Output summary** after creating or installing: authoritative edit path, installed skill path, bridge symlink status, and assumptions made about instructions or triggers.
+**Updating an existing skill:** preserve the original `name` unless the user wants a rename; edit at the authoritative location per creation-common.md. Output summary per creation-common.md.
 
 ---
 
@@ -90,75 +76,21 @@ Follow the skill's `## Tool notes` for how to execute eval runs (Task subagent, 
 
 ## Running and evaluating test cases
 
-Follow the skill's `## Tool notes` for how to execute runs (parallel vs sequential, baselines, timing capture). This section defines the **shared workspace layout, run loop, and artifacts** all tools should use when running full evals.
+The shared workspace layout, run-loop artifacts, and grading schemas live in `references/schemas.md` — read it before running a full eval. This section holds only the operating rules:
 
-Do not stop partway through a planned eval iteration. Do not use unrelated testing skills.
-
-Cap concurrent eval runs at the [../agent-runner/SKILL.md](../agent-runner/SKILL.md)
-defaults — at most 4 with-skill/baseline pairs (8 subagents) in flight; queue
-excess test cases in later batches within the same iteration.
-
-Workspace: `<skill-name>-workspace/` sibling to `.agents/skills/`, organized by `iteration-N/` and per-eval directories. Create directories as you go.
-
-### The run loop (tools with subagents)
-
-**Step 1 — Spawn all runs in one turn.** For each test case, spawn two subagents in the **same turn** (with-skill + baseline). Do not run with-skill first and baselines later. Write `eval_metadata.json` per eval directory (assertions may start empty). With-skill prompt:
-
-```
-Execute this task:
-- Skill path: .agents/skills/<skill-name>/
-- Task: <eval prompt>
-- Input files: <eval files or "none">
-- Save outputs to: <workspace>/iteration-<N>/eval-<ID>/with_skill/outputs/
-- Outputs to save: <artifacts to keep>
-```
-
-Baseline: `without_skill/outputs/` for new skills; snapshot the old skill to `skill-snapshot/` for improvements → `old_skill/outputs/`.
-
-**Step 2 — Assertions while runs execute.** Draft objective, descriptively named assertions (skip forced assertions for subjective skills); update `eval_metadata.json` and `evals/evals.json`; explain them to the user.
-
-**Step 3 — Capture timing.** When subagent completion notifications include `total_tokens` and `duration_ms`, write `timing.json` in each run directory immediately.
-
-**Step 4 — Grade, aggregate, viewer.** Grade with `agents/grader.md` → `grading.json` per run; aggregate with `python -m scripts.aggregate_benchmark`; analyst pass with `agents/analyzer.md`; then **always** launch the viewer and show results to the human **before** revising the skill yourself. For iteration 2+, pass `--previous-workspace`.
-
-**Step 5 — Feedback loop.** Read `feedback.json` when the user is done. Empty feedback means accepted. Kill any background viewer server when finished.
-
-### Workspace artifacts
-
-Each eval directory holds `eval_metadata.json` (eval_id, eval_name, prompt, assertions) plus run directories: `with_skill/outputs/` and a baseline (`without_skill/outputs/` for new skills, `old_skill/outputs/` when comparing versions — snapshot the prior shared skill before baseline runs on improvements). Each run directory holds `timing.json` (when your tool provides token/duration data) and `grading.json` (`text`, `passed`, and `evidence` on each expectation — required by the viewer; see `agents/grader.md`). JSON examples for every artifact: `references/schemas.md`.
-
-**benchmark.json / benchmark.md:** produced by:
-
-```bash
-cd <SKILL_CREATOR_ROOT>
-python -m scripts.aggregate_benchmark <workspace>/iteration-N --skill-name <name> \
-    --primary with_skill --baseline without_skill   # or old_skill
-```
-
-Pass `--primary/--baseline` explicitly whenever more than two arm directories exist — unselected multi-arm input is rejected rather than guessed. `run_status.json` (`{"status": "completed"|"errored"|"timeout"}`) in a run directory marks infrastructure failures, which are excluded from deltas and listed in `comparisons[].failed_runs`.
-
-**Review viewer:**
-
-```bash
-python <SKILL_CREATOR_ROOT>/eval-viewer/generate_review.py \
-  <workspace>/iteration-N \
-  --skill-name "<name>" \
-  --benchmark <workspace>/iteration-N/benchmark.json
-```
-
-Use `--previous-workspace` for iteration 2+. Use `--static <path>` when no browser is available.
-
-**feedback.json** after user review (schema in `references/schemas.md`). Empty feedback means the user accepted the output.
+- Do not stop partway through a planned eval iteration. Do not use unrelated testing skills.
+- Cap concurrent eval runs at the [../agent-runner/SKILL.md](../agent-runner/SKILL.md) defaults — at most 4 with-skill/baseline pairs (8 subagents) in flight; queue excess test cases in later batches within the same iteration.
+- Spawn each test case's with-skill + baseline runs in the **same turn** — never with-skill first and baselines later. Baseline is `without_skill/` for new skills; snapshot the old skill and use `old_skill/` when comparing versions.
+- Grade with `agents/grader.md` → `grading.json` per run (required by the viewer); aggregate with `python -m scripts.aggregate_benchmark` (pass `--primary/--baseline` explicitly whenever more than two arm directories exist — unselected multi-arm input is rejected rather than guessed); analyst pass with `agents/analyzer.md`; then **always** launch the viewer and show results to the human **before** revising the skill yourself. For iteration 2+, pass `--previous-workspace`.
+- `run_status.json` (`{"status": "completed"|"errored"|"timeout"}`) in a run directory marks infrastructure failures, which are excluded from deltas and listed in `comparisons[].failed_runs`.
+- Read `feedback.json` when the user is done; empty feedback means accepted. Kill any background viewer server when finished.
+- Never eval on a dirty tree; sweep untracked files after every eval run (spawned runs can leave demo projects and other residue behind).
 
 ---
 
 ## Reviewing and improving the skill
 
-After test runs, check for correctness (scope, accuracy, hallucinated files or APIs), completeness (edge cases, output format, escalation when needed), and efficiency (prompt too long to follow, repeated work, ignored native tool features documented in Tool notes).
-
-Improvement rules: **generalize** (fixes must help beyond the eval examples), **keep the file lean** (read transcripts, not just final outputs), **edit the tool-neutral body first** at the authoritative location per **Where to edit** (then Tool notes for tool-only gaps), **explain why** (reasoning over ALL-CAPS MUSTs), and **bundle repeated work** under `scripts/`.
-
-After edits: rerun evals into `iteration-<N+1>/`, regenerate the viewer, collect feedback, repeat until the user is satisfied or progress stalls.
+After test runs, check for correctness (scope, accuracy, hallucinated files or APIs), completeness (edge cases, output format, escalation when needed), and efficiency (prompt too long to follow, repeated work, ignored native tool features documented in Tool notes). Improvement rules and the iterate loop: [references/creation-common.md](references/creation-common.md). After edits: rerun evals into `iteration-<N+1>/`, regenerate the viewer, collect feedback, repeat until the user is satisfied or progress stalls.
 
 ---
 
@@ -183,25 +115,7 @@ Retirement (removing a skill from the catalog) requires the same representative 
 
 ## Description optimization
 
-The `description` field drives skill discovery. After creating or improving a skill, offer to tune it.
-
-### Shared steps (all tools)
-
-**Step 1 — Trigger eval queries:** ~20 realistic queries (should-trigger / should-not-trigger), concrete and edge-case heavy. See `references/description-eval-queries.md` for format, examples, and coverage guidance.
-
-**Step 2 — User review:** use `assets/eval_review.html`. Replace placeholders:
-
-- `__EVAL_DATA_PLACEHOLDER__` → JSON array of eval items (no quotes around it — JS variable assignment)
-- `__SKILL_NAME_PLACEHOLDER__` → skill name
-- `__SKILL_DESCRIPTION_PLACEHOLDER__` → current description
-
-Open in a browser; user edits queries, toggles should-trigger, exports JSON (often to Downloads as `eval_set.json`).
-
-**Step 3 (automated — tool-specific):** run `run_loop.py` only when the skill's `## Tool notes` documents it (Claude Code / Cowork). Otherwise skip to Step 4 after Steps 1–2.
-
-**Step 4 — Apply:** Update skill frontmatter in the authoritative edit location (per **Where to edit**), reinstall if bootstrap. Show before/after when possible.
-
-For how skill triggering works in general (name + description matching, one-step tasks the base model handles directly), see `references/description-eval-queries.md`.
+The `description` field drives skill discovery. Manual tuning steps (trigger-eval queries, user review, apply): [references/creation-common.md](references/creation-common.md), skill-specific notes in `references/description-eval-queries.md`; review UI asset: `assets/eval_review.html` (replace the `__EVAL_DATA_PLACEHOLDER__`, `__SKILL_NAME_PLACEHOLDER__`, `__SKILL_DESCRIPTION_PLACEHOLDER__` placeholders). Automated `run_loop.py` runs **only** where the skill's `## Tool notes` documents it (Claude Code / Cowork).
 
 ---
 
