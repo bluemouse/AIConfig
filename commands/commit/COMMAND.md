@@ -26,7 +26,7 @@ command name. Treat that text as optional extra context for the commit message b
 
 3. If there are no staged changes, stop and report — do not stage files or commit.
 
-4. Read and follow the **commit-message-writer** skill (`.agents/skills/commit-message-writer/SKILL.md` or the installed tool skill). Use scope **staged** only. Run phases 1–4 (parse, gather evidence, compose, output) — treat `/commit` as the explicit commit request exception in that skill's Primary Directive. **Do not** emit or wait on the commit-offer question; proceed to commit once the draft is ready.
+4. Read and follow the **commit-message-writer** skill (`.agents/skills/commit-message-writer/SKILL.md` or the installed tool skill). Use scope **staged** only. `/commit` is the explicit commit request covered by the skill's **Commit on confirmation** section — proceed to commit once the draft is ready; **do not** emit or wait on the commit-offer question.
 
 5. Extract the final commit text (subject line, blank line, body) from the draft:
    - Prefer the ` ```text ` block under `## Verbose`, or the HEREDOC body inside `## Suggested command` under ` ```bash `.

@@ -15,7 +15,7 @@ Each loop has a doer (produces), a checker (audits), a round cap, an exit condit
 | Terminal labels | `actionable`, `blocked` |
 | Escalation | `blocked` → stop, present the specific blocker, ask user |
 | Root cause field | n/a (no checker, no findings) |
-| Artifact | `02-requirement-ledger.md` (see `requirement-ledger-template.md`) |
+| Artifact | `02-requirement-ledger.md` (per the prompt-clarifier requirement-ledger reference) |
 
 ## Loop 1: Research
 
@@ -119,7 +119,7 @@ When a loop hits its round cap without converging:
 
 1. Mark the loop `NOT READY` with a blocker summary.
 2. Read the `root-cause-phase` field from the checker's findings.
-3. If root-cause-phase is upstream (not `local`) AND backward edge count for target phase < 2:
+3. If root-cause-phase is upstream (not `local`, and an **earlier** phase — a later-phase value is a mis-tag to re-derive, not a route) AND backward edge count for target phase < 2:
    - Create a backward handoff packet (see `backward-handoff-format.md`).
    - Route to the target phase with the packet.
    - Target phase fixes the specific issue, re-produces its terminal artifact.

@@ -48,8 +48,11 @@ Non-negotiable; violating them produces unreviewable diffs and breaks the review
    re-review with the new context.
 4. **Match existing style.** Match the surrounding code's conventions; do not introduce
    new patterns.
-5. **No commits.** This skill does not commit, push, stage, or deploy. Hand off to
-   code-reviewer for re-review, then to git-guide or `/commit`.
+5. **No commits — one exception.** This skill does not commit, push, stage, or
+   deploy. Hand off to code-reviewer for re-review, then to git-guide or
+   `/commit`. Exception: the dev-workflow-orchestrator's staged final deep review
+   directs the resolver to apply fixes as **new commits on top** (no rebase, no
+   `--amend`) — follow that instruction when the task packet explicitly carries it.
 6. **Surface failures.** Run verification after each fix or batch, record ambiguities and
    failures in the fix report, and never hide a scope violation in a long diff.
 
@@ -75,20 +78,17 @@ problem creates technical debt and hides the root cause.
 
 ### 3. Plan and apply local fixes
 
-Group related findings that touch the same file or module. Fix blockers first, then
-majors, then minors (or defer minors if the user or reviewer indicated they are optional).
-For each fix, identify the exact file and location, the minimal change that resolves the
-finding, the verification command, and whether a test must be added or updated. If a
+For each local finding, identify the exact file and location, the minimal change that
+resolves it, the verification command, and whether a test must be added or updated. If a
 finding is ambiguous — unclear location, open-ended required fix, or contradicting the
 codebase — do not guess; mark it `unresolved` in the fix report with the reason.
 
-Apply fixes one at a time or in small related batches: make the minimal change, update or
-add the test if the finding is about missing or wrong tests, run the finding's verification
-command or the project's focused test/build/lint for the touched area, and record the
-result. If a fix attempt fails — the fix doesn't resolve the finding, a test breaks
-unexpectedly, or a deeper issue appears — stop fixing that finding. Switch to
-[../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) if the root cause is unclear,
-or mark the finding `unresolved` with the failure reason in the fix report.
+Apply fixes one at a time or in small related batches, run the touched area's verification
+after each, and record the result. If a fix attempt fails — the fix doesn't resolve the
+finding, a test breaks unexpectedly, or a deeper issue appears — stop fixing that
+finding. Switch to [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) if the root
+cause is unclear, or mark the finding `unresolved` with the failure reason in the fix
+report.
 
 ### 4. Verify
 

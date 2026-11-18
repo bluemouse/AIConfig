@@ -109,7 +109,7 @@ Iterate over the stages declared in plan §10 `Stage breakdown`. Per-pass input/
 For the Clarify phase (Phase 0), there is no checker. Run prompt-clarifier as a single named pass:
 
 1. **Baseline + pre-flight:** `record_baseline.py --phase clarify --run-dir <path>`; `check_pre_phase.py --phase clarify --run-dir <path>` — stop and report on failure.
-2. **Clarifier pass:** prompt-clarifier as a named pass — input `01-feature-brief.md`, output `02-requirement-ledger.md` using the template at `<SKILL_ROOT>/references/requirement-ledger-template.md` (resolve `<SKILL_ROOT>` to the installed orchestrator skill directory); mode constraints: read-only, interactive.
+2. **Clarifier pass:** prompt-clarifier as a named pass — input `01-feature-brief.md`, output `02-requirement-ledger.md` using the template at `<SKILL_ROOT>/../prompt-clarifier/references/requirement-ledger.md` (resolve `<SKILL_ROOT>` to the installed orchestrator skill directory); mode constraints: read-only, interactive.
 3. **Read status:** prompt-clarifier's internal `CHECK` state is the exit condition. If `actionable`, proceed. If `blocked`, escalate immediately.
 4. **Post-flight + validate:** `check_post_phase.py --phase clarify --run-dir <path>` — stop and report on failure; then `validate_phase.py --phase clarify --run-dir <path>`. On pass, update manifest, go forward to Research.
 5. **Update manifest** after every step; refresh the manifest pin after the write with `python .agents/tools/dev-workflow/record_baseline.py --phase <current-phase> --run-dir <path> --manifest-only` (see State tracking).
@@ -123,13 +123,13 @@ For all other phases, run the doer → checker loop (round caps: research 5, pla
 5. **Route:** apply the loop contract ([references/loop-contracts.md](references/loop-contracts.md)):
    - **Accepted** (verdict in the phase's accept set) → run `validate_phase.py --phase <name> --run-dir <path>`. On pass, update manifest, go forward to the next phase; on failure, handle per Validation handling below.
    - **Needs revision** (`root-cause-phase` = `local`) → increment the round counter. If round < cap: when the next round will be round > 1, first copy the current checker artifact to `<name>-r<N>.md` (N = round just completed, e.g. `11-research-review.md` → `11-research-review-r1.md` entering round 2) so the next round's fresh-context checker sees prior rounds' findings — which carry forward by id — without overwriting them; include all `-r<N>` paths in the next round's task packet (native mode) or named-pass context (delegated mode). Loop back to the doer pass with the checker's feedback. If round = cap, escalate.
-   - **Needs revision** (`root-cause-phase` is not `local` — e.g. `research`, `clarify`, `plan`, `implement`) → create a backward handoff packet for the target phase, route to it (see Backward edge below).
+   - **Needs revision** (`root-cause-phase` is not `local` — e.g. `research`, `clarify`, `plan`, `implement`) → create a backward handoff packet for the target phase, route to it (see Backward edge below). A backward edge routes only to an **earlier** phase; a checker tagging a later-phase or current-phase value other than `local` (e.g. `plan` during Research, `code-review` during Plan) is mis-tagging — treat the value as invalid, re-derive it from the finding, and do not create a packet.
    - **Blocked** → escalate immediately.
 6. **Update manifest** after every step; refresh the manifest pin after the write with `python .agents/tools/dev-workflow/record_baseline.py --phase <current-phase> --run-dir <path> --manifest-only` (see State tracking).
 
 ### Backward edge
 
-When a checker finding has `root-cause-phase` set to an earlier phase:
+When a checker finding has `root-cause-phase` set to an earlier phase (later-phase values are unroutable mis-tags — re-derive instead of routing):
 
 1. Check the backward edge count for the target phase in the manifest (< 2?).
 2. Create a backward handoff packet at `back-<from>-to-<to>-<n>.md` (e.g. `back-code-review-to-plan-1.md`) using [references/backward-handoff-format.md](references/backward-handoff-format.md).
@@ -181,10 +181,10 @@ Read each reference before the step that uses it. All paths are relative to `<SK
 | [references/manifest-format.md](references/manifest-format.md) | Starting or resuming a run — manifest section headers and valid field values |
 | [references/permission-matrix.md](references/permission-matrix.md) | Enforcing phase mode — per-phase permissions, staged-mode additions, forbidden actions |
 | [references/dispatch-modes.md](references/dispatch-modes.md) | Selecting a dispatch mode at phase 0 and constructing a checker task packet |
-| [references/requirement-ledger-template.md](references/requirement-ledger-template.md) | The Clarify pass — pass this path to prompt-clarifier as its output template |
+| [../prompt-clarifier/references/requirement-ledger.md](../prompt-clarifier/references/requirement-ledger.md) | The Clarify pass — pass this path to prompt-clarifier as its output template |
 
 > **Installation note.** `tools/installer.py` copies the whole skill directory, so these files ship
 > as `<skill-root>/references/*.md` in the target project. When passing a template path to a phase
 > skill, pass the resolved path (e.g.
-> `.agents/skills/dev-workflow-orchestrator/references/requirement-ledger-template.md`), not the
+> `.agents/skills/prompt-clarifier/references/requirement-ledger.md`), not the
 > bare `references/` form, which only resolves when the reader is already inside the skill root.
