@@ -2,7 +2,7 @@
 
 Use this document for a failure, regression, crash, hang, incorrect result, performance problem, resource leak, or flaky behavior.
 
-This skill **documents failure for learning** — reproduction, evidence, ranked hypotheses, and optional candidate fixes as **proposals only**. When the user wants a **verified fix applied**, hand off to [../../debugging-guide/SKILL.md](../../debugging-guide/SKILL.md) — do not apply production patches in code-professor. See [skill-boundaries.md](skill-boundaries.md).
+This skill **documents failure for learning** — reproduction, evidence, ranked hypotheses, and optional candidate fixes as **proposals only**. When the user wants a **verified fix applied**, hand off to [../../debugging-guide/SKILL.md](../../debugging-guide/SKILL.md) — do not apply production patches in code-professor.
 
 ## Default structure
 

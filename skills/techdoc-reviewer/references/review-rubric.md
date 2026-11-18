@@ -35,90 +35,26 @@ performance-sensitive guarantees.
 
 ## General review dimensions
 
-### Technical correctness
-
-Verify names, signatures, defaults, values, constraints, procedures, dependencies, and
-observable behavior against current repository evidence.
-
-### Completeness and audience fit
-
-Check that the intended reader has prerequisite knowledge, tools, permissions, configuration,
-decision criteria, expected results, and relevant edge/failure cases. Do not require internal
-implementation details unless the audience needs them to use or operate the system correctly.
-
-### Executability
-
-Validate commands, snippets, config, and procedural sequences where safe. Check working
-directory, inputs, generated files, environment, permissions, version assumptions, expected
-results, cleanup, and rollback. A command that parses but requires an undocumented prerequisite
-is not a successful example.
-
-### Cross-document consistency and discoverability
-
-Search related docs for contradicting terms, defaults, contracts, and procedures. Prefer a
-canonical reference plus links over duplicating fast-changing facts in several places. Treat
-links and anchors as part of the workflow: they must resolve to the intended current material.
-
-### Architecture and rationale
-
-For architecture material, verify responsibilities, dependency direction, control/data flow,
-invariants, ownership, extension points, and meaningful portability/performance limits. Require
-rationale only when the document's purpose is design understanding; never infer undocumented
-intent from code alone.
-
-### Operations, failure, and safety
-
-For operational docs, verify diagnosis, safe commands, expected signals, recovery, rollback,
-escalation, logging/monitoring references, and dangerous-operation guardrails. Treat unsafe or
-irreversible advice as high risk even when the happy path is correct.
-
-### Clarity and maintainability
-
-Flag ambiguity, undefined terms, misleading organization, or duplicated volatile information
-only when it changes technical meaning, blocks action, or creates a credible maintenance risk.
-Suppress grammar and stylistic preferences unless requested.
+Review each document for technical correctness against repository evidence, completeness
+for its intended audience, executability of its commands and procedures (working
+directory, inputs, environment, version assumptions, expected results, cleanup), and
+cross-document consistency (contradicting terms/defaults/procedures; canonical reference
+plus links over duplicated fast-changing facts; links resolve to current material). Apply
+only the dimensions relevant to the document's purpose and audience. Suppress grammar and
+stylistic preferences unless requested.
 
 ## Document-type focus
 
-### README and getting started
-
-Verify project scope, supported environments, prerequisites, a reproducible first successful
-result, command working directories, and links to deeper reference material.
-
-### Build, install, and setup
-
-Verify tool/runtime versions, dependency discovery, environment variables, platform differences,
-commands, generated artifacts, expected outputs, and troubleshooting for common failure modes.
-
-### API and configuration reference
-
-Verify signatures/types, parameters, return values, errors, defaults, valid values, precedence,
-ownership/lifetime, thread safety, ordering, initialization/shutdown, deprecation, compatibility,
-and examples.
-
-### Architecture guide
-
-Verify current components and their responsibilities, dependency direction, data/control flow,
-lifecycles, invariants, extension points, and whether current state and future proposals are
-clearly labeled.
-
-### ADR, proposal, or design record
-
-Verify status, context, constraints, alternatives, decision, rationale, and consequences.
-Preserve the historical decision; record supersession or changed status instead of rewriting
-past context as though it were current architecture.
-
-### Tutorial or migration guide
-
-Verify the starting state, complete sequence, current APIs/commands, expected intermediate
-results, hidden prerequisites, rollback/cleanup, and next steps. Migration guidance also needs
-version boundaries, compatibility implications, and a safe recovery path.
-
-### Runbook and troubleshooting guide
-
-Verify trigger conditions, diagnosis steps, least-risk commands, expected signals, permissions,
-rollback/recovery, escalation, and stale service/tool/path names. Confirm that emergency actions
-are distinguishable from normal operation.
+For the document's type, check what its reader will act on: README/getting-started
+(environment, prerequisites, a reproducible first success), build/install/setup (versions,
+environment, artifacts, common failure modes), API/configuration reference (signatures,
+defaults, precedence, ownership/lifetime, compatibility, examples), architecture guide
+(components, dependency direction, invariants, current vs proposed state), ADR (status,
+rationale, consequences — preserve the historical decision; record supersession rather
+than rewriting past context as current), tutorial/migration guide (starting state,
+sequence, hidden prerequisites, rollback, version boundaries), runbook (trigger
+conditions, least-risk commands, recovery, escalation, distinguishable emergency
+actions).
 
 ## Severity rubric
 

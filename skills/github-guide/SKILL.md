@@ -39,19 +39,11 @@ When this skill fires:
 
 ## PR authoring defaults
 
-Author-side defaults for the PR description, sizing, and self-review — apply them before `gh pr create`. Four are firm:
-
-- **"Tested locally" tells the reviewer nothing** — name the scenario, the environment, and how the reviewer can re-run it (a command, a request, a deep link); list the automated tests added and the edge cases checked (empty, error, concurrency, large input).
-- **50-200 changed lines per PR, ~400 as a soft cap** — line counts approximate the real target: review time under roughly an hour. Limit files touched, not just lines; a wide diff is hard to follow even when small.
-- **Split a refactor out of a feature PR** — one concern per PR; break large changes into independently reviewable slices or stack dependent PRs and cross-link them. Line count measures volume, not risk, so call out legitimately big diffs (scaffolding, generated code, dependency bumps, renames) up front and the reviewer calibrates instead of skimming.
-- **Keep the PR a draft until CI is green and you have self-reviewed the diff** — read your own diff file by file, remove debug logging, commented-out code, and stray files, confirm the diff matches the description, run the project checks (typecheck / lint / build / test), then flip to ready and assign reviewers.
-
-Description shape:
-
-- Lead with **What / Why / How** — the net effect, the goal with the linked work item, the approach plus any rejected alternative and the reason.
-- Match depth to size — one sentence for a typo or version bump; ~300-400 words for a multi-area change. Link context (work items, related PRs, design docs) and attach screenshots for any UI change.
-- Add a short **Tradeoffs / risks** section when the change has limitations or non-obvious decisions: each known limitation and why it is acceptable for now, alternatives considered, and anything affecting backwards compatibility, data, or config. Do not invent risks when there are none.
-- A lean template of 4-6 prompts (What / Why / Changes / Testing / Tradeoffs / Related) beats a long checklist form — set it as `PULL_REQUEST_TEMPLATE.md` so every PR starts pre-filled.
+Author-side contract: **keep the PR a draft until CI is green and you have self-reviewed
+the diff** (read your own diff file by file, remove debug logging, commented-out code,
+and stray files, confirm the diff matches the description, run the project checks), then
+flip to ready and assign reviewers. Sizing, description shape, and splitting are author
+judgment — calibrate to review time, not line count.
 
 For the surrounding work, hand off: **[git-guide](../git-guide/SKILL.md)** for mechanics (commit, push, rebase, worktrees), **[git-merge-guide](../git-merge-guide/SKILL.md)** for local merge/rebase integration, **[commit-message-writer](../commit-message-writer/SKILL.md)** for the commit message, **[code-reviewer](../code-reviewer/SKILL.md)** for diff review.
 

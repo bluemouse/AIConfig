@@ -40,7 +40,7 @@ Use the domain skill first when correctness requires specialized procedure, then
 - Expect belief updating: at least one argument should be conceded, refined, or conditionally accepted when warranted.
 - Keep the council proportional — no larger or longer than the stakes require, and stop once new rounds stop producing material information.
 
-Read `references/council-protocol.md` for the full deliberation, evidence, scoring, convergence, and fallback protocol. Read `references/output-formats.md` when producing the final deliverable. Read `references/examples.md` when role selection or council behavior is unclear.
+Read `references/council-protocol.md` for the full deliberation, evidence, comparison, convergence, and fallback protocol. Read `references/output-formats.md` when producing the final deliverable. Read `references/examples.md` when role selection or council behavior is unclear.
 
 ## Execution Modes
 
@@ -56,19 +56,19 @@ Use simulated mode by default when the environment does not expose independent e
 
 ### 1. Frame the Council Charter
 
-Restate the decision in one sentence and extract the desired outcome, scope and exclusions, hard constraints, evaluation criteria and their weights, current options and prior work, deadlines, affected stakeholders, and evidence held or still needed. Ask a question only when a missing fact could reverse the recommendation, make the task unsafe, or make the final decision meaningless; otherwise state the working assumption and proceed. Pick a deliberation mode: **Explore**, **Decide**, **Plan**, **Resolve**, or **Review**.
+Restate the decision in one sentence; extract the desired outcome, scope, hard constraints, evaluation criteria, current options, stakeholders, and evidence held or still needed. Ask a question only when a missing fact could reverse the recommendation, make the task unsafe, or make the decision meaningless; otherwise state the working assumption and proceed. Pick a deliberation mode: **Explore**, **Decide**, **Plan**, **Resolve**, or **Review**.
 
 ### 2. Choose Deliberation Depth
 
-Scale from Lean (3 members, 2 rounds) through Standard to Rigorous (3 rounds plus verification) with the stakes; tier definitions, depth criteria, and role-construction fields: `references/council-protocol.md`. Add a member only when their perspective could change the decision.
+Scale from Lean (3 members, 2 rounds) through Standard to Rigorous with the stakes; tier definitions: `references/council-protocol.md`. Add a member only when their perspective could change the decision.
 
 ### 3. Assemble a Non-Redundant Council
 
-Use 3-7 voting members plus a non-voting chair. Select roles dynamically from the topic — not every role automatically — covering, when relevant: domain authority (correctness and standards), operator or practitioner (feasibility and delivery), stakeholder advocate (impact), risk and dissent lead (failure modes and reversibility), systems integrator (dependencies and second-order effects), evidence auditor (source quality and falsifiability), and alternative architect (reframing and hybrids). Replace overlapping members until each has a meaningfully different attack surface, and have the chair justify each selection in one line. Worked role examples: `references/examples.md`.
+Use 3-7 voting members plus a non-voting chair, each constructed per the five-field definition in `references/council-protocol.md` with a meaningfully different attack surface — e.g. domain authority, operator, stakeholder advocate, risk and dissent lead, systems integrator, evidence auditor, alternative architect. Select roles from the topic, not by rote; have the chair justify each selection in one line. Role-design calibration: `references/examples.md`.
 
 ### 4. Build the Evidence Ledger
 
-Before debate, create a claim-indexed shared record of verified facts, inferences, assumptions, preferences, unknowns, and decision criteria with weights (notation: `references/council-protocol.md`). Research externally when the answer depends on current, niche, technical, legal, medical, financial, or otherwise high-stakes facts and suitable tools are available. Prefer primary sources. Never invent citations or upgrade an assumption into a fact.
+Before debate, create a claim-indexed record of facts, inferences, assumptions, preferences, and unknowns (claim and evidence grading: `references/council-protocol.md`). Research externally when the answer depends on current or high-stakes facts and suitable tools are available; prefer primary sources. Never invent citations or upgrade an assumption into a fact.
 
 ### 5. Run Round 1: Independent Positions
 

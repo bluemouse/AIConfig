@@ -6,7 +6,7 @@
 2. Role construction
 3. Evidence discipline
 4. Debate mechanics
-5. Option scoring
+5. Option comparison
 6. Convergence and stopping
 7. Multi-agent dispatch pattern
 8. Failure recovery
@@ -37,16 +37,7 @@ Evidence standard: [what would persuade them]
 
 Good role differences arise from different objectives, information, time horizons, or exposure to consequences. Avoid superficial differences such as "optimist" versus "pessimist" without distinct analytical responsibilities.
 
-The chair is non-voting. The chair must:
-
-- maintain the charter and evidence ledger;
-- stop members from changing the question without declaring a reframe;
-- normalize argument length so verbosity does not become influence;
-- identify whether disputes concern facts, values, predictions, or execution;
-- demand direct answers to the strongest objection;
-- synthesize without hiding dissent.
-
-An evidence auditor may vote on options but has special authority to downgrade unsupported claims. It cannot veto a value judgment merely because values are not empirical facts.
+The chair is non-voting: it maintains the charter and evidence ledger, ensures disputes are classified (facts, values, predictions, execution), and synthesizes without hiding dissent. An evidence auditor may vote on options but has special authority to downgrade unsupported claims; it cannot veto a value judgment merely because values are not empirical facts.
 
 ## 3. Evidence Discipline
 
@@ -116,31 +107,9 @@ Convert remaining disagreements into one of four forms:
 3. a forecast to test with a reversible experiment;
 4. a hard incompatibility requiring separate options.
 
-## 5. Option Scoring
+## 5. Option Comparison
 
-Use scoring only after the reasoning is visible.
-
-1. Choose 3-7 decision criteria.
-2. Set weights totaling 100. Infer weights from the user's goals and label them as assumptions when not explicit.
-3. Score each option from 0-5:
-   - 0: fails the criterion;
-   - 1: severe weakness;
-   - 2: below acceptable;
-   - 3: acceptable;
-   - 4: strong;
-   - 5: exceptional.
-4. Attach a one-line evidence-based rationale to every score.
-5. Calculate weighted totals if useful, but never use more numerical precision than the evidence supports.
-
-### Robustness Check
-
-Run a sensitivity check when:
-
-- the top two options are within 10% of each other;
-- a high-weight criterion rests on E0-E2 evidence;
-- reasonable stakeholders would assign substantially different weights.
-
-State what weight or factual change would reverse the ranking. When the ranking is fragile, prefer a staged, reversible experiment over a permanent commitment.
+Compare options against the charter criteria only after the reasoning is visible — the comparison must expose trade-offs, never disguise judgment as precision. Whatever scoring form is used, state what weight or factual change would reverse the ranking; when the ranking is fragile (near-tied options, weak evidence behind a decisive criterion, or stakeholders who would weight criteria very differently), prefer a staged, reversible experiment over a permanent commitment.
 
 ### Dominance Rules
 

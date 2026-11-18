@@ -84,8 +84,6 @@ guide's examples: symptom, cause, safe fix.
 - Reach the first useful example within two short orientation paragraphs; lead with
   concrete artifacts (code, commands, outputs, diagrams, screenshots, UI actions) and
   explain after the reader sees something real.
-- One new idea per step; explain a change when the reader encounters the limitation
-  it resolves.
 - Expected output and before/after evidence over vague claims like "faster."
 
 ## Completion checklist

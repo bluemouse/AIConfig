@@ -19,14 +19,9 @@ For semantic, API, behavioral, multi-file, or integration-verification work, han
 | Stage resolved files during active merge/rebase | Integration review, affected-test verification, merge reports |
 | Final merge commit **after** integration is already staged | End-to-end integration from conflict markers through verification |
 
-## Rationale
-
-Simple conflicts like import lists and lockfiles can be resolved mechanically. Semantic
-conflicts need intent reconstruction and combined-tree review — that belongs to
-`git-merge-guide`.
-
-During an active merge or rebase, this skill resolves and stages only. Creating the merge
-commit or finishing a rebase sequence after complex integration is separate mechanics
+Simple conflicts (import lists, lockfiles) resolve mechanically; semantic ones need intent
+reconstruction and combined-tree review, which belong to `git-merge-guide`. During an
+active merge or rebase, resolve and stage only — the final commit is separate mechanics
 once the tree is correct and staged.
 
 ## Example: simple lockfile conflict

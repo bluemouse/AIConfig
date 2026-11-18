@@ -12,14 +12,12 @@ coding agents.
 
 ## When NOT to Use
 
-Load [references/skill-boundaries.md](references/skill-boundaries.md) when routing is ambiguous.
-
-- **Diff or commit review** — [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-- **Product, requirements, or spec research** — [../research-guide/SKILL.md](../research-guide/SKILL.md)
-- **Implementation plan authoring** — [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
+- **Diff or commit review** — [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md); code-professor studies baseline code, code-reviewer needs a change set
+- **Product, requirements, or spec research** — [../research-guide/SKILL.md](../research-guide/SKILL.md); code-professor covers settled implementation with `path:line` evidence, research-guide covers unsettled requirements
+- **Implementation plan authoring** — [../plan-guide/SKILL.md](../plan-guide/SKILL.md); "explore the codebase and turn this ask into a plan" is plan-guide even when it reads code
 - **Plan execution** — [../plan-executor/SKILL.md](../plan-executor/SKILL.md)
-- **Verified defect repair** (applied fix, not a teaching document) — [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md)
-- **C/C++ performance optimization with profiling** — [../cpp-performance-guide/SKILL.md](../cpp-performance-guide/SKILL.md)
+- **Verified defect repair** (applied fix, not a teaching document) — [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md); "investigate this crash" / "why does this fail" is code-professor until the user asks for a patch applied
+- **C/C++ performance optimization with profiling** — [../cpp-performance-guide/SKILL.md](../cpp-performance-guide/SKILL.md); "why is this path slow?" is a code-professor failure investigation, "profile and optimize it" is cpp-performance-guide
 
 ## Non-negotiable rules
 

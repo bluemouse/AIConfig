@@ -29,12 +29,10 @@ git rebase origin/<base>           # replay this branch's commits on top of the 
 git push --force-with-lease        # never plain --force on a shared branch
 ```
 
-- Use `--force-with-lease`, not `--force` — it refuses to overwrite commits you have not seen,
-  so a teammate's push is not silently clobbered.
 - Simple conflicts during the rebase → resolve and stage per
   [merge-resolve.md](merge-resolve.md), then `git rebase --continue`.
 - Semantic or multi-file conflicts → hand off to
   [../../git-merge-guide/SKILL.md](../../git-merge-guide/SKILL.md); do not create merge
   commits during active integration.
-- Rebasing rewrites history; only rebase a branch that is yours / unshared, and never rebase
-  or force-push `main` / `master`.
+- Only rebase a branch that is yours / unshared; never rebase or force-push
+  `main` / `master`.

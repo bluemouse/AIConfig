@@ -103,30 +103,6 @@ Choose a visual because it answers a question better than prose.
 - **Algorithm or branching decisions:** flowchart or short pseudocode before
   implementation.
 
-Example architecture diagram:
-
-```mermaid
-flowchart LR
-    A[Client] --> B[SDK]
-    B --> C[Service API]
-    C --> D[(Storage)]
-    C --> B
-    B --> A
-```
-
-Example interaction diagram:
-
-```mermaid
-sequenceDiagram
-    participant App
-    participant SDK
-    participant API
-    App->>SDK: call operation()
-    SDK->>API: HTTP request
-    API-->>SDK: response
-    SDK-->>App: typed result
-```
-
 Keep labels concrete. After the visual, state the one or two relationships the reader
 should remember.
 
@@ -148,18 +124,10 @@ should remember.
 
 ## 6. Professional-use checklist
 
-Select and demonstrate only what applies:
-
-- errors, retries, validation, cancellation, and timeouts;
-- authentication, authorization, secrets, and input safety;
-- unit, integration, end-to-end, or contract testing;
-- logging, metrics, tracing, diagnostics, and debuggability;
-- performance, caching, batching, concurrency, memory, and rate limits;
-- configuration, environments, deployment, migrations, and rollback;
-- API lifecycle, versioning, backward compatibility, and deprecations; and
-- code organization, reuse, extension points, and maintainability.
-
-Do not turn this into a detached final checklist unless the user explicitly asks for one.
+At the professional-use stage, select and demonstrate only the operational concerns that
+apply to this product (errors/retries/timeouts, auth and secrets, testing, observability,
+performance, deployment, API lifecycle, maintainability) — demonstrated in the running
+example, never as a detached final checklist.
 
 ## 7. Review rubric
 
@@ -184,16 +152,7 @@ request.
 
 ## 8. Anti-patterns
 
-Avoid:
-
-- a long "What is X?" essay before the first example;
-- many unrelated hello-world snippets instead of one evolving example;
-- unexplained walls of code;
-- examples without expected results;
-- advanced sections that add obscure syntax rather than realistic capability;
-- diagrams that duplicate prose without clarifying a relationship;
-- generic claims such as "easy," "powerful," "robust," or "production-ready" without
-  evidence;
-- fabricated benchmarks, API behavior, compatibility claims, error output, or
-  screenshots; and
-- a vague ending when concrete next actions are available.
+The negative image of the rules above: a "What is X?" essay before the first example,
+unrelated hello-world snippets instead of one evolving example, unexplained code walls,
+examples without expected results, diagrams duplicating prose, generic claims ("easy",
+"production-ready") without evidence, fabricated output, and vague endings.
