@@ -13,7 +13,7 @@ Turn a rough idea, feature request, or requirements draft into an **agreed resea
 
 - Ambiguous ask (deliverable, scope, or decision unclear) — settle with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) first; once discovery begins, this skill's one-question-at-a-time pacing governs
 - Implementation planning — [../plan-guide/SKILL.md](../plan-guide/SKILL.md) (hand the finalized report to it); plan audit — [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
-- Research-report audit — [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md), revising via [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md)
+- Research-report audit — [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md), revising via [../dev-workflow-orchestrator/references/reviewer-core/producer-feedback-loop.md](../dev-workflow-orchestrator/references/reviewer-core/producer-feedback-loop.md)
 - Code or diff review — [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md); codebase learning — [../code-professor/SKILL.md](../code-professor/SKILL.md)
 - Git, PR, or commit work — [../git-guide/SKILL.md](../git-guide/SKILL.md), [../github-guide/SKILL.md](../github-guide/SKILL.md), or [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md)
 
@@ -49,7 +49,7 @@ Do not continue past the gate until the user answers. New information starts the
 
 **Fast-pass synthesis** — only on an explicit user request for speed or a lightweight report: one compact discovery pass (depth focused unless risk requires more), one synthesis, one agreement gate; still run the readiness checklist before finalizing.
 
-**Reviewer feedback loop** — when the user provides a `research-reviewer` report or findings, follow [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md) before revising.
+**Reviewer feedback loop** — when the user provides a `research-reviewer` report or findings, follow [../dev-workflow-orchestrator/references/reviewer-core/producer-feedback-loop.md](../dev-workflow-orchestrator/references/reviewer-core/producer-feedback-loop.md) before revising.
 
 For deeper probing, use the questioning patterns in [references/questioning-playbook.md](references/questioning-playbook.md).
 

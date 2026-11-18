@@ -57,18 +57,10 @@ At the start, state that you are using the `plan-executor` skill. If concurrent 
 2. **Stage scope (staged mode only):** If a stage scope is provided (e.g., `--stage stage-2` or an equivalent parameter), read only that stage's tasks from plan §10 `Stage breakdown` and execute only those units. Produce a stage-indexed implementation report (e.g., `30-stageN-implementation-report.md`). If no stage scope is provided, execute the whole plan (linear behavior). Stage-scoped execution still follows all non-negotiable rules: no commit, no push, protect user work, run verifications, generate a report.
 3. Review critically before editing. Look for missing prerequisites, contradictory steps, unsafe actions, broad refactors hidden inside small tasks, or dependencies that prevent parallelization. This is a lightweight execution sanity check — not a substitute for [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md).
 4. Stop for clarification only when the blocker would make implementation unsafe or likely wrong. Otherwise, make a conservative assumption and record it in the report. When the gap is a requirement-level ambiguity rather than an execution detail, resolve it in this session with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) or return to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) — never pass the ambiguity down to a subagent, which cannot ask the user.
-5. Create a visible todo list or equivalent execution tracker from the plan (or from the scoped stage's tasks).
 
 ### 2. Establish baseline
 
-Before editing, inspect repository state:
-
-- Current branch name.
-- `git status --short` or equivalent.
-- Existing uncommitted changes that appear unrelated to the plan.
-- Relevant project commands from the plan, README, package files, build files, or existing CI config.
-
-If unrelated user changes overlap files required by the plan, stop and ask how to proceed. If they do not overlap, continue and avoid touching them.
+Before editing, record the current branch and `git status --short`. If unrelated user changes overlap files required by the plan, stop and ask how to proceed; if they do not overlap, continue and avoid touching them.
 
 ### 3. Divide the plan into execution units
 
@@ -117,12 +109,7 @@ If concurrent subagents are unavailable, execute the units directly in dependenc
 
 Before implementing a unit, read the plan's test discipline for its tasks. For tasks marked `mandatory` (explicitly user-requested TDD, or code work whose risk profile calls for it), apply strict red-green-refactor by following [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md): write and observe a failing test before the production change. For `verification-led` tasks, follow the plan's stated verification strategy and record the command and its observed result — do not silently substitute TDD for it, and do not skip verification. For `n/a` tasks (non-code or check-only config/infra with justification), follow the plan's verification steps without TDD. If the plan omits test discipline on a code task, treat it as `mandatory` and note the assumption in the report.
 
-For direct or parent-led work:
-
-1. Mark the active unit as in progress.
-2. Make the smallest plan-consistent change.
-3. Run local verification for the unit when available.
-4. Mark the unit complete only after verification or a recorded reason verification could not run.
+For direct or parent-led work, make the smallest plan-consistent change and treat a unit as complete only after its verification runs (or a recorded reason it could not).
 
 For subagent work:
 

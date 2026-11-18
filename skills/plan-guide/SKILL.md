@@ -81,7 +81,7 @@ Choose one input mode:
 - **Plan normalization**: user provides a thin, informal, external, or previously generated plan and asks to expand it into this skill's executable format.
 - **Review repair loop**: user provides a plan-reviewer report, reviewer findings, a Guide handoff packet, or asks whether the plan needs another iteration.
 
-If the input mode is **codebase-led**, **direct spec** without explicit upstream readiness, or **plan normalization** from a thin plan, default the artifact status to `draft` or `ready for review`; do not mark it `validated` without a plan-reviewer result or explicit user acceptance. If plan-reviewer feedback is present, follow [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md) before rewriting the plan.
+If the input mode is **codebase-led**, **direct spec** without explicit upstream readiness, or **plan normalization** from a thin plan, default the artifact status to `draft` or `ready for review`; do not mark it `validated` without a plan-reviewer result or explicit user acceptance. If plan-reviewer feedback is present, follow [../dev-workflow-orchestrator/references/reviewer-core/producer-feedback-loop.md](../dev-workflow-orchestrator/references/reviewer-core/producer-feedback-loop.md) before rewriting the plan.
 
 ### 2. Intake and source mapping
 
@@ -146,37 +146,13 @@ If multiple approaches are viable and the choice materially affects cost, risk, 
 
 ### 6. Design tests and verification iteratively
 
-Use the planning roles as analytical lenses, not theatrical personas — **Tests Designer** is always active for implementation plans; add **Domain Specialist** lenses when the domain requires them. Before finalizing tasks, design tests from the requirements, interfaces, and the planned decomposition: failing tests, scenarios, fixtures, and edge cases mapped from acceptance criteria and must-have requirements, with test slices and red-phase specs informing task boundaries and sequencing, and automated tests aligned with manual checks, commands, observability validation, and the verification matrix. Iterate with **Requirements Mapper**, **Architecture Planner**, **Task Decomposer**, and **Verification Planner** across steps 5–7 until every must-have requirement has at least one planned failing test or verification check (check-only requirements by verification check), task boundaries support independent red-green cycles, and verification coverage is complete. See [references/planning-roles.md](references/planning-roles.md) for role details and collaboration rules.
-
-For each planned test, specify when known:
-- Test id, type (unit/integration/e2e/contract), and requirement ids covered.
-- Test file path and test name or description.
-- Arrange/act/assert intent and expected failure message or assertion before implementation exists.
-- Fixtures, mocks, test data, or golden references needed.
-- Dependencies on earlier tasks or test infrastructure.
+Design tests and verification from the requirements, interfaces, and the planned decomposition, iterating with steps 5–7 until **every must-have requirement has at least one planned failing test or verification check** (check-only requirements by verification check), task boundaries support independent red-green cycles, and verification coverage is complete. For each planned test, specify when known: test id, type, requirement ids covered, test file path and name, arrange/act/assert intent with the expected failure message before implementation exists, fixtures/mocks/test data needed, and dependencies on earlier tasks or test infrastructure.
 
 Do not finalize the plan while test design and task decomposition disagree. Resolve conflicts in this loop before step 7.
 
 ### 7. Decompose work
 
-Create a cohesive task sequence. Use tasks that are large enough to carry a meaningful review gate and small enough to be independently implemented and verified.
-
-For each task, include:
-- Task id and title.
-- Purpose and source requirements covered.
-- Dependencies on earlier tasks.
-- Files to create, modify, or inspect. Use exact paths when known.
-- Execution class: `parallel`, `sequential`, or `integration`.
-- File ownership for execution, including allowed write paths and shared files that require parent-led integration.
-- Interfaces consumed and produced, including names, signatures, schemas, events, flags, or contracts when known.
-- Red-phase tests to write first: exact test file, test name, scenario, and expected failure before production code.
-- Implementation steps with concrete actions (production code only after the red-phase test exists).
-- Supplementary checks to add or run (manual, integration, observability).
-- Test discipline: `mandatory` (default for all code-producing tasks) | `n/a` (non-code or config/infra verified by checks only — justify).
-- Verification command, manual check, or expected observable result.
-- Acceptance criteria satisfied by the task.
-- Risks, rollback, or stop conditions when relevant.
-- Suggested commit message or review checkpoint when useful.
+Create a cohesive task sequence. Use tasks that are large enough to carry a meaningful review gate and small enough to be independently implemented and verified. Populate each task with the full field set defined in [references/implementation-plan-template.md](references/implementation-plan-template.md) — task id, source requirements, dependencies, exact file paths, execution class and file ownership, interfaces, red-phase tests, implementation steps, test discipline (`mandatory` default | `n/a` justified), verification command, acceptance criteria, and risks/stop conditions.
 
 Avoid fixed-length plans. Use as many tasks as required, but split the plan when independent subsystems should be planned separately.
 
@@ -215,7 +191,7 @@ Fix issues inline when possible. If any blocker or discovery gate remains, mark 
 
 ### 10. Collaborate with plan-reviewer
 
-This skill and plan-reviewer form a quality loop: this skill produces an implementation plan, plan-reviewer audits it against the source context and returns a review-report with a Guide handoff packet, and this skill consumes the report — repairing the plan, asking needed questions, narrowing scope, or blocking execution — until the plan is validated or explicitly blocked. When a plan-reviewer report is provided, follow [references/reviewer-feedback-loop.md](references/reviewer-feedback-loop.md) and [../plan-reviewer/references/re-review-protocol.md](../plan-reviewer/references/re-review-protocol.md). Never ignore blocker or major findings. Every material finding needs a disposition: resolved, partially resolved, reopened, needs user decision, needs codebase inspection, needs upstream research, accepted as execution risk, rejected with rationale, or still blocking.
+This skill and plan-reviewer form a quality loop: this skill produces an implementation plan, plan-reviewer audits it against the source context and returns a review-report with a Guide handoff packet, and this skill consumes the report — repairing the plan, asking needed questions, narrowing scope, or blocking execution — until the plan is validated or explicitly blocked. When a plan-reviewer report is provided, follow [../dev-workflow-orchestrator/references/reviewer-core/producer-feedback-loop.md](../dev-workflow-orchestrator/references/reviewer-core/producer-feedback-loop.md) and [../dev-workflow-orchestrator/references/reviewer-core/re-review-protocol.md](../dev-workflow-orchestrator/references/reviewer-core/re-review-protocol.md). Never ignore blocker or major findings. Every material finding needs a disposition: resolved, partially resolved, reopened, needs user decision, needs codebase inspection, needs upstream research, accepted as execution risk, rejected with rationale, or still blocking.
 
 ### 11. End with a plan gate
 

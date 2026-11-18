@@ -13,9 +13,11 @@ skill's Phase 3 procedure and the `plan-executor` / `implementation-auditor` ski
 
 1. Read and follow the **dev-workflow-orchestrator** skill
    (`.agents/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill), specifically
-   the **Within a phase (the loop)** procedure for Phase 3 (Implement). Treat
-   `/implement` as the explicit start signal — proceed without asking for a
-   second confirmation.
+   the **Within a phase (the loop)** standard procedure for Phase 3 (Implement). Treat
+   `/implement` as the explicit start signal — proceed without asking for a second
+   confirmation. This command carries only the Implement-phase delta; the orchestrator
+   owns the loop mechanics (including the staged iterator when the manifest records
+   `Run mode: staged`) and its `references/loop-contracts.md` owns the contract details.
 
 2. **Resolve the run directory** (one of):
    - **Explicit slug**: if the user passes `<slug>`, use `.agents/workflow/<slug>/`.
@@ -26,56 +28,31 @@ skill's Phase 3 procedure and the `plan-executor` / `implementation-auditor` ski
      pointing at an implementation plan. Verify the file is non-empty (if empty, report
      "`--from <path>`: file is empty" and stop before invoking plan-executor). Create a
      feature slug (kebab-case), create `.agents/workflow/<slug>/`, copy the external plan
-     to `20-implementation-plan.md`, and write a minimal `00-run-manifest.md` with
-     `Run status: in-progress`, `Current phase: implement`, all phases `not-started` except
-     Implement (`in-progress`), and a `## Dispatch log` section recording
-     `Dispatch mode: native` when the command's host session exposes a
-     subagent/task primitive satisfying the `agent-runner` contract (per the
-     orchestrator skill's capability detection in `references/dispatch-modes.md`),
-     otherwise `Dispatch mode: delegated`; if
-     the capability cannot be inspected from inside the session, default to
-     delegated and say so in the dispatch log. Record `Evaluated at: bootstrap` in the dispatch log. Never use `skipped` or
-     `fragment` as status values — they fail `manifest_checks.py`. Structural
-     validation of the plan is delegated to `plan-executor`'s existing input
+     to `20-implementation-plan.md`, and write a minimal `00-run-manifest.md` (`Run
+     status: in-progress`, `Current phase: implement`, all phases `not-started` except
+     Implement `in-progress`) plus a `## Dispatch log` section recording `Dispatch mode:
+     native` or `delegated` per the orchestrator's capability detection; default to
+     delegated and say so when uninspectable; record `Evaluated at: bootstrap`. Never use
+     `skipped` or `fragment` as status values — they fail `manifest_checks.py`.
+     Structural validation of the plan is delegated to plan-executor's existing input
      validation.
 
-3. **Read or write the manifest**:
-   - If the run dir exists, read `00-run-manifest.md`.
-   - If bootstrapping, write the minimal manifest described in step 2.
+3. **Run the Phase 3 loop** with this delta:
 
-4. **Run the Phase 3 loop** (doer → checker → revise) per the orchestrator skill.
-   This procedure mirrors the orchestrator skill's `Within a phase (the loop)` — if the
-   orchestrator's procedure changes, update all four per-phase commands (`/research`, `/plan`, `/implement`, `/review`):
-   - **Record baseline**: `python .agents/tools/dev-workflow/record_baseline.py --phase implement --run-dir .agents/workflow/<slug>`
-   - **Pre-flight**: `python .agents/tools/dev-workflow/check_pre_phase.py --phase implement --run-dir .agents/workflow/<slug>`. If it fails, stop and report.
-   - **Doer pass**: invoke `plan-executor` as a named pass with input `20-implementation-plan.md` and output `30-implementation-report.md`.
-   - **Checker pass**: first read the `## Dispatch log` section of `00-run-manifest.md`; if it records `Dispatch mode: native`, dispatch `implementation-auditor` as a subagent per the orchestrator's native-mode task packet; otherwise (delegated/simulated, or the manifest has no dispatch log — default to delegated and say so) invoke `implementation-auditor` as a named pass with input `30-implementation-report.md` and output `31-implementation-audit.md`. The checker must include `root-cause-phase` on every finding. If the native dispatch fails or the subagent returns no verdict within the host's bounded window, apply the orchestrator's fallback rules (`references/dispatch-modes.md`: Fallback on spawn failure / hung checker) — one identical retry on a transient failure, otherwise record the failure in the dispatch log and fall back to the named pass; never block the workflow.
-   - **Post-flight**: `python .agents/tools/dev-workflow/check_post_phase.py --phase implement --run-dir .agents/workflow/<slug>`. If it fails, stop and report.
-   - **Read verdict** from the `## Verdict` heading in `31-implementation-audit.md`.
-   - **Route**:
-     - `pass` or `pass with risks` → run `python .agents/tools/dev-workflow/validate_phase.py --phase implement --run-dir .agents/workflow/<slug>`. If validation passes, update manifest (phase status `accepted`) and stop with a summary. If validation fails, handle per the orchestrator's validation rules.
-     - `fail` with `root-cause-phase: local` → increment round counter. On round > 1, copy `31-implementation-audit.md` to `31-implementation-audit-r<N>.md` where N is the round just completed (round 2 → `-r1`, round 3 → `-r2`) so the fresh-context checker sees prior findings and preserves finding ids, and include all prior `-r1`, `-r2`, … paths in the next round's context. Loop back to the doer pass. Round cap is 3; on cap, escalate.
-     - `fail` with `root-cause-phase: plan` or `research` → write a backward handoff packet `back-implement-to-<target>-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.agents/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .agents/workflow/<slug>`, update manifest (target phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (instruct the user to run `/plan <slug>` for plan issues or `/research <slug>` for research issues), then stop. Backward edge cap is 2 per phase.
-     - `fail` with `root-cause-phase: clarify` → write a backward handoff packet `back-implement-to-clarify-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.agents/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .agents/workflow/<slug>`, update manifest (Clarify phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (since no `/clarify` command exists, instruct the user to run `/run-dev-workflow` to resolve the Clarify issue, or resolve it manually), then stop. Backward edge cap is 2 per phase.
-     - `blocked` → escalate immediately with a blocker summary and stop.
-   - **Update manifest** after every step; after each manifest write, refresh the manifest pin with `python .agents/tools/dev-workflow/record_baseline.py --phase implement --run-dir .agents/workflow/<slug> --manifest-only` (never a full re-record mid-phase — it would reset the dirty-path and HEAD baselines the source-edit and commit checks pin against).
+   | Field | Value |
+   | --- | --- |
+   | Doer | `plan-executor`, input `20-implementation-plan.md`, output `30-implementation-report.md` |
+   | Checker | `implementation-auditor`, input `30-implementation-report.md`, output `31-implementation-audit.md` |
+   | Round cap | 3 |
+   | Accept verdicts | `pass`, `pass with risks` (then `validate_phase.py --phase implement`) |
+   | Revise verdicts | `fail` — `local` loops to the round cap; non-local creates a backward packet per Backward targets |
+   | Blocked | `blocked` → escalate immediately with a blocker summary and stop |
+   | Backward targets | `plan` or `research` (packet `back-implement-to-<target>-<n>.md` → user runs `/plan <slug>` or `/research <slug>`) and `clarify` (`back-implement-to-clarify-<n>.md` → no `/clarify` command; `/run-dev-workflow` or manual) |
+   | Mode | Write source per the implementation plan; run tests and builds; write only `30-*.md` and `31-*.md`; no committing, pushing, deploying, or destructive commands |
 
-5. **Enforce Implement mode**: write source per the implementation plan; run tests and
-   builds; write to `30-*.md` and `31-*.md` artifacts; no committing, pushing, deploying,
-   or destructive commands.
-
-## Optional arguments
-
-- `<slug>` — existing run directory under `.agents/workflow/`.
-- `--from <path> <slug>` — when no run dir exists, bootstraps a new run from an external implementation plan at `<path>`.
-
-## Output
-
-- Phase started, round number
-- Verdict from implementation-auditor
-- Backward edge created and routed (if any)
-- Validation results
-- Final summary: manifest phase status, terminal artifact path (`30-implementation-report.md`)
+4. **Output**: phase started and round number; verdict from implementation-auditor;
+   backward edge created and routed (if any); validation results; final summary (manifest
+   phase status, terminal artifact `30-implementation-report.md`).
 
 ## On failure
 
