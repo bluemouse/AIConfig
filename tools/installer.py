@@ -1327,6 +1327,40 @@ def copy_path(src: Path, dest: Path) -> None:
         raise InstallerError(f"Source path does not exist: {src}")
 
 
+def warn_unpaired_cross_skill_refs(
+    target_root: Path, slug: str, skills: Sequence[str], result: OperationResult
+) -> None:
+    """cr-002: warn when an installed skill's cross-skill links have no target.
+
+    A skill body may link sibling skills by relative path (e.g.
+    `../dev-workflow-orchestrator/references/reviewer-core/...` or
+    `../skill-creator/references/creation-common.md`) — links that resolve
+    only when the referenced skill is also installed. Installing the consumer
+    alone ships dangling links. Warn, do not block: the consumer may already
+    be installed in the target (the check re-reads the installed copy, and a
+    skipped copy carries the same body), or the target may install the
+    referenced skill separately.
+    """
+    skill_md = target_root / SHARED_SKILL_DIR.format(name=slug) / "SKILL.md"
+    if not skill_md.is_file():
+        return
+    body = skill_md.read_text(encoding="utf-8", errors="replace")
+    install_set = {slugify_name(s) for s in skills}
+    # Cross-skill references appear as markdown links of the form
+    # `](../<sibling>/...)`. Match only markdown link targets — plain code
+    # spans containing `../<sibling>/` include REST URL paths like
+    # `.../pulls/{n}/reviews` that are not skill references.
+    referenced = set(re.findall(r"\]\(\.\./([a-z0-9-]+)/", body))
+    for sibling in sorted(referenced):
+        sibling_dir = target_root / SHARED_SKILL_DIR.format(name=sibling)
+        if not sibling_dir.is_dir() and sibling not in install_set:
+            result.warnings.append(
+                f"skill {slug}: references sibling skill {sibling} by relative "
+                f"path but it is not installed and not in this install set — "
+                f"also pass --skills {sibling} so the cross-skill links resolve"
+            )
+
+
 def warn_unpaired_agent_skill(
     target_root: Path, slug: str, skills: Sequence[str], result: OperationResult
 ) -> None:
@@ -1439,6 +1473,15 @@ def install_items(
         # run never creates the bridge.
         if not dry_run:
             ensure_bridge_symlink(target_root)
+
+    # cr-002: cross-skill relative links resolve only when the referenced
+    # sibling skill is also installed (folded references like reviewer-core
+    # and creation-common make this common). Warn, do not block.
+    for name in skills:
+        if not dry_run:
+            warn_unpaired_cross_skill_refs(
+                target_root, slugify_name(name), skills, result
+            )
 
     for name in agents:
         slug = slugify_name(name)

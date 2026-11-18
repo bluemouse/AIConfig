@@ -119,25 +119,33 @@ class CommandConformanceTests(unittest.TestCase):
     )
 
     def test_command_round_copy_rule_incremental(self) -> None:
-        """t-001: each command's revise-route bullet uses the incremental
-        `-r<N>` copy rule (N = round just completed) and carries all prior paths."""
+        """t-001: the incremental `-r<N>` copy rule (N = round just completed,
+        carry all prior paths) lives in the orchestrator's loop procedure; the
+        per-phase commands delegate loop mechanics to it and must not
+        re-encode a stale copy rule."""
+        orch = ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
+        self.assertIsNone(
+            HARDCODED_R1_COPY.search(orch),
+            "orchestrator: hard-coded `-r1` copy target found — use the incremental "
+            "`-r<N>` rule (copy to `-r<N>` where N is the round just "
+            "completed) and carry all prior `-r1`..`-r<N>` paths",
+        )
+        self.assertRegex(
+            orch,
+            r"-r<N>\.md` \(N = round just completed",
+            "orchestrator: incremental `-r<N>` copy rule missing",
+        )
+        self.assertRegex(
+            orch,
+            r"all `-r<N>` paths|all `-r1`[^`\n]*`-r",
+            "orchestrator: carry-all-prior-paths instruction missing",
+        )
         for name in PHASE_COMMANDS:
             body = self._command_body(name)
             self.assertIsNone(
                 HARDCODED_R1_COPY.search(body),
-                f"{name}: hard-coded `-r1` copy target found — use the incremental "
-                "`-r<N>` rule (copy to `-r<N>` where N is the round just "
-                "completed) and carry all prior `-r1`..`-r<N>` paths",
-            )
-            self.assertRegex(
-                body,
-                r"-r<N>\.md` where N is the round just completed",
-                f"{name}: incremental `-r<N>` copy rule missing",
-            )
-            self.assertRegex(
-                body,
-                r"all prior `-r1`[^`\n]*`-r",
-                f"{name}: carry-all-prior-paths instruction missing",
+                f"{name}: command re-encodes a stale `-r1` copy rule — loop "
+                "mechanics belong to the orchestrator",
             )
 
     def test_orchestrator_packet_spec_all_prior_paths(self) -> None:
@@ -155,18 +163,25 @@ class CommandConformanceTests(unittest.TestCase):
             )
 
     def test_command_conformance_caps_verdicts_ordering(self) -> None:
-        """t-003: round caps, verdict sets, and checker-first round-1 ordering
-        in the review command match the orchestrator's loop contracts."""
+        """t-003: round caps are stated once in the orchestrator's loop
+        procedure; the review command's delta table carries the checker-first
+        round-1 ordering."""
+        orch = ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
+        self.assertIn(
+            "round caps: research 5, plan 3, implement 3, code review 5",
+            orch,
+            "orchestrator: per-phase round caps missing",
+        )
         review_body = self._command_body("review")
-        self.assertIn("Round cap is 5", review_body)
-        self.assertRegex(review_body, r"checker runs\s+first")
+        self.assertIn("Round cap | 5", review_body)
+        self.assertIn("Round 1: checker first", review_body)
         for name, cap in (
-            ("research", "Round cap is 5"),
-            ("plan", "Round cap is 3"),
-            ("implement", "Round cap is 3"),
+            ("research", "Round cap | 5"),
+            ("plan", "Round cap | 3"),
+            ("implement", "Round cap | 3"),
         ):
             body = self._command_body(name)
-            self.assertIn(cap, body, f"{name}: round cap missing")
+            self.assertIn(cap, body, f"{name}: delta-table round cap missing")
 
     def test_dispatch_fallback_covers_hung_checker(self) -> None:
         """t-004: the dispatch fallback covers hung/no-verdict checkers,
@@ -180,21 +195,32 @@ class CommandConformanceTests(unittest.TestCase):
         )
 
     def test_commands_read_dispatch_log(self) -> None:
-        """t-005: each command reads `## Dispatch log` before dispatching;
-        bootstrap manifests record a dispatch mode, selected by host
-        capability detection rather than pinned to delegated."""
+        """t-005: each command's bootstrap manifest rule records a dispatch
+        mode selected by host capability detection rather than pinned to
+        delegated, and the checker dispatch reads `## Dispatch log`."""
         for name in PHASE_COMMANDS:
             body = self._command_body(name)
-            self.assertIn("## Dispatch log", body,
-                          f"{name}: dispatch-log read missing")
-            self.assertIn("Dispatch mode: native", body,
-                          f"{name}: native dispatch-mode recording missing")
-            self.assertIn("Dispatch mode: delegated", body,
-                          f"{name}: delegated dispatch-mode fallback recording missing")
+            # "Dispatch mode: native" may wrap across lines in the body;
+            # assert the wording without the exact wrap point.
+            self.assertRegex(
+                body,
+                r"Dispatch mode:\s*native",
+                f"{name}: native dispatch-mode recording missing",
+            )
+            self.assertRegex(
+                body,
+                r"default to\s+delegated",
+                f"{name}: delegated dispatch-mode fallback recording missing",
+            )
             self.assertIsNone(
                 re.search(r"unknown at bootstrap time", body),
                 f"{name}: outdated pinned-delegated bootstrap rationale found",
             )
+        # The checker-pass dispatch-log read lives in the orchestrator's loop
+        # procedure, which every phase command loads in step 1.
+        orch = ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
+        self.assertIn("## Dispatch log", orch,
+                      "orchestrator: dispatch-log read missing")
 
 
 if __name__ == "__main__":

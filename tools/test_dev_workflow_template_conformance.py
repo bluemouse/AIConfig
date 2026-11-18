@@ -47,7 +47,7 @@ def _template_body(path: Path) -> str:
 
 # Bootstrap template that produces each phase artifact.
 TEMPLATES: dict[str, Path] = {
-    "02-requirement-ledger.md": REPO_ROOT / "skills" / "dev-workflow-orchestrator" / "references" / "requirement-ledger-template.md",
+    "02-requirement-ledger.md": REPO_ROOT / "skills" / "prompt-clarifier" / "references" / "requirement-ledger.md",
     "10-research-report.md": REPO_ROOT / "skills" / "research-guide" / "references" / "research-report-template.md",
     "11-research-review.md": REPO_ROOT / "skills" / "research-reviewer" / "references" / "review-report-template.md",
     "20-implementation-plan.md": REPO_ROOT / "skills" / "plan-guide" / "references" / "implementation-plan-template.md",
@@ -180,12 +180,14 @@ class CommandContractTests(unittest.TestCase):
 
     def test_review_command_checker_first_on_round_one(self) -> None:
         text = (REPO_ROOT / "commands" / "review" / "COMMAND.md").read_text(encoding="utf-8")
-        self.assertIn("Round-1 ordering (Code Review exception)", text)
-        checker_pos = text.find("**Checker pass (round 1)**")
-        doer_pos = text.find("**Doer pass**")
-        self.assertGreater(checker_pos, -1, "review command must name a round-1 checker pass")
-        self.assertGreater(doer_pos, -1, "review command must name a doer pass")
-        self.assertLess(checker_pos, doer_pos, "round 1 must run the checker before the doer")
+        ordering_pos = text.find("| Ordering |")
+        self.assertGreater(ordering_pos, -1, "review command must state round-1 ordering")
+        # The ordering is declared in the delta table's Ordering row.
+        ordering_row = re.search(r"\| Ordering \|[^\n]*", text)
+        assert ordering_row is not None
+        self.assertIn("Round 1: checker first", ordering_row.group(0))
+        self.assertGreater(text.find("`code-reviewer`"), -1, "checker pass must be named")
+        self.assertGreater(text.find("`code-review-resolver`"), -1, "doer pass must be named")
 
 
 if __name__ == "__main__":

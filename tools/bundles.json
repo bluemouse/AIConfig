@@ -24,14 +24,19 @@
       "id": "core-dev-workflow",
       "name": "Core dev workflow bundle",
       "description": "Minimum workflow set for ordinary feature, bug, and product-spec development.",
-      "bases": ["core-dev-workflow"]
+      "bases": [
+        "core-dev-workflow"
+      ]
     },
     {
       "id": "extended-dev-workflow",
       "name": "Extended dev workflow bundle",
       "description": "Core bundle plus quality gates, collaboration support, parallel execution, and GitHub delivery.",
-      "bases": ["core-dev-workflow"],
+      "bases": [
+        "core-dev-workflow"
+      ],
       "skills": [
+        "dev-workflow-orchestrator",
         "research-reviewer",
         "plan-reviewer",
         "advisory-council",

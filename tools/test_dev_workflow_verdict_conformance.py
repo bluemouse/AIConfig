@@ -46,19 +46,28 @@ PHASE_ARTIFACT = {
 
 
 def _agent_output_format(name: str) -> str:
-    """Extract the Output format section of a checker agent's AGENT.md."""
+    """Extract the verdict list of a checker agent's AGENT.md.
+
+    Since the shared-boilerplate fold, the verdict list lives on the
+    "Allowed verdicts" line inside the Per-agent contract section (the
+    output-format boilerplate moved to
+    dev-workflow-orchestrator/references/checker-subagent-contract.md).
+    """
     text = (REPO_ROOT / "agents" / name / "AGENT.md").read_text(encoding="utf-8")
-    match = re.search(r"^## Output format\s*$(.*?)^## ", text, re.MULTILINE | re.DOTALL)
-    assert match, f"No Output format section in agents/{name}/AGENT.md"
+    # Capture through wrapped continuation lines until the next bullet or
+    # the stage-exit exception sentence.
+    match = re.search(
+        r"\*\*Allowed verdicts:\*\*(.*?)(?=\n- |\n\n|\*\*Stage-exit exception)",
+        text,
+        re.DOTALL,
+    )
+    assert match, f"No Allowed verdicts line in agents/{name}/AGENT.md"
     return match.group(1)
 
 
 def _bullet_verdicts(section: str) -> set[str]:
-    """Extract the verdict strings from an agent Output-format bullet list."""
-    verdicts_found = set()
-    for m in re.finditer(r"^\s{2,}-\s+`([^`]+)`\s*$", section, re.MULTILINE):
-        verdicts_found.add(m.group(1).strip())
-    return verdicts_found
+    """Extract the verdict strings from an Allowed verdicts line."""
+    return set(re.findall(r"`([^`]+)`", section))
 
 
 class AgentVerdictConformanceTests(unittest.TestCase):
@@ -289,25 +298,39 @@ class RootCauseVocabularyConformanceTests(unittest.TestCase):
                     )
 
     def test_agent_bodies_document_full_vocabulary(self) -> None:
-        """Each checker agent's root-cause-phase value list covers all values."""
+        """The shared checker-subagent contract (which every checker agent
+        loads in its Read-first section) lists the full root-cause vocabulary,
+        and each agent delegates to it."""
+        contract = (
+            REPO_ROOT
+            / "skills"
+            / "dev-workflow-orchestrator"
+            / "references"
+            / "checker-subagent-contract.md"
+        ).read_text(encoding="utf-8")
+        match = re.search(
+            r"`root-cause-phase` valid values: (.*?)\.\n",
+            contract,
+            re.DOTALL,
+        )
+        assert match, "checker-subagent-contract.md: no root-cause-phase valid-values list"
+        listed = set(re.findall(r"`(\w[\w-]*)`", match.group(1)))
+        self.assertEqual(
+            listed,
+            self.VALUES,
+            "checker-subagent-contract.md root-cause vocabulary "
+            f"{sorted(listed)} != {sorted(self.VALUES)}",
+        )
         for phase, name in AGENTS.items():
             with self.subTest(phase=phase):
                 text = (REPO_ROOT / "agents" / name / "AGENT.md").read_text(
                     encoding="utf-8"
                 )
-                match = re.search(
-                    r"Include `root-cause-phase` on every finding\.\*\* Valid values: (.*?)\.",
+                self.assertIn(
+                    "checker-subagent-contract.md",
                     text,
-                )
-                assert match, (
-                    f"agents/{name}/AGENT.md: no root-cause-phase valid-values list"
-                )
-                listed = set(re.findall(r"`(\w[\w-]*)`", match.group(1)))
-                self.assertEqual(
-                    listed,
-                    self.VALUES,
-                    f"agents/{name}/AGENT.md root-cause vocabulary {sorted(listed)} "
-                    f"!= {sorted(self.VALUES)}",
+                    f"agents/{name}/AGENT.md: does not load the shared "
+                    "checker contract",
                 )
 
     def test_skill_bodies_and_templates_document_full_vocabulary(self) -> None:
