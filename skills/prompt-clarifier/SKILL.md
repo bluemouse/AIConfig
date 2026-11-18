@@ -54,24 +54,9 @@ Ask one to three questions per turn by default. Ask up to five only when they ar
 
 When another skill is driving the task and specifies its own question pacing — for example one decision per turn during a research dialogue or a planning pass — follow that skill's rule instead. Its pacing reflects the rhythm of that workflow; batching against it costs more than it saves.
 
-Choose the next question by expected information gain:
+Choose the next question by expected information gain: prefer a question that eliminates several plausible interpretations; prefer decisions that affect scope, architecture, safety, or acceptance criteria; ask prerequisites before dependents; skip what can be inferred, discovered, or safely defaulted; do not ask speculative future questions before the current branch is selected.
 
-1. Prefer a question that eliminates several plausible interpretations.
-2. Prefer decisions that affect scope, architecture, safety, or acceptance criteria.
-3. Ask prerequisite questions before dependent questions.
-4. Avoid asking about details that can be inferred, discovered, or safely defaulted.
-5. Do not ask speculative future questions before the current branch is selected.
-
-Make each question easy to answer:
-
-- Ask for one concrete decision per question.
-- Use short numbered questions.
-- Offer mutually distinct options when the likely answers are known.
-- Mark a recommended default and explain it only when the reason is not obvious.
-- Include `Not sure - use the recommended default` when appropriate.
-- Permit compact replies such as `1b 2a` or `defaults`.
-- Ask for an example and a non-example when a subjective term needs an operational definition.
-- Use placeholders only when the user can fill them directly.
+Make each question easy to answer: one concrete decision per question; short numbered questions; mutually distinct options when the likely answers are known; a marked recommended default; compact reply forms such as `1b 2a` or `defaults`; an example and a non-example when a subjective term needs an operational definition. Never re-ask what the prompt, conversation, or a quick low-risk inspection already answered, and never ask a question whose answer would not change the work.
 
 Use this pattern when suitable:
 
@@ -90,15 +75,6 @@ I need two decisions before I can proceed:
 
 Reply with `defaults`, `1c 2a`, or your own wording.
 ```
-
-Do not ask:
-
-- Questions already answered in the prompt or conversation.
-- Questions answerable by a quick, low-risk inspection.
-- Broad prompts such as "Can you clarify?" or "What do you want?"
-- Multiple decisions hidden inside one sentence.
-- "Anything else?" when no material ambiguity remains.
-- Questions whose answers would not change the work.
 
 ## Handling user responses
 

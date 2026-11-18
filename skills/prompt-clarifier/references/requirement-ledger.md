@@ -58,8 +58,6 @@ task. Omit sections that are not relevant — do not fill them with placeholders
 - The clarifier's `CHECK` state must pass before the ledger is written: outcome unambiguous, deliverable known, success evaluable, no unresolved contradictions.
 - If the clarifier cannot reach `actionable` (e.g., the user cannot provide a required decision), the ledger is marked `blocked` with the specific blocker.
 
-> **Source of truth.** The dev-workflow harness's canonical template lives at
-> `skills/dev-workflow-orchestrator/references/requirement-ledger-template.md`
-> (installed as `.agents/skills/dev-workflow-orchestrator/references/requirement-ledger-template.md`).
-> This file mirrors it so prompt-clarifier is self-contained when installed
-> without the orchestrator. Keep the two in sync when the schema changes.
+> **Source of truth.** This file is the canonical ledger schema; the
+> dev-workflow-orchestrator passes its path to the Clarify pass as the output
+> template (`.agents/skills/prompt-clarifier/references/requirement-ledger.md`).

@@ -7,7 +7,7 @@ Ported and adapted from `references/skills/debugging-guide/` in this repository.
 - **Last reviewed:** 2026-07-10
 - **Used for:**
   - `SKILL.md` → classify-before-trace, gotchas, progressive disclosure
-  - `references/bug-taxonomy.md`, `references/scientific-debugging.md`, `references/reproduction-and-bisection.md`, `references/instrumentation-and-checks.md`, `references/determinism-and-replay.md`, `references/gotchas.md`
+  - `references/bug-taxonomy.md`, `references/reproduction-and-bisection.md`, `references/instrumentation-and-checks.md`, `references/determinism-and-replay.md`, `references/gotchas.md`
 - **Aspects extracted:**
   - "A Taxonomy of Bugs" — bug classes and per-class prevention-by-design
   - "A Debugging Story" — hypothesis ranking, confirm-before-fix, repro shrinking, git bisect failure modes, determinism and record/replay

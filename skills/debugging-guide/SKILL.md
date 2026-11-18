@@ -1,6 +1,6 @@
 ---
 name: debugging-guide
-description: "Use when diagnosing a software defect before fixing it — reproducing or shrinking failures, tracing root cause with evidence, ranking hypotheses, choosing prevention-by-design tripwires, writing regression tests, applying a minimal fix, and verifying with commands. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, failing tests, build failures, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging, dangling-pointer crashes, buffer-overwrite classes, and unclear integration failures — even when the user does not say debugging. Does not trigger on active merge/rebase integration (git-merge-guide), strict TDD coaching (test-driven-dev-guide), correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning (code-professor), profiling without a defect, ownership API design (cpp-memory-guide), or native GDB/LLDB steps while editing C++."
+description: "Use when diagnosing a software defect before fixing it — root-cause tracing with evidence before any production change, reproducing or shrinking failures, forming and testing hypotheses, choosing prevention-by-design tripwires, writing the regression test, and applying the minimal fix. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging, dangling-pointer crashes, buffer-overwrite classes, and unclear integration failures — even when the user does not say debugging; skip it for a failure with an obvious, verified cause. Does not trigger on active merge/rebase integration (git-merge-guide), strict TDD coaching (test-driven-dev-guide), correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning (code-professor), profiling without a defect, or native GDB/LLDB steps while editing C++."
 ---
 
 # Debugging Guide
@@ -14,8 +14,8 @@ coaching, post-implementation correctness audit, diff review, or plan execution.
 
 ## When to Use
 
-- Reproducing and tracing a crash, failing test, build failure, regression, or flaky behavior
-- Gathering evidence, forming hypotheses, and confirming cause before changing production code
+- Reproducing and tracing a crash, regression, flaky behavior, or non-obvious failure
+- Gathering evidence and confirming cause before changing production code
 - Writing or updating a regression test or durable reproducer for a specific defect
 - Applying a focused production fix and verifying it with commands
 - Producing a debugging report for reviewers or follow-up agents
@@ -32,55 +32,22 @@ Do not propose or apply a production fix until you can state:
 A symptom is not a root cause. A plausible explanation is not evidence. A manual check is
 not enough when an automated test or durable reproducer can be created.
 
-## Workflow
+## Investigation contract
 
-### 1. Freeze the scope
+The workflow is the standard one you already know — freeze scope (inspect state before
+editing; one-sentence bug definition; smallest affected surface), reproduce before
+changing code (record exact commands, inputs, failing log slices, exit codes; for
+intermittent failures capture frequency and at least one failing trace), read the failure
+literally (first meaningful failure over cascade errors; known vs inferred), classify the
+bug class, trace backward through data/state flow to the earliest incorrect transition,
+and compare against the closest working example in the same codebase before inventing a
+new approach. References carry the on-demand depth:
 
-- Inspect the current state before editing: branch, dirty files, recent commits, failing command, config, environment, and user-provided reproduction steps.
-- Do not switch branches, discard changes, reformat unrelated files, or mix cleanup with debugging unless the user explicitly asks.
-- Define the bug in one sentence: expected behavior, actual behavior, and impact.
-- Identify the smallest affected surface: function, module, boundary, platform, build variant, dependency, data shape, feature flag, or external service.
-
-### 2. Reproduce before changing code
-
-- Run the failing command, test, build, scenario, or minimal manual reproduction before editing.
-- Record exact commands, inputs, relevant log slices (the failing section, not the full stream), stack traces, assertions, screenshots, timestamps, exit codes, dependency versions, and platform details.
-- For intermittent failures, repeat enough times to estimate frequency and capture at least one failing trace. Record seed, order, clock, thread, device, network, and cache state when relevant.
-- If the failure cannot be reproduced, add diagnostics or request missing reproduction data. Do not guess a fix.
 - Load `references/reproduction-and-bisection.md` when shrinking a slow repro or bisecting history.
 - Load `references/determinism-and-replay.md` when the bug is intermittent and you need determinism, stress, logging, or record/replay.
-
-### 3. Read the failure literally
-
-- Read the complete error message, stack trace, assertion text, and surrounding logs before opening broad code areas.
-- Prefer the first meaningful failure in time over later cascade errors.
-- Follow line numbers, file paths, invariant names, error codes, request ids, object ids, and thread/process ids exactly.
-- Separate what is known from what is inferred. Mark assumptions until evidence proves them.
-- Load `references/scientific-debugging.md` when ranking hypotheses from crash or error evidence.
-
-### 4. Classify the bug
-
-- Name the bug class before tracing deeply: logic/edge case, unexpected initial condition, state mutation, memory safety, concurrency, build/config, platform, integration/schema, flakiness, or design flaw.
-- Ask what design or tripwire would have prevented every bug in that class, not only this instance.
-- After the fix, note the class and one structural prevention for follow-up.
-- Load `references/bug-taxonomy.md` for class-specific prevention tactics.
-
-### 5. Trace backward to the earliest incorrect transition
-
-Start at the observable failure and walk backward through data, control, state, configuration, ownership, timing, or build flow.
-
-For each hop, answer:
-
-- What input entered here?
-- What output or state left here?
-- What invariant should hold here?
-- Where was that invariant first violated?
-- Which caller, dependency, config, generated file, cache, thread, or platform condition allowed it?
-
-For multi-component systems, instrument boundaries first: UI to app, app to service, service to database, parser to model, producer to consumer, build step to packaging, host to plugin, or client to server. Log what enters and exits each boundary once, then remove temporary diagnostics before finishing unless they are intentionally useful permanent observability.
-
-Load `references/diagnostic-techniques.md` for tracing, differential comparison, bisecting, and bug-class-specific tactics.
-Load `references/instrumentation-and-checks.md` when adding assertions, sanitizers, or tripwires — instrument to surface the fault **earlier** or where it is cheaper to act on, not to restate what the crash already showed.
+- Load `references/bug-taxonomy.md` for bug classes and prevention-by-design tactics.
+- Load `references/diagnostic-techniques.md` for tracing, differential comparison, bisecting, and bug-class-specific tactics.
+- Load `references/instrumentation-and-checks.md` when adding assertions, sanitizers, or tripwires — instrument to surface the fault **earlier** or where it is cheaper to act on, not to restate what the crash already showed.
 
 When reproduction exists and the defect is in **native C++**, apply the debugger
 (GDB/LLDB) and sanitizer toolchain directly; debugger rules and sanitizer build flags
@@ -88,13 +55,9 @@ live in
 [cpp-coding's build-and-verification.md](../cpp-coding/references/build-and-verification.md#native-debugging-with-gdblldb)
 (via [cpp-coding](../cpp-coding/SKILL.md)).
 
-### 6. Compare against working patterns
+## Hypothesis discipline
 
-Find the closest working example in the same codebase before inventing a new approach; list the differences between broken and working paths before judging which difference matters.
-
-### 7. Form and test one hypothesis at a time
-
-Use this exact thought structure before each experiment:
+Test one hypothesis at a time, one variable per experiment. Before each experiment:
 
 ```text
 Hypothesis: [specific root cause mechanism]
@@ -104,50 +67,41 @@ Experiment: [one command, diagnostic, breakpoint, assertion, or tiny probe]
 Outcome: [confirmed/rejected + evidence]
 ```
 
-Rules:
-
-- Test one variable at a time.
 - Prefer observation, instrumentation, and focused tests before production edits.
 - If an experiment disproves the hypothesis, discard it and form a new one; do not stack speculative fixes.
 - If three production fix attempts fail or each fix reveals a different shared-state/coupling problem, stop and reassess the design with the user before attempting another fix.
 
-### 8. Create a failing test or durable reproducer
+## Fix and verify
 
-Before the production fix, create the smallest regression test or reproducer that captures the root cause.
+1. **Regression test first** — before the production fix, create the smallest failing test
+   or reproducer that captures the root cause (unit test for a local bug, integration
+   test for a boundary bug, end-to-end when only the full stack fails, or a deterministic
+   reproducer script if no harness fits). Use
+   [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md) when available.
+   Do not write tests that encode the implementation detail you are about to change.
+2. **Fix the earliest incorrect transition**, not the nearest symptom. Banned fixes:
+   sleeps, hidden retries, silent fallbacks.
+3. **Verify with evidence** — if verification cannot be run, state exactly why, what was
+   not verified, and which command should be run next. Do not claim the bug is fixed
+   without command-backed evidence.
+4. **After the fix**, note the bug class and one structural prevention (what design or
+   tripwire would have caught the whole class) for follow-up.
 
-Prefer, in order:
+## Report
 
-1. a focused unit test when the bug is local;
-2. an integration or component test when the boundary is the bug;
-3. a system/end-to-end test when behavior only fails in the full stack;
-4. a deterministic reproducer script or command if the codebase lacks a suitable test harness.
+For non-trivial investigations, end with a compact report — load
+`references/debugging-report.md` and follow the template: status; expected and actual
+behavior; reproduction; root cause as the earliest incorrect transition; evidence and
+rejected alternatives; changed files; tests/commands run with results; residual risk;
+Next Step handoff. For a trivial fix with an obvious cause, a one-paragraph summary
+covering root cause, fix, and verification suffices.
 
-Use [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md) when available. The test or reproducer must fail against the buggy behavior and pass only after the fix. Do not write tests that simply encode the implementation detail you are about to change.
-
-### 9. Apply the minimal root-cause fix
-
-Fix the earliest incorrect transition, not the nearest symptom. Banned fixes: sleeps, hidden retries, silent fallbacks.
-
-### 10. Verify with evidence
-
-If verification cannot be run, state exactly why, what was not verified, and which command should be run next. Do not claim the bug is fixed without command-backed evidence.
-
-### 11. Produce the debugging report
-
-End every debugging task with a compact report. Load `references/debugging-report.md` and follow the template.
-
-The report must include:
-
-- status;
-- expected and actual behavior;
-- reproduction command or steps;
-- root cause as the earliest incorrect transition;
-- evidence and rejected alternatives;
-- changed files and fix summary;
-- tests/commands run with results;
-- residual risk and follow-up.
-
-After the fix is verified, hand off deliberately: for complex or shared-code fixes, route to [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) for requirement-level correctness proof, then to [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) for the fix diff before delivery. For a small, well-contained fix with a passing regression test, a direct [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) pass is enough. Record the chosen next step in the report's Next Step field.
+After the fix is verified, hand off deliberately: complex or shared-code fixes route to
+[../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) for
+requirement-level correctness proof, then to
+[../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) for the fix diff; a small,
+well-contained fix with a passing regression test needs only the code-reviewer pass.
+Record the chosen next step in the report's Next Step field.
 
 ## Gotchas
 
@@ -163,37 +117,18 @@ Load `references/gotchas.md` for the full list. High-signal items:
 
 ## Stop signs
 
-Stop and return to investigation when you notice any of these:
-
-- proposing a fix before reproducing or tracing the cause;
-- changing multiple variables at once;
-- adding a workaround to hide the symptom;
-- relying only on a manual check when automated verification is possible;
-- assuming the error message is misleading without proving it;
-- skipping a working-example comparison;
-- fixing code you do not understand;
-- attempting a fourth speculative fix after three failed fixes.
-
-## Completion checklist
-
-Before finishing, ensure:
-
-- root cause is specific and evidence-backed;
-- regression test or durable reproducer exists when feasible;
-- fix is minimal and localized;
-- unrelated changes are absent or explicitly justified;
-- exact verification commands and outcomes are reported;
-- temporary diagnostics are removed or intentionally retained as useful observability.
+Stop and return to investigation when you notice: proposing a fix before reproducing or
+tracing the cause; changing multiple variables at once; adding a workaround to hide the
+symptom; relying on a manual check when automated verification is possible; assuming the
+error message is misleading without proving it; fixing code you do not understand; or
+attempting a fourth speculative fix after three failed fixes.
 
 When debugging was invoked from an active merge/rebase integration, return control to
 [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) afterward.
 
 ## Progressive disclosure
 
-Load these references on demand:
-
 - `references/bug-taxonomy.md` — classify bugs and choose prevention-by-design tactics
-- `references/scientific-debugging.md` — hypothesis ranking and confirm-before-fix discipline
 - `references/reproduction-and-bisection.md` — shrink repros and bisect regressions
 - `references/instrumentation-and-checks.md` — assertions, sanitizers, and tripwire discipline
 - `references/determinism-and-replay.md` — make intermittent bugs reproducible

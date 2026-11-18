@@ -43,6 +43,5 @@ git bisect reset
 
 ## Related
 
-- `scientific-debugging.md` — hypothesis-first when bisect is too slow
 - `determinism-and-replay.md` — intermittent repro tactics
 - [../../git-guide/SKILL.md](../../git-guide/SKILL.md) — git mechanics during bisect
