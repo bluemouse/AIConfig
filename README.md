@@ -542,9 +542,8 @@ done
 **Create a custom agent** (example chat prompt):
 
 ```text
-Use agent-creator to bootstrap code-reviewer under agents/code-reviewer/ with
-per-tool notes in AGENT.md's ## Tool notes, validate, and install with
-install_portable_agent.py.
+Use agent-creator to bootstrap code-reviewer under agents/code-reviewer/, validate,
+and install with install_portable_agent.py.
 ```
 
 **Direct agent scaffold** (no bootstrap):

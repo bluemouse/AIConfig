@@ -352,6 +352,7 @@ class OperationResult:
     installed: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
     removed: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
     @property
@@ -1299,6 +1300,38 @@ def copy_path(src: Path, dest: Path) -> None:
         raise InstallerError(f"Source path does not exist: {src}")
 
 
+def warn_unpaired_agent_skill(
+    target_root: Path, slug: str, skills: Sequence[str], result: OperationResult
+) -> None:
+    """ar-012: warn when an installed agent references a skill that is not installed.
+
+    Checker agents reference `.agents/skills/<name>/` as their criteria source;
+    installing the agent without its paired skill leaves the agent's skill
+    reference unresolvable in the target. Warn, do not block — non-checker
+    agents may legitimately reference skills installed separately. The check
+    reads the installed Claude copy; a skipped (existing) copy carries the
+    same body. Only meaningful for agent installs — skill, command, scripts,
+    and guideline installs never write the `.claude/agents/<name>.md` file
+    this reads, so it is called only from the agents loop.
+    """
+    agent_path = target_root / CLAUDE_AGENT_FILE.format(name=slug)
+    if not agent_path.is_file():
+        return
+    agent_md = agent_path.read_text(encoding="utf-8", errors="replace")
+    paired_skill_dir = target_root / SHARED_SKILL_DIR.format(name=slug)
+    skill_in_install_set = slug in {slugify_name(s) for s in skills}
+    if (
+        ".agents/skills/" in agent_md
+        and not paired_skill_dir.is_dir()
+        and not skill_in_install_set
+    ):
+        result.warnings.append(
+            f"agent {slug}: references a skill under .agents/skills/ but the "
+            f"paired skill is not in this install set — also pass "
+            f"--skills {slug} so the agent's skill reference resolves"
+        )
+
+
 def install_items(
     *,
     source_root: Path,
@@ -1362,6 +1395,7 @@ def install_items(
                 result.installed.append(rel_dest)
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
+
         # Skills install into .agents/skills/ — bridge Claude Code to it so
         # the installed skills are discovered (shared with the wave-1
         # installer's semantics; a refusal is reported, never fatal).
@@ -1395,6 +1429,13 @@ def install_items(
                 result.installed.append(rel_dest)
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
+
+        # ar-012: an installed agent whose body references a skill under
+        # .agents/skills/ (the checker agents' criteria source) needs that
+        # skill installed too; without it, the agent's step-2 skill
+        # reference is unresolvable in the target. Warn, do not block —
+        # non-checker agents may legitimately have no paired skill.
+        warn_unpaired_agent_skill(target_root, slug, skills, result)
 
     for name in commands:
         slug = slugify_name(name)
@@ -1465,6 +1506,7 @@ def install_items(
                 result.installed.append(rel_dest)
             except OSError as exc:
                 result.errors.append(f"{rel_dest}: {exc}")
+
         # Commands are command-skills under .agents/skills/ — they need the
         # same Claude Code bridge as skills.
         ensure_bridge_symlink(target_root)
@@ -1750,6 +1792,10 @@ def format_result(result: OperationResult, *, uninstall: bool) -> str:
     if result.errors:
         lines.append("Errors:")
         lines.extend(f"  - {msg}" for msg in result.errors)
+
+    if result.warnings:
+        lines.append("Warnings:")
+        lines.extend(f"  - {msg}" for msg in result.warnings)
 
     if result.ok and not uninstall and result.installed:
         lines.append("")

@@ -29,6 +29,15 @@ PHASE_CHECKER: dict[str, str] = {
     "code-review": "40-code-review.md",
 }
 
+# ar-002/ar-013: root-cause-phase vocabulary per phase. Keep in lockstep with
+# loop-contracts.md "Root cause field" rows and the checker skill/agent bodies.
+ROOT_CAUSE_VALUES: dict[str, set[str]] = {
+    "research": {"local", "research", "clarify", "plan", "implement", "code-review"},
+    "plan": {"local", "research", "clarify", "plan", "implement", "code-review"},
+    "implement": {"local", "research", "clarify", "plan", "implement", "code-review"},
+    "code-review": {"local", "research", "clarify", "plan", "implement", "code-review"},
+}
+
 # Final doer artifact for each completed loop. The code-review loop starts with
 # a review, but a completed loop must end with the reviewer consuming the fix report.
 PHASE_DOER: dict[str, str] = {
@@ -143,6 +152,127 @@ def check_root_cause_phase_present(run_dir: Path, phase: str) -> list[Finding]:
                 f"'root-cause-phase' field found"
             ),
         ))
+        return findings
+
+    # ar-013: require the field in each finding's block and validate its
+    # value against the phase's allowed vocabulary (ROOT_CAUSE_VALUES).
+    #
+    # A finding *definition* is the id at the start of a heading or list
+    # item — the position where a checker authors a finding (detail sections
+    # in the report templates use `#### rr-001: ...`). Summary-table rows
+    # and prior-round disposition rows mention ids without defining
+    # findings, so they are not presence-checked. A definition's block runs
+    # to the next finding-id occurrence of any form (heading, list item, or
+    # table row), so a missing field in one finding cannot be masked by a
+    # later finding's field (the ar-013 round-3 false negative).
+    allowed = ROOT_CAUSE_VALUES.get(phase, set())
+    # A finding *definition* is the id at the start of a heading or a
+    # header-shaped list item (id followed by `:` or an em dash — the detail
+    # sections' `- rr-001: ...` / `#### rr-001: ...` conventions). A bare
+    # line-initial reference bullet ("- consider cr-001 first" in Next
+    # actions) is a mention, not a definition, so it is not
+    # presence-checked (cr-013).
+    definition_pattern = re.compile(
+        r"^#{2,6}\s+(?:finding\s+)?[*`]*((?:rr|pr|ia|cr)-\d{3})\b"
+        r"|^[-*]\s+[*`]*((?:rr|pr|ia|cr)-\d{3})\s*[:—-]\s",
+        re.IGNORECASE | re.MULTILINE,
+    )
+    boundary_pattern = re.compile(
+        r"^#{2,6}\s+(?:finding\s+)?[*`]*(?:rr|pr|ia|cr)-\d{3}\b"
+        r"|^[-*]\s+[*`]*(?:rr|pr|ia|cr)-\d{3}\b"
+        r"|^\|[^|\n]*\b(?:rr|pr|ia|cr)-\d{3}\b",
+        re.IGNORECASE | re.MULTILINE,
+    )
+    boundary_starts = [m.start() for m in boundary_pattern.finditer(text)]
+    for definition in definition_pattern.finditer(text):
+        finding_id = definition.group(1) or definition.group(2)
+        block_end = next(
+            (start for start in boundary_starts if start > definition.start()),
+            len(text),
+        )
+        block = text[definition.start():block_end]
+        if "root-cause-phase" not in block.lower():
+            findings.append(Finding(
+                severity="error",
+                check="loop_contract",
+                message=(
+                    f"Finding {finding_id} in {checker_file} has no "
+                    f"'root-cause-phase' field in its block"
+                ),
+            ))
+
+    # Value vocabulary applies to every field occurrence in the artifact —
+    # definition blocks and summary-table root-cause columns alike — so a
+    # value outside the phase's vocabulary is flagged wherever it appears.
+    value_pattern = re.compile(
+        r"root-cause-phase\s*[:`]\s*`?(\w[\w-]*)", re.IGNORECASE
+    )
+    for value_match in value_pattern.finditer(text):
+        value = value_match.group(1).lower()
+        if allowed and value not in allowed:
+            findings.append(Finding(
+                severity="error",
+                check="loop_contract",
+                message=(
+                    f"root-cause-phase '{value_match.group(1)}' in {checker_file} "
+                    f"is not in the phase's vocabulary {sorted(allowed)}"
+                ),
+            ))
+    # Summary-table occurrences: the label lives in the header cell, so the
+    # labeled-field pattern misses them. Locate the column via the header
+    # row, then scan only that table's contiguous body rows — the scan stops
+    # at the first non-table line, so later unrelated tables are never
+    # validated against this column, and the markdown separator row
+    # (all cells `-`/`:`/space) is skipped (cr-008).
+    if allowed:
+        table_line_pattern = re.compile(r"^\|[^\n]*\|[^\n]*$", re.MULTILINE)
+        for header_match in table_line_pattern.finditer(text):
+            line = header_match.group(0)
+            cells = [c.strip().strip("`").lower() for c in line.split("|")[1:-1]]
+            if "root-cause-phase" not in cells:
+                continue
+            value_index = cells.index("root-cause-phase")
+            body = text[header_match.end():]
+            row_matches = list(table_line_pattern.finditer(body))
+            for row_idx, row_match in enumerate(row_matches):
+                prev_end = (
+                    row_matches[row_idx - 1].end()
+                    if row_idx > 0
+                    else 0
+                )
+                # Contiguous table rows are separated by exactly one newline
+                # (cr-014). Markdown ends a table at a blank line — any gap
+                # other than a single "\n" (blank line, prose, heading) means
+                # the table ended and the scan must stop, or the next table's
+                # cells would be validated against this column index.
+                if body[prev_end:row_match.start()] != "\n":
+                    break
+                row_line = row_match.group(0)
+                row_cells = [c.strip() for c in row_line.split("|")[1:-1]]
+                if all(re.fullmatch(r"[-: ]*", c) for c in row_cells):
+                    continue  # markdown separator row
+                if len(row_cells) <= value_index:
+                    continue
+                value = row_cells[value_index].strip("`").lower()
+                # Placeholder tolerance (cr-015): templates list the allowed
+                # values as a slash-separated placeholder (e.g.
+                # `local/research/clarify/plan/implement/code-review`), and a
+                # checker may copy the row verbatim — the verdict extractor
+                # tolerates exactly this via strip_placeholder_options. Real
+                # values are single hyphenated words; skip cells that carry
+                # slash-separated option lists rather than flagging them.
+                if "/" in value:
+                    continue
+                if value and value not in allowed:
+                    findings.append(Finding(
+                        severity="error",
+                        check="loop_contract",
+                        message=(
+                            f"root-cause-phase '{row_cells[value_index].strip().strip('`')}' "
+                            f"in {checker_file} is not in the phase's vocabulary "
+                            f"{sorted(allowed)}"
+                        ),
+                    ))
     return findings
 
 

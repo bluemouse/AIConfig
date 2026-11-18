@@ -166,6 +166,38 @@ python skills/agent-creator/scripts/quick_validate.py --root /path/to/repo --nam
 - Bootstrapped portable agents belong in `agents/<name>/`.
 - Tool-specific frontmatter such as `model`, `tools`, or `readonly` is not portable; keep it as prose in `## Tool notes` when the user wants per-tool variants.
 
+## Read-only checker agents: per-host reality
+
+For read-only checker agents (dev-workflow checkers and any agent whose only writes are
+its output artifact), the installed copies intentionally carry no host frontmatter keys —
+`name` and `description` only. The per-host consequences:
+
+- **Claude Code** — the installed `.claude/agents/<name>.md` is a verbatim copy of the
+  AGENT.md, so it carries no `tools:` or `model:` keys. Read-only behavior is enforced
+  by the agent body's Boundaries section, not by host frontmatter. Add
+  `tools: Read, Grep, Glob, Bash` to the installed file's frontmatter only if you want
+  Claude Code to restrict this agent's tools at the host level.
+- **Cursor** — compat-reads the same verbatim copy and provides no host-level write guard
+  (there is no `readonly:` key). Read-only behavior is enforced by the agent body's
+  Boundaries section. Add `readonly: true` to the installed file's frontmatter only if
+  your Cursor setup honors it.
+- **GitHub Copilot** — `.agent.md` files do not expose a native `readonly` frontmatter
+  field. Read-only enforcement is **instruction-only** (the agent body's Boundaries
+  section) plus detection via the dev-workflow `check_post_phase.py` validation script,
+  which catches forbidden writes in all modes.
+
+**Model defaults:** with no `model:` key, Claude Code runs the agent on the main conversation's model, Cursor on the parent agent's model, and Copilot on the user's currently selected Copilot chat model. Add a `model` key per tool only if the agent must run on a specific model.
+
+**Reload after install:** restart or reload the Claude Code session, reload the Cursor
+window, or reload VS Code after installing or editing an agent so the host rediscovers it.
+
+Because these facts are identical for every read-only checker, the agent AGENT.md files
+carry **no** `## Tool notes` section at all — this section is the only home for the
+per-host install reality. Do not add a Tool notes pointer to the AGENT.md: the body
+becomes the subagent's prompt in native dispatch (installation mechanics are irrelevant
+to the running checker), and this reference does not ship with the dev-workflow harness
+bundle, so a pointer would dangle in distribution targets.
+
 ## Quality checklist
 
 Before finishing, confirm the agent meets the three bars from the shared skill:

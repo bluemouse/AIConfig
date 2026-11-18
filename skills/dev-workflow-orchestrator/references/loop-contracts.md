@@ -30,7 +30,7 @@ Each loop has a doer (produces), a checker (audits), a round cap, an exit condit
 | Feedback format | `rr-NNN` findings + research-guide handoff packet |
 | Terminal labels | `ready`, `conditionally ready`, `needs revision`, `blocked`, `NOT READY` (cap hit) |
 | Escalation | `NOT READY` → root cause classification → backward edge or ask user |
-| Root cause field | `root-cause-phase`: `local` / `research` / `plan` / `implement` / `code-review` |
+| Root cause field | `root-cause-phase`: `local` / `research` / `clarify` (fundamentally ambiguous requirement — backward edge to Clarify) / `plan` / `implement` / `code-review` |
 
 ## Loop 2: Plan
 
@@ -45,7 +45,7 @@ Each loop has a doer (produces), a checker (audits), a round cap, an exit condit
 | Feedback format | `pr-NNN` findings + Guide handoff packet |
 | Terminal labels | `validated`, `conditionally validated`, `needs revision`, `blocked`, `NOT READY` (cap hit) |
 | Escalation | `NOT READY` → root cause classification → backward edge to Research or ask user |
-| Root cause field | `root-cause-phase`: `local` / `research` / `plan` / `implement` / `code-review` |
+| Root cause field | `root-cause-phase`: `local` / `research` / `clarify` (fundamentally ambiguous requirement — backward edge to Clarify) / `plan` / `implement` / `code-review` |
 
 ## Loop 3: Implement
 
@@ -60,7 +60,7 @@ Each loop has a doer (produces), a checker (audits), a round cap, an exit condit
 | Feedback format | `ia-NNN` findings + audit report |
 | Terminal labels | `pass`, `pass with risks`, `fail`, `blocked`, `NOT READY` (cap hit) |
 | Escalation | `NOT READY` → root cause classification → backward edge to Plan or Research, or ask user |
-| Root cause field | `root-cause-phase`: `local` / `research` / `plan` / `implement` / `code-review` |
+| Root cause field | `root-cause-phase`: `local` / `research` / `clarify` (fundamentally ambiguous requirement — backward edge to Clarify) / `plan` / `implement` / `code-review` |
 
 ## Loop 4: Code Review
 
@@ -74,7 +74,7 @@ Each loop has a doer (produces), a checker (audits), a round cap, an exit condit
 | Feedback format | `cr-NNN` findings + verdict field |
 | Terminal labels | `ready to commit`, `ready with notes`, `needs revision`, `NOT READY` (cap hit) |
 | Escalation | `NOT READY` → root cause classification → backward edge to Plan or Research, or ask user |
-| Root cause field | `root-cause-phase`: `local` / `research` / `plan` / `implement` / `code-review` |
+| Root cause field | `root-cause-phase`: `local` / `research` / `clarify` (fundamentally ambiguous requirement — backward edge to Clarify) / `plan` / `implement` / `code-review` |
 | Round-1 ordering | Checker (code-reviewer) runs first on round 1 to produce findings; doer (code-review-resolver) runs first on round > 1 to apply prior fixes. The resolver requires findings as input, so a clean first pass has nothing to resolve. |
 
 ## Loop 5: Stage-Exit Review (staged mode only)
@@ -108,7 +108,7 @@ Runs after all stages commit, on the cumulative commit range. This is the full c
 | Feedback format | `cr-NNN` findings + verdict field |
 | Terminal labels | `ready to commit`, `ready with notes`, `needs revision`, `NOT READY` (cap hit) |
 | Escalation | `NOT READY` → root cause classification → backward edge to Plan or Research, or ask user |
-| Root cause field | `root-cause-phase`: `local` / `research` / `plan` / `implement` / `code-review` |
+| Root cause field | `root-cause-phase`: `local` / `research` / `clarify` (fundamentally ambiguous requirement — backward edge to Clarify) / `plan` / `implement` / `code-review` |
 | Review scope | Cumulative commit range (`HEAD~N..HEAD` where N = number of stage commits) |
 | Review effort | `deep` |
 | Artifacts | `40-final-deep-review.md`, `41-final-fix-report.md` (if findings) |

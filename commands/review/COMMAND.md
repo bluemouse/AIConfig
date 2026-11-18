@@ -32,11 +32,13 @@ skill's Phase 4 procedure and the `code-review-resolver` / `code-reviewer` skill
      and a `## Verification status` section with the body `unverified`. Write a minimal
      `00-run-manifest.md` with `Run status: in-progress`, `Current phase: code-review`,
      all phases `not-started` except Code Review (`in-progress`), and a
-     `## Dispatch log` section recording `Dispatch mode: delegated` (recorded at
-     bootstrap — command-bootstrapped runs skip phase 0; the default is
-     delegated because the command host's subagent capability is unknown at
-     bootstrap time). Never use `skipped` or `fragment` as status values — they
-     fail `manifest_checks.py`.
+     `## Dispatch log` section recording `Dispatch mode: native` when the
+     command's host session exposes a subagent/task primitive satisfying the
+     `agent-runner` contract (per the orchestrator skill's capability detection
+     in `references/dispatch-modes.md`), otherwise `Dispatch mode: delegated`;
+     if the capability cannot be inspected from inside the session, default
+     to delegated and say so in the dispatch log. Never use `skipped` or
+     `fragment` as status values — they fail `manifest_checks.py`.
 
 3. **Read or write the manifest**:
    - If the run dir exists, read `00-run-manifest.md`.
@@ -50,16 +52,17 @@ skill's Phase 4 procedure and the `code-review-resolver` / `code-reviewer` skill
      doer runs first (applying the prior round's fixes), then the checker re-reviews.
    - **Record baseline**: `python .agents/tools/dev-workflow/record_baseline.py --phase code-review --run-dir .agents/workflow/<slug>`
    - **Pre-flight**: `python .agents/tools/dev-workflow/check_pre_phase.py --phase code-review --run-dir .agents/workflow/<slug>`. If it fails, stop and report.
-   - **Checker pass (round 1)**: first read the `## Dispatch log` section of `00-run-manifest.md`; if it records `Dispatch mode: native`, dispatch `code-reviewer` as a subagent per the orchestrator's native-mode task packet; otherwise (delegated/simulated, or the manifest has no dispatch log — default to delegated and say so) invoke `code-reviewer` as a named pass with input `30-implementation-report.md` (and the working-tree diff) and output `40-code-review.md`. The checker must include `root-cause-phase` on every finding.
+   - **Checker pass (round 1)**: first read the `## Dispatch log` section of `00-run-manifest.md`; if it records `Dispatch mode: native`, dispatch `code-reviewer` as a subagent per the orchestrator's native-mode task packet; otherwise (delegated/simulated, or the manifest has no dispatch log — default to delegated and say so) invoke `code-reviewer` as a named pass with input `30-implementation-report.md` (and the working-tree diff) and output `40-code-review.md`. The checker must include `root-cause-phase` on every finding. If the native dispatch fails or the subagent returns no verdict within the host's bounded window, apply the orchestrator's fallback rules (`references/dispatch-modes.md`: Fallback on spawn failure / hung checker) — one identical retry on a transient failure, otherwise record the failure in the dispatch log and fall back to the named pass; never block the workflow.
    - **Doer pass**: invoke `code-review-resolver` as a named pass with the findings from `40-code-review.md` (and the working-tree diff) and output `41-fix-report.md`. On round > 1 the doer runs first, applying the prior round's findings, then the checker re-reviews.
    - **Post-flight**: `python .agents/tools/dev-workflow/check_post_phase.py --phase code-review --run-dir .agents/workflow/<slug>`. If it fails, stop and report.
    - **Read verdict** from the `## Verdict` heading in `40-code-review.md`.
    - **Route**:
      - `ready to commit` or `ready with notes` → run `python .agents/tools/dev-workflow/validate_phase.py --phase code-review --run-dir .agents/workflow/<slug>`. If validation passes, update manifest (phase status `accepted`) and stop with a summary. If validation fails, handle per the orchestrator's validation rules.
      - `needs revision` with `root-cause-phase: local` → increment round counter. On round > 1, copy `40-code-review.md` to `40-code-review-r<N>.md` where N is the round just completed (round 2 → `-r1`, round 3 → `-r2`) so the fresh-context checker sees prior findings and preserves finding ids, and include all prior `-r1`, `-r2`, … paths in the next round's context. Loop back to the doer pass. Round cap is 5; on cap, escalate.
-     - `needs revision` with `root-cause-phase: upstream` (plan or research) → write a backward handoff packet `back-code-review-to-<target>-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.agents/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .agents/workflow/<slug>`, update manifest (target phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (instruct the user to run `/plan <slug>` for plan issues or `/research <slug>` for research issues), then stop. Backward edge cap is 2 per phase.
-     - `blocked` → escalate immediately with a blocker summary and stop.
-   - **Update manifest** after every step.
+     - `needs revision` with `root-cause-phase: plan` or `research` → write a backward handoff packet `back-code-review-to-<target>-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.agents/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .agents/workflow/<slug>`, update manifest (target phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (instruct the user to run `/plan <slug>` for plan issues or `/research <slug>` for research issues), then stop. Backward edge cap is 2 per phase.
+     - `needs revision` with `root-cause-phase: clarify` → write a backward handoff packet `back-code-review-to-clarify-<n>.md` using the format in the dev-workflow-orchestrator skill's `references/backward-handoff-format.md` (resolve the path from the installed orchestrator skill root, e.g. `.agents/skills/dev-workflow-orchestrator/references/backward-handoff-format.md`), validate it with `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir .agents/workflow/<slug>`, update manifest (Clarify phase status `backward-edge-received`, increment backward edge count), print the finding and the recommended next step (since no `/clarify` command exists, instruct the user to run `/run-dev-workflow` to resolve the Clarify issue, or resolve it manually), then stop. Backward edge cap is 2 per phase.
+     - `blocked` → code-reviewer emits no `blocked` verdict (an empty or unreachable diff yields `ready to commit`); if the artifact nonetheless carries one, treat it as an invalid verdict: report the mismatch and stop.
+   - **Update manifest** after every step; after each manifest write, refresh the manifest pin with `python .agents/tools/dev-workflow/record_baseline.py --phase code-review --run-dir .agents/workflow/<slug> --manifest-only` (never a full re-record mid-phase — it would reset the dirty-path and HEAD baselines the source-edit and commit checks pin against).
 
 5. **Enforce Code Review mode**: write source only to fix review findings (via
    `code-review-resolver`); write to `40-*.md` and `41-*.md` artifacts; run tests and builds;

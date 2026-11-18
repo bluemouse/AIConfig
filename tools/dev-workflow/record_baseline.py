@@ -10,11 +10,25 @@ These are written to `baseline.txt`, `phase-start-dirty-hashes.json`, and
 `phase-start-snapshot.txt` in the run directory. Mode enforcement checks read
 these to distinguish pre-existing changes from mutations made during the phase.
 
+With --manifest-only, no new baseline is recorded; instead the run-dir
+snapshot's entry for the run manifest (`00-run-manifest.md`) is refreshed to
+its current hash. The orchestrator runs this after every manifest write:
+`check_no_manifest_edits_by_phase` pins the manifest against the snapshot, so
+an orchestrator-owned update must be re-pinned or post-flight flags it. The
+feature brief's pin is deliberately left at its phase-start hash — the
+orchestrator never legitimately writes the brief mid-phase, so refreshing it
+would launder a forbidden doer/checker edit (cr-009). A full re-record here
+would defeat the other mode-enforcement checks —
+`check_no_forbidden_source_edits` compares dirty paths against
+`baseline.txt`'s, and `check_no_commits_in_non_commit_phase` compares HEAD
+against the baseline HEAD — so --manifest-only deliberately leaves those
+files untouched.
+
 Usage:
-    python .agents/tools/dev-workflow/record_baseline.py --phase research --run-dir .agents/workflow/<slug> [--repo-root <path>]
+    python .agents/tools/dev-workflow/record_baseline.py --phase research --run-dir .agents/workflow/<slug> [--repo-root <path>] [--manifest-only]
 
 Exit codes:
-    0 — baseline recorded
+    0 — baseline recorded (or manifest pin refreshed)
     1 — error (not a git repo, run dir missing, etc.)
     2 — usage error
 """
@@ -28,12 +42,54 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Orchestrator-owned run-dir files: only the orchestrator writes these, and
+# check_no_manifest_edits_by_phase pins them against the run-dir snapshot.
+# Keep in lockstep with ORCHESTRATOR_OWNED in checks/mode_checks.py.
+ORCHESTRATOR_OWNED = {"00-run-manifest.md", "01-feature-brief.md"}
+
+# The pin refresh is for the manifest only: the orchestrator legitimately
+# updates the manifest mid-phase, but never the feature brief — so
+# refreshing the brief's snapshot entry would launder a forbidden
+# doer/checker edit of the brief into the pin (cr-009). The brief stays
+# pinned at its phase-start hash.
+MANIFEST_PIN_FILES = {"00-run-manifest.md"}
+
 
 def _file_digest(path: Path) -> str | None:
     """Return a stable digest for a file, or None when it no longer exists."""
     if not path.is_file():
         return None
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def refresh_manifest_pin(run_dir: Path) -> int:
+    """Refresh the snapshot's manifest entry; touch nothing else.
+
+    Reads `phase-start-snapshot.txt`, replaces the hash for the run manifest
+    (`00-run-manifest.md`) with its current digest, and writes the file back
+    with unchanged ordering. `baseline.txt` and
+    `phase-start-dirty-hashes.json` — the source-edit and commit pins — and
+    the feature brief's snapshot entry are deliberately left as they were:
+    the orchestrator never legitimately writes the brief mid-phase, so its
+    phase-start pin must keep catching a forbidden edit.
+    """
+    snapshot_path = run_dir / "phase-start-snapshot.txt"
+    if not snapshot_path.is_file():
+        print("ERROR: no phase-start snapshot to refresh — record a full baseline first")
+        return 1
+
+    lines = snapshot_path.read_text(encoding="utf-8").splitlines()
+    updated: list[str] = []
+    for line in lines:
+        name, _, _ = line.partition("\t")
+        if name in MANIFEST_PIN_FILES:
+            digest = _file_digest(run_dir / name) or ""
+            updated.append(f"{name}\t{digest}")
+        else:
+            updated.append(line)
+    snapshot_path.write_text("\n".join(updated) + "\n", encoding="utf-8")
+    print("MANIFEST PIN REFRESHED (manifest entry updated)")
+    return 0
 
 
 def record_baseline(run_dir: Path, repo_root: Path | None) -> int:
@@ -160,9 +216,21 @@ def main() -> int:
         default=None,
         help="Path to the git repository root. Defaults to the first parent containing .git.",
     )
+    parser.add_argument(
+        "--manifest-only",
+        action="store_true",
+        help=(
+            "Do not record a new baseline; refresh only the run-dir snapshot's "
+            "manifest entry (00-run-manifest.md). Use after orchestrator-owned "
+            "manifest writes mid-phase."
+        ),
+    )
     args = parser.parse_args()
 
-    return record_baseline(args.run_dir.resolve(), args.repo_root)
+    run_dir = args.run_dir.resolve()
+    if args.manifest_only:
+        return refresh_manifest_pin(run_dir)
+    return record_baseline(run_dir, args.repo_root)
 
 
 if __name__ == "__main__":

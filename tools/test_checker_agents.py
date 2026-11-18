@@ -2,10 +2,9 @@
 """Structural tests for the four dev-workflow checker agents.
 
 Validates that each checker agent:
-- Has a bootstrap AGENT.md with a `## Tool notes` section (FR-1, post-merge)
-- Points to its corresponding skill (FR-2)
-- Documents per-host read-only enforcement in Tool notes (FR-3)
-- Documents model inheritance per host in Tool notes (FR-4)
+- Has a bootstrap AGENT.md with NO `## Tool notes` section — per-host install reality
+  lives once in agent-creator's portable-agent-layout.md (post-migration contract)
+- Points to its corresponding skill
 - Has a differentiated description from the skill (FR-12, rr-008)
 
 Also validates orchestrator edits:
@@ -61,15 +60,26 @@ class CheckerAgentBootstrapTests(unittest.TestCase):
             agent_md = REPO_ROOT / "agents" / name / "AGENT.md"
             self.assertTrue(agent_md.is_file(), f"Missing bootstrap AGENT.md: {agent_md}")
 
-    def test_all_four_have_tool_notes_section(self):
-        """t-002 (post-merge): Each AGENT.md has a `## Tool notes` section."""
+    def test_all_four_have_no_tool_notes(self):
+        """t-002 (post-merge): Each AGENT.md has no `## Tool notes` section —
+        per-host install reality is documented once in agent-creator's
+        portable-agent-layout.md, not duplicated (or pointed at) in every
+        agent body that becomes the subagent prompt on native dispatch."""
         for name in CHECKER_AGENTS:
             agent_md = REPO_ROOT / "agents" / name / "AGENT.md"
             content = agent_md.read_text(encoding="utf-8")
-            self.assertRegex(
+            self.assertNotRegex(
                 content,
                 r"(?m)^## Tool notes\s*$",
-                f"{agent_md} missing '## Tool notes' section",
+                f"{agent_md} has a '## Tool notes' section — remove it; the shared "
+                f"per-host reality lives in agent-creator's portable-agent-layout.md",
+            )
+            self.assertNotIn(
+                "portable-agent-layout.md",
+                content,
+                f"{agent_md} references agent-creator's portable-agent-layout.md, "
+                f"which is absent from distribution targets (installer ships only "
+                f"the dual-target agent files)",
             )
 
 
@@ -88,40 +98,34 @@ class CheckerAgentContentTests(unittest.TestCase):
                 f"{agent_md} does not reference skill at {expected_ref}",
             )
 
+    SHARED_TOOL_NOTES_REF = (
+        REPO_ROOT / "skills" / "agent-creator" / "references" / "portable-agent-layout.md"
+    )
+    SHARED_SECTION_HEADING = "Read-only checker agents: per-host reality"
+
     def test_readonly_enforcement_documented_per_host(self):
-        """t-004 (cr-205/ia-002): Tool notes document the verbatim-copy reality —
-        Claude and Cursor hosts carry no readonly/tools frontmatter keys (the
-        installer copies AGENT.md verbatim), Copilot is instruction-only."""
+        """t-004 (cr-205/ia-002): The shared per-host reality section in
+        agent-creator's portable-agent-layout.md documents the verbatim-copy
+        reality — Claude and Cursor hosts carry no readonly/tools frontmatter
+        keys (the installer copies AGENT.md verbatim), Copilot is
+        instruction-only. The AGENT.md bodies carry no Tool notes sections."""
+        shared = self.SHARED_TOOL_NOTES_REF.read_text(encoding="utf-8")
+        self.assertIn(
+            self.SHARED_SECTION_HEADING,
+            shared,
+            "portable-agent-layout.md missing shared per-host Tool notes section",
+        )
+        self.assertIn("no `tools:` or `model:` keys", shared,
+                      "shared Tool notes missing Claude no-host-frontmatter-keys documentation")
+        self.assertIn("no `readonly:` key", shared,
+                      "shared Tool notes missing Cursor no-readonly-key documentation")
+        self.assertIn("instruction-only", shared.lower(),
+                      "shared Tool notes missing Copilot instruction-only documentation")
         for name in CHECKER_AGENTS:
             agent_md = REPO_ROOT / "agents" / name / "AGENT.md"
             content = agent_md.read_text(encoding="utf-8")
-            tool_notes = content.split("## Tool notes", 1)
-            self.assertEqual(
-                len(tool_notes),
-                2,
-                f"{agent_md} missing '## Tool notes' section for host checks",
-            )
-            notes = tool_notes[1]
-            self.assertIn(
-                "verbatim copy of this AGENT.md",
-                notes,
-                f"{agent_md} Tool notes missing verbatim-copy (no host frontmatter keys) documentation",
-            )
-            self.assertIn(
-                "no `tools:` or `model:` keys",
-                notes,
-                f"{agent_md} Tool notes missing Claude no-host-frontmatter-keys documentation",
-            )
-            self.assertIn(
-                "no `readonly:` key",
-                notes,
-                f"{agent_md} Tool notes missing Cursor no-readonly-key documentation",
-            )
-            self.assertIn(
-                "instruction-only",
-                notes.lower(),
-                f"{agent_md} Tool notes missing Copilot instruction-only documentation",
-            )
+            self.assertNotIn("## Tool notes", content,
+                              f"{agent_md} has a '## Tool notes' section for host checks")
 
     def test_agent_description_differs_from_skill(self):
         """t-010: Agent description contains 'isolated' or 'fresh-context' (structural proxy for differentiation)."""
@@ -137,29 +141,21 @@ class CheckerAgentContentTests(unittest.TestCase):
             )
 
     def test_model_inheritance_documented_per_host(self):
-        """t-012 (cr-205/ia-002): Tool notes document the default-model reality —
-        installed copies carry no `model:` key, so Claude/Cursor run on the
-        conversation/parent model and Copilot on the user's selected chat model."""
-        for name in CHECKER_AGENTS:
-            agent_md = REPO_ROOT / "agents" / name / "AGENT.md"
-            content = agent_md.read_text(encoding="utf-8")
-            tool_notes = content.split("## Tool notes", 1)
-            self.assertEqual(
-                len(tool_notes),
-                2,
-                f"{agent_md} missing '## Tool notes' section for model checks",
-            )
-            notes = tool_notes[1]
-            self.assertIn(
-                "With no `model:` key",
-                notes,
-                f"{agent_md} Tool notes missing no-model-key default-model documentation",
-            )
-            self.assertIn(
-                "user's currently selected Copilot chat model",
-                notes,
-                f"{agent_md} Tool notes missing Copilot selected-model documentation",
-            )
+        """t-012 (cr-205/ia-002): The shared per-host reality section documents
+        the default-model reality — installed copies carry no `model:` key, so
+        Claude/Cursor run on the conversation/parent model and Copilot on the
+        user's selected chat model. The AGENT.md bodies carry no Tool notes."""
+        shared = self.SHARED_TOOL_NOTES_REF.read_text(encoding="utf-8")
+        self.assertIn(
+            "with no `model:` key",
+            shared.lower(),
+            "shared Tool notes missing no-model-key default-model documentation",
+        )
+        self.assertIn(
+            "user's currently selected Copilot chat model",
+            shared,
+            "shared Tool notes missing Copilot selected-model documentation",
+        )
 
 
 class OrchestratorEditTests(unittest.TestCase):

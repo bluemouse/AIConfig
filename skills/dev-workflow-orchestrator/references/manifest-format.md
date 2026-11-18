@@ -108,14 +108,14 @@ The run manifest is the orchestrator's state file. It tracks the entire run so t
 
 ## Dispatch log
 - Dispatch mode: <native | delegated | simulated>
-- Evaluated at: phase 0
+- Evaluated at: <phase 0 | bootstrap>
 - Notes: <e.g., "Copilot Chat — no subagent API, fell back to delegated">
 ```
 
 ## Rules
 
 - Only the orchestrator writes this file. Phases read it for context but never edit it.
-- The orchestrator updates `Last updated` and the relevant phase status after every step.
+- The orchestrator updates `Last updated` and the relevant phase status after every step, then refreshes the manifest pin (`record_baseline.py --phase <current-phase> --manifest-only` — never a full re-record mid-phase, which would reset the dirty-path and HEAD baselines the source-edit and commit checks pin against) so the mode-enforcement manifest pin tracks the orchestrator-owned write instead of flagging it.
 - `Current phase` is the phase the orchestrator is about to run or is currently running.
 - `Backward edges received` tracks the cap of 2 per phase.
 - **Compaction:** at each phase boundary, the orchestrator may mark superseded round

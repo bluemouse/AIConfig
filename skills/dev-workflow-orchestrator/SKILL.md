@@ -17,7 +17,8 @@ state, routing, and integration; the skills own production and checking.
 ## Primary Directive
 
 Your job is to **orchestrate the workflow**, not to research, plan, implement, review, or
-commit yourself. You invoke skills as named passes, read their verdicts, apply the loop
+commit yourself. You dispatch doer skills as named passes and checker skills per the recorded
+dispatch mode (native subagent or named pass — see Dispatch model), read their verdicts, apply the loop
 contracts, route backward edges, track state in the manifest, and enforce mode boundaries.
 
 ## When to Use
@@ -84,19 +85,19 @@ Iterate over the stages declared in plan §10 `Stage breakdown`. Per-pass input/
 | --- | --- |
 | 1. Baseline + pre-flight | `record_baseline.py --phase implement --run-dir <path>`; `check_pre_phase.py --phase implement --run-dir <path>` |
 | 2. Doer (stage-scoped) | `plan-executor` named pass, `--stage stage-N` (execute only stage-N's §10 tasks) → `30-stageN-implementation-report.md` |
-| 3. Checker | `implementation-auditor` named pass → `31-stageN-implementation-audit.md`; `root-cause-phase` on every finding |
-| 4. Post-flight + route audit | `check_post_phase.py --phase implement --run-dir <path>`. `pass`/`pass with risks` → `validate_phase.py --phase implement --run-dir <path>` (no `--stage` flag; resolves the first `30/31-stageN-*` match on disk) → step 5. `fail`+`local` → in-stage Loop 3 (cap 3) → step 2. `fail`+upstream → backward edge to Plan or Research. `blocked` → escalate |
-| 5. Review (light) | `code-reviewer` named pass on the stage's diff/commit range, effort `standard` (the final deep review is cumulative) → `40-stageN-code-review.md`; `root-cause-phase` on every finding |
-| 6. Route review | `ready to commit`/`ready with notes` → step 7. `needs revision`+blocker/major → in-stage Loop 4 (cap 5, round-1 reviewer-first) → code-review-resolver. `needs revision`+upstream → backward edge |
+| 3. Checker | `implementation-auditor` per the recorded dispatch mode (native subagent task packet or named pass) → `31-stageN-implementation-audit.md`; `root-cause-phase` on every finding |
+| 4. Post-flight + route audit | `check_post_phase.py --phase implement --run-dir <path>`. `pass`/`pass with risks` → `validate_phase.py --phase implement --run-dir <path>` (no `--stage` flag; resolves the first `30/31-stageN-*` match on disk) → step 5. `fail`+`local` → in-stage Loop 3 (cap 3) → step 2. `fail`+non-local → backward edge to the root-cause phase (Research, Clarify, or Plan). `blocked` → escalate |
+| 5. Review (light) | `code-reviewer` per the recorded dispatch mode (native subagent task packet or named pass) on the stage's diff/commit range, effort `standard` (the final deep review is cumulative) → `40-stageN-code-review.md`; `root-cause-phase` on every finding |
+| 6. Route review | `ready to commit`/`ready with notes` → step 7. `needs revision`+blocker/major → in-stage Loop 4 (cap 5, round-1 reviewer-first) → code-review-resolver. `needs revision`+non-local → backward edge |
 | 7. Per-stage commit | `commit-message-writer` drafts, `git-guide` commits (per-stage only, no push); hash → manifest `## Stage status` |
-| 8. Stage-exit review | Between stages only (last stage skips it). `plan-reviewer` in stage-exit mode over `30/31/40-stageN-*.md`, §4 assumptions, §10 remaining stages → `32-stageN-exit-review.md` |
+| 8. Stage-exit review | Between stages only (last stage skips it). `plan-reviewer` in stage-exit mode per the recorded dispatch mode (native subagent task packet or named pass) over `30/31/40-stageN-*.md`, §4 assumptions, §10 remaining stages → `32-stageN-exit-review.md` |
 | 9. Route exit verdict | `plan-current` → `plan-guide` lightly refines the next stage's tasks; next stage. `plan-stale` → full re-plan of remaining stages, `plan-reviewer` re-audit, user re-confirms at a plan gate, resume from the affected stage |
 
 **Backward-edge independence:** in-stage backward edges repair the *current* stage's plan root cause; the between-stage stage-exit review judges forward-looking plan validity. The two mechanisms are independent — neither triggers the other.
 
 #### Final deep review (after all stages commit)
 
-1. Run Loop 4 (code-reviewer → code-review-resolver, round cap 5, `deep` effort, round-1 reviewer-first ordering) on the cumulative commit range (`HEAD~N..HEAD`, N = number of stage commits) → `40-final-deep-review.md`.
+1. Run Loop 4 (code-reviewer → code-review-resolver, round cap 5, `deep` effort, round-1 reviewer-first ordering) on the cumulative commit range (`HEAD~N..HEAD`, N = number of stage commits), dispatching code-reviewer per the recorded dispatch mode (native subagent task packet or named pass) → `40-final-deep-review.md`.
 2. If findings: `code-review-resolver` applies fixes as **new commits on top** (no `git rebase`, no `git commit --amend`); `code-reviewer` re-reviews the new range → `41-final-fix-report.md`.
 3. Run `validate_phase.py --phase code-review --run-dir <path>` (artifact structure, verdict, mode enforcement, handoff integrity); on failure, handle per Validation handling below.
 4. If a finding is design-level with `root-cause-phase: plan`, create a backward edge to `plan-guide` for root-cause repair.
@@ -111,20 +112,20 @@ For the Clarify phase (Phase 0), there is no checker. Run prompt-clarifier as a 
 2. **Clarifier pass:** prompt-clarifier as a named pass — input `01-feature-brief.md`, output `02-requirement-ledger.md` using the template at `<SKILL_ROOT>/references/requirement-ledger-template.md` (resolve `<SKILL_ROOT>` to the installed orchestrator skill directory); mode constraints: read-only, interactive.
 3. **Read status:** prompt-clarifier's internal `CHECK` state is the exit condition. If `actionable`, proceed. If `blocked`, escalate immediately.
 4. **Post-flight + validate:** `check_post_phase.py --phase clarify --run-dir <path>` — stop and report on failure; then `validate_phase.py --phase clarify --run-dir <path>`. On pass, update manifest, go forward to Research.
-5. **Update manifest** after every step.
+5. **Update manifest** after every step; refresh the manifest pin after the write with `python .agents/tools/dev-workflow/record_baseline.py --phase <current-phase> --run-dir <path> --manifest-only` (see State tracking).
 
 For all other phases, run the doer → checker loop (round caps: research 5, plan 3, implement 3, code review 5). **Code Review exception:** on round 1 the checker (code-reviewer) runs first to produce findings, then the doer (code-review-resolver) applies fixes; on rounds > 1 the doer runs first (applying the prior round's findings), then the checker re-reviews — the resolver needs findings as input.
 
 1. **Baseline + pre-flight:** `record_baseline.py --phase <name> --run-dir <path>`; `check_pre_phase.py --phase <name> --run-dir <path>` — stop and report on failure.
 2. **Doer pass:** invoke the doer skill as a named pass with the input artifact path (the previous phase's terminal artifact, or the requirement ledger for Research), the output artifact path (per the artifact contract), and this phase's mode constraints.
-3. **Checker pass:** invoke the checker skill as a named pass with input (the doer's output) and output artifact paths per the artifact contract; require the `root-cause-phase` field on every finding.
+3. **Checker pass:** per the recorded dispatch mode — in native mode, spawn the checker agent as a subagent with a task packet per [references/dispatch-modes.md](references/dispatch-modes.md); in delegated/simulated mode, invoke the checker skill as a named pass — with input (the doer's output) and output artifact paths per the artifact contract; require the `root-cause-phase` field on every finding.
 4. **Read verdict + post-flight:** read the checker's verdict and findings; `check_post_phase.py --phase <name> --run-dir <path>` — stop and report on failure.
 5. **Route:** apply the loop contract ([references/loop-contracts.md](references/loop-contracts.md)):
    - **Accepted** (verdict in the phase's accept set) → run `validate_phase.py --phase <name> --run-dir <path>`. On pass, update manifest, go forward to the next phase; on failure, handle per Validation handling below.
    - **Needs revision** (`root-cause-phase` = `local`) → increment the round counter. If round < cap: when the next round will be round > 1, first copy the current checker artifact to `<name>-r<N>.md` (N = round just completed, e.g. `11-research-review.md` → `11-research-review-r1.md` entering round 2) so the next round's fresh-context checker sees prior rounds' findings — which carry forward by id — without overwriting them; include all `-r<N>` paths in the next round's task packet (native mode) or named-pass context (delegated mode). Loop back to the doer pass with the checker's feedback. If round = cap, escalate.
-   - **Needs revision** (`root-cause-phase` = upstream) → create a backward handoff packet, route to the target phase (see Backward edge below).
+   - **Needs revision** (`root-cause-phase` is not `local` — e.g. `research`, `clarify`, `plan`, `implement`) → create a backward handoff packet for the target phase, route to it (see Backward edge below).
    - **Blocked** → escalate immediately.
-6. **Update manifest** after every step.
+6. **Update manifest** after every step; refresh the manifest pin after the write with `python .agents/tools/dev-workflow/record_baseline.py --phase <current-phase> --run-dir <path> --manifest-only` (see State tracking).
 
 ### Backward edge
 
@@ -133,14 +134,14 @@ When a checker finding has `root-cause-phase` set to an earlier phase:
 1. Check the backward edge count for the target phase in the manifest (< 2?).
 2. Create a backward handoff packet at `back-<from>-to-<to>-<n>.md` (e.g. `back-code-review-to-plan-1.md`) using [references/backward-handoff-format.md](references/backward-handoff-format.md).
 3. Validate the packet: `python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> --run-dir <path>`.
-4. Update manifest: target phase status = `backward-edge-received`, increment backward edge count.
+4. Update manifest: target phase status = `backward-edge-received`, increment backward edge count; refresh the manifest pin after the write (`record_baseline.py --phase <current-phase> --run-dir <path> --manifest-only`).
 5. Route to the target phase: it reads the packet, fixes the specific issue (not the whole phase), re-produces its terminal artifact, and re-runs its loop (doer → checker).
 6. On acceptance, re-run downstream phases that depended on the changed artifact.
 7. If the target phase also hits its cap or the backward edge count reaches 2, escalate to the user.
 
 ### Escalation
 
-When a loop cap is hit without converging: mark the loop `NOT READY` with a blocker summary; read `root-cause-phase` from the findings. If upstream and backward edge count < 2, send a backward edge. If local or the count = 2, stop, present the blocker summary, and ask the user.
+When a loop cap is hit without converging: mark the loop `NOT READY` with a blocker summary; read `root-cause-phase` from the findings. If it is not `local` (e.g. `research`, `clarify`, `plan`) and the backward edge count for that phase < 2, send a backward edge. If it is `local` or the count = 2, stop, present the blocker summary, and ask the user.
 
 Raise every user-facing ask here as a structured question — never a question buried in prose. Report the blocker chain: outcome first, chain after. When a backward edge also doesn't resolve (target phase cap hit): stop the workflow, present the full blocker chain, and ask whether to retry, change scope, or abort — as a structured question.
 
@@ -151,21 +152,21 @@ After running `validate_phase.py`: for each **error**, default is to stop and fi
 ### Ending a run
 
 1. After Phase 5 (Commit) completes, write `50-commit.md` with the commit hash.
-2. Update manifest: status = `completed`, current phase = `done`.
+2. Update manifest: status = `completed`, current phase = `done`; refresh the manifest pin after the write (`record_baseline.py --phase <current-phase> --run-dir <path> --manifest-only`).
 3. Summarize for the user: artifacts created, commit hash, any accepted risks, backward edges that occurred.
 
 ## Dispatch model
 
-Select the checker dispatch mode per [references/dispatch-modes.md](references/dispatch-modes.md) — **native** (checker as a subagent with a fresh isolated context), **delegated** (checker as a named pass), or **simulated** (same as delegated, labeled honestly). Evaluate once per run at phase 0 (Clarify), record it in the manifest's `## Dispatch log` section, and construct checker task packets per the reference. The orchestrator itself enforces two rules:
+Select the checker dispatch mode per [references/dispatch-modes.md](references/dispatch-modes.md) — **native** (checker as a subagent with a fresh isolated context), **delegated** (checker as a named pass), or **simulated** (same as delegated, labeled honestly). Evaluate once per run — at phase 0 (Clarify) for full runs, or at bootstrap for command-bootstrapped runs, applying the same capability detection — record it in the manifest's `## Dispatch log` section, and construct checker task packets per the reference. The orchestrator itself enforces two rules:
 
 - Read the verdict from the **on-disk artifact** (`## Verdict` heading), never from the subagent's return message — the artifact is the source of truth; the return message is a convenience (status + summary). The doer never reads the checker's verdict; the checker owns the loop verdict, the orchestrator owns phase transitions and backward edges.
 - If a subagent spawn fails (or a spawned checker returns no verdict within the host's bounded window), classify the cause per dispatch-modes.md: retry the identical dispatch once on a transient failure; otherwise record the failure in the dispatch log and fall back to delegated mode for that checker. Do not block the workflow.
 
 ## State tracking
 
-Read `00-run-manifest.md` at the start of every turn for the current phase and round, backward edge counts per phase, phase statuses, artifact registry, and validation log. The manifest is the orchestrator's memory across turns — without it, the orchestrator cannot resume. Always update it after every step.
+Read `00-run-manifest.md` at the start of every turn for the current phase and round, backward edge counts per phase, phase statuses, artifact registry, and validation log. The manifest is the orchestrator's memory across turns — without it, the orchestrator cannot resume. Always update it after every step, and **refresh the manifest pin after every orchestrator-owned manifest write** (`python .agents/tools/dev-workflow/record_baseline.py --phase <current-phase> --run-dir <path> --manifest-only`): mode enforcement pins the manifest's sha256 against the phase-start snapshot, so a manifest update without a pin refresh trips `check_post_phase.py`'s mode-enforcement error. `--manifest-only` updates only the snapshot's orchestrator-owned entries — never run a full `record_baseline.py` re-record mid-phase, because it would also reset the dirty-path and HEAD baselines that the source-edit and commit checks pin against, laundering any forbidden write made since phase start. Doers and checkers never touch the manifest — if a phase-owned pass appears to have modified it, that is a violation to report, not to re-record.
 
-**Phase-boundary compaction checkpoint:** at each phase boundary (never mid-phase — mode enforcement pins the manifest's sha256 against the phase-start snapshot, so a mid-phase rewrite breaks validation), mark superseded round artifacts in the artifact registry and record a compaction note. If context limits approach mid-run, end the turn at the next phase boundary and resume from the manifest — the run state survives the interruption by design.
+**Phase-boundary compaction checkpoint:** at each phase boundary, mark superseded round artifacts in the artifact registry and record a compaction note (mid-phase manifest writes are fine as long as the manifest pin is refreshed after each one — see State tracking). If context limits approach mid-run, end the turn at the next phase boundary and resume from the manifest — the run state survives the interruption by design.
 
 ## References
 

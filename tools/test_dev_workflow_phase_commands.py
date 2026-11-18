@@ -181,13 +181,20 @@ class CommandConformanceTests(unittest.TestCase):
 
     def test_commands_read_dispatch_log(self) -> None:
         """t-005: each command reads `## Dispatch log` before dispatching;
-        bootstrap manifests record a dispatch mode."""
+        bootstrap manifests record a dispatch mode, selected by host
+        capability detection rather than pinned to delegated."""
         for name in PHASE_COMMANDS:
             body = self._command_body(name)
             self.assertIn("## Dispatch log", body,
                           f"{name}: dispatch-log read missing")
+            self.assertIn("Dispatch mode: native", body,
+                          f"{name}: native dispatch-mode recording missing")
             self.assertIn("Dispatch mode: delegated", body,
-                          f"{name}: bootstrap dispatch-mode recording missing")
+                          f"{name}: delegated dispatch-mode fallback recording missing")
+            self.assertIsNone(
+                re.search(r"unknown at bootstrap time", body),
+                f"{name}: outdated pinned-delegated bootstrap rationale found",
+            )
 
 
 if __name__ == "__main__":

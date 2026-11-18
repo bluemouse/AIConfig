@@ -65,7 +65,7 @@ Every material finding must include:
 - Why it matters.
 - Required fix or recommendation.
 - Recommended research-guide action (revise report, ask user, inspect codebase, gather evidence, resolve open question, narrow scope, accept as planning risk, re-review, etc.).
-- `root-cause-phase`: `local` (fix within the research loop) | `research` (this phase) | `plan` | `implement` | `code-review`. Use `local` for a research-report defect fixable by research-guide; an earlier phase is rare, since research is the first phase. The dev-workflow-orchestrator reads this field to route backward handoff packets; outside the orchestrator, it is informational.
+- `root-cause-phase`: `local` (fix within the research loop) | `research` (this phase) | `clarify` (the requirement itself is fundamentally ambiguous — backward edge to Clarify) | `plan` | `implement` | `code-review`. Use `local` for a research-report defect fixable by research-guide; use `clarify` only when the requirement, not the research, is the defect; an earlier phase is rare, since research is the first phase. The dev-workflow-orchestrator reads this field to route backward handoff packets; outside the orchestrator, it is informational.
 
 Assign one verdict per [references/validation-rubric.md](references/validation-rubric.md): `ready`, `conditionally ready`, `needs revision`, or `blocked`. Never rubber-stamp a ready verdict — the rubric lists the sections whose absence or contradiction blocks `ready`.
 

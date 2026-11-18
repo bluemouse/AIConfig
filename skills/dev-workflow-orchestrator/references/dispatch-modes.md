@@ -9,7 +9,7 @@ in the orchestrator's context (delegated/simulated).
 | Mode | When | How checkers run |
 | --- | --- | --- |
 | **Native** | Host exposes a subagent/task primitive that satisfies the `agent-runner` contract (create isolated sessions, submit without waiting, preserve separate context) | Orchestrator spawns the checker agent as a subagent with a complete task packet. Fresh isolated context. Dispatch is by subagent type, not by agent description. |
-| **Delegated** | Host has no subagent API but the orchestrator can invoke the checker skill as a named pass | Current behavior. Checker runs in orchestrator context. No fresh context, but artifact contract and validation still hold. |
+| **Delegated** | Host has no subagent API but the orchestrator can invoke the checker skill as a named pass | Checker runs in orchestrator context. No fresh context, but artifact contract and validation still hold. |
 | **Simulated** | Host has neither (e.g. Copilot Chat interactive with no agent-session) | Same as delegated. Label honestly in the manifest's dispatch log. |
 
 ## Capability detection
@@ -28,9 +28,13 @@ sequential execution as native mode — use delegated mode and label it honestly
 ## Evaluation timing
 
 Evaluate the dispatch mode **once per run** — at phase 0 (Clarify) for full
-runs, or at bootstrap for command-bootstrapped runs (which skip phase 0; the
-bootstrap commands record `Dispatch mode: delegated` in the manifest, since the
-command host's subagent capability is unknown at bootstrap time). Record the selected
+runs, or at bootstrap for command-bootstrapped runs (which skip phase 0). At
+bootstrap, apply the same capability detection as phase 0 by inspecting the
+tools available in the command's host session: record `Dispatch mode: native`
+when the host exposes a subagent/task primitive satisfying the `agent-runner`
+contract, otherwise `delegated` (or `simulated`, labeled honestly). If the
+capability cannot be inspected from inside the session, default to delegated
+and say so in the dispatch log. Record the selected
 mode in the manifest's `## Dispatch log` section. The dispatch primitive does not change
 mid-run, so per-phase re-evaluation adds complexity for no benefit; transient
 availability failures are handled by the fallback rules below, not by re-evaluation.

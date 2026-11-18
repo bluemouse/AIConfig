@@ -38,7 +38,7 @@ If none were found, write `No findings.` and skip the table and detail subsectio
 
 | id | severity | scope | location | issue | root-cause-phase | recommended route |
 |----|----------|-------|----------|-------|------------------|-------------------|
-| cr-001 | blocker/major/minor | design/correctness/maintainability/security/performance/tests/scope-intent-alignment | `path:line` or unanchored | <short title> | local/research/plan/implement/code-review | direct edit / plan-executor / debugging-guide / plan-guide / test-driven-dev-guide / implementation-auditor |
+| cr-001 | blocker/major/minor | design/correctness/maintainability/security/performance/tests/scope-intent-alignment | `path:line` or unanchored | <short title> | local/research/clarify/plan/implement/code-review | direct edit / plan-executor / debugging-guide / plan-guide / test-driven-dev-guide / implementation-auditor |
 
 ### Finding details
 
@@ -51,7 +51,7 @@ If none were found, write `No findings.` and skip the table and detail subsectio
 - Why it matters: <regression, security, maintainability, or merge-risk impact>
 - Proposed fix: <actionable fix or improvement — not a vague suggestion>
 - Verdict (deep effort only): <CONFIRMED | PLAUSIBLE — omit at basic/standard effort>
-- root-cause-phase: <local | research | plan | implement | code-review> — use `local` when the finding is a code defect fixable by code-review-resolver; use `research`, `plan`, or `implement` when the root cause traces to an earlier phase. When the dev-workflow-orchestrator is active, it reads this field to route backward handoff packets; outside the orchestrator, the field is informational.
+- root-cause-phase: <local | research | clarify | plan | implement | code-review> — use `local` when the finding is a code defect fixable by code-review-resolver; use `research`, `plan`, or `implement` when the root cause traces to an earlier phase, or `clarify` when the requirement itself is fundamentally ambiguous (backward edge to Clarify). When the dev-workflow-orchestrator is active, it reads this field to route backward handoff packets; outside the orchestrator, the field is informational.
 - Recommended route: <direct scoped edit | plan-executor | debugging-guide | plan-guide | test-driven-dev-guide | implementation-auditor>
 
 ## 5. Open questions or assumptions

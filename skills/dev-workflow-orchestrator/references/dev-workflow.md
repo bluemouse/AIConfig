@@ -336,7 +336,7 @@ The core bundle is always available. The extended-bundle gates are optional by d
 | Change class | Mandatory gates | Rationale |
 | --- | --- | --- |
 | Small local bug fix | None beyond [code-reviewer](../../code-reviewer/SKILL.md) `basic` | Low blast radius, reversible |
-| Feature, single subsystem | [code-reviewer](../../code-reviewer/SKILL.md) `standard`; [plan-reviewer](../../plan-reviewer/SKILL.md) if delegated | Bounded scope |
+| Feature, single subsystem | [code-reviewer](../../code-reviewer/SKILL.md) `standard`; [plan-reviewer](../../plan-reviewer/SKILL.md) if executed by another person or agent | Bounded scope |
 | Security / auth / privacy change | [plan-reviewer](../../plan-reviewer/SKILL.md), [implementation-auditor](../../implementation-auditor/SKILL.md), `deep` [code-reviewer](../../code-reviewer/SKILL.md) | High blast radius |
 | Data or schema migration | [research-reviewer](../../research-reviewer/SKILL.md) (when a research report exists), [plan-reviewer](../../plan-reviewer/SKILL.md), [implementation-auditor](../../implementation-auditor/SKILL.md) | Hard to roll back |
 | Public API or contract change | [plan-reviewer](../../plan-reviewer/SKILL.md), `deep` [code-reviewer](../../code-reviewer/SKILL.md), [techdoc-reviewer](../../techdoc-reviewer/SKILL.md) | Cross-team impact and reader-visible contracts |
@@ -374,7 +374,7 @@ Use this path when the work begins as a product requirement, customer problem, r
 2. Use [research-guide](../../research-guide/SKILL.md) if scope, users, success metrics, acceptance criteria, or tradeoffs are unclear.
 3. Use [research-reviewer](../../research-reviewer/SKILL.md) for important specs before planning.
 4. Use [plan-guide](../../plan-guide/SKILL.md) to create the implementation plan.
-5. Use [plan-reviewer](../../plan-reviewer/SKILL.md) if the plan is complex, risky, or delegated.
+5. Use [plan-reviewer](../../plan-reviewer/SKILL.md) if the plan is complex, risky, or delegated to another person or agent for execution.
 6. Use [plan-executor](../../plan-executor/SKILL.md) to implement.
 7. Use [implementation-auditor](../../implementation-auditor/SKILL.md) to map results back to requirements.
 8. Use [code-reviewer](../../code-reviewer/SKILL.md) to review the diff.
@@ -476,7 +476,7 @@ Minimum habit:
 
 ### Tech leads and reviewers
 
-Use the extended bundle to protect high-risk work. Require research review when requirements affect product direction or cross-team contracts. Require plan review when the work is delegated, migration-heavy, security-sensitive, or hard to roll back. Require implementation audit before code review when the acceptance criteria are more important than the diff shape.
+Use the extended bundle to protect high-risk work. Require research review when requirements affect product direction or cross-team contracts. Require plan review when the work is delegated execution, migration-heavy, security-sensitive, or hard to roll back. Require implementation audit before code review when the acceptance criteria are more important than the diff shape.
 
 Minimum habit:
 
