@@ -198,5 +198,53 @@ class BundleHelpEntriesTests(unittest.TestCase):
         )
 
 
+class ParseFrontmatterEmbeddedDelimTests(unittest.TestCase):
+    """t-003: an embedded `---` line must not silently truncate frontmatter.
+
+    Sub-case (a) must-not-regress: an indented block-scalar value containing
+    an indented `---` line parses correctly today and must keep doing so.
+    Sub-case (b) red: a column-0 line beginning with `---` inside the value
+    silently truncates the parsed description at HEAD; after the fix the
+    equality scan finds the true closing delimiter and yaml.safe_load
+    rejects the malformed marker per the None-on-error semantics — the
+    correct deterministic outcome is None, not a silently-truncated dict.
+    """
+
+    def test_indented_block_scalar_embedded_delim_parses(self) -> None:
+        content = (
+            "---\n"
+            "name: my-skill\n"
+            "description: >-\n"
+            "  line one\n"
+            "  ---\n"
+            "  line two\n"
+            "---\n"
+            "body\n"
+        )
+        parsed = mod.parse_frontmatter(content)
+        self.assertIsNotNone(parsed)
+        assert parsed is not None
+        self.assertEqual(parsed["name"], "my-skill")
+        self.assertEqual(parsed["description"], "line one --- line two")
+
+    def test_column_zero_delim_line_yields_none_not_truncation(self) -> None:
+        # `--- ` at column 0 ends the YAML block scalar; the value becomes
+        # invalid YAML from that point — explicit None beats silent
+        # truncation. Same for a `----` line.
+        for marker in ("--- ", "----"):
+            with self.subTest(marker=marker):
+                content = (
+                    "---\n"
+                    "name: my-skill\n"
+                    "description: >-\n"
+                    "  line one\n"
+                    f"{marker}\n"
+                    "  line two\n"
+                    "---\n"
+                    "body\n"
+                )
+                self.assertIsNone(mod.parse_frontmatter(content))
+
+
 if __name__ == "__main__":
     unittest.main()

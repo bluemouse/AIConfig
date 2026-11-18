@@ -44,13 +44,26 @@ import os
 import re
 import shutil
 import sys
-import tkinter as tk
 import yaml
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from tkinter import filedialog, messagebox, scrolledtext, ttk
 from typing import Literal
+
+# The CLI must import on hosts without python3-tk (containers, minimal WSL,
+# headless CI) — only the GUI mode needs tkinter, so a missing install
+# degrades to None sentinels instead of a module-level traceback. All five
+# names are referenced by GUI code paths only (annotations are lazy via
+# `from __future__ import annotations`; run_gui checks `tk` before use).
+try:
+    import tkinter as tk
+    from tkinter import filedialog, messagebox, scrolledtext, ttk
+except ImportError:  # pragma: no cover - exercised via sys.modules blocking in tests
+    tk = None  # type: ignore[assignment]
+    filedialog = None  # type: ignore[assignment]
+    messagebox = None  # type: ignore[assignment]
+    scrolledtext = None  # type: ignore[assignment]
+    ttk = None  # type: ignore[assignment]
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -176,6 +189,13 @@ INSTALLABLE_GUIDELINES = (
     "minutes",
 )
 
+# Scripts membership is intentional, not incidental: only subdirectories of
+# tools/ named here are scripts members (a random tracked directory under
+# tools/ must not silently join the default install). Add a name here when a
+# new scripts package is introduced, and keep tools/bundles.md's scripts
+# membership in sync.
+INSTALLABLE_SCRIPTS = ("dev-workflow",)
+
 # Scripts are discovered as subdirectories of tools/ in the repo root.
 TOOL_SCRIPTS_SCAN_REL_DIRS = ("tools",)
 
@@ -205,12 +225,6 @@ LEGACY_PURGE_REL_PATHS = (
     # .agents/skills/guidelines-<name>/ skill packages).
     ".agents/guidelines",
 )
-
-# Scripts are discovered as subdirectories of tools/ in the repo root.
-# A scripts "name" is the directory name under tools/.
-# tools/ also carries the installer, bundles config, and the test suite —
-# those never count as script packages.
-NON_SCRIPT_TOOL_DIRS = frozenset({"__pycache__"})
 
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -882,7 +896,6 @@ def build_target_bundle(
         name=TARGET_BUNDLE_NAME,
         description=TARGET_BUNDLE_DESCRIPTION,
         # Guidelines are explicit-only and never bundle-carried: their
-        # Guidelines are explicit-only and never bundle-carried: their
         # guidelines-<name> skill packages are excluded from target-bundle
         # membership even when installed in the target. Command-skill dirs
         # (cmd-<name>) are commands, not plain skills — excluded here so the
@@ -958,16 +971,29 @@ def discover_commands() -> list[str]:
 
 
 def parse_frontmatter(content: str) -> dict | None:
-    """Parse YAML frontmatter from a skill or agent markdown file."""
-    if not content.startswith("---"):
+    """Parse YAML frontmatter from a skill or agent markdown file.
+
+    The closing delimiter is the first line that equals ``---`` exactly —
+    a non-greedy regex would silently truncate at any embedded
+    ``---``-prefixed line inside a value (e.g. a column-0 ``--- `` marker in
+    a block scalar), yielding a lossy dict instead of a parse failure. The
+    scan is equality-based, not strip-based: an indented ``---`` line inside
+    a block-scalar value is content and must not close the frontmatter.
+    """
+    lines = content.splitlines()
+    if not lines or lines[0] != "---":
         return None
 
-    match = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
-    if not match:
+    end = None
+    for idx in range(1, len(lines)):
+        if lines[idx] == "---":
+            end = idx
+            break
+    if end is None:
         return None
 
     try:
-        frontmatter = yaml.safe_load(match.group(1))
+        frontmatter = yaml.safe_load("\n".join(lines[1:end]))
     except yaml.YAMLError:
         return None
 
@@ -1033,25 +1059,20 @@ def load_command_descriptions(names: Sequence[str]) -> dict[str, str]:
 
 
 def discover_scripts() -> list[str]:
-    """Return scripts directory names discovered under REPO_ROOT/tools/.
+    """Return allowlisted scripts names present under REPO_ROOT/tools/.
 
-    tools/ also holds installer.py, bundles.*, and the test suite — only
-    the exclude-filtered subdirectories that carry a scripts payload are
-    script names (currently dev-workflow/).
+    tools/ is a mixed directory (installer, bundle config, test suite);
+    scripts membership is decided by INSTALLABLE_SCRIPTS, not by directory
+    shape — a subdirectory joins only when its name is allowlisted, so
+    discovery walks the allowlist itself and checks each entry for a
+    matching directory. Widening a prefix filter here can never add a
+    member; add the name to INSTALLABLE_SCRIPTS instead.
     """
     names: set[str] = set()
     for rel_dir in TOOL_SCRIPTS_SCAN_REL_DIRS:
-        scan_root = REPO_ROOT / rel_dir
-        if not scan_root.is_dir():
-            continue
-        for child in scan_root.iterdir():
-            if not child.is_dir() or child.name.startswith((".", "__")):
-                continue
-            # tools/ is a mixed directory: only subdirectories that are NOT
-            # tracked installer/test/tooling files count as script packages.
-            if rel_dir == "tools" and child.name in NON_SCRIPT_TOOL_DIRS:
-                continue
-            names.add(child.name)
+        for name in INSTALLABLE_SCRIPTS:
+            if (REPO_ROOT / rel_dir / name).is_dir():
+                names.add(name)
     return sorted(names)
 
 
@@ -1089,6 +1110,12 @@ def validate_target(source: Path, target: Path, *, create: bool) -> Path:
     if not target.exists():
         if create:
             target.mkdir(parents=True, exist_ok=True)
+        else:
+            # create=False callers (uninstall, purge, dry run) require an
+            # existing target — a dry run previews an operation on a real
+            # project and must never mkdir; uninstall/purge have nothing to
+            # act on.
+            raise InstallerError(f"Target project not found: {target}")
         return target
     if not target.is_dir():
         raise InstallerError(f"Target is not a directory: {target}")
@@ -1342,9 +1369,13 @@ def install_items(
     scripts: Sequence[str] = (),
     guidelines: Sequence[str] = (),
     override: bool = False,
+    dry_run: bool = False,
 ) -> OperationResult:
     result = OperationResult()
-    target_root = validate_target(source_root, target_root, create=True)
+    # A dry run previews an operation on a real project: the target must
+    # exist and nothing is ever created (create=False mirrors the uninstall
+    # and purge precedent).
+    target_root = validate_target(source_root, target_root, create=not dry_run)
 
     # Skills and command-skills share .agents/skills/: a name passed as both
     # installs once (the command pass would otherwise see the skill pass's
@@ -1389,7 +1420,13 @@ def install_items(
                 if not override:
                     result.skipped.append(rel_dest)
                     continue
+                if dry_run:
+                    result.installed.append(rel_dest)
+                    continue
                 remove_path(dest)
+            if dry_run:
+                result.installed.append(rel_dest)
+                continue
             try:
                 copy_path(src, dest)
                 result.installed.append(rel_dest)
@@ -1398,8 +1435,10 @@ def install_items(
 
         # Skills install into .agents/skills/ — bridge Claude Code to it so
         # the installed skills are discovered (shared with the wave-1
-        # installer's semantics; a refusal is reported, never fatal).
-        ensure_bridge_symlink(target_root)
+        # installer's semantics; a refusal is reported, never fatal). A dry
+        # run never creates the bridge.
+        if not dry_run:
+            ensure_bridge_symlink(target_root)
 
     for name in agents:
         slug = slugify_name(name)
@@ -1423,7 +1462,13 @@ def install_items(
                 if not override:
                     result.skipped.append(rel_dest)
                     continue
+                if dry_run:
+                    result.installed.append(rel_dest)
+                    continue
                 remove_path(dest)
+            if dry_run:
+                result.installed.append(rel_dest)
+                continue
             try:
                 copy_path(src, dest)
                 result.installed.append(rel_dest)
@@ -1500,7 +1545,13 @@ def install_items(
                 if not override:
                     result.skipped.append(rel_dest)
                     continue
+                if dry_run:
+                    result.installed.append(rel_dest)
+                    continue
                 remove_path(dest)
+            if dry_run:
+                result.installed.append(rel_dest)
+                continue
             try:
                 copy_path(src, dest)
                 result.installed.append(rel_dest)
@@ -1508,8 +1559,9 @@ def install_items(
                 result.errors.append(f"{rel_dest}: {exc}")
 
         # Commands are command-skills under .agents/skills/ — they need the
-        # same Claude Code bridge as skills.
-        ensure_bridge_symlink(target_root)
+        # same Claude Code bridge as skills. A dry run never bridges.
+        if not dry_run:
+            ensure_bridge_symlink(target_root)
 
     for name in scripts:
         slug = slugify_name(name)
@@ -1527,7 +1579,13 @@ def install_items(
                 if not override:
                     result.skipped.append(rel_dest)
                     continue
+                if dry_run:
+                    result.installed.append(rel_dest)
+                    continue
                 remove_path(dest)
+            if dry_run:
+                result.installed.append(rel_dest)
+                continue
             try:
                 copy_path(src, dest)
                 result.installed.append(rel_dest)
@@ -1564,7 +1622,14 @@ def install_items(
             if not override:
                 result.skipped.append(rel_dest)
                 continue
+            if dry_run:
+                result.installed.append(rel_dest)
+                continue
             remove_path(dest)
+        if dry_run:
+            # The mkdir + write_text at this spot is one mutation unit.
+            result.installed.append(rel_dest)
+            continue
         try:
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(guideline_skill_content(source_root, slug), encoding="utf-8")
@@ -1575,13 +1640,15 @@ def install_items(
             result.errors.append(str(exc))
         # Guidelines install into .agents/skills/ — they need the same Claude
         # Code bridge as skills (a guidelines-only install must still create
-        # it, or Claude Code never discovers the new packages).
-        ensure_bridge_symlink(target_root)
+        # it, or Claude Code never discovers the new packages). A dry run
+        # never bridges.
+        if not dry_run:
+            ensure_bridge_symlink(target_root)
 
     return result
 
 
-def purge_legacy_paths(target_root: Path) -> OperationResult:
+def purge_legacy_paths(target_root: Path, *, dry_run: bool = False) -> OperationResult:
     """Remove a target project's pre-single-root install leftovers.
 
     Purges the legacy shared layer (.ai/ — the whole directory), the Cursor
@@ -1598,9 +1665,9 @@ def purge_legacy_paths(target_root: Path) -> OperationResult:
     # itself would rmtree the gitignored .ai/ workflow state (unrecoverable)
     # plus the real .claude/skills/ and .claude/commands/. REPO_ROOT is read
     # at call time so tests (and alternate checkouts) can rebind it.
+    # validate_target owns missing-target handling (create=False raises
+    # for an absent target) — no is_dir re-check needed here.
     validate_target(REPO_ROOT, target_root, create=False)
-    if not target_root.is_dir():
-        raise InstallerError(f"Target project not found: {target_root}")
 
     legacy_paths = [target_root / rel for rel in LEGACY_PURGE_REL_PATHS]
     claude_skills = target_root / ".claude" / "skills"
@@ -1611,6 +1678,9 @@ def purge_legacy_paths(target_root: Path) -> OperationResult:
     for path in legacy_paths:
         if not path.exists() and not path.is_symlink():
             continue
+        if dry_run:
+            result.removed.append(format_rel(path, target_root))
+            continue
         try:
             remove_path(path)
             result.removed.append(format_rel(path, target_root))
@@ -1619,13 +1689,14 @@ def purge_legacy_paths(target_root: Path) -> OperationResult:
     return result
 
 
-def format_purge_result(result: OperationResult) -> str:
+def format_purge_result(result: OperationResult, *, dry_run: bool = False) -> str:
+    verb = "Would purge legacy paths" if dry_run else "Purged legacy paths"
     lines: list[str] = []
     if result.removed:
-        lines.append("Purged legacy paths:")
+        lines.append(f"{verb}:")
         lines.extend(f"  - {path}" for path in result.removed)
     else:
-        lines.append("Purged legacy paths: (none found)")
+        lines.append(f"{verb}: (none found)")
     if result.errors:
         lines.append("Errors:")
         lines.extend(f"  - {msg}" for msg in result.errors)
@@ -1644,6 +1715,17 @@ def is_guideline_skill(skill_dir: Path) -> bool:
     return skill_dir.name.startswith(GUIDELINE_SKILL_PREFIX)
 
 
+# Removal contract (F1, settled by user decision): uninstall is
+# unconditional for skills, agents, commands, and scripts — scripted
+# teardowns (CI cleanup, reprovisioning) rely on removal always happening,
+# so no provenance or user-modification check applies to those kinds. This
+# is deliberate, not an oversight: the docs member kind's
+# *_is_installer_written machinery was removed (see
+# test_installer_dev_workflow.py::test_no_docs_member_kind_remains — the
+# docs-kind precedent, not a general pin) and no per-kind provenance helper
+# exists. Guidelines are the sole exception: their installed content is
+# installer-generated end-to-end (guideline_skill_content), so their removal
+# path verifies a byte-identical regeneration match first.
 def uninstall_items(
     *,
     target_root: Path,
@@ -1652,11 +1734,14 @@ def uninstall_items(
     commands: Sequence[str],
     scripts: Sequence[str] = (),
     guidelines: Sequence[str] = (),
+    dry_run: bool = False,
 ) -> OperationResult:
     result = OperationResult()
+    # validate_target owns missing-target handling (create=False raises for
+    # an absent target) — a teardown of a non-existent project is an error,
+    # consistent with purge; a scripted uninstall of a missing target should
+    # fail loudly rather than report an empty success.
     target_root = validate_target(REPO_ROOT, target_root, create=False)
-    if not target_root.exists():
-        return result
 
     for name in skills:
         slug = slugify_name(name)
@@ -1688,6 +1773,9 @@ def uninstall_items(
             ):
                 continue
             if path.exists():
+                if dry_run:
+                    result.removed.append(format_rel(path, target_root))
+                    continue
                 try:
                     remove_path(path)
                     result.removed.append(format_rel(path, target_root))
@@ -1698,6 +1786,9 @@ def uninstall_items(
         slug = slugify_name(name)
         for path in agent_remove_paths(target_root, slug):
             if path.exists():
+                if dry_run:
+                    result.removed.append(format_rel(path, target_root))
+                    continue
                 try:
                     remove_path(path)
                     result.removed.append(format_rel(path, target_root))
@@ -1718,6 +1809,9 @@ def uninstall_items(
                 and not is_command_skill(path / COMMAND_SKILL_SKILL_MD)
             ):
                 continue
+            if dry_run:
+                result.removed.append(format_rel(path, target_root))
+                continue
             try:
                 remove_path(path)
                 result.removed.append(format_rel(path, target_root))
@@ -1728,6 +1822,9 @@ def uninstall_items(
         slug = slugify_name(name)
         for path in scripts_remove_paths(target_root, slug):
             if path.exists():
+                if dry_run:
+                    result.removed.append(format_rel(path, target_root))
+                    continue
                 try:
                     remove_path(path)
                     result.removed.append(format_rel(path, target_root))
@@ -1759,6 +1856,9 @@ def uninstall_items(
         for path in remove_paths:
             if not path.exists():
                 continue
+            if dry_run:
+                result.removed.append(format_rel(path, target_root))
+                continue
             try:
                 remove_path(path)
                 result.removed.append(format_rel(path, target_root))
@@ -1768,26 +1868,34 @@ def uninstall_items(
     return result
 
 
-def format_result(result: OperationResult, *, uninstall: bool) -> str:
+def format_result(
+    result: OperationResult, *, uninstall: bool, dry_run: bool = False
+) -> str:
+    # Under a dry run the headings read as would-be actions ("Would
+    # install/remove") so a skimmed section cannot be mistaken for a
+    # completed one; the banner itself is printed once by run_cli for
+    # composed runs.
+    verb_install = "Would install" if dry_run else "Installed"
+    verb_remove = "Would remove" if dry_run else "Removed"
     lines: list[str] = []
     if uninstall:
         if result.removed:
-            lines.append("Removed:")
+            lines.append(f"{verb_remove}:")
             lines.extend(f"  - {path}" for path in result.removed)
         if result.skipped:
             lines.append("Skipped (left in place; remove manually or reinstall with --override):")
             lines.extend(f"  - {path}" for path in result.skipped)
         if not result.removed and not result.skipped:
-            lines.append("Removed: (nothing matched)")
+            lines.append(f"{verb_remove}: (nothing matched)")
     else:
         if result.installed:
-            lines.append("Installed:")
+            lines.append(f"{verb_install}:")
             lines.extend(f"  - {path}" for path in result.installed)
         if result.skipped:
             lines.append("Skipped (already exists; use --override to replace):")
             lines.extend(f"  - {path}" for path in result.skipped)
         if not result.installed and not result.skipped:
-            lines.append("Installed: (nothing copied)")
+            lines.append(f"{verb_install}: (nothing copied)")
 
     if result.errors:
         lines.append("Errors:")
@@ -1797,7 +1905,8 @@ def format_result(result: OperationResult, *, uninstall: bool) -> str:
         lines.append("Warnings:")
         lines.extend(f"  - {msg}" for msg in result.warnings)
 
-    if result.ok and not uninstall and result.installed:
+    if result.ok and not uninstall and result.installed and not dry_run:
+        # A dry run installed nothing — the reload reminder would mislead.
         lines.append("")
         lines.append(RELOAD_REMINDER)
 
@@ -1814,6 +1923,7 @@ def run_operation(
     guidelines: Sequence[str] = (),
     uninstall: bool = False,
     override: bool = False,
+    dry_run: bool = False,
 ) -> tuple[int, str]:
     if not skills and not agents and not commands and not scripts and not guidelines:
         raise InstallerError("Select at least one skill, agent, command, scripts, or guideline.")
@@ -1826,6 +1936,7 @@ def run_operation(
             commands=commands,
             scripts=scripts,
             guidelines=guidelines,
+            dry_run=dry_run,
         )
     else:
         result = install_items(
@@ -1837,9 +1948,10 @@ def run_operation(
             scripts=scripts,
             guidelines=guidelines,
             override=override,
+            dry_run=dry_run,
         )
 
-    message = format_result(result, uninstall=uninstall)
+    message = format_result(result, uninstall=uninstall, dry_run=dry_run)
     if result.errors:
         return 1, message
     return 0, message
@@ -1952,6 +2064,15 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         action="store_true",
         help="Replace existing skills, agents, commands, scripts, and guidelines in the target project.",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Preview the operation: report what would be installed, skipped, "
+            "removed, or refused without writing anything to the target "
+            "(including the .claude/skills bridge). The target must already exist."
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -1973,8 +2094,10 @@ def run_cli(argv: Sequence[str]) -> int:
         # --purge-legacy composes with the kind selectors or runs standalone:
         # legacy leftovers go first so a fresh install lands clean.
         if args.purge_legacy:
-            purge_result = purge_legacy_paths(target)
-            purge_messages.append(format_purge_result(purge_result))
+            purge_result = purge_legacy_paths(target, dry_run=args.dry_run)
+            purge_messages.append(
+                format_purge_result(purge_result, dry_run=args.dry_run)
+            )
             purge_failed = not purge_result.ok
         # --dev-workflow is an alias for --bundles dev-workflow-harness.
         bundle_ids = list(args.bundles or [])
@@ -2022,6 +2145,7 @@ def run_cli(argv: Sequence[str]) -> int:
             guidelines=selection.guidelines,
             uninstall=args.uninstall,
             override=args.override,
+            dry_run=args.dry_run,
         )
     except InstallerError as exc:
         # cr-009: a purge already happened irreversibly before this error —
@@ -2032,6 +2156,12 @@ def run_cli(argv: Sequence[str]) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
+    # A dry run prints its banner exactly once, above every composed
+    # section (purge report + operation report), so a composed preview
+    # reads as one operation rather than several.
+    if args.dry_run:
+        print("Dry run — no changes were made:")
+        print()
     for purge_message in purge_messages:
         print(purge_message)
         print()
@@ -2701,6 +2831,16 @@ class InstallerApp:
 
 
 def run_gui() -> int:
+    if tk is None:
+        # The guarded import came up empty: no python3-tk on this host.
+        print(
+            "error: tkinter is not available, so the GUI cannot start.\n"
+            "Install python3-tk (or run on a host with tkinter) or use the "
+            "CLI instead, for example:\n"
+            "  python tools/installer.py /path/to/project",
+            file=sys.stderr,
+        )
+        return 2
     if not sys.platform.startswith("win") and not os.environ.get("DISPLAY"):
         print(
             "error: No display available for the GUI.\n"

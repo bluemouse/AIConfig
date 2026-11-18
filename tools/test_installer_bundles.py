@@ -344,7 +344,7 @@ class CliSkillResolutionTests(unittest.TestCase):
             self.assertEqual(selection.commands, ["commit"])
 
     def test_discover_scripts_scans_tools_root(self) -> None:
-        """t-014a: scripts are discovered from the tracked tools/ root."""
+        """t-014a: allowlisted scripts are discovered from the tracked tools/ root."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             tools_dir = root / "tools" / "dev-workflow"
@@ -358,6 +358,23 @@ class CliSkillResolutionTests(unittest.TestCase):
                 mod.REPO_ROOT = original_root
 
             self.assertEqual(discovered, ["dev-workflow"])
+
+    def test_discover_scripts_ignores_non_allowlisted_dir(self) -> None:
+        """t-015: membership is intentional — a random tracked subdirectory
+        under tools/ is NOT a scripts member until added to the allowlist."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            tools_dir = root / "tools" / "future-helper"
+            tools_dir.mkdir(parents=True)
+            (tools_dir / "README.md").write_text("# future-helper\n", encoding="utf-8")
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = root
+            try:
+                discovered = mod.discover_scripts()
+            finally:
+                mod.REPO_ROOT = original_root
+
+            self.assertEqual(discovered, [])
 
     def test_no_default_exclusion_mechanism_remains(self) -> None:
         """fr-7 (t-108): the personal-preference exclusion mechanism is gone."""

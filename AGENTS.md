@@ -165,6 +165,7 @@ python tools/installer.py /path/to/other-project --skills cpp-coding vulkan-dev 
 python tools/installer.py /path/to/other-project --commands commit --override
 python tools/installer.py /path/to/other-project --bundles core-dev-workflow
 python tools/installer.py /path/to/other-project --bundles target-bundle
+python tools/installer.py /path/to/other-project --bundles core-dev-workflow --dry-run
 python tools/installer.py /path/to/other-project --guidelines coding-behavior
 python tools/installer.py /path/to/other-project --purge-legacy
 python tools/installer.py /path/to/other-project --agents my-agent --uninstall
@@ -172,7 +173,7 @@ python tools/installer.py /path/to/other-project --commands commit --uninstall
 python tools/installer.py   # GUI when no arguments
 ```
 
-Omit `--skills`, `--agents`, and `--commands` to install or uninstall all names discovered under `.agents/skills/` (skills and command-skills) and the dual-target agent paths. Use `--bundles` to install workflow skill sets from [tools/bundles.json](tools/bundles.json) or the dynamic `target-bundle` (skills, agents, commands, and scripts already installed in the target project; documented in [tools/bundles.md](tools/bundles.md)). Without `--override`, existing target paths are skipped. `--purge-legacy` removes a target's pre-single-root leftovers (`.ai/`, `.cursor/{skills,commands,agents}/`, `.github/prompts/`, `.github/skills/`, `.claude/commands/`, `.agents/guidelines/`, and `.claude/skills/` when it is a real directory) and composes with the kind selectors. See [README.md](README.md#distribute-to-another-project) for full flag reference.
+Omit `--skills`, `--agents`, and `--commands` to install or uninstall all names discovered under `.agents/skills/` (skills and command-skills) and the dual-target agent paths. Use `--bundles` to install workflow skill sets from [tools/bundles.json](tools/bundles.json) or the dynamic `target-bundle` (skills, agents, commands, and scripts already installed in the target project; documented in [tools/bundles.md](tools/bundles.md)). Without `--override`, existing target paths are skipped. `--dry-run` previews the selected install, uninstall, or purge without writing anything to the target (the target must already exist). Scripts membership is allowlisted via the `INSTALLABLE_SCRIPTS` tuple in `tools/installer.py` — a tracked subdirectory under `tools/` is installable as scripts only when named there; add to the tuple when adding a scripts package. `--purge-legacy` removes a target's pre-single-root leftovers (`.ai/`, `.cursor/{skills,commands,agents}/`, `.github/prompts/`, `.github/skills/`, `.claude/commands/`, `.agents/guidelines/`, and `.claude/skills/` when it is a real directory) and composes with the kind selectors. See [README.md](README.md#distribute-to-another-project) for full flag reference.
 
 **Trigger-eval a skill description:**
 

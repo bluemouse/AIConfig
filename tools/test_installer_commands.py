@@ -16,11 +16,11 @@ import os
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 TOOLS_DIR = Path(__file__).resolve().parent
 INSTALLER_PATH = TOOLS_DIR / "installer.py"
-
 
 def load_installer_module():
     spec = importlib.util.spec_from_file_location("installer_commands", INSTALLER_PATH)
@@ -34,13 +34,13 @@ def load_installer_module():
 
 mod = load_installer_module()
 
+
 REPO_ROOT = TOOLS_DIR.parent
 
 GIT_COMMIT_DESCRIPTION = (
     "Draft a Conventional Commit message for staged changes with "
     "commit-message-writer, then commit those staged changes without pushing."
 )
-
 
 def write_plain_skill(root: Path, name: str) -> Path:
     """Write a plain (non-command) skill under <root>/.agents/skills/<name>/."""
@@ -52,7 +52,6 @@ def write_plain_skill(root: Path, name: str) -> Path:
         encoding="utf-8",
     )
     return skill_md
-
 
 def write_command_skill(
     root: Path,
@@ -81,7 +80,6 @@ def write_command_skill(
     skill_md = skill_dir / "SKILL.md"
     skill_md.write_text(f"{frontmatter}\n# {name}\n", encoding="utf-8")
     return skill_md
-
 
 class CommandDiscoveryTests(unittest.TestCase):
     def test_discover_commands_includes_flag_command_skill(self) -> None:
@@ -140,7 +138,6 @@ class CommandDiscoveryTests(unittest.TestCase):
             self.assertEqual(
                 mod.discover_commands_in_project(root), ["demo-command"]
             )
-
 
 class CommandInstallTests(unittest.TestCase):
     def test_install_command_copies_skill_tree(self) -> None:
@@ -338,7 +335,6 @@ class CommandInstallTests(unittest.TestCase):
                 "stale undecodable dest must be replaced under --override",
             )
 
-
     def test_install_command_skips_existing_without_override(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
@@ -388,7 +384,6 @@ class CommandInstallTests(unittest.TestCase):
                     override=False,
                 )
             self.assertIn("skill, agent, command, scripts, or guideline", str(ctx.exception))
-
 
 class BridgeCreationTests(unittest.TestCase):
     """fd-002/fd-003/fd-019 regression coverage for bridge + default uninstall."""
@@ -520,7 +515,6 @@ class BridgeCreationTests(unittest.TestCase):
             self.assertEqual(code, 0, "default uninstall of a clean target must exit 0")
             self.assertFalse((target / ".agents" / "skills" / "cmd-demo-command").exists())
             self.assertFalse((target / ".agents" / "skills" / "plain-skill").exists())
-
 
 class PurgeLegacyTests(unittest.TestCase):
     """--purge-legacy: remove a target's pre-single-root install leftovers."""
@@ -748,7 +742,6 @@ class PurgeLegacyTests(unittest.TestCase):
             self.assertIn("Purged legacy paths", captured_out.getvalue())
             self.assertIn("Errors:", captured_out.getvalue())
 
-
     def test_run_cli_purge_legacy_standalone(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / "target"
@@ -927,7 +920,6 @@ class PurgeLegacyTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("TARGET", buf.getvalue())
 
-
 class AgentInstallTests(unittest.TestCase):
     """cr-005: agent bulk install pre-checks BOTH dual-target sources."""
 
@@ -1011,8 +1003,6 @@ class AgentInstallTests(unittest.TestCase):
                 "partial pair must not install when the other source is missing",
             )
 
-
-
 class CliHelpTextTests(unittest.TestCase):
     """CLI help text reflects the single-root layout (pg-005)."""
 
@@ -1056,7 +1046,6 @@ class CliHelpTextTests(unittest.TestCase):
         self.assertFalse(hasattr(mod, "SHARED_COMMAND_FILE"))
         self.assertFalse(hasattr(mod, "SHARED_AGENT_FILE"))
 
-
 class DocsCliRemovedTests(unittest.TestCase):
     """The --docs CLI flag is removed (guide travels with the skill)."""
 
@@ -1085,6 +1074,362 @@ class DocsCliRemovedTests(unittest.TestCase):
             script_names=None,
         )
         self.assertFalse(hasattr(selection, "docs"))
+
+class HeadlessImportTests(unittest.TestCase):
+    """t-001/t-002: the CLI must import and function without tkinter.
+
+    The distribution installer's CLI mode must run on hosts without
+    python3-tk (containers, minimal WSL); the tkinter import is guarded at
+    module level and only the GUI code paths need it.
+    """
+
+    def _load_headless(self):
+        # Block tkinter (and its submodules) so `import tkinter` raises
+        # ImportError in-process; the guard must turn that into None
+        # sentinels, not a module-level traceback.
+        blocked = {
+            name: None
+            for name in (
+                "tkinter",
+                "tkinter.filedialog",
+                "tkinter.messagebox",
+                "tkinter.scrolledtext",
+                "tkinter.ttk",
+            )
+        }
+        stashed = {name: sys.modules.pop(name) for name in blocked if name in sys.modules}
+        sys.modules.update(blocked)
+        try:
+            spec = importlib.util.spec_from_file_location(
+                "installer_headless", INSTALLER_PATH
+            )
+            module = importlib.util.module_from_spec(spec)
+            sys.modules["installer_headless"] = module
+            spec.loader.exec_module(module)
+        finally:
+            for name in blocked:
+                sys.modules.pop(name, None)
+            sys.modules.update(stashed)
+        return module
+
+    def test_module_imports_headless(self) -> None:
+        module = self._load_headless()
+        # The CLI surface functions without touching any GUI path.
+        args = module.parse_args(["/tmp/does-not-matter", "--skills", "x"])
+        self.assertEqual(args.skills, ["x"])
+        self.assertFalse(args.dry_run)
+
+    def test_run_gui_without_tkinter_reports_error(self) -> None:
+        module = self._load_headless()
+        buf = io.StringIO()
+        with contextlib.redirect_stderr(buf):
+            with contextlib.redirect_stdout(io.StringIO()):
+                # DISPLAY is pinned so the headless branch cannot
+                # short-circuit before the tkinter guard fires (pr-003).
+                with unittest.mock.patch.dict(os.environ, {"DISPLAY": ":0"}):
+                    code = module.run_gui()
+        self.assertEqual(code, 2)
+        self.assertIn("tkinter", buf.getvalue())
+
+class DryRunTests(unittest.TestCase):
+    """t-006..t-008, t-012, t-013: --dry-run previews without mutating.
+
+    A dry run must suppress all six mutation surfaces: copy/remove under
+    install, the guidelines write block, the .claude/skills bridge symlink,
+    the target mkdir, and every uninstall/purge removal — while all guards
+    (cross-kind refusals, provenance checks, exists/skip/override logic)
+    evaluate identically to the real run.
+    """
+
+    def _fixture(self, root: Path) -> Path:
+        """A source catalog with one member of each installable kind."""
+        skill = root / ".agents" / "skills" / "sample-skill"
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text(
+            "---\nname: sample-skill\ndescription: A sample skill.\n---\nbody\n",
+            encoding="utf-8",
+        )
+        cmd = root / ".agents" / "skills" / "cmd-sample-command"
+        cmd.mkdir(parents=True)
+        (cmd / "SKILL.md").write_text(
+            "---\nname: sample-command\ndescription: A sample command.\n"
+            "disable-model-invocation: true\n---\nbody\n",
+            encoding="utf-8",
+        )
+        agent_claude = root / ".claude" / "agents"
+        agent_github = root / ".github" / "agents"
+        agent_claude.mkdir(parents=True)
+        agent_github.mkdir(parents=True)
+        (agent_claude / "sample-agent.md").write_text(
+            "---\nname: sample-agent\ndescription: A sample agent.\n---\nbody\n",
+            encoding="utf-8",
+        )
+        (agent_github / "sample-agent.agent.md").write_text(
+            "---\nname: sample-agent\ndescription: A sample agent.\n---\nbody\n",
+            encoding="utf-8",
+        )
+        scripts = root / "tools" / "sample-scripts"
+        scripts.mkdir(parents=True)
+        (scripts / "README.md").write_text("# sample-scripts\n", encoding="utf-8")
+        guideline = root / "guidelines" / "sample-guideline.md"
+        guideline.parent.mkdir(parents=True, exist_ok=True)
+        guideline.write_text(
+            "---\ndescription: A sample guideline.\n---\n# Sample guideline\n",
+            encoding="utf-8",
+        )
+        return root
+
+    def _tree_digest(self, root: Path) -> dict[str, bytes]:
+        digest: dict[str, bytes] = {}
+        for path in sorted(root.rglob("*")):
+            rel = str(path.relative_to(root))
+            if path.is_symlink():
+                digest[rel] = ("link:" + os.readlink(path)).encode()
+            elif path.is_file():
+                digest[rel] = path.read_bytes()
+            else:
+                digest[rel] = b"<dir>"
+        return digest
+
+    def _run(self, module, target: Path, source: Path | None = None, **kwargs):
+        # run_operation reads the module-global REPO_ROOT; rebind it to the
+        # fixture source when one is given (the suite's existing convention).
+        original_root = module.REPO_ROOT
+        if source is not None:
+            module.REPO_ROOT = source
+        try:
+            return module.run_operation(
+                target=target,
+                skills=kwargs.get("skills", []),
+                agents=kwargs.get("agents", []),
+                commands=kwargs.get("commands", []),
+                scripts=kwargs.get("scripts", []),
+                guidelines=kwargs.get("guidelines", []),
+                uninstall=kwargs.get("uninstall", False),
+                override=kwargs.get("override", False),
+                dry_run=kwargs.get("dry_run", False),
+            )
+        finally:
+            module.REPO_ROOT = original_root
+
+    def test_dry_run_install_leaves_target_untouched(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = self._fixture(Path(tmp) / "source")
+            target = Path(tmp) / "target"
+            target.mkdir()
+            before = self._tree_digest(target)
+            code, message = self._run(
+                mod,
+                target,
+                source=source,
+                skills=["sample-skill"],
+                agents=["sample-agent"],
+                commands=["sample-command"],
+                scripts=["sample-scripts"],
+                guidelines=["sample-guideline"],
+                dry_run=True,
+            )
+            self.assertEqual(code, 0)
+            self.assertIn("Would install:", message)
+            self.assertEqual(self._tree_digest(target), before)
+            self.assertIn(".agents/skills/sample-skill", message)
+
+    def _report_lines(self, message: str) -> set[str]:
+        return {
+            ln.strip(" -")
+            for ln in message.splitlines()
+            if ln.startswith("  - ")
+        }
+
+    def test_dry_run_matches_real_run(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = self._fixture(Path(tmp) / "source")
+            target = Path(tmp) / "target"
+            target.mkdir()
+            _, dry_message = self._run(
+                mod, target, source=source, skills=["sample-skill"], dry_run=True
+            )
+            _, real_message = self._run(
+                mod, target, source=source, skills=["sample-skill"], dry_run=False
+            )
+            dry_lines = self._report_lines(dry_message)
+            real_lines = self._report_lines(real_message)
+            self.assertTrue(dry_lines)
+            self.assertEqual(dry_lines, real_lines)
+
+    def test_dry_run_refusal_matches_real_run(self) -> None:
+        """cr-002: guard refusals must produce identical error entries
+        dry vs real — the cr-004 command-skill-dest refusal fires before
+        the dry_run gate, so a preview must report exactly what a real run
+        would refuse."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = self._fixture(Path(tmp) / "source")
+            target = Path(tmp) / "target"
+            # A command-skill squatting on the plain-skill name: the cr-004
+            # guard refuses the plain-skill install over it, dry or real.
+            dest = target / ".agents" / "skills" / "sample-skill"
+            dest.mkdir(parents=True)
+            (dest / "SKILL.md").write_text(
+                "---\nname: sample-skill\ndescription: d.\n"
+                "disable-model-invocation: true\n---\nbody\n",
+                encoding="utf-8",
+            )
+            before = self._tree_digest(target)
+            dry_code, dry_message = self._run(
+                mod, target, source=source, skills=["sample-skill"], dry_run=True
+            )
+            real_code, real_message = self._run(
+                mod, target, source=source, skills=["sample-skill"], dry_run=False
+            )
+            self.assertEqual(dry_code, real_code)
+            self.assertEqual(dry_code, 1)
+            self.assertEqual(
+                self._report_lines(dry_message), self._report_lines(real_message)
+            )
+            self.assertIn("refusing to replace command-skill", dry_message)
+            self.assertEqual(self._tree_digest(target), before)
+
+    def test_dry_run_requires_existing_target(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = self._fixture(Path(tmp) / "source")
+            target = Path(tmp) / "never-created"
+            with self.assertRaises(mod.InstallerError):
+                self._run(mod, target, source=source, skills=["sample-skill"], dry_run=True)
+            self.assertFalse(target.exists())
+
+    def test_dry_run_purge_reports_without_removing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "target"
+            legacy = target / ".ai"
+            legacy.mkdir(parents=True)
+            (legacy / "state.json").write_text("{}", encoding="utf-8")
+            before = self._tree_digest(target)
+            result = mod.purge_legacy_paths(target, dry_run=True)
+            self.assertEqual(result.removed, [".ai"])
+            self.assertEqual(self._tree_digest(target), before)
+
+    def test_dry_run_uninstall_reports_without_removing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = self._fixture(Path(tmp) / "source")
+            target = Path(tmp) / "target"
+            # Real install first, so the uninstall pass has members to remove.
+            self._run(
+                mod,
+                target,
+                source=source,
+                skills=["sample-skill"],
+                agents=["sample-agent"],
+                commands=["sample-command"],
+                scripts=["sample-scripts"],
+                guidelines=["sample-guideline"],
+            )
+            before = self._tree_digest(target)
+            code, message = self._run(
+                mod,
+                target,
+                source=source,
+                skills=["sample-skill"],
+                agents=["sample-agent"],
+                commands=["sample-command"],
+                scripts=["sample-scripts"],
+                guidelines=["sample-guideline"],
+                uninstall=True,
+                dry_run=True,
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(self._tree_digest(target), before)
+            for member in (
+                ".agents/skills/sample-skill",
+                ".claude/agents/sample-agent.md",
+                ".agents/skills/cmd-sample-command",
+                ".agents/tools/sample-scripts",
+                ".agents/skills/guidelines-sample-guideline",
+            ):
+                self.assertIn(member, message)
+
+    def test_dry_run_uninstall_skips_user_modified_guideline(self) -> None:
+        """cr-002: the guideline provenance check must evaluate
+        identically under dry-run — a user-modified installed copy is
+        reported as skipped (not removed), and the dry run must leave it
+        untouched exactly like the real run would."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = self._fixture(Path(tmp) / "source")
+            target = Path(tmp) / "target"
+            self._run(mod, target, source=source, guidelines=["sample-guideline"])
+            installed = (
+                target
+                / ".agents"
+                / "skills"
+                / "guidelines-sample-guideline"
+                / "SKILL.md"
+            )
+            installed.write_text(
+                installed.read_text(encoding="utf-8") + "user-edit\n",
+                encoding="utf-8",
+            )
+            before = self._tree_digest(target)
+            code, message = self._run(
+                mod,
+                target,
+                source=source,
+                guidelines=["sample-guideline"],
+                uninstall=True,
+                dry_run=True,
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(self._tree_digest(target), before)
+            self.assertIn(
+                ".agents/skills/guidelines-sample-guideline", message
+            )
+            # The modified copy sits in the skipped section, not Removed.
+            removed_section = message.split("Skipped")[0]
+            self.assertNotIn(
+                ".agents/skills/guidelines-sample-guideline",
+                removed_section.split("Dry run")[0],
+            )
+
+    def test_dry_run_override_would_replace_without_replacing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = self._fixture(Path(tmp) / "source")
+            target = Path(tmp) / "target"
+            target.mkdir()
+            self._run(mod, target, source=source, skills=["sample-skill"])
+            # User modifies the installed copy; a dry-run --override must
+            # report the replacement but leave the modified bytes on disk.
+            installed_md = (
+                target / ".agents" / "skills" / "sample-skill" / "SKILL.md"
+            )
+            installed_md.write_text("user-modified\n", encoding="utf-8")
+            before = self._tree_digest(target)
+            code, message = self._run(
+                mod, target, source=source, skills=["sample-skill"], override=True, dry_run=True
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(self._tree_digest(target), before)
+            self.assertIn("Would install:", message)
+            self.assertEqual(
+                installed_md.read_text(encoding="utf-8"), "user-modified\n"
+            )
+
+class UninstallMissingTargetTests(unittest.TestCase):
+    """cr-001: uninstall on a missing target exits 2, not silent 0.
+
+    validate_target(create=False) owns missing-target handling; a scripted
+    teardown of a non-existent project should fail loudly (consistent with
+    purge) rather than report an empty success. This pins the deliberate
+    exit-code change so it cannot regress unnoticed.
+    """
+
+    def test_uninstall_missing_target_exits_2(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "never-created"
+            buf = io.StringIO()
+            with contextlib.redirect_stderr(buf):
+                code = mod.run_cli(
+                    [str(target), "--uninstall", "--skills", "sample-skill"]
+                )
+            self.assertEqual(code, 2)
+            self.assertIn("Target project not found", buf.getvalue())
 
 
 if __name__ == "__main__":
