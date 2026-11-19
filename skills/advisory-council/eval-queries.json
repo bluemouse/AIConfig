@@ -99,7 +99,7 @@
     "query": "Write a commit message for my staged changes",
     "should_trigger": false,
     "split": "test",
-    "rationale": "near-miss: commit-message task belongs to git-guide commit-message drafting"
+    "rationale": "near-miss: commit-message task belongs to commit-message-writer"
   },
   {
     "query": "Pressure-test this proposal and tell me if any show-stoppers mean we should reject it",

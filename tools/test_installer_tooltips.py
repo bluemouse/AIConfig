@@ -104,24 +104,25 @@ class FrontmatterDescriptionTests(unittest.TestCase):
 
         self.assertEqual(descriptions, {"runner": "Runs tasks"})
 
-    def test_load_git_guide_description_smoke(self) -> None:
-        # Fixture-based (not real-repo): a REPO_ROOT-patched smoke test so it
-        # does not depend on this checkout's installed state.
+    def test_load_commit_message_writer_description_smoke(self) -> None:
+        # Fixture-based (not real-repo): the repo itself still lives under
+        # .ai/skills/ until the stage-5 self-migration, so a REPO_ROOT-patched
+        # smoke test stays green across the migration boundary.
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             original_root = mod.REPO_ROOT
             mod.REPO_ROOT = root
             try:
                 write_markdown(
-                    root / ".agents/skills/git-guide" / "SKILL.md",
-                    description="Runs git operations",
+                    root / ".agents/skills/commit-message-writer" / "SKILL.md",
+                    description="Drafts commit messages",
                 )
-                descriptions = mod.load_skill_descriptions(["git-guide"])
+                descriptions = mod.load_skill_descriptions(["commit-message-writer"])
             finally:
                 mod.REPO_ROOT = original_root
 
-        self.assertIn("git-guide", descriptions)
-        self.assertTrue(descriptions["git-guide"])
+        self.assertIn("commit-message-writer", descriptions)
+        self.assertTrue(descriptions["commit-message-writer"])
 
 
 class SelectionHelpFormatTests(unittest.TestCase):

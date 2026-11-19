@@ -262,7 +262,7 @@ DEV_WORKFLOW_SKILLS = (
     "implementation-auditor",
     "code-review-resolver",
     "code-reviewer",
-    "git-guide",
+    "commit-message-writer",
 )
 DEV_WORKFLOW_COMMANDS = (
     "run-dev-workflow",
