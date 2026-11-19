@@ -1,8 +1,6 @@
-# Desktop UI/UX Design Principles
+# Design Principles
 
-Framework-independent design reasoning for this skill. Apply the Qt mapping in `qt-widgets-patterns.md` after the workflow and interaction model is sound.
-
-Reason from the user's task first: entry point, information needed to decide, primary action, feedback, error paths, recovery/undo, and context worth preserving. Prefer familiar controls, give immediate and proportional feedback, prevent errors before confirming them (confirm only hard-to-reverse destructive actions), keep frequent workflows shorter than rare ones, group by user concept, use clear concrete language, and design every relevant state (loading/busy, empty, disabled, validation error, operation failure, dirty/unsaved, success). Preserve user context — selection, scroll, expansion, splitters, docks, active tab — across navigation. Verify the complete loop: intent -> find control -> act -> observe response -> understand result -> continue. If any transition is ambiguous, the design has an interaction problem even if every control looks correct.
+Priority order and review severity rubric for this skill. Design every relevant state: loading/busy, empty, disabled, validation error, operation failure, dirty/unsaved, success.
 
 ## Priority order
 

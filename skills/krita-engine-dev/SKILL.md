@@ -114,7 +114,7 @@ Keep these rules explicit in design and review answers:
 | Add/modify brush engines, register paintop plugins, design a new painting app | [implementation-playbooks.md](references/implementation-playbooks.md) |
 | Tiled pixel storage, layer/projection, canvas/GPU interaction, performance | [pixel-layer-gpu-performance.md](references/pixel-layer-gpu-performance.md) |
 | Navigate a Krita checkout or validate claims against source | [source-reading-map.md](references/source-reading-map.md) |
-| Extended background when focused references are insufficient (~1100 lines) | [krita-programming-guide.md](references/krita-programming-guide.md) |
+| Extended background when focused references are insufficient (~750 lines) | [krita-programming-guide.md](references/krita-programming-guide.md) |
 
 When a task spans multiple areas, read **every matching row** — e.g. a new paintop plugin needs
 [implementation-playbooks.md](references/implementation-playbooks.md),

@@ -46,7 +46,7 @@ new approach. References carry the on-demand depth:
 - Load `references/reproduction-and-bisection.md` when shrinking a slow repro or bisecting history.
 - Load `references/determinism-and-replay.md` when the bug is intermittent and you need determinism, stress, logging, or record/replay.
 - Load `references/bug-taxonomy.md` for bug classes and prevention-by-design tactics.
-- Load `references/diagnostic-techniques.md` for tracing, differential comparison, bisecting, and bug-class-specific tactics.
+- Load `references/diagnostic-techniques.md` for tracing, differential comparison, and bisection tactics.
 - Load `references/instrumentation-and-checks.md` when adding assertions, sanitizers, or tripwires — instrument to surface the fault **earlier** or where it is cheaper to act on, not to restate what the crash already showed.
 
 When reproduction exists and the defect is in **native C++**, apply the debugger
@@ -132,7 +132,7 @@ When debugging was invoked from an active merge/rebase integration, return contr
 - `references/reproduction-and-bisection.md` — shrink repros and bisect regressions
 - `references/instrumentation-and-checks.md` — assertions, sanitizers, and tripwire discipline
 - `references/determinism-and-replay.md` — make intermittent bugs reproducible
-- `references/diagnostic-techniques.md` — tracing, comparison, bisection, bug-class table
+- `references/diagnostic-techniques.md` — tracing, comparison, bisection
 - `references/gotchas.md` — common misreadings and anti-patterns
 - `references/debugging-report.md` — final report template
 - [../cpp-coding/references/build-and-verification.md](../cpp-coding/references/build-and-verification.md) — C++ sanitizer builds, clang-tidy, coverage (via [cpp-coding](../cpp-coding/SKILL.md))

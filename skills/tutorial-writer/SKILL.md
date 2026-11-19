@@ -59,7 +59,7 @@ sections.
 different use case — progressing from quick first success through minimum mental
 model, a limitation-exposing extension, end-to-end integration, and professional
 use. See [references/tutorial-patterns.md](references/tutorial-patterns.md) §1 for
-the stage pattern and §2 for the tutorial skeleton.
+the stage pattern.
 
 **Each learning step.** State the goal; show the code, command, UI action, or
 configuration; show an observable result (output, response, state change,
@@ -69,7 +69,7 @@ runnable code when the reader needs it, else the smallest meaningful diff with
 omissions marked; keep names, paths, and expected output consistent across steps.
 
 **Visuals.** Add a visual only when it answers a question more clearly than prose;
-frame it with that question and state the takeaway after (reference §4 selector).
+frame it with that question and state the takeaway after (reference §2 selector).
 Screenshots only when the user provides or requests them or a verified environment
 can capture them.
 
@@ -103,6 +103,6 @@ Before delivering a tutorial, guide, or review, confirm:
 
 ## Resources
 
-- [references/tutorial-patterns.md](references/tutorial-patterns.md) — skeletons,
-  example ladder, visual selector, review rubric, anti-patterns
+- [references/tutorial-patterns.md](references/tutorial-patterns.md) — example
+  ladder, visual selector, review rubric, anti-patterns
 - [SOURCES.md](SOURCES.md) — provenance notes

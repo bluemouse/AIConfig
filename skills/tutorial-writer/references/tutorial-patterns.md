@@ -6,13 +6,11 @@ visual, or reviewing an existing tutorial.
 ## Contents
 
 1. Example-first progression
-2. Tutorial skeleton
-3. User-guide skeleton
-4. Visual selector
-5. Example quality rules
-6. Professional-use checklist
-7. Review rubric
-8. Anti-patterns
+2. Visual selector
+3. Example quality rules
+4. Professional-use checklist
+5. Review rubric
+6. Anti-patterns
 
 ## 1. Example-first progression
 
@@ -29,67 +27,7 @@ A strong running example usually evolves through these stages:
 Do not teach a concept before the reader has a reason to need it. When possible, let a
 new requirement expose the limitation first, then explain the concept that resolves it.
 
-## 2. Tutorial skeleton
-
-```markdown
-# Build [specific outcome]
-
-[Two-sentence orientation.]
-
-## Make it work
-[Minimal runnable example]
-[Expected output]
-
-## Add [capability]
-[New requirement]
-[Small code or action change]
-[Expected output]
-
-## See how it works
-[Diagram and concise explanation]
-
-## Handle [real-world concern]
-[Example showing the concern]
-[Improved implementation]
-[Verification]
-
-## Put it together
-[Realistic end-to-end example]
-
-## Next steps
-[Specific related capabilities]
-```
-
-## 3. User-guide skeleton
-
-```markdown
-# [Product or feature] user guide
-
-## Quickstart
-[Fastest useful success]
-
-## Core tasks
-### [Common task 1]
-### [Common task 2]
-
-## How it works
-[Compact mental model and visual]
-
-## Practical workflows
-### [Realistic workflow 1]
-### [Realistic workflow 2]
-
-## Advanced use
-[Configuration, composition, extensibility, or automation]
-
-## Production and operations
-[Relevant reliability, security, performance, testing, or deployment guidance]
-
-## Troubleshooting
-[Symptoms → causes → fixes]
-```
-
-## 4. Visual selector
+## 2. Visual selector
 
 Choose a visual because it answers a question better than prose.
 
@@ -106,7 +44,7 @@ Choose a visual because it answers a question better than prose.
 Keep labels concrete. After the visual, state the one or two relationships the reader
 should remember.
 
-## 5. Example quality rules
+## 3. Example quality rules
 
 - Make the first example complete enough to copy and run.
 - Show setup commands, dependencies, imports, credential placeholders, or UI
@@ -122,14 +60,14 @@ should remember.
 - Never present unexecuted code, uncaptured screenshots, or theoretical output as
   verified.
 
-## 6. Professional-use checklist
+## 4. Professional-use checklist
 
 At the professional-use stage, select and demonstrate only the operational concerns that
 apply to this product (errors/retries/timeouts, auth and secrets, testing, observability,
 performance, deployment, API lifecycle, maintainability) — demonstrated in the running
 example, never as a detached final checklist.
 
-## 7. Review rubric
+## 5. Review rubric
 
 For a tutorial or guide review, rank findings by reader impact:
 
@@ -150,7 +88,7 @@ For each material finding, state the affected section, reader impact, evidence, 
 targeted improvement. Avoid rewriting a complete guide when concise findings meet the
 request.
 
-## 8. Anti-patterns
+## 6. Anti-patterns
 
 The negative image of the rules above: a "What is X?" essay before the first example,
 unrelated hello-world snippets instead of one evolving example, unexplained code walls,

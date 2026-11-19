@@ -10,369 +10,15 @@ Useful companion references:
 - [Build Instructions](https://docs.krita.org/en/untranslatable_pages/building_krita.html)
 - [Krita API Docs](https://api.kde.org/extragear-api/graphics-apidocs/krita/html/index.html)
 
-## 1. Start With the Right Mental Model
-
-Krita is not "a window that paints pixels directly". It is a layered image application with a stroke scheduler, tiled paint devices, paint operations ("paintops"), resource-backed presets, and a projection system that updates the canvas from document state.
-
-For painting work, the most important directories are:
-
-- `libs/image/`: document model, paint devices, painter, stroke scheduling, undo, projection updates
-- `libs/image/brushengine/`: paintop contracts, presets, settings, spacing/timing, and registry
-- `libs/ui/tool/`: tools, freehand helpers, and stroke strategy glue
-- `libs/brush/`: brush tip resources and dab creation
-- `libs/pigment/`: color spaces and composite operations
-- `plugins/paintops/`: concrete brush engines
-
-At a high level, a freehand stroke looks like this:
-
-1. A tool samples input events.
-2. Krita freezes the active preset and related resources into a stroke-local snapshot.
-3. The stroke is submitted to the image scheduler as a queue of jobs.
-4. A `KisPainter` owns a concrete `KisPaintOp` instance for that stroke.
-5. The paintop converts stylus data into one or more dabs.
-6. Dabs are composited into tiled paint devices.
-7. Dirty regions are marked, projections are updated, and the canvas repaints.
-
-Everything interesting about brush feel, performance, and correctness happens inside that pipeline.
-
-## 2. Core Painting Objects
-
-Learn these types first. Almost every painting bug or feature request eventually lands in one of them.
-
-### `KisImage`
-
-`KisImage` is the document-level coordinator. It owns the scheduler and is the place where strokes are started. `KisImage::startStroke()` delegates to `KisUpdateScheduler`, which arbitrates between painting work and projection updates.
-
-Why it matters:
-
-- the stroke engine does not run "outside" the image
-- painting and projection are intentionally scheduled together
-- undo, level-of-detail painting, and dirty propagation all flow through the image
-
-### `KisNode`
-
-A `KisNode` is a layer or another graph node that participates in the image tree. Painting usually targets a node's `KisPaintDevice`, then dirty regions are pushed back to the node so projection recomputation can happen.
-
-Why it matters:
-
-- many bugs that look like "brush bugs" are actually target-node or indirect-painting bugs
-- masking brushes and temporary composition devices still end up resolving into node updates
-
-### `KisPaintDevice`
-
-`KisPaintDevice` stores pixels in Krita's internal tiled representation. Paintops do not paint directly to the widget or canvas; they paint into devices that later feed projection.
-
-Why it matters:
-
-- performance-sensitive code usually operates on devices, fixed devices, or accessors
-- wrap-around mode, selections, and blending are handled at device/painter level
-
-### `KisPainter`
-
-`KisPainter` is the execution context that binds color, composite op, selection, mirror state, and a concrete `KisPaintOp`. It is the bridge between high-level stroke code and low-level compositing.
-
-Why it matters:
-
-- tools do not normally know how to stamp dabs; painters do
-- paintops are instantiated per painter/preset combination
-- `KisPainter::bltFixed()` is a critical part of the final render path
-
-### `KisPaintOpPreset`, `KisPaintOpSettings`, and `KisPaintOp`
-
-These three concepts are easy to confuse:
-
-- `KisPaintOpPreset`: a user-facing preset, including the selected engine id and resource-backed settings
-- `KisPaintOpSettings`: the engine-specific configuration blob
-- `KisPaintOp`: the runtime object that actually paints
-
-Why it matters:
-
-- when users save and share "brushes", they are often really sharing presets and linked resources
-- when you extend an engine, you typically touch both settings and runtime code
-
-### `KisBrush`
-
-`KisBrush` is the brush tip resource. It is not the whole brush engine. The default raster engine uses `KisBrush` to build dabs, but the full feel of a stroke comes from the surrounding paintop logic: spacing, rotation, opacity, scatter, timing, texture, mirroring, and compositing.
-
-Why it matters:
-
-- "change the brush" and "change the engine" are different tasks
-- brush tip resources are reused across multiple engines
-
-### `KisResourcesSnapshot`
-
-Painting often happens off the GUI thread, so Krita cannot lazily reach into the global resource database while a worker thread is rendering dabs. `KisResourcesSnapshot` freezes the preset, colors, gradients, pattern, channel locks, mirror state, and other context for the stroke.
-
-Why it matters:
-
-- if a feature depends on a resource, think about how it gets cloned into the stroke
-- thread-safe painting depends on snapshots, not the global database
-
-## 3. The Raster Stroke Path: From Stylus Sample to Pixels
-
-This section is the most important part of the guide. Read the code in the same order.
-
-### Step 1: Tool input enters through `KisToolFreehandHelper`
-
-`libs/ui/tool/kis_tool_freehand_helper.cpp` is the main entry point for freehand raster painting.
-
-When a stroke starts, `KisToolFreehandHelper::initPaintImpl()` does several important things:
-
-- stores the `KisStrokesFacade`
-- builds a `KisResourcesSnapshot`
-- determines whether the preset needs airbrushing or spacing updates
-- creates initial `KisDistanceInformation`
-- creates stroke painters
-- constructs a `FreehandStrokeStrategy`
-- starts the stroke through `startStroke()`
-- enables async updates when the preset requires them
-
-This is where user input turns into an engine-managed stroke instead of a stream of ad hoc paint calls.
-
-### Step 2: The stroke is scheduled, not executed inline
-
-`KisImage::startStroke()` delegates to `KisUpdateScheduler`, and `KisUpdateScheduler` delegates to `KisStrokesQueue`.
-
-That matters because Krita does not treat painting as a special case separate from document updates. The scheduler balances:
-
-- stroke jobs
-- projection updates
-- spontaneous image jobs
-- level-of-detail work
-
-`KisStrokesQueue::startStroke()` can also create an LOD buddy stroke when low-resolution interactive painting is enabled. If you change stroke job data or geometry handling, remember that the queue may clone jobs for a parallel LOD path.
-
-### Step 3: Stroke initialization opens devices, transactions, and masking infrastructure
-
-The real stroke setup happens in `KisPainterBasedStrokeStrategy::initStrokeCallback()` in `libs/ui/tool/strokes/kis_painter_based_stroke_strategy.cpp`.
-
-This is where Krita:
-
-- chooses the target paint device
-- handles selections
-- switches into indirect painting when required
-- creates a `KisTransaction` for undo
-- sets up interstroke data
-- optionally creates a masking brush renderer
-- initializes painters with `KisResourcesSnapshot::setupPainter()`
-
-`KisResourcesSnapshot::setupPainter()` is important because it loads:
-
-- foreground and background color
-- generator, pattern, and gradient
-- channel locks
-- opacity
-- composite op
-- mirroring
-- stroke/fill styles
-- the active preset, last
-
-The preset is initialized last because the paintop may inspect painter state during construction.
-
-### Step 4: User motion becomes stroke jobs
-
-Freehand input does not immediately draw. It becomes `FreehandStrokeStrategy::Data` jobs such as:
-
-- `POINT`
-- `LINE`
-- `CURVE`
-- `POLYLINE`
-- `POLYGON`
-- `RECT`
-- `ELLIPSE`
-
-`FreehandStrokeStrategy::doStrokeCallback()` dispatches each job to a `KisMaskedFreehandStrokePainter`, which in turn routes painting to the underlying `KisPainter`.
-
-The important lesson is that Krita's stroke model is job-based. This is what makes concurrency, batching, dirty-region collection, LOD, and asynchronous dab rendering possible.
-
-### Step 5: `KisPainter` hands execution to the active paintop
-
-The bridge is intentionally small:
-
-- `KisPainter::setPaintOpPreset()` asks `KisPaintOpRegistry` to create the concrete runtime engine
-- `KisPainter::paintAt()` calls `d->paintOp->paintAt(pi, savedDist)`
-
-This is a clean architectural seam:
-
-- tools understand geometry and stroke semantics
-- painters own rendering state
-- paintops own brush-engine behavior
-
-If you are trying to understand why a preset behaves strangely, check that the right paintop is being created and bound to the painter before debugging the engine internals.
-
-### Step 6: `KisPaintInformation` and `KisDistanceInformation` define dab placement
-
-`KisPaintInformation` carries the per-sample input data:
-
-- position
-- pressure
-- x/y tilt
-- rotation
-- tangential pressure
-- perspective
-- time
-- speed
-
-`KisDistanceInformation` carries the stroke-local spacing and timing state between dabs.
-
-The key contract is in `KisPaintInformation::paintAt()`:
-
-1. register the current distance info
-2. call the paintop's `paintAt(const KisPaintInformation&)`
-3. call `updateTimingImpl()`
-4. lock drawing angle when needed
-5. call `registerPaintedDab()` on the distance info
-
-This is one of the most important invariants in Krita's brush engine:
-
-- the paintop computes the current dab and returns spacing information
-- the framework records the consequences of painting that dab
-
-Do not bypass this lightly. Many spacing, angle, and airbrush bugs come from breaking this contract.
-
-### Step 7: `KisPaintOp` defines the paint-engine contract
-
-Every brush engine derives from `KisPaintOp` in `libs/image/brushengine/kis_paintop.h`.
-
-The most important virtual methods are:
-
-- `paintAt(const KisPaintInformation&)`
-- `updateSpacingImpl(const KisPaintInformation&)`
-- `updateTimingImpl(const KisPaintInformation&)`
-- optionally `paintLine()` and `paintBezierCurve()`
-- optionally `doAsynchronousUpdate()`
-
-The default `paintLine()` path uses `KisPaintOpUtils::paintLine()` to interpolate along the segment using `KisDistanceInformation::getNextPointPosition()`. That utility is also where spacing and timing can still be updated even when no dab is emitted along a short segment.
-
-This is why stroke quality depends on more than "draw a circle every N pixels". Krita tracks both geometric distance and temporal behavior.
-
-### Step 8: The default pixel brush engine is implemented by `KisBrushOp`
-
-The concrete default raster engine lives in `plugins/paintops/defaultpaintops/brush/kis_brushop.cpp`. This is the best paintop to study first.
-
-Its constructor wires together several option objects, including:
-
-- size
-- ratio
-- rate
-- softness
-- lightness strength
-- spacing
-- scatter
-- sharpness
-- rotation
-- opacity
-
-That list explains a lot about Krita's brush capability. What artists experience as "one brush" is really a runtime combination of many option evaluators driven by `KisPaintInformation`.
-
-In `KisBrushOp::paintAt()` the engine:
-
-1. validates the target device and brush
-2. rejects cases where the brush cannot paint for this input
-3. computes scale, rotation, and ratio
-4. computes the scattered cursor position
-5. computes per-dab opacity and flow
-6. builds a `KisDabCacheUtils::DabRequestInfo`
-7. submits the dab to `KisDabRenderingExecutor`
-8. returns spacing information via `effectiveSpacing(...)`
-
-This means the default engine does not immediately composite every dab in `paintAt()`. It can stage dab generation and later flush them asynchronously.
-
-### Step 9: Asynchronous dab generation uses a dedicated queue and job runners
-
-The async path is a major performance feature.
-
-`KisDabRenderingExecutor::addDab()` creates a rendering job through `KisDabRenderingQueue` and immediately schedules a `FreehandStrokeRunnableJobDataWithUpdate`. Later, `KisBrushOp::doAsynchronousUpdate()` pulls completed dabs from the queue and emits blit jobs.
-
-This split has several benefits:
-
-- expensive dab generation can happen independently of final compositing
-- Krita can adapt update cadence to keep the stroke visually responsive
-- cached or postprocessed dabs can be reused efficiently
-
-Inside `KisDabRenderingQueue`, jobs are tracked by sequence number. A request can become:
-
-- a new dab generation
-- a postprocess job
-- a copy of a previously generated dab
-
-That is one reason Krita's raster engine performs well even when brush evaluation is complex.
-
-### Step 10: Dabs are generated through `KisDabCacheUtils` and `KisBrush`
-
-`plugins/paintops/libpaintop/KisDabCacheUtils.cpp` turns a logical dab request into a `KisFixedPaintDevice`.
-
-The high-level choices are:
-
-- create an image stamp device directly
-- mask a solid color into a fixed paint device
-- colorize a source device and then apply the brush mask
-
-After generation, `postProcessDab()` can apply:
-
-- sharpness processing
-- texture processing
-
-The actual brush tip work goes through `KisBrush::generateMaskAndApplyMaskOrCreateDab()` in `libs/brush/kis_brush.cpp`. This is where the brush pyramid produces an image for the current shape and subpixel offset, and where the resulting mask is converted into pixels in the destination color space.
-
-This separation is important:
-
-- `KisBrush` knows how to create a brush-tip image or mask
-- the paintop decides when, where, and with what options to request that dab
-
-### Step 11: Final dab compositing happens in `KisPainter::bltFixed()`
-
-`KisBrushOp::doAsynchronousUpdate()` is where ready dabs become pixels on the target device.
-
-It:
-
-- limits how many dabs to flush in one update period
-- computes dirty rectangles from dab bounds
-- handles wrap-around normalization
-- splits dabs into non-overlapping rectangles
-- schedules concurrent `bltFixed()` jobs
-- adds mirroring jobs when needed
-- records dirty rects and adapts the next update period
-
-The actual compositing work happens inside `libs/image/kis_painter_blt_multi_fixed.cpp`.
-
-`KisPainter::Private::applyDevice()` prepares a `KoCompositeOp::ParameterInfo` block and calls:
-
-- `colorSpace->bitBlt(...)`
-- with the active composite op
-- against the destination device
-
-This is the point where:
-
-- the dab's source pixels
-- the destination tile data
-- the active composite op
-- the color spaces
-- selection masking
-
-all meet in a single render step.
-
-If a bug looks like "the dab shape is right but the blend is wrong", this is usually the level to inspect.
-
-### Step 12: Dirty regions flow back into the image and projection system
-
-After paint jobs or async updates complete, `FreehandStrokeStrategy::issueSetDirtySignals()` gathers dirty rects from the masked painters.
-
-Depending on the mode, Krita may:
-
-- set dirty rects directly on the target node
-- split and normalize dirty areas for masking brush merges
-- queue additional merge jobs
-
-Once the node is marked dirty, projection updates are scheduled by the image/update infrastructure and the canvas eventually repaints.
-
-That means a full stroke is not complete when a dab exists. It is complete when:
-
-- the dab has been composited
-- dirty regions are marked
-- projection catches up
-
-## 4. What the Stroke and Brush Engine Can Do
+The mental model, the core painting objects, and the full raster stroke path
+from stylus sample to pixels are covered by the focused references: read
+[architecture-map.md](architecture-map.md) for the mental model, the subsystem
+map, and the standard freehand stroke flow, and
+[core-classes-and-contracts.md](core-classes-and-contracts.md) for the class
+responsibility tables and contracts. This guide continues with the capability
+map and the deeper implementation material.
+
+## 1. What the Stroke and Brush Engine Can Do
 
 The user manual describes these features from the artist's point of view. Here is where they come from in code.
 
@@ -434,7 +80,7 @@ If a change only works at full resolution, it is not finished.
 
 Krita supports many paint engines under `plugins/paintops/`, not just the default pixel brush. The plugin registry and factory system are what turn an engine implementation into something users can choose in the preset editor.
 
-## 5. Resource and Preset Architecture
+## 2. Resource and Preset Architecture
 
 This area matters much more than it first appears.
 
@@ -470,7 +116,7 @@ For the deeper design background, read `libs/resources/ResourcesDesignNotes.md`.
 
 Some resources depend on canvas state, such as foreground and background color. `KisPaintOpPreset::cloneWithResourcesSnapshot(...)` can bake required canvas resources into a local storage object. This is how gradients and similar resources stay consistent during a stroke.
 
-## 6. How to Extend the Brush Engine
+## 3. How to Extend the Brush Engine
 
 There are two common extension paths: modify an existing engine, or add a new one.
 
@@ -541,52 +187,13 @@ If you are adding your first raster brush feature, start with the default pixel 
 - `plugins/paintops/libpaintop/`
 - `libs/brush/`
 
-## 7. Performance and Correctness Rules
+The performance and correctness rules — the spacing/timing contract,
+worker-thread resource access, per-dab allocation, mirror/wrap/selection/
+indirect/LOD coverage, and dirty rectangles — live in the skill's Core
+invariants and Gotchas sections and in
+[pixel-layer-gpu-performance.md](pixel-layer-gpu-performance.md).
 
-These rules will save you from many regressions.
-
-### Rule 1: Do not break the spacing/timing contract
-
-If the engine emits a dab, the corresponding distance/timing state must be updated through the normal `KisPaintInformation` and `KisDistanceInformation` flow.
-
-Symptoms when broken:
-
-- uneven spacing
-- wrong drawing angle
-- broken airbrush behavior
-- lines that behave differently from isolated dabs
-
-### Rule 2: Do not read GUI-thread resources from worker-thread paint code
-
-Use resource snapshots and declared resource dependencies. If an engine needs a resource during painting, make sure it was cloned into the stroke-local snapshot.
-
-Symptoms when broken:
-
-- nondeterministic paint behavior
-- crashes or empty resources during threaded painting
-- presets that serialize incorrectly
-
-### Rule 3: Keep per-dab allocation and conversion under control
-
-`KisBrushOp` uses a dab executor, a rendering queue, caches, pooled memory, and adaptive update periods for a reason. Do not casually add expensive conversions or heap allocations on the hot path without measuring the impact.
-
-### Rule 4: Always think about mirrored, wrapped, selected, indirect, and LOD painting
-
-A change that works in the simplest case can still be wrong in real usage.
-
-At minimum, ask:
-
-- does it behave under horizontal and vertical mirroring?
-- does it behave at the canvas edge in wrap-around mode?
-- does it behave with a selection?
-- does it behave when painting indirectly?
-- does it behave in LOD mode?
-
-### Rule 5: Dirty rectangles are part of correctness
-
-If the dirty region is too small, the canvas will miss updates. If it is too large, performance drops. When changing async update logic or masking brush merges, verify dirty-region computation.
-
-## 8. A Good Code-Reading Order
+## 4. A Good Code-Reading Order
 
 If you are new to Krita, do not read the repository randomly. Read in this order:
 
@@ -614,21 +221,11 @@ If you are new to Krita, do not read the repository randomly. Read in this order
 
 After that, read one alternate engine under `plugins/paintops/` to see how Krita supports very different brush behavior on top of the same stroke framework.
 
-## 9. How the User Manual Maps to the Code
-
-The user manual is still useful while you read the code. A few examples:
-
-- [Loading and Saving Brushes](https://docs.krita.org/en/user_manual.html): helps you remember that presets and resources are first-class product features, not just editor internals.
-- [Mirror Tools](https://docs.krita.org/en/user_manual.html): maps to painter mirror state and mirrored dab updates.
-- [Python Scripting](https://docs.krita.org/en/user_manual.html): maps more to `libkis` and automation than to the core raster stroke path.
-
-When a feature matters to artists, it usually means there is a non-trivial architectural constraint behind it.
-
-## 10. Advanced Implementation: Tiled Painting
+## 5. Advanced Implementation: Tiled Painting
 
 The stroke engine only makes sense if you understand what it is painting into. Krita's raster storage is not a single flat image buffer. `KisPaintDevice` is the public painting object, but the actual sparse pixel storage is usually delegated to `KisTiledDataManager`.
 
-### 10.1 `KisPaintDevice` is a facade over tiled storage
+### 5.1 `KisPaintDevice` is a facade over tiled storage
 
 `KisPaintDevice` owns:
 
@@ -645,7 +242,7 @@ This distinction matters when you maintain painting code:
 - use `extent()` when you want the rough working region or tile-aligned storage shape
 - use `exactBounds()` when correctness depends on the real painted pixels
 
-### 10.2 Tiles are 64x64, sparse, and copy-on-write
+### 5.2 Tiles are 64x64, sparse, and copy-on-write
 
 At the lowest storage layer, `KisTileData::WIDTH` and `KisTileData::HEIGHT` are both 64. Krita therefore stores raster content in 64x64 chunks.
 
@@ -663,7 +260,7 @@ The separation between `KisTile` and `KisTileData` is important:
 
 Because those are separate objects, multiple tiles or historical revisions can share a `KisTileData` instance until somebody writes to it.
 
-### 10.3 `KisTiledDataManager` is where storage policy lives
+### 5.3 `KisTiledDataManager` is where storage policy lives
 
 `KisTiledDataManager` is responsible for:
 
@@ -683,7 +280,7 @@ Two methods are especially important for performance-sensitive code:
 
 Krita uses the rough form for temporary devices and LOD transfers because it is much faster and because extra copied pixels are acceptable in those contexts.
 
-### 10.4 Undo is tile-native, not layered on top
+### 5.4 Undo is tile-native, not layered on top
 
 Undo is deeply integrated into tile storage through `KisMementoManager`. `KisTiledDataManager::getTilesPair()` can fetch both the current tile and the committed tile together, which lets iterators work against the live state and the undo baseline without extra hash-table traffic.
 
@@ -696,7 +293,7 @@ That is why tiled painting code often talks about:
 
 This is not an afterthought. It is how Krita keeps painting, undo, and projection history coherent under heavy editing.
 
-### 10.5 Random accessors are optimized around tiles
+### 5.5 Random accessors are optimized around tiles
 
 Many core painting loops do not iterate pixel-by-pixel in a naive way. `KisRandomAccessor2` caches tile info, locks tiles for read or write, and exposes:
 
@@ -709,7 +306,7 @@ That is exactly why `KisPainter::Private::applyDevice()` can walk large spans ef
 
 In other words, the tile system directly shapes the structure of the brush engine's inner loops.
 
-### 10.6 Wrap-around mode is implemented as accessor remapping
+### 5.6 Wrap-around mode is implemented as accessor remapping
 
 `KisWrappedRandomAccessor` is a useful example of Krita's storage design. It does not duplicate the whole image. Instead, it remaps requested coordinates into the wrap rectangle before delegating to the normal tiled accessor.
 
@@ -720,7 +317,7 @@ This is why wrap-around logic shows up in both:
 - low-level accessors and wrapped rect normalization
 - high-level paintops such as `KisBrushOp::doAsynchronousUpdate()`
 
-### 10.7 Tile data can be pooled, compressed, and swapped
+### 5.7 Tile data can be pooled, compressed, and swapped
 
 `KisTileData` has storage states such as `NORMAL`, `COMPRESSED`, and `SWAPPED`, and it can use pooled memory for common pixel sizes. If tile data is swapped out, it is reloaded on demand through the data store.
 
@@ -731,7 +328,7 @@ This matters to brush-engine maintainers for two reasons:
 
 When a painting change causes mysterious performance regressions on large canvases, the culprit is often the interaction between the brush engine and the tiled backing store.
 
-### 10.8 Why paintops create temporary composition devices
+### 5.8 Why paintops create temporary composition devices
 
 Many paintops do not stamp straight into the target device. They first build a temporary device with `createCompositionSourceDevice()` or `createCompositionSourceDeviceFixed()`.
 
@@ -743,7 +340,7 @@ That is not just convenience. Those helpers preserve:
 
 So when a paintop later blits or mirrors a dab, it is doing so in a temporary device that still matches the destination device's storage and coordinate rules.
 
-## 11. Paintop Through Three Presets
+## 6. Paintop Through Three Presets
 
 The most important thing to understand about a Krita brush preset is that the preset file is not the engine. A `.kpp` stores embedded preset data, including a `paintopid`, and that `paintopid` determines which factory and runtime class the brush engine will use.
 
@@ -757,7 +354,7 @@ The framework path is always the same:
 
 The most important lesson is that preset names can be misleading. A preset that sounds like a "spray" or "bristle" brush may still be implemented by the default `paintbrush` engine if its `paintopid` says so. The engine id, not the marketing name, defines the code path.
 
-### 11.1 Preset 1: `b)_Airbrush_Soft.kpp` (`paintopid="paintbrush"`)
+### 6.1 Preset 1: `b)_Airbrush_Soft.kpp` (`paintopid="paintbrush"`)
 
 This preset is a good first example because it uses the default raster paint engine while also exercising one of the engine's most important timing features. Its embedded preset data includes:
 
@@ -781,7 +378,7 @@ Why this is architecturally important:
 - if you are asked to "make airbrush smoother", you are usually debugging preset options, timing, or `KisBrushOp`, not inventing a new engine
 - if two presets feel completely different but share `paintopid="paintbrush"`, the right place to compare them is often the option evaluation path, not the registry or tool layer
 
-### 11.2 Preset 2: `v)_Texture_Pointillism.kpp` (`paintopid="spraybrush"`)
+### 6.2 Preset 2: `v)_Texture_Pointillism.kpp` (`paintopid="spraybrush"`)
 
 This preset is a better example of a truly different engine. Its preset data declares `paintopid="spraybrush"` and includes spray-specific color and precision options such as per-particle color variation.
 
@@ -810,7 +407,7 @@ Why this is architecturally important:
 - the paintop framework is intentionally broad enough to support both classic dab-stamping engines and engines that synthesize richer local geometry
 - if you add a new paint engine, you should not assume the default brush engine's async dab executor is mandatory
 
-### 11.3 Preset 3: `k)_Blender_Basic.kpp` (`paintopid="colorsmudge"`)
+### 6.3 Preset 3: `k)_Blender_Basic.kpp` (`paintopid="colorsmudge"`)
 
 This preset is an excellent example of a paintop that is still brush-based, but is semantically much closer to a local compositing system than a plain stamping engine.
 
@@ -847,7 +444,7 @@ Why this is architecturally important:
 - if you only study `KisBrushOp`, you may underestimate how much state a paintop is allowed to own
 - if you are extending smudge-like behavior, you need to think about sampling history, strategy selection, and dirty-rect generation, not just tip shape and spacing
 
-### 11.4 What these three presets show together
+### 6.4 What these three presets show together
 
 Taken together, these presets show three very different uses of the same framework:
 
@@ -857,17 +454,17 @@ Taken together, these presets show three very different uses of the same framewo
 
 That is the real design lesson of Krita paintops: the framework standardizes lifecycle and integration points, but it deliberately does not force every engine into the same rendering algorithm.
 
-## 12. Advanced Implementation: Mirroring
+## 7. Advanced Implementation: Mirroring
 
 The earlier sections treated mirroring as a user-facing feature. Internally, mirroring is a cross-cutting rendering concern that touches resource snapshots, painters, LOD transforms, dirty-rect handling, and paintop-specific execution strategies.
 
-### 12.1 Mirror state is injected before paintop creation
+### 7.1 Mirror state is injected before paintop creation
 
 Mirroring enters the paint path through `KisResourcesSnapshot::setupPainter()`, which calls `KisPainter::setMirrorInformation(...)`.
 
 That means mirror state is part of the painter context before the concrete paintop is constructed. This is important because some engines inspect painter state during initialization and some engines need mirror-aware auxiliary devices from the start.
 
-### 12.2 Mirroring is evaluated in effective LOD coordinates
+### 7.2 Mirroring is evaluated in effective LOD coordinates
 
 `KisPainter::renderMirrorMask(...)` first maps the axes center through `KisLodTransform` before computing mirrored target positions.
 
@@ -879,7 +476,7 @@ This is a subtle but important implementation detail:
 
 If you ever see mirroring bugs that appear only during low-detail interactive painting, this is one of the first places to inspect.
 
-### 12.3 There are two major mirroring paths
+### 7.3 There are two major mirroring paths
 
 Krita does not mirror every paintop in the same way.
 
@@ -924,7 +521,7 @@ The last point is especially important. `addMirroringJobs(...)` inserts sequenti
 
 In other words, the pixel brush engine does not treat mirroring as a cosmetic post-step. It treats it as part of its scheduling and memory-sharing model.
 
-### 12.4 Geometry helpers separate coordinate mirroring from pixel mirroring
+### 7.4 Geometry helpers separate coordinate mirroring from pixel mirroring
 
 `KritaUtils` provides utilities such as:
 
@@ -940,7 +537,7 @@ These helpers do not all perform the same work:
 
 This separation matters because sometimes Krita needs to move geometry without immediately touching pixel buffers, and sometimes it needs to mirror actual dab contents.
 
-### 12.5 Selection masks and mirrored dabs must stay aligned
+### 7.5 Selection masks and mirrored dabs must stay aligned
 
 The fixed-dab overload `renderMirrorMask(QRect, KisFixedPaintDeviceSP, KisFixedPaintDeviceSP)` mirrors both:
 
@@ -951,7 +548,7 @@ before calling `bltFixedWithFixedSelection(...)`.
 
 That is an easy place to introduce bugs when changing selection-aware painting or mirrored mask rendering. If the mask and dab are mirrored with different assumptions, the mirrored result will look offset or clipped even though the primary dab is correct.
 
-### 12.6 Non-incremental mirroring has an overlap problem
+### 7.6 Non-incremental mirroring has an overlap problem
 
 `renderDabWithMirroringNonIncremental()` shows another subtlety: mirrored target rectangles can intersect each other. When that happens, the order of clearing and recompositing matters.
 
@@ -964,7 +561,7 @@ The implementation:
 
 This is a reminder that mirroring is not just "paint the same dab three more times". When mirrored copies overlap, Krita has to avoid cyclic self-recompositing artifacts.
 
-### 12.7 Mirroring interacts with wrap-around and temporary devices
+### 7.7 Mirroring interacts with wrap-around and temporary devices
 
 Mirroring is layered on top of the same storage and access rules described in the tiled-painting section:
 
@@ -974,7 +571,7 @@ Mirroring is layered on top of the same storage and access rules described in th
 
 This is why mirror bugs can sometimes be storage bugs or scheduling bugs in disguise.
 
-### 12.8 Maintainer checklist for mirror-related changes
+### 7.8 Maintainer checklist for mirror-related changes
 
 If you change anything around dab generation, dirty-rect calculation, or temporary-device blitting, verify all of these:
 
@@ -989,7 +586,7 @@ If you change anything around dab generation, dirty-rect calculation, or tempora
 
 If one of those paths fails, the bug is usually not "just in the UI". It is usually a mismatch between painter state, dab geometry, or tiled-device updates.
 
-## 13. Asset-Backed Brush Tips and Paper Textures
+## 8. Asset-Backed Brush Tips and Paper Textures
 
 Many of Krita's most interesting presets are not defined only by numeric sliders. They depend on external image assets:
 
@@ -998,7 +595,7 @@ Many of Krita's most interesting presets are not defined only by numeric sliders
 
 From the user's point of view, these are just preset ingredients. From the engine's point of view, they are linked resources that must be resolved, cloned into the stroke snapshot, interpreted correctly, and then fed through the same dab pipeline as any other brush.
 
-### 13.1 Where these assets live in a preset
+### 8.1 Where these assets live in a preset
 
 In the serialized preset data, the two key places are:
 
@@ -1017,7 +614,7 @@ This is why an asset-backed preset can keep painting correctly even when the str
 
 There is also an important portability detail for paper textures. `KisEmbeddedTextureData` stores the pattern signature fields such as md5, filename, and name, and can also carry the pattern bytes as base64. At runtime `loadLinkedPattern()` first tries to resolve the pattern from the resource database and then falls back to the embedded payload if the external resource is missing. That is how textured presets can remain self-contained enough to survive resource moves or bundle export/import.
 
-### 13.2 Example A: `g)_Dry_Brushing.kpp`
+### 8.2 Example A: `g)_Dry_Brushing.kpp`
 
 This preset is a very good example because it combines both asset types in a single `paintbrush` preset:
 
@@ -1115,7 +712,7 @@ This matters for caching:
 
 Without that split, cached dabs could accumulate texture repeatedly and become incorrect.
 
-### 13.3 Example B: `z)_Stamp_Leaves.kpp`
+### 8.3 Example B: `z)_Stamp_Leaves.kpp`
 
 This preset is useful because it shows a different kind of image asset:
 
@@ -1135,7 +732,7 @@ The rest of the stroke framework is the same, but the tip-loader path is differe
 
 So even though the asset is vector, the runtime paint engine still works with a rasterized `KisBrush` representation. That is a recurring Krita pattern: high-level resources can have very different source formats, but by the time the stroke engine uses them, they are normalized into a common brush/dab interface.
 
-### 13.4 Generic processing model for asset-backed brushes
+### 8.4 Generic processing model for asset-backed brushes
 
 Putting both examples together, the runtime model looks like this:
 
@@ -1157,7 +754,7 @@ The important architectural separation is:
 - paintop logic decides where and how often to place it
 - texture/paper processing decides how the already-generated dab is altered before compositing
 
-### 13.5 Maintenance rules for asset-backed brushes
+### 8.5 Maintenance rules for asset-backed brushes
 
 When you modify or debug this area, keep these rules in mind:
 
@@ -1167,7 +764,7 @@ When you modify or debug this area, keep these rules in mind:
 - If the same preset behaves differently at different zoom or LOD levels, check both the brush scaling path and the texture-mask recalculation path.
 - If a brush asset comes from a different source format, such as PNG versus SVG, expect the loader to differ but the downstream dab pipeline to stay mostly the same.
 
-## 14. Final Advice
+## 9. Final Advice
 
 When you maintain Krita's brush engine, keep three questions in your head:
 

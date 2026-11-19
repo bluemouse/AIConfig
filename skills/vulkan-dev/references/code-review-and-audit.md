@@ -62,7 +62,7 @@ Do not invent VUIDs, promotion status, mandatory limits, or signatures. For "is 
 ### Descriptors and pipeline layout
 
 - [ ] Descriptor layouts match shader declarations; pipeline layouts compatible with bound sets and push constants.
-- [ ] No descriptor updates while in-flight GPU work may read them (unless safely managed update-after-bind).
+- [ ] No descriptor updates while in-flight GPU work may read them (unless safely managed update-after-bind) — see the update-while-in-flight gotcha in [descriptors.md](./descriptors.md).
 - [ ] No per-draw descriptor allocation/update unless intentionally measured.
 - [ ] Descriptor-indexing features enabled before bindless/runtime-array/partially-bound/update-after-bind usage.
 

@@ -85,17 +85,8 @@ See `determinism-and-replay.md`.
 
 ## Common bug classes
 
-| Bug class | Evidence to seek | Fix shape |
-| --- | --- | --- |
-| Logic/edge case | failing assertion, truth table, missing branch, boundary input | correct condition or algorithm; add edge-case test |
-| State mutation | first invalid write, ownership/lifetime transition, mutation order | move fix to writer; preserve invariant |
-| Memory safety | sanitizer output, invalid lifetime, bounds, aliasing, use-after-free | correct ownership/lifetime/bounds; add sanitizer-backed test when possible |
-| Concurrency | interleaving trace, lock/order invariant, race detector, thread ids | enforce synchronization/order; avoid sleeps |
-| Build/config | exact command, generated files, flags, env, dependency versions | fix config propagation or generated source, not consumer workaround |
-| Platform behavior | OS/API difference, path, permissions, endian, locale, timezone, SDK | isolate platform contract and test affected platform |
-| Performance | profile, allocation count, hot path, input size, algorithmic complexity | fix hot path with benchmark or regression guard |
-| Flakiness | repetition count, seed, time dependency, ordering, external dependency | make synchronization/data deterministic; repeat verification |
-| Integration/schema | request/response payloads, schema mismatch, version skew, auth context | fix boundary contract and add contract/integration test |
+Classify the bug before selecting a fix: see the class | evidence signature | fix shape | structural prevention table in
+[`bug-taxonomy.md`](bug-taxonomy.md).
 
 ## Fix selection checklist
 

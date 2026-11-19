@@ -39,27 +39,6 @@ Official references:
 - https://doc.qt.io/qt-6/accessible-qwidget.html
 - https://doc.qt.io/qt-6/qaccessible.html
 
-## Color and visual communication
-
-Do not rely on color alone for:
-
-- errors
-- warnings
-- connection state
-- selected state
-- success/failure
-- required fields
-
-Pair color with text, iconography, shape, or another redundant cue.
-
-Keep focus, selection, disabled, and error states distinguishable under platform themes, including dark/high-contrast modes when supported by the product.
-
-## Font scaling and text resilience
-
-Avoid assuming a fixed system font size. Test larger fonts and longer translations.
-
-Prefer layouts over fixed geometry. Allow labels to grow or wrap where appropriate. Avoid clipping by using restrictive maximum sizes unless the design truly requires them.
-
 ## High DPI
 
 Qt 6 uses device-independent geometry in higher-level GUI APIs and maps it to physical pixels according to the device pixel ratio.
@@ -75,23 +54,6 @@ Design implications:
 
 Official reference:
 - https://doc.qt.io/qt-6/highdpi.html
-
-## Localization
-
-All user-facing text should be translatable unless it is truly data.
-
-Design for:
-
-- text expansion
-- different word order
-- longer button labels
-- pluralization and numeric formatting
-- date/time formats
-- right-to-left layout when the product supports RTL languages
-
-Avoid string concatenation that assumes English grammar. Keep labels and units semantically clear.
-
-In `.ui` files, ordinary string properties are translatable by default. Use `notr="true"` only for content that should not be translated.
 
 ## Platform conventions
 

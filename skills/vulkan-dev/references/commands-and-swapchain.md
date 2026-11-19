@@ -78,7 +78,7 @@ void drawFrame(uint64_t frame) {
 
 - Resetting a pool or recording into a buffer whose previous submission's fence has not signaled corrupts in-flight GPU work — always gate on the slot fence.
 - A `VkCommandPool` is not thread-safe; two threads recording from one pool race — one pool per thread.
-- Waiting on the fence you just submitted (not the slot about to be reused) collapses frames-in-flight into a stall.
+- Fence reuse: wait on the slot about to be reused, not the fence just submitted — see the `vkWaitForFences` gotcha in [synchronization.md](./synchronization.md).
 - Ignoring `VK_SUBOPTIMAL_KHR`/`VK_ERROR_OUT_OF_DATE_KHR` from acquire or present leaves a stale swapchain after resize — recreate it (and never present into a stale image).
 - The image-available semaphore must be one not currently pending on another acquire; using a per-frame-slot semaphore avoids reusing one mid-flight.
 

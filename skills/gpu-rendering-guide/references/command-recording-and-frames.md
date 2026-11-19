@@ -57,7 +57,7 @@ void draw_frame(uint64_t frame) {
 
 - Recording into (or resetting) a context whose previous submission's fence has not signaled corrupts in-flight GPU work — always gate reuse on the slot fence.
 - Sharing one recording context across threads is a data race; contexts are externally synchronized — one context per thread.
-- Waiting on the fence of the frame you just submitted (instead of the slot you are about to reuse) collapses frames-in-flight back to a full CPU/GPU stall.
+- Fence reuse: wait on the slot about to be reused, not the fence just submitted — see the fence gotcha in [references/synchronization.md](./synchronization.md).
 - Per-frame resources must be genuinely duplicated; a single shared dynamic buffer written each frame races the GPU reading last frame's value.
 - The swapchain can return out-of-date/suboptimal on resize; recreate the swapchain and dependent targets, do not present into a stale image.
 - More frames in flight adds input latency and multiplies per-frame memory; 2–3 is the usual sweet spot, not "as many as possible".

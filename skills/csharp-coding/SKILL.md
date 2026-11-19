@@ -11,11 +11,10 @@ Resolve `<SKILL_ROOT>` as the directory containing this skill's `SKILL.md`.
 
 Before assuming language or toolchain features, inspect the project's `global.json`,
 `*.csproj`, and `Directory.Build.props` / `Directory.Packages.props` (plus `.editorconfig`
-when style matters). `LangVersion` — not the newest installed SDK — determines which
-language features are available; see [language-versions.md](references/language-versions.md)
-for the C# 9–14 feature gates. Unity, Xamarin, and legacy repos often pin an old
-`LangVersion` — check it before using records, required members, or collection
-expressions. Match the existing `TargetFramework`, nullable setting, and analyzer
+when style matters). `LangVersion` — not the newest installed SDK — gates which language
+features are available; Unity/legacy repos often pin an old `LangVersion` — check it
+before using records, required members, collection expressions, or other newer syntax.
+Match the existing `TargetFramework`, nullable setting, and analyzer
 configuration rather than the latest defaults.
 
 ## Verify
@@ -32,11 +31,5 @@ Never claim code was tested unless a command actually ran; state what was not ve
 - Non-C# projects — use the language-specific skill instead.
 - Infrastructure/DevOps work with no C# or project-file changes (pure Terraform,
   Kubernetes, CI provisioning).
-
-## Reference routing
-
-| Task | Read |
-|------|------|
-| Which language features a project's `LangVersion` permits; C# 9–14 feature-version gates; SDK/LangVersion interaction | [language-versions.md](references/language-versions.md) |
 
 [SOURCES.md](SOURCES.md) records provenance for the surviving material.

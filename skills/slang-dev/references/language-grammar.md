@@ -95,16 +95,7 @@ Rules:
 
 ## Expressions, Statements, and Local Bindings
 
-```ebnf
-block            := '{' statement* '}'
-statement        := decl-stmt | expr-stmt | if-stmt | for-stmt | while-stmt | return-stmt | break-stmt | continue-stmt
-local-binding    := ('let' | 'var' | type) identifier ('=' expression)? ';'
-if-stmt          := 'if' '(' expression ')' statement ('else' statement)?
-for-stmt         := 'for' '(' init? ';' condition? ';' next? ')' statement
-return-stmt      := 'return' expression? ';'
-```
-
-Use `let` for immutable locals:
+Statement and expression syntax follows ordinary C-family rules. The Slang-specific form is the immutable local binding `let`:
 
 ```slang
 let ndotl = saturate(dot(n, l));

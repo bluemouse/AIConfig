@@ -16,155 +16,6 @@ last_updated: "2026-07-06"
 libmypaint_reference_version: "upstream master (unified mypaint_brush_stroke_to API; mypaint repo may bundle 1.6.x)"
 ---
 
-## Module 0: Guide Overview and Learning Path
-
-This guide explains **both halves of the MyPaint stack**:
-
-1. **MyPaint the application**: the Python/GTK program that owns documents,
-   layers, tools, presets, undo/redo, file handling, and the on-canvas UI.
-2. **libmypaint the brush engine**: the native dab engine that turns a stream
-   of stylus samples plus a `.myb` preset into concrete dabs rendered into a
-   tiled surface.
-
-Read this as a maintainer's guide, not just an API reference. The goal is to
-help a junior engineer answer questions like:
-
-- "Where does a stylus event enter the program?"
-- "Why did this brush setting change the dab count?"
-- "Why is the stroke split on the undo stack now?"
-- "Why does mirroring change the painted result but viewport mirroring does not?"
-- "Which code owns the preset, and which code owns the live brush state?"
-
-The guide is progressive: it starts with the MyPaint application architecture,
-then follows the stroke path down into libmypaint's input processing, setting
-evaluation, dab scheduling, rasterization, compositing, and symmetry handling.
-
-### 0.1 Who This Guide Is For
-
-- Junior engineers onboarding to the MyPaint codebase.
-- Maintainers extending tools, layers, commands, or brush behavior in MyPaint.
-- Engineers debugging parity failures between MyPaint and libmypaint.
-- Engineers implementing a new surface backend or a compatible brush engine.
-
-Prior knowledge assumed: basic understanding of Python, C, 2D raster graphics,
-and event-driven GUI applications. No prior knowledge of MyPaint or libmypaint
-is required.
-
-### 0.2 The Core Mental Model
-
-The single most important architectural fact is that **MyPaint and libmypaint
-are separate systems joined by a thin binding layer**.
-
-```text
-GTK / tablet events
-        |
-        v
-MyPaint application (Python)
-  gui.main -> gui.application.Application
-  gui.document / gui.mode / gui.freehand
-  lib.document / lib.command / lib.layer
-        |
-        v
-Binding layer
-  lib.brush.py
-  lib/brush.hpp
-  lib/python_brush.hpp
-  lib/tiledsurface.hpp
-        |
-        v
-libmypaint (C)
-  mypaint-brush.c
-  mypaint-mapping.c
-  mypaint-tiled-surface.c
-  brushmodes.c
-  mypaint-symmetry.c
-```
-
-When debugging, work backward from the symptom:
-
-- If the wrong tool or layer receives input, start in `gui/`.
-- If undo/redo or stroke splitting is wrong, inspect `lib.command` and
-  `lib.layer`.
-- If the dab sequence or rendered output is wrong, continue into
-  `lib.brush`, the SWIG/C++ bridge, and then libmypaint.
-
-### 0.3 Learning Path
-
-Read the modules in order. Each module builds on earlier ones.
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  PART I — MyPaint Application Architecture                      │
-│  Module A: Repo map, startup, object graph, contributor flow.   │
-│  Module B: Document, layers, commands, MVC responsibilities.    │
-│  Module C: Event path from GTK input to libmypaint stroke.      │
-│  Module D: Symmetry, mirroring, and view transforms.            │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│  PART II — libmypaint Architecture and Data Model               │
-│  Module 1: What is a dab engine? Architecture, API variants.    │
-│  Module 2: The .myb preset format. Settings, inputs, examples.  │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│  PART III — The Stroke Pipeline                                 │
-│  Module 3: Input processing. Stylus sanitization, tilt, cursor. │
-│  Module 4: Setting evaluation. Mapping curves, extrapolation.   │
-│  Module 5: Dab scheduling. Count, carry, recompute loop.        │
-│  Module 6: Per-dab assembly. Opacity, offsets, color, geometry. │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│  PART IV — Color and Paint                                      │
-│  Module 7: Color dynamics and smudge. HSV/HSL, smudge buckets.  │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│  PART V — Surface and Rendering                                 │
-│  Module  8: Canvas model. Tile format, pixel layout, atomics.   │
-│  Module  9: Dab rasterization. rr distance, falloff, AA.        │
-│  Module 10: Compositing. Blend pass order, over-op formulas.    │
-│  Module 11: Advanced surface. get_color, operation queue, sym.  │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│  PART VI — Spectral Pigment Reference                           │
-│  Module 12: Spectral basis, WGM mixing, exact constants.        │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│  PART VII — GPU Implementation                                  │
-│  Module 13: Skia/Skiko and Vulkan backend strategies.           │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────────┐
-│  PART VIII — Implementation and Validation                      │
-│  Module 14: Implementation blueprint. Data structures, loop.    │
-│  Module 15: Validation strategy. Unit, determinism, visual.     │
-│  Module 16: Quick reference. Visual impact table.               │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 0.4 Stopping Points
-
-The modules are designed so you can stop after any Part and have a usable base:
-
-- After **Part I**: You can navigate the app, trace a user action, and place
-  new features in the right Python module.
-- After **Part II**: You understand the brush preset model and the engine
-  boundary between MyPaint and libmypaint.
-- After **Part III**: You can reason about input processing, state updates,
-  and why a given stroke emits a particular dab sequence.
-- After **Part IV**: You can modify color, smudge, and pigment behavior.
-- After **Part V**: You can debug tile-level output, blending, symmetry, and
-  dirty-region behavior.
-- After **Parts VI-VII**: You can evaluate spectral and GPU backend work.
-- After **Part VIII**: You have the implementation and test model needed for
-  production changes.
-
----
-
 # Part I — MyPaint Application Architecture
 
 ---
@@ -698,7 +549,8 @@ For a GPU-accelerated engine, the recommended approach is:
 
 1. Implement and validate brush core behavior using a CPU reference path
    (matching libmypaint math exactly).
-2. Run visual parity tests (see Module 15) before touching the GPU path.
+2. Run visual parity tests (see `performance-validation.md` §5–9)
+   before touching the GPU path.
 3. Replace only the surface backend with a GPU implementation.
 4. Keep blend ordering, clamps, and per-dab parameter resolution identical so
    the GPU path changes performance, not stroke semantics.
@@ -1245,8 +1097,9 @@ simulation.
 > **Prerequisites:** Modules 1–4.
 >
 > **Learning objective:** Understand how the engine turns one input event into
-> zero or more dab operations. After this module you can implement the dab
-> scheduler loop, which is the heart of the stroke simulation.
+> zero or more dab operations. The complete scheduler loop — partial dab carry,
+> per-dab recompute, interpolation contract, and parity pitfalls — is
+> specified in [brush-engine.md](brush-engine.md) §5.
 
 ### 5.1 The Event-Phase Scheduling Model
 
@@ -1273,93 +1126,15 @@ Where:
 - $R_{\text{actual}}$ = current dynamic radius (`actual_radius` state).
 - $R_{\text{base}} = \exp(\text{base\_value}(\text{radius\_logarithmic}))$,
   clamped to radius limits.
-- `distance` may be Euclidean or ellipse-adjusted (see §5.5).
+- `distance` may be Euclidean or ellipse-adjusted (see `brush-engine.md` §5).
 
 Mode-specific spacing source:
 
 - Spacing terms use evaluated state values, with fallback to base values when
   the state value is invalid (zero/NaN).
 
-### 5.3 Partial Dab Carry and Recompute Loop
-
-`partial_dabs` stores fractional progress carried across events. The complete
-loop:
-
-```text
-dabs_moved = partial_dabs
-dabs_todo  = count_dabs_to(x, y, dt)
-dt_left    = dt
-
-while dabs_moved + dabs_todo >= 1.0:
-    step_ddab = (dabs_moved > 0) ? (1.0 - dabs_moved) : 1.0
-    if dabs_moved > 0: dabs_moved = 0
-
-    frac    = step_ddab / dabs_todo
-    step_dt = frac * dt_left
-
-    // interpolate inputs (x, y, pressure, tilt, time) to dab position
-    step_x = frac * (target_x - current_x) ...
-
-    // IMPORTANT: Evaluate settings using CURRENT state, THEN update state
-    update_states_and_setting_values(step_ddab, step_x, ..., step_dt)
-
-    FLIP *= -1
-    drawDab()                          // uses updated settings + state
-    random_input = rng_next()          // exactly once per emitted dab
-
-    dt_left  -= step_dt
-    dabs_todo = count_dabs_to(x, y, dt_left)   // recompute with NEW state
-
-// always run once per event, even when loop emits zero dabs
-update_states_and_setting_values(step_ddab=dabs_todo, ..., step_dt=dt_left)
-partial_dabs = dabs_moved + dabs_todo
-```
-
-Why recomputation matters: `count_dabs_to()` depends on dynamic state
-(`actual_radius`, spacing settings, elliptical ratio/angle), and those values
-change after each update step. Simplifying to `partial += count; emit floor(partial)`
-diverges when radius or spacing evolves inside one event.
-
-### 5.4 Per-Dab Interpolation Contract
-
-Each emitted dab interpolates along the remaining segment using `frac`:
-
-- position (`x`, `y`)
-- `pressure`
-- tilt channels (`declination`, `ascension`, `declinationx`, `declinationy`)
-- `dt` contribution
-- `barrel_rotation` and ascension via **shortest-angle interpolation**
-
-Shortest-angle interpolation prevents angular wrap discontinuities when, for
-example, direction passes through 0°/360°.
-
-### 5.5 Ellipse-Adjusted Distance
-
-When `actual_elliptical_dab_ratio > 1.0`, distance is measured in rotated,
-aspect-scaled dab space:
-
-```text
-cs  = cos(radians(actual_elliptical_dab_angle))
-sn  = sin(radians(actual_elliptical_dab_angle))
-yyr = (dy * cs - dx * sn) * actual_elliptical_dab_ratio
-xxr =  dy * sn + dx * cs
-dist = sqrt(yyr^2 + xxr^2)
-```
-
-For circular dabs (`ratio <= 1.0`), `dist = hypot(dx, dy)`.
-
-This ensures dab spacing is measured in the dab's own coordinate frame, not
-raw Euclidean canvas space — critical for brushes with large elliptical aspect
-ratios.
-
-### 5.6 Parity Pitfalls
-
-- Do not simplify the loop to `partial += count; emit floor(partial)` — it
-  diverges when radius/spacing evolves inside one event.
-- Preserve ordering: update state → toggle `FLIP` → draw → advance RNG.
-- Preserve the post-loop state advance (fractional step without draw).
-- Keep distance metric consistent with current elliptical state, not just
-  Euclidean cursor distance.
+The partial-dab carry, recompute loop, per-dab interpolation, and
+ellipse-adjusted distance details are in [brush-engine.md](brush-engine.md) §5.
 
 ---
 
@@ -1401,7 +1176,7 @@ Key geometric parameters passed to the surface:
 Radius is clamped in the brush core to `[0.2, 1000]` pixels
 (`ACTUAL_RADIUS_MIN`, `ACTUAL_RADIUS_MAX`). The tiled surface path then adds
 finer guards — dabs with `radius < 0.1`, `hardness == 0`, or `opaque == 0`
-are skipped entirely (see Module 9, §9.5).
+are skipped entirely (see `surface-layer-gpu.md` §4).
 
 ### 6.3 Opacity Linearize Correction
 
@@ -1449,7 +1224,7 @@ offset settings that use FLIP produce **mirrored arm patterns** across
 consecutive dabs. Multi-bucket brushes store independent smudge state per arm
 via the `smudge_bucket` setting (see Module 7).
 
-**Gaussian noise formula** (Irwin–Hall approximation — see Module 12, §12.5):
+**Gaussian noise formula** (Irwin–Hall approximation — see Module 10, §10.5):
 
 ```text
 rand_gauss = (rng_next() + rng_next() + rng_next() + rng_next()) * 1.73205 - 3.46410
@@ -1477,7 +1252,7 @@ artifacts on neighbor pixels.
   destination pixels while preserving destination luminance/alpha.
   Luminance coefficients: `0.2126`, `0.7152`, `0.0722`.
 
-The actual blend pass execution order is in Module 10 (§10.1).
+The actual blend pass execution order is in `surface-layer-gpu.md` §5.
 
 ---
 
@@ -1670,7 +1445,7 @@ with alpha-proportional weights (`fac_a + fac_b = 1`).
 To reduce low-alpha artifacts (dark fringing), libmypaint blends between
 additive RGB and spectral results instead of forcing full spectral mixing at
 all opacities. The spectral conversion constants and the full WGM formula are
-in Module 12.
+in Module 10.
 
 ### 7.10 Draw-callback extensions
 
@@ -1824,316 +1599,15 @@ entire input event, so there is typically one atomic batch per input sample.
 
 ---
 
-## Module 9: Dab Rasterization
+## Module 9: Advanced Surface Features
 
 > **Prerequisites:** Modules 1–8.
->
-> **Learning objective:** Understand the exact per-pixel algorithm that turns
-> one dab's parameters into opacity values. This is the fundamental visual
-> signature of libmypaint brushes — getting this wrong produces visually
-> different results even when all other settings are correct.
-
-### 9.1 Normalized Distance `rr`
-
-For each pixel `(xp, yp)` in the dab bounding box, compute the normalized
-squared elliptical distance from the dab center:
-
-```text
-dx  = (xp + 0.5) - x          // pixel center minus dab center, x
-dy  = (yp + 0.5) - y          // pixel center minus dab center, y
-
-// Rotate and scale for elliptical dabs:
-angle_rad = angle * 2 * PI / 360
-cs  = cos(angle_rad)
-sn  = sin(angle_rad)
-
-xxr = dy * sn + dx * cs                          // major axis component
-yyr = (dy * cs - dx * sn) * aspect_ratio          // minor axis component (scaled)
-
-rr  = (xxr*xxr + yyr*yyr) / (radius * radius)    // normalized squared distance
-```
-
-Geometric meaning:
-
-- `rr = 0` at the dab center.
-- `rr = 1` at the ellipse boundary.
-- `rr > 1` is outside the dab.
-
-For circular dabs (`aspect_ratio == 1.0`), this simplifies to:
-
-```text
-rr = (dx*dx + dy*dy) / (radius * radius)
-```
-
-### 9.2 Two-Segment Linear Falloff (Parity-Critical)
-
-The dab opacity uses a **piecewise linear falloff** (not Gaussian, not cosine)
-in `rr` space. The two linear segments are parameterized by `hardness ∈ (0, 1]`:
-
-```text
-// Precompute segment parameters (once per dab, not per pixel):
-segment1_offset = 1.0
-segment1_slope  = -(1.0 / hardness - 1.0)
-
-segment2_offset =  hardness / (1.0 - hardness)
-segment2_slope  = -hardness / (1.0 - hardness)
-
-// Per-pixel opacity:
-if rr <= hardness:
-    opa = segment1_offset + rr * segment1_slope
-else:
-    opa = segment2_offset + rr * segment2_slope
-
-if rr > 1.0:
-    opa = 0.0
-```
-
-Visual interpretation:
-
-```text
-opacity
-  ^
-1 *----.
-  |     \   ← segment 1 (inner core, shallow slope)
-  |      .
-  |       \   ← segment 2 (outer fringe, steep slope)
-  +--------*--> rr
-  0  h     1
-```
-
-- `hardness = 1.0`: entire dab at full opacity with a hard edge (segment 2
-  unreachable).
-- `hardness → 0`: nearly transparent even at center; segment 2 dominates.
-- Both segments meet at `rr = hardness`, where both evaluate to `hardness`.
-
-**This piecewise linear shape is the fundamental visual signature of
-libmypaint brushes.** Using a Gaussian or cosine falloff instead will look
-different even at matching radius/hardness values.
-
-### 9.3 Anti-Aliasing for Small Dabs (radius < 3.0)
-
-When `radius < 3.0`, standard `rr` sampling misses subpixel detail, causing
-jagged edges. libmypaint activates an analytical AA path:
-
-```text
-r_aa_start = max(0, radius - 1.0)^2 / aspect_ratio
-
-// For each pixel:
-nearest_point  = point on dab major-axis line closest to pixel center,
-                 clamped to pixel boundaries
-rr_near        = r(nearest_point) / radius^2    // near-boundary distance
-
-if rr_near > 1.0: skip pixel (outside)
-
-farthest_point = point sqrt(1/PI) away from nearest_point,
-                 perpendicular to dab axis, on the far side
-rr_far = r(farthest_point) / radius^2
-
-// Quick path: both near and far are well inside the dab
-if r_far < r_aa_start:
-    rr = (rr_far + rr_near) * 0.5
-
-// Full AA:
-visibility_near = 1 - rr_near
-delta = rr_far - rr_near
-rr = 1 - visibility_near / (1 + delta)
-```
-
-For GPU implementations, simple multisampling within each pixel (e.g., 4×
-RGSS) is a practical substitute and is more parallelism-friendly.
-
-### 9.4 RLE Mask Encoding (CPU) vs GPU Path
-
-The per-pixel opacity values are encoded into an RLE mask before compositing.
-This skips transparent pixels cheaply during blend passes:
-
-```text
-mask format: [value, value, ..., 0, skip_count_in_components, ...]
-
-- Non-zero opacity:  write uint16_t opa_ = opa * 32768
-- Zero opacity run:  write [0, skip_count * 4]   (skip N×4 components)
-- End of mask:       write [0, 0]
-```
-
-Blend mode functions traverse this mask as:
-
-```c
-while (1) {
-    for (; mask[0]; mask++, rgba += 4) {
-        // process pixel using mask[0] as opacity weight
-    }
-    if (!mask[1]) break;   // end of mask
-    rgba += mask[1];        // skip transparent region
-    mask += 2;
-}
-```
-
-**For a GPU backend, this RLE encoding can be replaced entirely.** Generate
-the opacity function (`rr` → `opa`) in a compute or fragment shader and write
-directly to a float/half-float texture. There is no need to port the RLE mask
-to GPU code.
-
-### 9.5 Dab Geometry Guard Rails
-
-Before rasterizing, the surface backend applies these early-exit guards:
-
-```text
-if radius < 0.1:    skip (too small to produce meaningful pixels)
-if hardness == 0:   skip (infinitely soft → fully transparent at all rr)
-if opaque == 0:     skip (nothing to paint)
-```
-
-These are applied in `draw_dab_internal()` before any mask computation.
-
----
-
-## Module 10: Compositing and Blend Modes
-
-> **Prerequisites:** Modules 1–9.
->
-> **Learning objective:** Understand the exact blend pass execution order and
-> formulas. After this module you can implement a correct compositor that
-> matches libmypaint's visible output for all blend modes.
-
-### 10.1 Blend Pass Execution Order (Parity-Critical)
-
-From `process_op()` in `mypaint-tiled-surface.c`:
-
-```text
-// Precompute exclusion factor:
-normal = (1 - lock_alpha) * (1 - colorize) * (1 - posterize)
-
-// Pass 1: Normal blend (additive/RGB path)
-if paint < 1.0 and normal > 0:
-    if color_a == 1.0:
-        BlendMode_Normal(mask, rgba, color_r, color_g, color_b,
-                         normal * opaque * (1 - paint) * 32768)
-    else:
-        BlendMode_Normal_and_Eraser(mask, rgba, color_r, color_g, color_b,
-                                    color_a * 32768,
-                                    normal * opaque * (1 - paint) * 32768)
-
-// Pass 2: Normal blend (spectral/pigment path)
-if paint > 0.0 and normal > 0:
-    if color_a == 1.0:
-        BlendMode_Normal_Paint(mask, rgba, color_r, color_g, color_b,
-                               normal * opaque * paint * 32768)
-    else:
-        BlendMode_Normal_and_Eraser_Paint(...)
-
-// Pass 3: Lock-alpha blend (additive)
-if paint < 1.0 and lock_alpha > 0 and color_a != 0:
-    BlendMode_LockAlpha(mask, rgba, color_r, color_g, color_b,
-                        lock_alpha * opaque * (1 - colorize) * (1 - posterize)
-                        * (1 - paint) * 32768)
-
-// Pass 4: Lock-alpha blend (spectral)
-if paint > 0.0 and lock_alpha > 0 and color_a != 0:
-    BlendMode_LockAlpha_Paint(mask, rgba, ...)
-
-// Pass 5: Colorize
-if colorize > 0:
-    BlendMode_Color(mask, rgba, color_r, color_g, color_b,
-                    colorize * opaque * 32768)
-
-// Pass 6: Posterize
-if posterize > 0:
-    BlendMode_Posterize(mask, rgba, posterize * opaque * 32768, posterize_num)
-```
-
-Key points:
-
-- The `normal` factor `= (1 - lock_alpha) * (1 - colorize) * (1 - posterize)`
-  ensures these modes contribute exclusive (non-doubled) total coverage.
-- `color_a` is `eraser_target_alpha` from the brush core. When `color_a == 1.0`,
-  the faster Normal path is used; otherwise Normal-and-Eraser handles partial
-  transparency.
-- `paint_mode = 0` disables spectral passes (2 and 4) entirely.
-
-### 10.2 Normal Mode — "Over" Composite (Premultiplied)
-
-All blend modes operate on `uint16_t` premultiplied RGBA data (0–32768).
-
-Standard "over" composite used by Normal mode:
-
-```text
-opa_a = mask[0] * opacity / 32768     // effective top-layer alpha
-opa_b = 32768 - opa_a                  // residual bottom weight
-
-out_alpha = opa_a + opa_b * bottom_alpha / 32768
-out_rgb   = (opa_a * top_rgb + opa_b * bottom_rgb) / 32768
-```
-
-### 10.3 Lock-Alpha Mode
-
-Lock-alpha preserves destination alpha while updating RGB:
-
-```text
-opa_a = mask[0] * opacity / 32768
-opa_b = 32768 - opa_a
-opa_a = opa_a * bottom_alpha / 32768   // scale by existing alpha
-
-out_rgb = (opa_a * top_rgb + opa_b * bottom_rgb) / 32768
-// alpha unchanged
-```
-
-### 10.4 Colorize Mode
-
-The colorize blend applies brush hue/saturation while preserving destination
-luminance:
-
-```text
-// Approximately:
-dst_straight = (dst.r, dst.g, dst.b) / dst.a   // de-premultiply
-src_with_dst_luma = set_lum(src_rgb, lum(dst_straight))
-out_rgb = (opa_a * src_with_dst_luma * dst.a + opa_b * dst.rgb) / 32768
-// alpha unchanged
-
-Luma coefficients: (0.2126, 0.7152, 0.0722)
-```
-
-### 10.5 Posterize Mode
-
-Posterize quantizes destination RGB under the dab:
-
-```text
-// posterize_num = ROUND(setting * 100), clamped to [1, 128]
-quantized = round(dst_rgb * posterize_num) / posterize_num
-out_rgb = blend(quantized, dst_rgb, posterize_weight * mask_opacity)
-// alpha unchanged
-```
-
-### 10.6 Spectral / Pigment Path
-
-When `paint_mode > 0`, passes 2 and/or 4 run spectral blending instead of
-additive RGB. The WGM formula:
-
-```text
-spectral_result[i] = spectral_a[i]^fac_a * spectral_b[i]^fac_b
-```
-
-with alpha-proportional weights:
-
-```text
-fac_a = opa_a / (opa_a + opa_b * bottom_alpha / 32768)
-fac_b = 1 - fac_a
-```
-
-The full spectral conversion math (10-band basis, RGB↔spectral, exact
-constants) is in Module 12. When `paint_mode` is at an intermediate value
-(0–1), the result blends additive and spectral paths proportionally.
-
----
-
-## Module 11: Advanced Surface Features
-
-> **Prerequisites:** Modules 1–10.
 >
 > **Learning objective:** Understand the three advanced surface-layer features:
 > canvas color pickup (`get_color`), the operation queue and deferred
 > execution model, and symmetry painting.
 
-### 11.1 Canvas Color Pickup (`get_color`)
+### 9.1 Canvas Color Pickup (`get_color`)
 
 `get_color` reads the average canvas color under a circular region. It is the
 mechanism by which smudge state is updated (see Module 7, §7.4–7.5).
@@ -2193,11 +1667,12 @@ flushed, the pickup will sample stale data. libmypaint handles this by calling
 An implementation must ensure queued dab operations are applied before the
 buffer is sampled.
 
-### 11.2 Operation Queue and Deferred Execution
+### 9.2 Operation Queue and Deferred Execution
 
 `draw_dab` does not immediately composite pixels. Instead:
 
-1. Validates the dab (radius, hardness, opacity guard rails from §9.5).
+1. Validates the dab (radius, hardness, opacity guard rails from
+   `surface-layer-gpu.md` §4).
 2. Determines which tiles the dab overlaps (§8.4).
 3. Creates a copy of the dab operation and **enqueues** it for each
    overlapping tile.
@@ -2210,9 +1685,9 @@ This deferred model enables:
 
 - Batching many dabs from one input event into one atomic flush.
 - Parallelizing tile processing across CPU cores.
-- Clean synchronization points for GPU backends (see Module 13).
+- Clean synchronization points for GPU backends (see Module 11).
 
-### 11.3 Symmetry Painting and Mirroring
+### 9.3 Symmetry Painting and Mirroring
 
 Module D described the application-side wiring. This section focuses on the
 libmypaint-side execution model.
@@ -2260,15 +1735,16 @@ application's current UI.
 
 ---
 
-## Module 12: Spectral Conversion Reference
+## Module 10: Spectral Conversion Reference
 
-> **Prerequisites:** Module 10 (blend modes), Module 7 (smudge and color).
+> **Prerequisites:** Module 7 (smudge and color); blend-pass order in
+> `surface-layer-gpu.md` §5.
 >
 > **Learning objective:** Understand the exact constants and formulas for
 > libmypaint's 10-band spectral model. After this module you can implement
 > the spectral pigment path with full numerical accuracy.
 
-### 12.1 10-Band Spectral Basis
+### 10.1 10-Band Spectral Basis
 
 libmypaint's spectral representation uses a reduced 10-band model. The three
 RGB primaries are each represented as a 10-element spectral power distribution:
@@ -2283,7 +1759,7 @@ spectral_b[10] = {0.53705, 0.54665, 0.57550, 0.25878, 0.04171,
                    0.01266, 0.00749, 0.00677, 0.00670, 0.00668}
 ```
 
-### 12.2 RGB to Spectral Conversion
+### 10.2 RGB to Spectral Conversion
 
 ```text
 WGM_EPSILON = 0.0001   // avoid zero reflectance (log(0) in WGM)
@@ -2298,7 +1774,7 @@ spectral[i] = spectral_r[i] * r_adj
             + spectral_b[i] * b_adj
 ```
 
-### 12.3 Spectral to RGB Conversion
+### 10.3 Spectral to RGB Conversion
 
 Uses the 3×10 T-matrix (pseudo-inverse of the upsampling basis):
 
@@ -2315,7 +1791,7 @@ rgb_raw[c] = sum(T[c][i] * spectral[i] for i in 0..9)
 rgb[c]     = clamp((rgb_raw[c] - WGM_EPSILON) / offset, 0, 1)
 ```
 
-### 12.4 Weighted Geometric Mean (WGM) Mixing
+### 10.4 Weighted Geometric Mean (WGM) Mixing
 
 Spectral mixing of color A and color B with weights `fac_a`, `fac_b = 1 - fac_a`:
 
@@ -2333,7 +1809,7 @@ fac_b = 1 - fac_a
 `WGM_EPSILON` prevents `0^fac = 0` from collapsing the mix. The value
 `0.0001` is hardcoded and must not be changed without recalculating the T-matrix.
 
-### 12.5 Gaussian Noise via Irwin–Hall Approximation
+### 10.5 Gaussian Noise via Irwin–Hall Approximation
 
 libmypaint implements Gaussian noise using the 4-sample Irwin–Hall
 approximation (sum of 4 uniform randoms, scaled):
@@ -2354,7 +1830,7 @@ normalize the Irwin–Hall(4) distribution. This is used for:
 GPU implementations should replicate this exact formula with a reproducible
 seeded RNG to preserve determinism.
 
-### 12.6 RNG: Knuth Lagged Fibonacci Generator
+### 10.6 RNG: Knuth Lagged Fibonacci Generator
 
 libmypaint uses a Knuth lagged Fibonacci generator (LFIB) initialized via
 `rng_double_new(seed)`. The parameters used (low-quality settings, sufficient
@@ -2375,7 +1851,7 @@ dabs; advancing it outside the dab emission order breaks determinism.
 
 ---
 
-## Module 13: GPU Backend Architecture
+## Module 11: GPU Backend Architecture
 
 > **Prerequisites:** All previous modules.
 >
@@ -2383,29 +1859,14 @@ dabs; advancing it outside the dab emission order breaks determinism.
 > model to a GPU backend using Skia/Skiko or Vulkan. After this module you
 > can implement a GPU-accelerated surface backend.
 
-### 13.1 CPU / GPU Split Strategy
+### 11.1 CPU / GPU Split Strategy
 
-The brush engine core (mapping, dab planning, state machine) remains on the
-CPU. Only the rendering layer moves to the GPU:
+Keep the brush core (mapping, dab planning, state machine) on the CPU and move
+only the surface backend to the GPU; for the rationale and the
+renderer-architecture background, see the `gpu-rendering-guide` skill and
+`surface-layer-gpu.md` §9.
 
-```text
-CPU: Input → Brush Core → Dab Operations (per tile)
-                                  │
-                                  ▼ (end_atomic)
-GPU: Per-tile compute shader → Tile Textures → Canvas Composite
-```
-
-This split is correct because:
-
-- Brush state is inherently sequential — each dab depends on previous state.
-- Dab-to-dab scheduling cannot be parallelized.
-- Pixel compositing is embarrassingly parallel and GPU-friendly.
-
-The operation queue (Module 11, §11.2) provides the natural CPU→GPU handoff:
-at `end_atomic`, each tile's queued dab list is uploaded as a structured
-buffer and dispatched to the GPU.
-
-### 13.2 Skia / Skiko Backend Strategy
+### 11.2 Skia / Skiko Backend Strategy
 
 Skia does not natively expose libmypaint blend semantics, but can be mapped
 at the dab level using `SkCanvas` and custom shaders.
@@ -2451,7 +1912,7 @@ float opa(float2 pos) {
 at `end_atomic` is the synchronization point. This maps cleanly to the
 `begin_atomic`/`end_atomic` contract.
 
-### 13.3 Vulkan Backend Strategy
+### 11.3 Vulkan Backend Strategy
 
 Vulkan provides explicit control over memory, synchronization, and pipeline
 — ideal for maximum throughput and minimum latency.
@@ -2510,9 +1971,9 @@ void main() {
   tile per dispatch. For small dabs (few pixels affected), a 1D dispatch over
   only the affected pixel count may be faster.
 
-### 13.4 Blend Mode Shader Implementation
+### 11.4 Blend Mode Shader Implementation
 
-Each blend pass from Module 10 maps to a shader subfunction. In Vulkan GLSL:
+Each blend pass (see `surface-layer-gpu.md` §5) maps to a shader subfunction. In Vulkan GLSL:
 
 ```glsl
 // Normal (over) blend — premultiplied alpha:
@@ -2543,9 +2004,9 @@ vec4 blend_colorize(vec4 dst, vec3 src_rgb, float opa_weight) {
 // Luma coefficients: (0.2126, 0.7152, 0.0722)
 ```
 
-### 13.5 Canvas Color Pickup on GPU
+### 11.5 Canvas Color Pickup on GPU
 
-Canvas color pickup (Module 11, §11.1) requires reading from the tile texture,
+Canvas color pickup (Module 9, §9.1) requires reading from the tile texture,
 which may conflict with in-flight write operations.
 
 Strategy:
@@ -2563,7 +2024,7 @@ calls by obeying the `smudge_length` throttling that the brush core provides
 — this is why `smudge_length > 0` is important for performance, not just
 aesthetics.
 
-### 13.6 Recommended Implementation Order
+### 11.6 Recommended Implementation Order
 
 For a new GPU brush engine, this sequence reduces risk:
 
@@ -2577,227 +2038,6 @@ For a new GPU brush engine, this sequence reduces risk:
    c. Add smudge (`get_color` with GPU readback).
    d. Add spectral pigment mixing last (most complex, least common usage).
 4. Optimize: tile parallelism, command buffer reuse, staging buffer pools.
-
----
-
-# Part VIII — Implementation and Validation
-
----
-
-## Module 14: Implementation Blueprint
-
-> **Prerequisites:** All previous modules.
->
-> **Learning objective:** Concrete data structures and pseudocode for the full
-> implementation. Use these as the basis for your actual implementation.
-
-### 14.1 Suggested Data Structures
-
-```text
-BrushState:
-  x, y, pressure                   // tracked input position
-  actual_x, actual_y               // slow-tracked rendering position
-  partial_dabs                     // fractional dab accumulator
-  actual_radius                    // current evaluated radius
-  norm_speed1_slow, norm_speed2_slow  // speed filter states
-  norm_dx_slow, norm_dy_slow       // directional speed filter states
-  stroke, stroke_started           // stroke progress state
-  direction_dx, direction_dy       // direction filter states
-  direction_angle_dx, direction_angle_dy
-  declination, ascension           // tilt states
-  declinationx, declinationy
-  viewzoom, viewrotation
-  barrel_rotation
-  custom_input                     // custom input filter state
-  actual_elliptical_dab_ratio/angle
-  gridmap_x, gridmap_y
-  flip                             // alternating +1/-1 for mirrored offsets
-  smudge_buckets[0..255]           // up to 256 smudge state buckets
-  rng_state                        // Knuth LFIB RNG
-
-BrushSetting:
-  baseValue
-  mappings[inputId] -> piecewise curve points
-
-DabOp:
-  x, y, radius, hardness, opaque
-  aspectRatio, angle
-  color (r, g, b)
-  eraserTargetAlpha      // combines eraser + smudge alpha
-  lockAlpha, colorize
-  posterize, posterizeNum, paintMode   // 
-```
-
-### 14.2 Stroke Update Pseudocode
-
-```text
-strokeTo(sample):
-  // Phase 1: Input sanitization (Module 3)
-  normalize and clamp sample (pressure >= 0, tilt clamped to [-1,1])
-  derive tilt_declination, tilt_ascension, tilt_declinationx, tilt_declinationy
-  dt = max(0.0001, sample.dt)
-
-  // Phase 2: Virtual cursor (Module 3, §3.3)
-  apply slow_tracking and tracking_noise to x, y
-
-  if dt > 5.0 or reset_requested:
-    reset all states; return (stroke split)
-
-  dabs_moved = partial_dabs
-  dabs_todo  = count_dabs_to(x, y, dt)
-  dt_left    = dt
-
-  // Phase 3: Dab emission loop (Module 5)
-  while dabs_moved + dabs_todo >= 1.0:
-    if dabs_moved > 0:
-      step_ddab = 1.0 - dabs_moved; dabs_moved = 0
-    else:
-      step_ddab = 1.0
-    frac = step_ddab / dabs_todo
-    step_dt = frac * dt_left
-
-    // Interpolate inputs to dab position (Module 5, §5.4)
-    step_x = frac * (target_x - current_x) ...
-
-    // Evaluate settings using CURRENT state, then update (Module 3, §3.7)
-    update_states_and_setting_values(step_ddab, step_x, ..., step_dt)
-
-    FLIP *= -1
-
-    // Assemble and draw (Module 6)
-    drawDab()
-
-    // RNG advances exactly once per emitted dab (Module 1, §1.4)
-    advance RNG (random_input = rng_next())
-
-    dt_left -= step_dt
-    dabs_todo = count_dabs_to(x, y, dt_left)   // recalculate remaining
-
-  // Phase 4: Post-loop state advance (always runs, even when 0 dabs emitted)
-  update_states_and_setting_values(dabs_todo, ...)
-  partial_dabs = dabs_moved + dabs_todo
-```
-
-### 14.3 Renderer Boundary
-
-Keep a clean boundary between:
-
-- **Brush engine core** (input processing, mapping evaluation, state, dab
-  planning) — platform-agnostic.
-- **Surface backend** (mask generation, blending, tiling, dirty-rect
-  reporting) — renderer-specific.
-
-This enables portability across raster backends while preserving brush
-semantics. When debugging parity failures, the boundary also isolates whether
-the issue is in the brush core (wrong dab parameters) or the surface backend
-(wrong compositing).
-
----
-
-## Module 15: Validation and Parity Testing
-
-> **Prerequisites:** All previous modules.
->
-> **Learning objective:** Know what to test, in what order, to verify that
-> your engine is compatible with libmypaint.
-
-### 15.1 Unit Tests (Test These First)
-
-These catch correctness issues without needing rendering:
-
-- Piecewise curve interpolation: correctness within domain.
-- Piecewise curve extrapolation: slopes extend beyond domain, not clamped.
-- Mapping sum rule: `base_value + Σ curves`.
-- Dab count math: verify formula from §5.2 against known inputs.
-- Partial dab carry: `partial_dabs` evolves correctly across events.
-- Clamp and normalization invariants from §3.2.
-- Tilt derivation formula from §3.4.
-- Speed input logarithmic remapping from §4.4.
-- `rr` distance formula from §9.1 for circular and elliptical dabs.
-- Opacity falloff from §9.2 at `rr = 0`, `rr = hardness`, `rr = 1`, `rr > 1`.
-
-### 15.2 Determinism Tests (Test These Second)
-
-These catch ordering and state management issues:
-
-- Same input stream + same seed → identical dab sequence across multiple runs.
-- RNG advances exactly once per emitted dab, immediately after draw.
-- Post-loop state advance fires even when zero dabs emitted.
-- Replay consistency across platforms (if targeting cross-platform parity).
-
-### 15.3 Visual Parity Tests (Test These Last)
-
-Golden images generated from libmypaint reference; compare against engine output:
-
-- Pressure sweeps (0→1) with basic circular brush (Normal mode).
-- Speed sweeps with `speed1`-modulated settings.
-- Tilt/rotation-sensitive brushes (`tilt_declination` + `tilt_ascension`).
-- Smudge-heavy presets (single and multi-bucket).
-- Pigment/spectral-mode presets (`paint_mode = 1`).
-- Posterize-heavy presets (`posterize + posterize_num`).
-- Elliptical dabs with varying aspect ratio and angle.
-- Eraser and lock-alpha strokes.
-- Colorize strokes over non-trivial destinations.
-- Symmetry painting (rotational and snowflake modes).
-- Multi-bucket brushes with mirrored arm offsets.
-
----
-
-## Module 16: Quick Reference
-
-### 16.1 Brush Settings — Visual Impact Table
-
-| Setting | Typical Visual Impact |
-| --- | --- |
-| `hardness` | Hard stamp edge vs soft airbrush falloff |
-| `anti_aliasing` | Minimum softness zone preventing pixel staircase |
-| `dabs_per_actual_radius` | Continuous film vs dotted/texture spacing |
-| `dabs_per_second` | Time-based emission; prevents gaps at low speed |
-| `eraser` | Paint, erase, or mixed alpha transport |
-| `lock_alpha` | Constrains paint to existing opaque regions |
-| `colorize` | Re-hues destination while preserving luminance |
-| `posterize` + `posterize_num` | Banding / cel-shaded quantization |
-| `paint_mode` | Subtractive-style pigment color mixing |
-| `smudge` + `smudge_length` | Wet-drag smear; shorter = more canvas pickup |
-| `smudge_bucket` | Separates smudge state per dab arm |
-| `offset_by_random` | Scatter / jitter around stroke path |
-| `offset_angle` / `offset_angle_2` | Lateral offset, mirrored (butterfly) |
-| `opaque_linearize` | Perceptual linearity of pressure → opacity |
-| `change_color_h/v/l` | Per-dab hue / value / lightness shift |
-| `radius_by_random` | Per-dab radius noise (organic, brush-like texture) |
-| `elliptical_dab_ratio` | Calligraphic / chisel tip effect |
-
-### 16.2 Deterministic Replay Requirements
-
-For parity tests and reproducibility:
-
-- Use deterministic RNG seed policy (Knuth LFIB, seeded via
-  `rng_double_new(seed)` — see Module 12, §12.6).
-- Use monotonic timestamps or replayed `dt`.
-- Preserve floating-point clamp and ordering rules.
-- Persist brush version/mapping metadata with stroke recordings.
-
-For preset-level reproducibility, store:
-
-- The original `.myb` payload (or canonicalized equivalent).
-- Brush `version`.
-- Explicit handling policy for unknown settings/inputs.
-
-Without this metadata, two hosts can accept the same preset but diverge
-because they made different compatibility choices for unsupported keys.
-
-### 16.3 Unsupported Features Policy
-
-For host-side compatibility layers, do not silently drop unsupported features.
-Use an explicit policy:
-
-- Ignore + warning (recommended, matches libmypaint's own behavior for
-  unknown individual settings).
-- Fallback approximation (document the fallback).
-- Hard error (strict mode; only for top-level contract failures: missing
-  `version`, missing `settings`).
-
----
 
 ## References
 

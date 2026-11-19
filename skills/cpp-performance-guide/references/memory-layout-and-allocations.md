@@ -1,9 +1,6 @@
 # Memory Layout and Allocations
 
 ## Table of contents
-- Why memory dominates
-- Locality principles
-- Structure of arrays vs array of structures
 - Containers
 - Copies and views
 - Allocation churn
@@ -12,41 +9,9 @@
 - Cache and NUMA symptoms
 - Memory anti-patterns
 
-## Why memory dominates
-
-Modern CPUs execute many instructions per cycle when data is already in cache. When it is not, the core stalls on DRAM or coherence traffic — often making "ordinary" loops the bottleneck even when the algorithm is asymptotically fine.
-
-Practical model:
-
-- **Temporal locality:** reuse the same data soon (keep hot fields together, reuse buffers).
-- **Spatial locality:** access nearby addresses (contiguous containers, sequential scans).
-- **Working set:** bytes touched per pass; if it exceeds cache, miss rate rises.
-- **False sharing:** unrelated writes on the same cache line look like sharing to the hardware.
+## Containers
 
 Confirm memory is the limiter with counters or top-down metrics before reshaping data. For allocator API design beyond measured hot-path tuning, see [`../../cpp-memory-guide/SKILL.md`](../../cpp-memory-guide/SKILL.md).
-
-## Locality principles
-
-Memory is often the bottleneck even when CPU samples point at ordinary loops. Prefer:
-
-- contiguous storage over pointer graphs,
-- smaller hot structs,
-- hot/cold field splitting,
-- predictable access order,
-- batching to amortize fixed costs,
-- direct indexing over repeated associative lookups when lifecycle allows it.
-
-Do not optimize layout blindly. Confirm with profiling, counters, or clear hot-path reasoning.
-
-## Structure of arrays vs array of structures
-
-- **AoS** (`struct Particle { float x, y, z; int id; }; std::vector<Particle>`): natural when most fields of each object are touched together.
-- **SoA** (separate `std::vector<float> x, y, z` and `std::vector<int> id`): better when inner loops read or write one or two fields across many objects — improves vectorization and cache use in numerical kernels.
-- **Hybrid:** hot numeric fields in SoA, cold metadata in AoS or side tables — common in engines and simulations.
-
-Choose from measured access patterns, not aesthetics. Converting layout is a semantic-preserving refactor only when field grouping and iteration order stay equivalent.
-
-## Containers
 
 Performance-oriented defaults:
 

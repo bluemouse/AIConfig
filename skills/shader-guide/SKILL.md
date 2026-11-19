@@ -50,7 +50,7 @@ This skill covers **creative real-time GLSL effect authoring**: implicit surface
 | Before increasing loop counts, march steps, or FBM depth — or when frames stall | [references/performance-budget.md](references/performance-budget.md) |
 | Ping-pong simulation, persistent cross-frame state, pass chaining, structured texel storage | [references/multipass-buffer.md](references/multipass-buffer.md) |
 | Optimizing an SDF scene: bounding culls, hollow shells, hit refinement, field debug views | [references/sdf-tricks.md](references/sdf-tricks.md) |
-| Tracing a reference back to original `skills-ref/shader-dev` provenance | [references/source-map.md](references/source-map.md) |
+| Reference provenance or the neutral-uniform mapping (`uResolution`/`uTime`/`uFrame`/`uMouse`) | [references/source-map.md](references/source-map.md) |
 | GLSL compilation, link, or SPIR-V validation workflow | [`../glsl-coding/SKILL.md`](../glsl-coding/SKILL.md) |
 
 Individual techniques (ray marching, SDF primitives, CSG, domain warping/repetition, FBM and noise variants, voronoi, lighting models, soft shadows, AO, volumetrics, water/terrain, fractals, particles, path tracing, tone mapping, AA, camera effects, audio synthesis) have no reference file — write them directly from model knowledge and apply the Gotchas and performance budget below.

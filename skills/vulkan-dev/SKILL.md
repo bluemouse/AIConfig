@@ -80,7 +80,7 @@ pipeline creation, unbounded frames-in-flight, mobile-tiler-as-desktop assumptio
 
 - `maxMemoryAllocationCount` is small (often ~4096); per-resource `vkAllocateMemory` works in a demo then fails — sub-allocate from large blocks.
 - `oldLayout` in a barrier must equal the image's actual current layout (or `UNDEFINED` to discard); a mismatch is undefined behavior.
-- Updating a descriptor set (without `UPDATE_AFTER_BIND`) or destroying a resource while an in-flight frame may still read it is a data race — gate on the slot `VkFence`.
+- Descriptor updates/destroys racing an in-flight frame — see the update-while-in-flight gotcha in [references/descriptors.md](references/descriptors.md).
 - Forgetting to set a declared dynamic state (`vkCmdSetViewport`/`Scissor`) leaves it undefined; first use of an uncompiled pipeline stalls — build at load with a warm cache.
 - Ignoring `VK_ERROR_OUT_OF_DATE_KHR`/`VK_SUBOPTIMAL_KHR` from acquire/present leaves a stale swapchain after resize — recreate it.
 - A queue-family release barrier without a matching acquire (or vice versa) corrupts the resource; semaphores order queues but do not replace intra-queue barriers.

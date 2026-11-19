@@ -18,19 +18,20 @@ and the structural prevention turns one fix into immunity from a family of futur
 
 ## Bug classes
 
-| Class | Typical evidence | Structural prevention |
-| --- | --- | --- |
-| Typo / logic error | failing assertion, missing branch, boundary input | descriptive names, `const`, warnings, formatter, fewer code paths |
-| Unexpected initial condition | bad input at API boundary, violated precondition | assert preconditions at the owning boundary |
-| State mutation | first invalid write, wrong mutation order | fix at writer; preserve invariant |
-| Leak | growing memory, resources not released on shutdown | allocation tagging, per-subsystem totals, zero-on-shutdown |
-| Overwrite / use-after-free | sanitizer output, fill patterns, bounds fault | page-guard allocator (debug), ASan/UBSan, correct ownership |
-| Race / concurrency | flake under load, TSan report, vanishes single-threaded | single-thread fallback for triage, TSan, enforce ordering |
-| Build / config | wrong generated file, flag, env, dependency version | fix propagation at source, not consumer workaround |
-| Platform behavior | OS/API/SDK difference | isolate platform contract; test affected platform |
-| Integration / schema | payload mismatch, version skew, auth context | fix boundary contract; add contract/integration test |
-| Flakiness | seed/order/time dependency | determinism, stress, circular log, record/replay |
-| Design flaw / failed spec | repeated symptom at many call sites | type-safe single-purpose APIs; make misuse unrepresentable |
+| Class | Evidence signature | Fix shape | Structural prevention |
+| --- | --- | --- | --- |
+| Typo / logic error | failing assertion, truth table, missing branch, boundary input | correct the condition or algorithm; add edge-case test | descriptive names, `const`, warnings, formatter, fewer code paths |
+| Unexpected initial condition | bad input at API boundary, violated precondition | fix the violating caller; reject at the boundary | assert preconditions at the owning boundary |
+| State mutation | first invalid write, ownership/lifetime transition, wrong mutation order | fix at the writer; preserve the invariant | single-writer, invariant-preserving accessors |
+| Leak | growing memory, resources not released on shutdown | release at the owning scope; fix the shutdown path | allocation tagging, per-subsystem totals, zero-on-shutdown |
+| Overwrite / use-after-free | sanitizer output, fill patterns, bounds fault, aliasing, invalid lifetime | correct ownership/lifetime/bounds; add sanitizer-backed test when possible | page-guard allocator (debug), ASan/UBSan, correct ownership |
+| Race / concurrency | flake under load, interleaving trace, TSan report, lock/order invariant, thread ids, vanishes single-threaded | enforce synchronization/order; avoid sleeps | single-thread fallback for triage, TSan, simple concurrency patterns |
+| Build / config | wrong generated file, flag, env, dependency version, exact failing command | fix config propagation or generated source, not consumer workaround | fix propagation at the source |
+| Platform behavior | OS/API/SDK difference, path, permissions, endian, locale, timezone | isolate the platform contract; test the affected platform | isolate platform contracts behind one module |
+| Performance | profile, allocation count, hot path, input size, algorithmic complexity | fix the hot path; guard with benchmark or regression test | benchmark/regression guards on hot paths |
+| Flakiness | repetition count, seed, order/time dependency, external dependency | make synchronization/data deterministic; repeat verification | determinism, stress, circular log, record/replay |
+| Integration / schema | payload mismatch, schema mismatch, version skew, auth context | fix the boundary contract; add contract/integration test | contract tests at the boundary |
+| Design flaw / failed spec | repeated symptom at many call sites | surface the unstated assumption; redesign so misuse is unrepresentable | type-safe single-purpose APIs; make misuse unrepresentable |
 
 ## How to apply
 
@@ -69,5 +70,5 @@ html_text_t html_encode(raw_text_t in);
 
 - `instrumentation-and-checks.md` — tripwires per class
 - `determinism-and-replay.md` — intermittent bugs
-- `diagnostic-techniques.md` — bug-class table during tracing
+- `diagnostic-techniques.md` — tracing, differential comparison, and bisection techniques
 - [../../cpp-memory-guide/SKILL.md](../../cpp-memory-guide/SKILL.md) — C++ ownership and lifetime design (not active debugging)

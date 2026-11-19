@@ -40,8 +40,6 @@ Prefer:
 
 Container choice and locality details: [memory-layout-and-allocations.md](memory-layout-and-allocations.md#containers). Source-level smells:
 
-- `std::map` in hot lookups -> consider `std::unordered_map` or a flat hash map if ordering is not needed.
-- `std::list` traversal -> prefer `std::vector`/`std::deque` unless splice/stable iterator requirements dominate.
 - `std::unordered_map<std::string, V>` lookup by `string_view` -> use heterogeneous lookup with transparent hash/equality where supported.
 - linear search on sorted data -> use `lower_bound`/`binary_search`.
 - push loops without `reserve()` -> reserve capacity.

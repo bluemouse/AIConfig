@@ -100,19 +100,12 @@ For raster shaders, also test:
 - Make entry-point I/O structs explicit and stable.
 - Use named constants for thread group sizes and validate dispatch bounds.
 - Guard all buffer/texture indexing when dimensions can be arbitrary.
-- Keep coordinate spaces named in variable names (`worldPos`, `viewDir`, `clipPos`).
-- Prefer explicit conversions between `half`, `float`, and integer types.
 - Ensure all code paths initialize outputs.
-- Treat NaN/Inf paths explicitly in BRDF, normalize, reciprocal, and sqrt code.
 - Keep CPU-side struct definitions generated from or validated against Slang reflection.
 
 ## Performance Best Practices
 
-- Minimize global memory bandwidth; use packed formats only when precision and alignment are verified.
 - Coalesce buffer access and avoid divergent resource indexing where target support is limited.
-- Keep branch divergence predictable; prefer branchless math only when it reduces actual cost.
-- Avoid unnecessary `normalize`, `sqrt`, `pow`, transcendental functions, and high precision in inner loops.
-- Use `half` carefully on Metal/mobile when precision permits; validate Vulkan behavior separately.
 - Keep compute group sizes tuned per workload; common starting points are 64, 128, or 256 threads total, then measure.
 - Avoid excessive generic specialization that creates many pipelines and long compile times.
 - Group parameters by update frequency to reduce descriptor/argument-buffer rebinding.

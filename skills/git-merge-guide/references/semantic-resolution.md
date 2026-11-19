@@ -51,21 +51,8 @@ Do this when integration requires caller/type/test/config updates that Git did n
 
 ## Common bug patterns after mechanical merges
 
-Actively check for:
-
-- duplicate side effects because both branches added similar calls;
-- dropped validation/error handling from one side;
-- stale API calls that still compile through overload/default behavior;
-- inverted ownership or lifetime assumptions;
-- double-free, leak, stale reference, or invalid iterator risks;
-- changed execution ordering;
-- missing synchronization or lock-order changes;
-- initialization performed twice or no longer performed;
-- cleanup paths that only match one branch's resource model;
-- inconsistent units, coordinate spaces, ranges, enum meanings, or sentinel values;
-- serializers/readers using different schema versions;
-- feature gating applied on only one path;
-- tests merged mechanically so they no longer test the original regression.
+Actively check for the bug classes listed under "Required bug classes to review" in
+[integration-code-review.md](integration-code-review.md) — duplicated/dropped side effects, ownership/lifetime inversions, ordering and synchronization drift, semantic value collisions, schema and feature-gating mismatches, and mechanically merged tests that no longer protect the original regression.
 
 ## Tests as investigation tools
 

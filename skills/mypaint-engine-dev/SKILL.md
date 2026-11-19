@@ -116,7 +116,7 @@ Preserve these unless the user explicitly wants a non-compatible engine:
 | Tiles, compositing, symmetry, layer rendering, GPU/Skia/Vulkan backends | [surface-layer-gpu.md](references/surface-layer-gpu.md) |
 | Live drawing performance, debugging, regression and parity testing | [performance-validation.md](references/performance-validation.md) |
 | Source navigation or verification against repositories | [source-map.md](references/source-map.md) |
-| Extended background when focused references are insufficient (~2800 lines) | [MyPaintProgrammingGuide.md](references/MyPaintProgrammingGuide.md) |
+| Extended background when focused references are insufficient (~2000 lines) | [MyPaintProgrammingGuide.md](references/MyPaintProgrammingGuide.md) |
 
 When a task spans multiple areas, read **every matching row**. Provenance and external
 references are tracked in [SOURCES.md](SOURCES.md) — read for attribution only.

@@ -63,7 +63,7 @@ Conceptual parallels only — not engine API how-tos.
 - Forgetting an image-layout transition is undefined behavior even when the data is "obviously" ready — layout is part of the contract, not a hint.
 - One allocation per resource exhausts the (small, capped) device allocation limit and is slow; sub-allocate from large blocks.
 - Host-coherent memory skips explicit flush/invalidate but is not free; use persistently mapped rings for per-frame dynamic data — reserve staging copies for static device-local uploads.
-- Recording into a per-frame context whose previous submission's fence has not signaled corrupts in-flight GPU work — gate reuse on the fence.
+- Recording into a per-frame context before its fence has signaled corrupts in-flight work — see the fence gotcha in [references/synchronization.md](references/synchronization.md).
 - Re-using a transient target the graph aliased to another lifetime, then reading it later, returns garbage; lifetimes must not overlap.
 - Applying a display transfer function twice (an automatic sRGB backbuffer plus your own HDR encode) double-darkens and loses precision in the shadows — encode exactly once.
 - Reading GPU-simulation results back to the CPU each frame reintroduces the full pipeline stall you went to the GPU to avoid; consume them on the GPU via indirect draw.

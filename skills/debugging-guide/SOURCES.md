@@ -35,7 +35,7 @@ Ported and adapted from `references/skills/debugging-guide/` in this repository.
 ## Bootstrap additions (not from reference skill)
 
 - `references/debugging-report.md` — agent handoff report template
-- `references/diagnostic-techniques.md` — consolidated tracing, comparison, and bug-class table
+- `references/diagnostic-techniques.md` — consolidated tracing, comparison, and bisection tactics
 - Workflow steps for scope freeze, working-pattern comparison, verification ladder, and sibling-skill boundaries
 
 ## Refresh Workflow
