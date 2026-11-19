@@ -45,7 +45,7 @@ and stray files, confirm the diff matches the description, run the project check
 flip to ready and assign reviewers. Sizing, description shape, and splitting are author
 judgment — calibrate to review time, not line count.
 
-For the surrounding work, hand off: **[git-guide](../git-guide/SKILL.md)** for mechanics (commit, push, rebase, worktrees), **[git-merge-guide](../git-merge-guide/SKILL.md)** for local merge/rebase integration, **[commit-message-writer](../commit-message-writer/SKILL.md)** for the commit message, **[code-reviewer](../code-reviewer/SKILL.md)** for diff review.
+For the surrounding work, hand off: **[git-guide](../git-guide/SKILL.md)** for mechanics (commit, push, rebase, worktrees), **[git-merge-guide](../git-merge-guide/SKILL.md)** for local merge/rebase integration, **[git-guide](../git-guide/SKILL.md)** for the commit message, **[code-reviewer](../code-reviewer/SKILL.md)** for diff review.
 
 ## Gotchas
 

@@ -13,7 +13,6 @@
         "debugging-guide",
         "implementation-auditor",
         "code-reviewer",
-        "commit-message-writer",
         "git-guide",
         "github-guide"
       ]
@@ -61,7 +60,7 @@
         "implementation-auditor",
         "code-review-resolver",
         "code-reviewer",
-        "commit-message-writer"
+        "git-guide"
       ],
       "commands": [
         "run-dev-workflow",

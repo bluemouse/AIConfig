@@ -57,7 +57,7 @@
     "query": "draft a conventional commit for staged changes",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: commit message drafting -> commit-message-writer"
+    "rationale": "near-miss: commit message drafting -> git-guide commit-message drafting"
   },
   {
     "query": "open a PR with gh pr create",

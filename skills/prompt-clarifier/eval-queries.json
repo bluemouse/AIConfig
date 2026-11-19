@@ -135,6 +135,6 @@
     "query": "draft a conventional commit message for my staged changes",
     "should_trigger": false,
     "split": "validation",
-    "rationale": "validation negative: commit message authoring -> commit-message-writer"
+    "rationale": "validation negative: commit message authoring -> git-guide commit-message drafting"
   }
 ]

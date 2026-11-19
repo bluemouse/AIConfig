@@ -99,7 +99,7 @@
     "query": "draft a conventional commit message for my staged changes",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: commit message drafting, use commit-message-writer"
+    "rationale": "near-miss: commit message drafting, use git-guide commit-message drafting"
   },
   {
     "query": "resolve merge conflict and commit the result",
