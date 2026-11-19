@@ -2,7 +2,7 @@
 
 ## git-merge-guide (reference draft)
 
-- **Path:** `references/skills/git-merge-guide/` (historical; the folder was deleted on 2026-11-19 — the bootstrap skill is now the sole source of truth)
+- **Path:** `references/skills/git-merge-guide/`
 - **Last reviewed:** 2026-08-08
 - **Used for:**
   - `SKILL.md` → end-to-end local merge/rebase integration workflow
@@ -47,6 +47,7 @@
 
 ## Refresh Workflow
 
-1. Verify boundary with `git-guide`, `code-reviewer`, and `implementation-auditor` has not drifted
-2. Re-run eval-queries against the skill description
-3. Bump **Last reviewed** dates above
+1. Re-read `references/skills/git-merge-guide/` if the reference draft is updated
+2. Verify boundary with `git-guide`, `code-reviewer`, and `implementation-auditor` has not drifted
+3. Re-run eval-queries against the skill description
+4. Bump **Last reviewed** dates above

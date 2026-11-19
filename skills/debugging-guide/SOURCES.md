@@ -1,6 +1,6 @@
 # Sources
 
-Ported and adapted from a historical reference skill that was deleted on 2026-11-19; this bootstrap skill is now the sole source of truth.
+Ported and adapted from `references/skills/debugging-guide/` in this repository.
 
 ## Game-engine development blog (archive)
 
@@ -40,6 +40,7 @@ Ported and adapted from a historical reference skill that was deleted on 2026-11
 
 ## Refresh Workflow
 
-1. Re-check the external sources above (game-engine blog archive, rr, sanitizers) for updated material
-2. Update corresponding `skills/debugging-guide/references/<topic>.md` and `SKILL.md` workflow/gotchas
-3. Bump **Last reviewed** date above
+1. Re-read upstream sources in `references/skills/debugging-guide/SOURCES.md`
+2. Diff against the ported bootstrap references
+3. Update corresponding `skills/debugging-guide/references/<topic>.md` and `SKILL.md` workflow/gotchas
+4. Bump **Last reviewed** date above
