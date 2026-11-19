@@ -15,7 +15,7 @@ Turn a rough idea, feature request, or requirements draft into an **agreed resea
 - Implementation planning — [../plan-guide/SKILL.md](../plan-guide/SKILL.md) (hand the finalized report to it); plan audit — [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
 - Research-report audit — [../research-reviewer/SKILL.md](../research-reviewer/SKILL.md), revising via [../dev-workflow-orchestrator/references/reviewer-core/producer-feedback-loop.md](../dev-workflow-orchestrator/references/reviewer-core/producer-feedback-loop.md)
 - Code or diff review — [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md); codebase learning — [../code-professor/SKILL.md](../code-professor/SKILL.md)
-- Git, PR, or commit work — [../git-guide/SKILL.md](../git-guide/SKILL.md), [../github-guide/SKILL.md](../github-guide/SKILL.md), or [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md)
+- Git, PR, or commit work (including commit-message drafting) — [../git-guide/SKILL.md](../git-guide/SKILL.md) or [../github-guide/SKILL.md](../github-guide/SKILL.md)
 
 ## Direct requests
 

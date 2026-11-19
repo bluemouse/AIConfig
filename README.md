@@ -51,7 +51,6 @@ repo/
 │   ├── code-reviewer/                 # Structured multi-scope code review
 │   ├── techdoc-reviewer/              # Technical documentation review and synchronization
 │   ├── code-professor/                # Evidence-based codebase learning and documentation guides
-│   ├── commit-message-writer/         # Conventional Commit message drafting from git diffs
 │   ├── github-guide/                  # GitHub PR/review delivery via gh CLI and gh api
 │   ├── prompt-clarifier/              # Iterative clarification of ambiguous requests before acting
 │   ├── advisory-council/              # Multi-perspective council deliberation on complex decisions
@@ -109,8 +108,7 @@ Bootstrap skills live under `skills/`. Installing one copies the package to `.ag
 | `code-reviewer` | `skills/code-reviewer/` | Structured multi-scope code review |
 | `techdoc-reviewer` | `skills/techdoc-reviewer/` | Review and synchronize technical documentation against code, tests, and configuration |
 | `code-professor` | `skills/code-professor/` | Evidence-based guides for learning, tracing, and documenting existing codebases |
-| `commit-message-writer` | `skills/commit-message-writer/` | Draft Conventional Commit messages from staged/working diffs, commits, or ranges |
-| `git-guide` | `skills/git-guide/` | Git mechanics: commit, push, rebase, conflicts, worktrees |
+| `git-guide` | `skills/git-guide/` | Git mechanics — commit, push, rebase, conflicts, worktrees — plus Conventional Commit message drafting from staged/working diffs, commits, or ranges |
 | `git-merge-guide` | `skills/git-merge-guide/` | Local merge/rebase integration: semantic conflicts, integration review, verification |
 | `github-guide` | `skills/github-guide/` | GitHub delivery: `gh pr create`, post structured reviews, resolve threads; PR authoring defaults (description, sizing, self-review) |
 | `prompt-clarifier` | `skills/prompt-clarifier/` | Iteratively clarify ambiguous requests with adaptive questions before or during a task |
@@ -160,14 +158,14 @@ Several installed skills cross-link as companions — install related skills tog
 | Qt desktop | `qt-dev`, `qt-ui-guide`, `cpp-coding`, `vulkan-dev`, `gpu-rendering-guide` | UI/UX design and `.ui` review → Widgets/CMake implementation → C++ idioms → viewport/Vulkan integration → renderer architecture |
 | Kotlin/JVM | `kotlin-coding`, `gradle-dev`, `gradle-android-dev` | Language/stdlib/API design and tests (frameworks, coroutine tests, flakes) → Gradle build engineering → AGP variants, lint, R8 |
 | Android | `android-dev`, `android-ndk-dev`, `android-vulkan-dev`, `kotlin-coding`, `gradle-android-dev`, `vulkan-dev`, `gpu-rendering-guide` | App Kotlin/Compose → NDK/JNI → Android Vulkan → language/tests/AGP → generic Vulkan API → renderer architecture |
-| Git workflow | `commit-message-writer`, `git-guide`, `git-merge-guide`, `code-reviewer`, `techdoc-reviewer`, `github-guide` | Draft commit messages → git mechanics (commit/push/rebase/worktrees) → deep local merge/rebase integration → structured diff review → documentation truth/sync when reader-visible contracts change → GitHub delivery (`gh pr create`, PR authoring defaults, post review, resolve threads). PR authoring defaults are GitHub-delivery-scoped; GitLab/Azure DevOps MRs are host tooling outside the catalog |
+| Git workflow | `git-guide`, `git-merge-guide`, `code-reviewer`, `techdoc-reviewer`, `github-guide` | Commit messages + git mechanics (commit/push/rebase/worktrees) → deep local merge/rebase integration → structured diff review → documentation truth/sync when reader-visible contracts change → GitHub delivery (`gh pr create`, PR authoring defaults, post review, resolve threads). PR authoring defaults are GitHub-delivery-scoped; GitLab/Azure DevOps MRs are host tooling outside the catalog |
 | Codebase learning | `code-professor`, `tutorial-writer`, `plan-guide`, `debugging-guide`, `code-reviewer` | Evidence-backed codebase onboarding → example-driven tutorials and user guides → implementation planning → verified defect repair → diff review |
-| Meeting notes | `minutes` (guideline), `github-guide`, `commit-message-writer` | Source-grounded minutes from transcripts via the guideline → PR authoring (github-guide's PR authoring defaults) → commit messages (does not create tickets or publish unless asked) |
+| Meeting notes | `minutes` (guideline), `github-guide`, `git-guide` (commit-message drafting) | Source-grounded minutes from transcripts via the guideline → PR authoring (github-guide's PR authoring defaults) → commit messages (does not create tickets or publish unless asked) |
 | Requirement clarification | `prompt-clarifier`, `research-guide`, `plan-guide`, `debugging-guide` | Resolve blocking ambiguity in the request → open-ended discovery when the idea itself is unformed → implementation plan → root-cause work on defects |
 | Decision deliberation | `advisory-council`, `devil-advocate`, `prompt-clarifier`, `research-guide`, `plan-reviewer` | Clarify ambiguous decisions → council debate for multi-perspective synthesis → adversarial stress-test with proceed/rework/reject verdict → research and plan-audit companions |
 | Research workflow | `research-guide`, `research-reviewer`, `plan-guide`, `plan-reviewer`, `plan-executor` | Interactive discovery and research report → readiness audit → implementation plan → plan audit → execution |
 | Implementation quality | `test-driven-dev-guide`, `debugging-guide`, `implementation-auditor`, `code-reviewer`, `techdoc-reviewer` | TDD during implementation → systematic root-cause debugging → evidence-based correctness audit → structured diff review → documentation verification and synchronization when behavior or contracts change |
-| Dev-workflow harness | `dev-workflow-orchestrator`, `prompt-clarifier`, `research-guide`/`research-reviewer`, `plan-guide`/`plan-reviewer`, `plan-executor`/`implementation-auditor`, `code-review-resolver`/`code-reviewer`, `commit-message-writer` | Full pipeline via `/run-dev-workflow` or individual phase loops via `/research`, `/plan`, `/implement`, `/review`; installed/uninstalled as a unit via `--dev-workflow` |
+| Dev-workflow harness | `dev-workflow-orchestrator`, `prompt-clarifier`, `research-guide`/`research-reviewer`, `plan-guide`/`plan-reviewer`, `plan-executor`/`implementation-auditor`, `code-review-resolver`/`code-reviewer` | Full pipeline via `/run-dev-workflow` or individual phase loops via `/research`, `/plan`, `/implement`, `/review`; installed/uninstalled as a unit via `--dev-workflow` |
 | Parallel execution | `agent-runner` | Dispatch independent workstreams to isolated subagents; defers diff review to `code-reviewer`, git mechanics to `git-guide`, skill evals to `skill-creator`, harness orchestration to `dev-workflow-orchestrator` |
 
 Per-skill deferrals, companion links, and boundary rules live in each installed skill's body and in the cluster tables above. For step-by-step workflow sequencing and intake routing, see [dev-workflow.md](skills/dev-workflow-orchestrator/references/dev-workflow.md) (it travels inside the `dev-workflow-orchestrator` skill).
@@ -555,7 +553,7 @@ python skills/agent-creator/scripts/create_agent.py \
   --root . --name my-agent --description "…" --instructions-file body.md --overwrite
 ```
 
-Commit messages: use the installed **commit-message-writer** skill (or ask in chat to draft a Conventional Commit from staged changes).
+Commit messages: use the installed **git-guide** skill's commit-message drafting (or ask in chat to draft a Conventional Commit from staged changes).
 
 ## Rules (Cursor)
 

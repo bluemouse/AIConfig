@@ -57,7 +57,7 @@ Automatically detected:
       final merge commit during active integration
     - After integration is resolved and staged, create the final merge commit via
       [commit.md](commit.md) (optionally draft the message with
-      [../../commit-message-writer/SKILL.md](../../commit-message-writer/SKILL.md))
+      [commit-message.md](commit-message.md))
 14. If user requested removal: `git worktree remove <feature-worktree-path>`
 15. If user requested remote deletion: `git push origin --delete <feature-branch>`
 

@@ -29,7 +29,7 @@ workflow findings over prose polish; do not turn a review into copy editing unle
   [../tutorial-writer/SKILL.md](../tutorial-writer/SKILL.md); return here to verify the draft.
 - **PR description, commit message, or meeting minutes** — use
   [../github-guide/SKILL.md](../github-guide/SKILL.md),
-  [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md), or the
+  [../git-guide/SKILL.md](../git-guide/SKILL.md) (commit-message drafting), or the
   `guidelines-minutes` guideline-skill respectively.
 - **Pure copy editing** — grammar, tone, or style without technical verification, unless the
   user explicitly requests it alongside factual review.

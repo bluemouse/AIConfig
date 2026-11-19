@@ -1,6 +1,6 @@
 ---
 name: git-merge-guide
-description: "Guide complex local Git merges and rebases end-to-end: initiate operations, reconstruct intent from local history, resolve semantic conflicts, stage fixes without creating the final merge commit, continue rebases, review cleanly merged code for cross-branch integration bugs, run impact-based verification, and report results. Use when a local merge/rebase needs intent reconstruction, semantic resolution, combined-tree review, affected-test verification, or a merge report — even without saying git. Local evidence only; never fetch/push. Ask when intent is ambiguous; require permission before destructive ops. Does not trigger on push/fetch/pull, worktree lifecycle, simple single-file conflict triage (git-guide), cherry-pick/revert, final merge commits (git-guide), commit messages (commit-message-writer), diff review (code-reviewer), audits (implementation-auditor), plan execution (plan-executor), parallel dispatch (agent-runner), or debugging outside active integration (debugging-guide)."
+description: "Guide complex local Git merges and rebases end-to-end: initiate operations, reconstruct intent from local history, resolve semantic conflicts, stage fixes without creating the final merge commit, continue rebases, review cleanly merged code for cross-branch integration bugs, run impact-based verification, and report results. Use when a local merge/rebase needs intent reconstruction, semantic resolution, combined-tree review, affected-test verification, or a merge report — even without saying git. Local evidence only; never fetch/push. Ask when intent is ambiguous; require permission before destructive ops. Does not trigger on push/fetch/pull, worktree lifecycle, simple single-file conflict triage (git-guide), cherry-pick/revert, final merge commits (git-guide), commit-message drafting (git-guide), diff review (code-reviewer), audits (implementation-auditor), plan execution (plan-executor), parallel dispatch (agent-runner), or debugging outside active integration (debugging-guide)."
 ---
 
 # Git Merge Guide
@@ -25,7 +25,7 @@ Use this skill for complex local integration — intent reconstruction, semantic
 
 | Task | Path |
 |------|------|
-| Push/fetch/pull, stash, cherry-pick/revert, worktree lifecycle, simple single-file conflict triage, final merge commit | [../git-guide/SKILL.md](../git-guide/SKILL.md) (+ [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) to draft the message) |
+| Push/fetch/pull, stash, cherry-pick/revert, worktree lifecycle, simple single-file conflict triage, final merge commit, commit-message drafting | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
 | Structured diff review without an active integration | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
 | Requirement coverage audit unrelated to branch integration | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |
 | Root-cause debugging of a single defect outside active integration, or proving a failure is not integration-caused | [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) |
