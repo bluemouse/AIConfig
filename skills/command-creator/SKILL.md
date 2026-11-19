@@ -153,7 +153,7 @@ Test-and-iterate loop: [../skill-creator/references/creation-common.md](../skill
 | --- | --- |
 | Passive discovery, bundled scripts, eval loops | [../skill-creator/SKILL.md](../skill-creator/SKILL.md) |
 | Custom agents with dual-target layout | [../agent-creator/SKILL.md](../agent-creator/SKILL.md) |
-| Commit message drafting (often a command candidate) | [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) |
+| Commit message drafting (now inside git-guide; the /commit command exercises it) | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
 | Settling an ambiguous request before authoring | [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) |
 
 ### Reference files

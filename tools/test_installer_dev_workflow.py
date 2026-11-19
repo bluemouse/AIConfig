@@ -112,7 +112,7 @@ class DevWorkflowConstantsTests(unittest.TestCase):
                 "implementation-auditor",
                 "code-review-resolver",
                 "code-reviewer",
-                "commit-message-writer",
+                "git-guide",
             ),
         )
         self.assertEqual(
@@ -313,8 +313,8 @@ class DevWorkflowBundleTests(unittest.TestCase):
             [
                 "code-review-resolver",
                 "code-reviewer",
-                "commit-message-writer",
                 "dev-workflow-orchestrator",
+                "git-guide",
                 "implementation-auditor",
                 "plan-executor",
                 "plan-guide",

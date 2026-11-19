@@ -20,7 +20,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HARNESS_DIR = REPO_ROOT / "tools" / "dev-workflow"
-SKILL_SCRIPT = REPO_ROOT / "skills" / "commit-message-writer" / "scripts" / "lint_message.py"
+SKILL_SCRIPT = REPO_ROOT / "skills" / "git-guide" / "scripts" / "lint_message.py"
 
 sys.path.insert(0, str(HARNESS_DIR))
 

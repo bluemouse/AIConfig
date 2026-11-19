@@ -79,7 +79,7 @@ python tools/installer.py /path/to/project --dev-workflow
 
 `--dev-workflow` is a CLI alias for `--bundles dev-workflow-harness`. The harness consists of:
 
-- **Skills (11):** `dev-workflow-orchestrator` (the orchestrator) plus the phase doers and checkers — `prompt-clarifier`, `research-guide` / `research-reviewer`, `plan-guide` / `plan-reviewer`, `plan-executor` / `implementation-auditor`, `code-review-resolver` / `code-reviewer`, and `commit-message-writer`.
+- **Skills (11):** `dev-workflow-orchestrator` (the orchestrator) plus the phase doers and checkers — `prompt-clarifier`, `research-guide` / `research-reviewer`, `plan-guide` / `plan-reviewer`, `plan-executor` / `implementation-auditor`, `code-review-resolver` / `code-reviewer`, and `git-guide` (commit-message drafting for the per-stage commit step).
 - **Agents (4):** the four checker agents — `research-reviewer`, `plan-reviewer`, `implementation-auditor`, `code-reviewer` — installed as dual-target copies (`.claude/agents/<name>.md` verbatim from AGENT.md + `.github/agents/<name>.agent.md`). These run the checker skills with fresh-context isolation; read-only behavior is instruction-level (the agent body's Boundaries plus the harness's `check_post_phase.py` detection), not host-enforced frontmatter.
 - **Command (1):** `run-dev-workflow` — installed as a command-skill (`.agents/skills/cmd-run-dev-workflow/SKILL.md` with `disable-model-invocation: true`). Four per-phase commands — `research`, `plan`, `implement`, `review` — are also installed; each runs a single phase's doer/checker loop to acceptance or escalation without driving the full pipeline.
 - **Validation scripts:** the `.agents/tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/.agents/tools/dev-workflow/`.
@@ -114,8 +114,7 @@ The core bundle is the minimum workflow set a team should rely on for ordinary f
 | [debugging-guide](../skills/debugging-guide/SKILL.md) | Root-cause debugging | There is a defect, failing test, build failure, crash, regression, or flaky behavior |
 | [implementation-auditor](../skills/implementation-auditor/SKILL.md) | Requirement and evidence audit | Code changes need proof against acceptance criteria before claiming done |
 | [code-reviewer](../skills/code-reviewer/SKILL.md) | Structured diff review | A diff, commit, branch, or PR needs reviewer-side risk analysis |
-| [commit-message-writer](../skills/commit-message-writer/SKILL.md) | Commit narrative | A Conventional Commit message is needed from staged, unstaged, or committed changes |
-| [git-guide](../skills/git-guide/SKILL.md) | Git mechanics | Staging, committing, pushing, rebasing, resolving conflicts, or worktrees are needed |
+| [git-guide](../skills/git-guide/SKILL.md) | Git mechanics and commit narrative | Staging, committing, pushing, rebasing, resolving conflicts, or worktrees are needed, or a Conventional Commit message is needed from staged, unstaged, or committed changes |
 | [github-guide](../skills/github-guide/SKILL.md) | GitHub delivery and PR authoring | A GitHub PR or review must be created, updated, commented on, or resolved through `gh` / `gh api`, or the change needs a review-ready PR description, sizing, or self-review |
 
 ## Extended dev workflow bundle

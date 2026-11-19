@@ -43,9 +43,9 @@
   },
   {
     "query": "draft a conventional commit message for my staged changes",
-    "should_trigger": false,
+    "should_trigger": true,
     "split": "train",
-    "rationale": "near-miss: message drafting, use commit-message-writer"
+    "rationale": "positive: message drafting is now in-scope for git-guide"
   },
   {
     "query": "write a good pull request description for this change",
@@ -79,9 +79,9 @@
   },
   {
     "query": "commit and push with a proper message",
-    "should_trigger": false,
+    "should_trigger": true,
     "split": "validation",
-    "rationale": "near-miss: message drafting is commit-message-writer; git mechanics alone would trigger"
+    "rationale": "positive: drafting plus mechanics both in-scope for git-guide"
   },
   {
     "query": "review the integrated code after merging these branches for cross-branch bugs",
@@ -112,5 +112,137 @@
     "should_trigger": false,
     "split": "validation",
     "rationale": "near-miss: host mechanics, out of scope"
+  },
+  {
+    "query": "write a commit message for my staged changes",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: staged scope commit message draft"
+  },
+  {
+    "query": "draft a conventional commit for everything I've changed in the working tree",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: working tree scope with conventional format"
+  },
+  {
+    "query": "what should the commit message be for commit abc1234",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: single commit SHA message draft"
+  },
+  {
+    "query": "summarize commits since main into one conventional commit message for the PR",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: commit range message drafting"
+  },
+  {
+    "query": "write commit msg with Jira PROJ-456 context for my staged diff",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: jira context plus staged scope"
+  },
+  {
+    "query": "give me a conventional commit with subject and body for my staged changes",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: subject plus body format request"
+  },
+  {
+    "query": "help me write a git commit message explaining why we added jwt refresh",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: intent-focused message drafting"
+  },
+  {
+    "query": "draft commit message for HEAD~1..HEAD with test evidence in the body",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: range scope with body requirements"
+  },
+  {
+    "query": "conventional commit subject and body for my last three commits on this branch",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: range and conventional format"
+  },
+  {
+    "query": "I staged the auth changes — write feat/fix style commit message",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: type inference from staged auth changes"
+  },
+  {
+    "query": "rewrite this commit message to follow conventional commits with a breaking change footer",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: breaking change conventional format"
+  },
+  {
+    "query": "what commit message should I use for these doc-only markdown edits",
+    "should_trigger": true,
+    "split": "train",
+    "rationale": "direct: docs type inference"
+  },
+  {
+    "query": "run git commit for me with message chore: update deps",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: direct commit execution with a ready message — handled without loading a skill (baseline: pre-merge git-guide description also did not trigger it)"
+  },
+  {
+    "query": "split my branch into three small PRs with good titles",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: PR splitting -> github-guide"
+  },
+  {
+    "query": "git push origin HEAD and open a pull request",
+    "should_trigger": false,
+    "split": "train",
+    "rationale": "near-miss: PR creation belongs to github-guide (push mechanics alone would trigger)"
+  },
+  {
+    "query": "staged changes mix refactor and unrelated formatting — suggest how to split commits and draft messages for each",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: split guidance plus message drafts"
+  },
+  {
+    "query": "draft conventional commit for --working scope; repo log uses scopes like feat(renderer):",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: repo style alignment"
+  },
+  {
+    "query": "no staged changes but lots unstaged — write commit message anyway",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: scope clarification or empty index handling"
+  },
+  {
+    "query": "draft the commit message but don't reference the plan or research report — the message must stand alone",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: self-contained message requirement"
+  },
+  {
+    "query": "write a commit message for this stage; we're on stage 2 of the implementation plan",
+    "should_trigger": true,
+    "split": "validation",
+    "rationale": "validation positive: staged workflow context; message must restate intent, not cite the plan"
+  },
+  {
+    "query": "implement the JWT refresh endpoint in Python with pytest tests",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: implementation task, not commit message"
+  },
+  {
+    "query": "what does conventional commits spec say about BREAKING CHANGE footers",
+    "should_trigger": false,
+    "split": "validation",
+    "rationale": "validation negative: spec explanation without drafting task"
   }
 ]

@@ -26,7 +26,7 @@ command name. Treat that text as optional extra context for the commit message b
 
 3. If there are no staged changes, stop and report — do not stage files or commit.
 
-4. Read and follow the **commit-message-writer** skill (`.agents/skills/commit-message-writer/SKILL.md` or the installed tool skill). Use scope **staged** only. `/commit` is the explicit commit request covered by the skill's **Commit on confirmation** section — proceed to commit once the draft is ready; **do not** emit or wait on the commit-offer question.
+4. Read and follow the **git-guide** skill's commit-message drafting reference (`.agents/skills/git-guide/SKILL.md` → `references/commit-message.md`, or the installed tool skill). Use scope **staged** only. `/commit` is the explicit commit request covered by that reference's **Commit on confirmation** section — proceed to commit once the draft is ready; **do not** emit or wait on the commit-offer question.
 
 5. Extract the final commit text (subject line, blank line, body) from the draft:
    - Prefer the ` ```text ` block under `## Verbose`, or the HEREDOC body inside `## Suggested command` under ` ```bash `.
@@ -69,6 +69,6 @@ Never use `--no-verify` unless the user explicitly requested it in the same invo
 - Commit unstaged or untracked files
 - Push to remote unless explicitly requested in the same invocation
 - Run `git commit --amend`, `--no-verify`, or any destructive git commands
-- Skip commit-message-writer and invent a message without reading the staged diff
+- Skip the commit-message drafting reference and invent a message without reading the staged diff
 - Add AI or assistant attribution lines to the commit message
-- Commit when commit-message-writer recommends splitting unrelated staged work
+- Commit when the drafted `Context used:` note recommends splitting unrelated staged work

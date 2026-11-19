@@ -51,7 +51,7 @@
     "query": "create the merge commit with a good conventional commit message",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: final merge commit and message drafting belong to git-guide and commit-message-writer"
+    "rationale": "near-miss: final merge commit and message drafting belong to git-guide and git-guide commit-message drafting"
   },
   {
     "query": "push my branch and rebase onto main before opening the PR",
@@ -69,7 +69,7 @@
     "query": "draft a conventional commit message for my staged changes",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: message drafting, use commit-message-writer"
+    "rationale": "near-miss: message drafting, use git-guide commit-message drafting"
   },
   {
     "query": "review this diff and tell me if the logic is correct",
