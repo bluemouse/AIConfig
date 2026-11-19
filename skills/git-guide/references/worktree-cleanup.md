@@ -16,8 +16,11 @@ git worktree list
 
 # Output:
 # /home/user/project             9a3c5e2 [master]
-# /home/user/project-feature-auth 7f2b1d8 [feature/auth-redesign] (merged)
+# /home/user/project-feature-auth 7f2b1d8 [feature/auth-redesign]
 # /home/user/project-feature-db   c4a8e1f [feature/db-migration] (30+ days no commits)
+#
+# Note: merge/stale status is derived via `git branch --merged` (Techniques below),
+# not reported by `git worktree list` itself.
 
 # Cleanup will identify and remove merged/stale worktrees
 # Merged: feature/auth-redesign (fully merged into master)

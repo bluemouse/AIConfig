@@ -75,28 +75,8 @@ Use this structure for the review output. Keep it concise, but include enough de
 - Re-review recommendation:
 
 ## 9. Guide handoff packet
-- Target skill: plan-guide
-- Review verdict:
-- Confidence:
-- Execution recommendation:
-- Iteration required:
-- Input mode observed:
-- Planning depth observed:
-- Review depth used:
-- Highest-priority repair track:
-- Recommended plan-guide repair mode: full rewrite | targeted section repair | blocker-only repair | split plan | none
-- Sections or task ids to preserve unchanged:
-- Findings requiring plan-guide action:
-  - [finding id]: [severity] [summary]
-    - required action:
-    - affected plan area:
-    - expected repair:
-- User decisions needed:
-- Codebase/project facts to inspect:
-- Upstream research/spec issues:
-- Findings that may be accepted as execution risks:
-- Findings rejected or out of scope:
-- Re-review required before execution:
+
+Fill the full field list and value enums from [guide-handoff-contract.md](guide-handoff-contract.md) — the contract is the single source of truth for fields, allowed values, and semantics. Packet fields include: review verdict, confidence, execution recommendation, iteration required, observed input/planning/review modes, highest-priority repair track, recommended repair mode, sections to preserve, findings requiring action, user decisions, codebase facts, upstream issues, accepted risks, rejected findings, and re-review requirement.
 
 ## 10. Review gate
 Review gate: choose one:

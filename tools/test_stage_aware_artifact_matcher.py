@@ -135,3 +135,89 @@ class StageAwareArtifactMatcherTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class StageScopingRegressionTest(unittest.TestCase):
+    """Regression tests for stage-scoped artifact resolution.
+
+    Unscoped resolution must be deterministic (highest stage index wins,
+    not first filesystem match) and --stage N must never resolve stage M
+    artifacts. Root cause: first-match resolution let a malformed stage-2
+    artifact pass validation against stage-1's file.
+    """
+
+    @staticmethod
+    def _make_staged_run(tmpdir: str) -> Path:
+        run_dir = Path(tmpdir)
+        (run_dir / "00-run-manifest.md").write_text(
+            "# Run Manifest\n\n## Run metadata\n- Run mode: staged\n",
+            encoding="utf-8",
+        )
+        return run_dir
+
+    def test_unscoped_resolves_highest_stage(self) -> None:
+        """Without --stage, the highest stage index must win regardless of
+        directory iteration order."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = self._make_staged_run(tmpdir)
+            (run_dir / "30-stage1-implementation-report.md").write_text(
+                "# Implementation Report\n", encoding="utf-8"
+            )
+            (run_dir / "30-stage2-implementation-report.md").write_text(
+                "# Implementation Report\n", encoding="utf-8"
+            )
+            path = artifact_checks._find_stage_indexed_artifact(
+                run_dir, "30-implementation-report.md", "implement"
+            )
+            self.assertIsNotNone(path)
+            self.assertEqual(path.name, "30-stage2-implementation-report.md")
+
+    def test_stage_scope_excludes_other_stages(self) -> None:
+        """--stage 1 must not resolve a stage-2 artifact."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = self._make_staged_run(tmpdir)
+            (run_dir / "30-stage2-implementation-report.md").write_text(
+                "# Implementation Report\n", encoding="utf-8"
+            )
+            path = artifact_checks._find_stage_indexed_artifact(
+                run_dir, "30-implementation-report.md", "implement", stage=1
+            )
+            self.assertIsNone(path)
+
+    def test_stage_scope_finds_own_stage(self) -> None:
+        """--stage 2 must resolve the stage-2 artifact even when stage 1 exists."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = self._make_staged_run(tmpdir)
+            (run_dir / "30-stage1-implementation-report.md").write_text(
+                "# Implementation Report\n", encoding="utf-8"
+            )
+            (run_dir / "30-stage2-implementation-report.md").write_text(
+                "# Implementation Report\n", encoding="utf-8"
+            )
+            path = artifact_checks._find_stage_indexed_artifact(
+                run_dir, "30-implementation-report.md", "implement", stage=2
+            )
+            self.assertIsNotNone(path)
+            self.assertEqual(path.name, "30-stage2-implementation-report.md")
+
+    def test_stage_scoped_existence_check_fails_on_wrong_stage(self) -> None:
+        """check_artifacts_exist(stage=1) must error when only stage-2 exists."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = self._make_staged_run(tmpdir)
+            (run_dir / "30-stage2-implementation-report.md").write_text(
+                "# Implementation Report\n", encoding="utf-8"
+            )
+            (run_dir / "31-stage2-implementation-audit.md").write_text(
+                "## Verdict\npass\n", encoding="utf-8"
+            )
+            findings = artifact_checks.check_artifacts_exist(
+                run_dir, "implement", stage=1
+            )
+            errors = [f for f in findings if f.severity == "error"]
+            self.assertTrue(
+                errors, "stage-1 validation must not pass against stage-2 artifacts"
+            )

@@ -125,7 +125,7 @@ def allowed_prefixes_for_phase(run_dir: Path, phase: str, base_prefixes: set[str
 
 
 def _resolve_artifact_path(
-    run_dir: Path, filename: str, phase: str, staged_mode: bool
+    run_dir: Path, filename: str, phase: str, staged_mode: bool, stage: int | None = None
 ) -> Path | None:
     """Resolve the on-disk path for an expected artifact.
 
@@ -152,7 +152,7 @@ def _resolve_artifact_path(
             alias_path = run_dir / alias
             if alias_path.exists():
                 return alias_path
-        stage_path = _find_stage_indexed_artifact(run_dir, filename, phase)
+        stage_path = _find_stage_indexed_artifact(run_dir, filename, phase, stage)
         if stage_path is not None:
             return stage_path
     return None
@@ -221,7 +221,7 @@ def _required_artifacts(run_dir: Path, phase: str, staged_mode: bool) -> list[tu
 
 
 def _find_stage_indexed_artifact(
-    run_dir: Path, expected_filename: str, phase: str
+    run_dir: Path, expected_filename: str, phase: str, stage: int | None = None
 ) -> Path | None:
     """Find a stage-indexed variant of an expected artifact.
 
@@ -235,6 +235,11 @@ def _find_stage_indexed_artifact(
     artifacts are produced by one phase and consumed by another (e.g. the
     implement phase produces 30-stageN-* which the code-review phase consumes).
 
+    When ``stage`` is given, only that stage's file matches — validating
+    stage N must never resolve stage M != N artifacts. When ``stage`` is
+    None, the *highest* stage index wins, so resolution is deterministic
+    regardless of filesystem iteration order.
+
     Returns the path to the stage-indexed file if found, None otherwise.
     """
     # Extract the prefix (e.g., "30") and the suffix (e.g., "implementation-report.md")
@@ -245,20 +250,29 @@ def _find_stage_indexed_artifact(
     suffix = expected_filename[3:]  # e.g., "implementation-report.md"
 
     # Search for a file matching {prefix}-stage{N}-{suffix}
+    best: Path | None = None
+    best_index = -1
     for path in run_dir.iterdir():
         if not path.is_file() or not path.name.endswith(".md"):
             continue
         match = _STAGE_INDEX_RE.match(path.name)
         if match:
             file_prefix = match.group(1)
+            file_index = int(match.group(2))
             file_suffix = match.group(3)
-            if file_prefix == prefix and file_suffix == suffix:
-                return path
+            if file_prefix != prefix or file_suffix != suffix:
+                continue
+            if stage is not None:
+                if file_index == stage:
+                    return path
+            elif file_index > best_index:
+                best = path
+                best_index = file_index
 
-    return None
+    return best if stage is None else None
 
 
-def check_artifacts_exist(run_dir: Path, phase: str) -> list[Finding]:
+def check_artifacts_exist(run_dir: Path, phase: str, stage: int | None = None) -> list[Finding]:
     """Check that all expected artifacts for a phase exist.
 
     In staged mode (manifest has `Run mode: staged`), stage-indexed variants
@@ -273,7 +287,7 @@ def check_artifacts_exist(run_dir: Path, phase: str) -> list[Finding]:
     staged_mode = _is_staged_mode(run_dir)
     artifacts = _required_artifacts(run_dir, phase, staged_mode)
     for filename, _sections in artifacts:
-        if _resolve_artifact_path(run_dir, filename, phase, staged_mode) is not None:
+        if _resolve_artifact_path(run_dir, filename, phase, staged_mode, stage) is not None:
             continue  # Exact or stage-indexed variant found
         findings.append(
             Finding(
@@ -285,7 +299,7 @@ def check_artifacts_exist(run_dir: Path, phase: str) -> list[Finding]:
     return findings
 
 
-def check_artifact_sections(run_dir: Path, phase: str) -> list[Finding]:
+def check_artifact_sections(run_dir: Path, phase: str, stage: int | None = None) -> list[Finding]:
     """Check that existing artifacts contain required sections.
 
     In staged mode, stage-indexed variants are checked for required sections
@@ -295,7 +309,7 @@ def check_artifact_sections(run_dir: Path, phase: str) -> list[Finding]:
     staged_mode = _is_staged_mode(run_dir)
     artifacts = _required_artifacts(run_dir, phase, staged_mode)
     for filename, required_sections in artifacts:
-        path = _resolve_artifact_path(run_dir, filename, phase, staged_mode)
+        path = _resolve_artifact_path(run_dir, filename, phase, staged_mode, stage)
         if path is None:
             continue  # Already reported by check_artifacts_exist
         text = path.read_text(encoding="utf-8")
@@ -333,10 +347,14 @@ def check_artifact_naming(run_dir: Path) -> list[Finding]:
     return findings
 
 
-def run_all(run_dir: Path, phase: str) -> list[Finding]:
-    """Run all artifact structure checks for a phase."""
+def run_all(run_dir: Path, phase: str, stage: int | None = None) -> list[Finding]:
+    """Run all artifact structure checks for a phase.
+
+    ``stage`` scopes stage-indexed artifact resolution in staged mode;
+    None means unscoped (highest stage index wins).
+    """
     findings: list[Finding] = []
-    findings.extend(check_artifacts_exist(run_dir, phase))
-    findings.extend(check_artifact_sections(run_dir, phase))
+    findings.extend(check_artifacts_exist(run_dir, phase, stage))
+    findings.extend(check_artifact_sections(run_dir, phase, stage))
     findings.extend(check_artifact_naming(run_dir))
     return findings

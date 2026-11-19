@@ -160,7 +160,7 @@ python skills/skill-creator/scripts/package_skill.py .agents/skills/code-reviewe
 
 ## Notes on portability
 
-- If the user needs a standalone copy outside the single-root layout, use `init_skill.py --path <skills-root>` to create a full copy in one location.
+- If the user needs a standalone copy outside the single-root layout, use `init_skill.py <skill-name> --path <skills-root>` to create a full copy in one location.
 - Tool-specific frontmatter such as `disable-model-invocation` marks a **command-skill** (slash-invoked only); see command-creator for that flow.
 
 ## Quality checklist

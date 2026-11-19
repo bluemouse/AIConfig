@@ -89,6 +89,7 @@ t = 0.5 * (t0 + t1);
 **Why**: Visual substitution localizes whether errors are in the SDF, march budget, or shading composite.
 
 ```glsl
+layout(location = 0) out vec4 fragColor;
 fragColor = vec4(vec3(float(i) / float(MAX_STEPS)), 1.0);  // step heatmap
 ```
 

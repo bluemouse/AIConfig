@@ -47,7 +47,7 @@ verification, or a merge report.
   [github-guide](../github-guide/SKILL.md)
 - **Structured diff review without git operations** — use
   [code-reviewer](../code-reviewer/SKILL.md)
-- **Host-specific PR/MR creation** — use `github-guide` or `gitlab-guide` when installed
+- **Host-specific PR/MR creation** — use `github-guide` on GitHub hosts; other hosts' MR tooling is outside this catalog
 
 ## Core Principles
 
@@ -62,7 +62,7 @@ verification, or a merge report.
 
 ## Branch Operations
 
-- **Push + rebase-onto-base** — publish a branch upstream and keep its PR / MR diff scoped to this change; host skills (`github-guide` / `gitlab-guide`, when installed) drive PR/MR creation — see [references/push.md](references/push.md)
+- **Push + rebase-onto-base** — publish a branch upstream and keep its PR / MR diff scoped to this change; host skills (`github-guide` on GitHub; other hosts' MR tooling is outside this catalog) drive PR/MR creation — see [references/push.md](references/push.md)
 
 ## Conflict Resolution
 

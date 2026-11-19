@@ -32,10 +32,15 @@ from checks import mode_checks
 from checks import loop_checks
 
 
-def run_phase_validation(run_dir: Path, phase: str, repo_root: Path | None = None) -> list[Finding]:
+def run_phase_validation(
+    run_dir: Path,
+    phase: str,
+    repo_root: Path | None = None,
+    stage: int | None = None,
+) -> list[Finding]:
     """Run all validation checks for a phase. Returns a list of findings."""
     findings: list[Finding] = []
-    findings.extend(artifact_checks.run_all(run_dir, phase))
+    findings.extend(artifact_checks.run_all(run_dir, phase, stage))
     findings.extend(manifest_checks.run_all(run_dir, phase))
     findings.extend(loop_checks.run_all(run_dir, phase))
     findings.extend(mode_checks.run_all(run_dir, phase, repo_root))
@@ -61,6 +66,14 @@ def main() -> int:
         help="Path to the run directory (e.g., .agents/workflow/<slug>).",
     )
     parser.add_argument(
+        "--stage",
+        type=int,
+        default=None,
+        help="Stage number in staged mode: scope stage-indexed artifact "
+             "resolution (e.g. --stage 2 validates 30-stage2-* only). "
+             "Omit to resolve the highest stage index.",
+    )
+    parser.add_argument(
         "--repo-root",
         type=Path,
         default=None,
@@ -84,7 +97,7 @@ def main() -> int:
                 break
             current = current.parent
 
-    findings = run_phase_validation(run_dir, args.phase, repo_root)
+    findings = run_phase_validation(run_dir, args.phase, repo_root, args.stage)
 
     errors = [f for f in findings if f.severity == "error"]
     warnings = [f for f in findings if f.severity == "warning"]

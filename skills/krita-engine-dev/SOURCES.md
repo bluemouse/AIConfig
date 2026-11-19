@@ -59,7 +59,7 @@
 
 ## skills-ref/krita-engine-dev (bootstrap template)
 
-- **Path:** `skills-ref/krita-engine-dev/`
+- **Path:** `skills-ref/krita-engine-dev/` (historical; the `skills-ref/` folder was deleted from this machine — the bootstrap skill is now the sole source of truth)
 - **Last reviewed:** 2026-07-06
 - **Used for:**
   - Initial bootstrap content: `SKILL.md`, all `references/`, `scripts/krita_source_probe.py`, `eval-queries.json`

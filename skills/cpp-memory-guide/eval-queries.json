@@ -63,13 +63,13 @@
     "query": "convert this AoS particle array to SoA so the update loop is cache-friendly",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: data layout / cache -> data-oriented-design-guide"
+    "rationale": "near-miss: performance-oriented data layout belongs to cpp-performance-guide, not memory design"
   },
   {
     "query": "free nodes safely in our lock-free stack while other threads might still read them",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: lock-free reclamation -> lock-free-guide"
+    "rationale": "near-miss: lock-free algorithm design is outside the catalog; only the memory-lifetime side is in scope"
   },
   {
     "query": "sub-allocate VkDeviceMemory by memory type and use a staging buffer for uploads",
@@ -87,7 +87,7 @@
     "query": "fix malloc/free mismatch in our legacy C parser module",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: raw C malloc in .c file -> memory-management-guide"
+    "rationale": "near-miss: plain C memory management is outside the catalog (C++20 only)"
   },
   {
     "query": "rename our C++ classes to follow Core Guidelines naming and add [[nodiscard]] on factories",
@@ -117,6 +117,6 @@
     "query": "split the hot and cold fields of this struct to shrink the cache working set",
     "should_trigger": false,
     "split": "validation",
-    "rationale": "near-miss: hot/cold layout -> data-oriented-design-guide"
+    "rationale": "near-miss: hot/cold layout optimization belongs to cpp-performance-guide, not memory design"
   }
 ]

@@ -77,7 +77,7 @@
 
 ## Refresh Workflow
 
-1. Re-read the upstream source(s) above
+1. Re-check the external sources above that are still reachable; the game-engine blog archive has no recorded location and is treated as historical — do not attempt to refresh from it
 2. Diff against the prior pull (or scan for newly added sections)
 3. For each changed area, update the corresponding `references/<topic>.md`
 4. Bump **Last reviewed** date above

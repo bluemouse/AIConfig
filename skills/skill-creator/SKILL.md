@@ -38,7 +38,10 @@ Per the authoritative-edit rule in [references/creation-common.md](references/cr
 
 ### Bundled scripts
 
-`<SKILL_CREATOR_ROOT>` is the directory containing **this** skill's `SKILL.md`; `<SKILL_ROOT>` the directory containing the **target** skill's `SKILL.md` (after install). Run `python -m scripts.*` with `<SKILL_CREATOR_ROOT>` as the working directory so imports resolve. Under `<SKILL_CREATOR_ROOT>/`: `scripts/install_portable_skill.py` (install), `scripts/create_skill.py` (direct scaffold), `scripts/init_skill.py` (standalone), `scripts/quick_validate.py` (validate), `scripts/package_skill.py` (package), `scripts/aggregate_benchmark.py` (benchmark), `scripts/run_loop.py` (description eval loop), `eval-viewer/generate_review.py` (eval viewer).
+`<SKILL_CREATOR_ROOT>` is the directory containing **this** skill's `SKILL.md`; `<SKILL_ROOT>` the directory containing the **target** skill's `SKILL.md` (after install). Two invocation forms, per script:
+
+- **Module form** — `python -m scripts.<name>` with `<SKILL_CREATOR_ROOT>` as the working directory: `quick_validate`, `aggregate_benchmark`, `run_loop`, `run_eval` (and `eval-viewer/generate_review.py` by full path).
+- **Direct form** — `python <SKILL_CREATOR_ROOT>/scripts/<name>.py` (these use flat sibling imports and fail as `-m` modules): `install_portable_skill`, `create_skill`, `init_skill`, `package_skill`.
 
 ### Anatomy and authoring
 

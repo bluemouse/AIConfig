@@ -59,7 +59,7 @@ Individual techniques (ray marching, SDF primitives, CSG, domain warping/repetit
 
 - **Function signature mismatch** — if `fbm(vec3 p)` is defined, do not call `fbm(uv)` with a `vec2`.
 - **Terrain sampling** — height functions often need XZ: `terrainM(pos.xz + offset)`, not `terrainM(pos + offset)`.
-- **Performance** — ray march ≤ 128 steps, volume inner loops ≤ 32, FBM ≤ 6 octaves, nested loops ≤ 1000 iterations/pixel; see [references/performance-budget.md](references/performance-budget.md).
+- **Performance** — march/volume/FBM/nested-loop budgets are tabled in [references/performance-budget.md](references/performance-budget.md).
 - **Ping-pong feedback** — a pass reading its own output must alternate `uChannel0`/`uChannel1` each frame; seed the first frame (`uFrame < N` guard).
 - **Debug colors left in `main()` ship silently** — gate with `const bool DEBUG = false`.
 - **GLSL syntax and compile rules** — see [`../glsl-coding/SKILL.md`](../glsl-coding/SKILL.md).

@@ -2,7 +2,7 @@
 
 ## Git worktree workflow (repository synthesis)
 
-- **Path:** `skills-ref/git-guide/` (original template)
+- **Path:** `skills-ref/git-guide/` (original template) (historical; the `skills-ref/` folder was deleted from this machine — the bootstrap skill is now the sole source of truth)
 - **Last reviewed:** 2026-07-07
 - **Used for:**
   - `SKILL.md` → worktree lifecycle, progressive disclosure
@@ -14,7 +14,7 @@
 
 ## Git push and rebase (repository synthesis)
 
-- **Path:** `skills-ref/git-guide/references/push.md`
+- **Path:** `skills-ref/git-guide/references/push.md` (historical; the `skills-ref/` folder was deleted from this machine — the bootstrap skill is now the sole source of truth)
 - **Last reviewed:** 2026-07-07
 - **Used for:**
   - `references/push.md` → upstream publish, rebase onto base, force-with-lease
@@ -26,7 +26,7 @@
 
 ## Merge conflict resolution (repository synthesis)
 
-- **Path:** `skills-ref/git-guide/references/merge-resolve.md`
+- **Path:** `skills-ref/git-guide/references/merge-resolve.md` (historical; the `skills-ref/` folder was deleted from this machine — the bootstrap skill is now the sole source of truth)
 - **Last reviewed:** 2026-07-07
 - **Used for:**
   - `references/merge-resolve.md` → detect, classify, resolve, validate
@@ -47,7 +47,6 @@
 
 ## Refresh Workflow
 
-1. Re-read upstream git worktree and push/rebase references
-2. Verify commit-message-writer boundary has not drifted
-3. Re-run eval-queries against the skill description
-4. Bump **Last reviewed** dates above
+1. Verify commit-message-writer boundary has not drifted
+2. Re-run eval-queries against the skill description
+3. Bump **Last reviewed** dates above

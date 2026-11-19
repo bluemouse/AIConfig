@@ -91,12 +91,15 @@ For very small dabs, the CPU path uses an analytical anti-aliasing path. GPU bac
 
 Blend pass order is parity-critical:
 
-1. Normal additive/RGB path.
-2. Normal pigment path when `paint_mode > 0`.
-3. Lock-alpha additive path.
-4. Lock-alpha pigment path when `paint_mode > 0`.
-5. Colorize.
-6. Posterize.
+1. Normal additive/RGB path and lock-alpha additive path (`if (paint < 1.0) { Normal,
+   LockAlpha }`).
+2. Normal pigment path and lock-alpha pigment path when `paint_mode > 0`
+   (`if (paint > 0.0) { Normal_Paint, LockAlpha_Paint }`).
+3. Colorize.
+4. Posterize.
+
+Both lock-alpha passes run *inside* their `paint` condition — lock-alpha additive
+runs before the pigment normal pass, not after the full normal group.
 
 The normal contribution is reduced by mode exclusivity:
 

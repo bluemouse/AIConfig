@@ -44,4 +44,4 @@ Rules:
 - Exhaustive `when` over a sealed hierarchy requires no `else`, and adding a new variant breaks compilation at every `when` — that is the point. Avoid `else` on sealed `when` expressions unless the hierarchy is intentionally open or Java interop forces it; `else` silently disables the exhaustiveness check.
 - Exhaustiveness is checked per *static* type. `when` over a value typed as the sealed supertype is exhaustive; the same `when` over a value already narrowed to one variant is not, and `when` over a non-sealed supertype never is.
 - Smart-cast narrowing inside a `when` subject can change which branches the compiler requires — if a `when` that used to compile demands `else` after a type change, check the subject's declared type first.
-- `when` with a subject captures the subject once; `when (expensiveCall())` does not re-evaluate per branch, but neither can later branches observe side effects from earlier ones.
+- `when` with a subject captures the subject once — `when (expensiveCall())` evaluates the call a single time, not per branch, and only one branch executes.

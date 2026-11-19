@@ -255,7 +255,7 @@ Gdk event
   -> lib.brush.Brush.stroke_to()
   -> lib/brush.hpp / lib/python_brush.hpp
   -> mypaint_brush_stroke_to()
-  -> mypaint_brush_stroke_to_internal()
+  -> prepare_and_draw_dab()  (inside mypaint_brush_stroke_to; no _internal symbol exists)
 ```
 
 Understanding this chain makes the rest of the guide much easier to place in
@@ -317,8 +317,7 @@ The Python-to-native boundary is intentionally thin:
 
 - `lib/brush.py` exposes the Python-facing `Brush`.
 - `lib/python_brush.hpp` provides minimal exception-handling wrappers.
-- `lib/brush.hpp` forwards to `mypaint_brush_stroke_to()` and
-  `mypaint_brush_stroke_to(..., linear=TRUE)()`.
+- `lib/brush.hpp` forwards to the unified `mypaint_brush_stroke_to(..., linear)`.
 
 That means nearly all "real brush math" happens below the binding boundary.
 If a visual brush bug survives up to `lib.brush.Brush.stroke_to()`, the next
@@ -1454,7 +1453,7 @@ in Module 10.
   - `posterize_num` → `ROUND(posterize_num * 100)` clamped to `[1, 128]`.
 - `paint_mode` mixes additive RGB and spectral pigment paths:
   - `0.0` = additive-only, `1.0` = spectral-only, intermediate = blend both.
-  - When `0`, spectral blend passes (passes 2 and 4) are skipped.
+  - When `0`, the spectral pigment passes (`Normal_Paint`, `LockAlpha_Paint`) are skipped.
 
 ### 7.11 Parity Pitfalls
 

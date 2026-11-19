@@ -42,7 +42,7 @@ plus the command body. Every coding agent exposes it as `/<name>`; the model nev
 repo/
   .agents/
     skills/
-      code-review/
+      cmd-code-review/
         SKILL.md
 ```
 

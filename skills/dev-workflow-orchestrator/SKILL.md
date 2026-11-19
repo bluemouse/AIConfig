@@ -86,7 +86,7 @@ Iterate over the stages declared in plan §10 `Stage breakdown`. Per-pass input/
 | 1. Baseline + pre-flight | `record_baseline.py --phase implement --run-dir <path>`; `check_pre_phase.py --phase implement --run-dir <path>` |
 | 2. Doer (stage-scoped) | `plan-executor` named pass, `--stage stage-N` (execute only stage-N's §10 tasks) → `30-stageN-implementation-report.md` |
 | 3. Checker | `implementation-auditor` per the recorded dispatch mode (native subagent task packet or named pass) → `31-stageN-implementation-audit.md`; `root-cause-phase` on every finding |
-| 4. Post-flight + route audit | `check_post_phase.py --phase implement --run-dir <path>`. `pass`/`pass with risks` → `validate_phase.py --phase implement --run-dir <path>` (no `--stage` flag; resolves the first `30/31-stageN-*` match on disk) → step 5. `fail`+`local` → in-stage Loop 3 (cap 3) → step 2. `fail`+non-local → backward edge to the root-cause phase (Research, Clarify, or Plan). `blocked` → escalate |
+| 4. Post-flight + route audit | `check_post_phase.py --phase implement --run-dir <path>`. `pass`/`pass with risks` → `validate_phase.py --phase implement --run-dir <path> --stage N` (scoped to the current stage N; omit `--stage` only for cumulative final validation, which resolves the highest stage index deterministically) → step 5. `fail`+`local` → in-stage Loop 3 (cap 3) → step 2. `fail`+non-local → backward edge to the root-cause phase (Research, Clarify, or Plan). `blocked` → escalate |
 | 5. Review (light) | `code-reviewer` per the recorded dispatch mode (native subagent task packet or named pass) on the stage's diff/commit range, effort `standard` (the final deep review is cumulative) → `40-stageN-code-review.md`; `root-cause-phase` on every finding |
 | 6. Route review | `ready to commit`/`ready with notes` → step 7. `needs revision`+blocker/major → in-stage Loop 4 (cap 5, round-1 reviewer-first) → code-review-resolver. `needs revision`+non-local → backward edge |
 | 7. Per-stage commit | `commit-message-writer` drafts, `git-guide` commits (per-stage only, no push); hash → manifest `## Stage status` |
@@ -141,7 +141,7 @@ When a checker finding has `root-cause-phase` set to an earlier phase (later-pha
 
 ### Escalation
 
-When a loop cap is hit without converging: mark the loop `NOT READY` with a blocker summary; read `root-cause-phase` from the findings. If it is not `local` (e.g. `research`, `clarify`, `plan`) and the backward edge count for that phase < 2, send a backward edge. If it is `local` or the count = 2, stop, present the blocker summary, and ask the user.
+When a loop cap is hit without converging: mark the loop `NOT READY` with a blocker summary; read `root-cause-phase` from the findings. If it names a phase **strictly earlier** than the current one (e.g. `research`, `clarify`, `plan` during Implement) and the backward edge count for that phase < 2, send a backward edge; a same-phase or later-phase value is a mis-tag — treat it as `local`. If it is `local` or the count = 2, stop, present the blocker summary, and ask the user.
 
 Raise every user-facing ask here as a structured question — never a question buried in prose. Report the blocker chain: outcome first, chain after. When a backward edge also doesn't resolve (target phase cap hit): stop the workflow, present the full blocker chain, and ask whether to retry, change scope, or abort — as a structured question.
 

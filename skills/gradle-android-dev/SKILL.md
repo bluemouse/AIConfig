@@ -1,6 +1,6 @@
 ---
 name: gradle-android-dev
-description: Configure and debug Android Gradle Plugin builds for Android app and library projects. Use when working with com.android.application, com.android.library, android blocks, SDK levels, namespace, build types, product flavors, variants, lint, R8/ProGuard, signing, Android unit/instrumented test tasks, Android Studio sync, AGP upgrades, or Android build performance — even if the user says "fix my Android Gradle sync" without naming AGP. Always use gradle-dev for general Gradle concepts, wrapper, Kotlin DSL, dependency management, build cache/configuration cache, CI, and custom task logic. For plain Kotlin test design, use kotlin-coding. For Kotlin source language/API fixes, use kotlin-coding.
+description: Configure and debug Android Gradle Plugin builds for Android app and library projects. Use when working with com.android.application, com.android.library, android blocks, SDK levels, namespace, build types, product flavors, variants, lint, R8/ProGuard, signing, Android unit/instrumented test tasks, Android Studio sync, AGP upgrades, or Android build performance — even if the user says "fix my Android Gradle sync" without naming AGP. Always use gradle-dev for general Gradle concepts, wrapper, Kotlin DSL, dependency management, build cache/configuration cache, CI, and custom task logic. For Kotlin source language/API fixes and plain Kotlin test design, use kotlin-coding.
 ---
 
 # Gradle Android Dev
@@ -58,7 +58,7 @@ Run device/emulator tasks such as `connectedDebugAndroidTest` only when a device
 
 ## Tooling helper
 
-This skill includes `scripts/android_gradle_project_check.sh`. Use it only when a local Android Gradle project is available and the user wants command discovery or checks run. Default mode is `--quick`.
+This skill includes `scripts/android_gradle_project_check.sh`. Use it only when a local Android Gradle project is available and the user wants command discovery or checks run. Default mode is `--dry-run` (prints commands without executing); pass `--quick` to actually run the compact check pass.
 
 ```bash
 scripts/android_gradle_project_check.sh --dry-run
@@ -86,5 +86,4 @@ The script detects Android modules and prints/runs likely assemble, unit-test, l
 | Android build performance, variant reduction, CI | [performance-ci.md](references/performance-ci.md) |
 | Sync, SDK/JDK, manifest, R8/dex, signing playbooks | [troubleshooting.md](references/troubleshooting.md) |
 | General Gradle wrapper, catalogs, caches, CI | [gradle-dev](../gradle-dev/SKILL.md) |
-| Plain Kotlin test design and frameworks | [kotlin-coding](../kotlin-coding/SKILL.md) |
-| Kotlin language/API design | [kotlin-coding](../kotlin-coding/SKILL.md) |
+| Kotlin language/API design and plain Kotlin test design | [kotlin-coding](../kotlin-coding/SKILL.md) |

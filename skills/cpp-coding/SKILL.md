@@ -138,17 +138,7 @@ crash or UB fix, also satisfy debugging-guide's verification discipline before c
 
 ## Resources
 
-- [modern-cpp20.md](references/modern-cpp20.md) — C++20 version gates and non-obvious
-  concurrency/coroutine rules
-- [build-and-verification.md](references/build-and-verification.md) — Toolchain and quality
-  gates
-- [debugging-flakiness.md](references/debugging-flakiness.md) — Test failure triage,
-  flaky-test guardrails, and pitfalls table
-- [cpp-memory-guide](../cpp-memory-guide/SKILL.md) — C++20 allocators, ownership, PMR (companion skill)
-- [debugging-guide](../debugging-guide/SKILL.md) — Evidence-driven root-cause debugging before patching (companion skill)
-- [cpp-performance-guide](../cpp-performance-guide/SKILL.md) — Measured C++ performance work when there is no correctness defect (companion skill)
-
-External reference: [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
+External reference: [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines) — bundled and companion references are tabled in Reference routing above.
 
 ## Tool notes
 

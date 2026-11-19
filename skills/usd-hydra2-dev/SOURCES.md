@@ -3,7 +3,7 @@
 ## OpenUSD (primary)
 
 - **Repository:** https://github.com/PixarAnimationStudios/OpenUSD
-- **Local checkout reviewed:** `/home/andy/DevHome/externals/OpenUSD` (`dev` branch)
+- **Local checkout reviewed:** `/home/andy/DevHome/externals/OpenUSD` (`dev` branch; the checkout was later deleted from this machine — re-clone before the next source-verification pass)
 - **Last reviewed:** 2026-07-07
 - **Used for:**
   - All Hydra 2.0 scene-index contracts, datasource/schema APIs, dirtying semantics, plugin surfaces, USD imaging chain entry points, and Storm transparency/material-tag behavior cited in this skill

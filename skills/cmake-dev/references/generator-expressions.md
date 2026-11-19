@@ -38,7 +38,7 @@ target_compile_definitions(mylib PRIVATE
 | `$<CONFIG:Debug>` | Per-configuration values |
 | `$<CXX_COMPILER_ID:GNU,Clang>` | Compiler-specific flags |
 | `$<PLATFORM_ID:Linux>` | OS-specific settings |
-| `$<TARGET_GENEX_EVAL:…>` | Evaluate nested genex when debugging (CMake 3.27+) |
+| `$<TARGET_GENEX_EVAL:…>` | Evaluate nested genex when debugging (CMake 3.12+) |
 
 ## Techniques
 

@@ -5,7 +5,7 @@ description: android ndk and c++ integration guidance for kotlin android 16/api 
 
 # Android NDK Dev
 
-Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve paths to `references/` and `scripts/` from that directory.
+Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve paths to `references/` from that directory.
 
 Use this skill when an Android app needs C++ code or native libraries. Keep Kotlin as the app/control layer and make the native boundary small, explicit, measured, and lifecycle-safe.
 
@@ -69,7 +69,6 @@ Expose native code through one Kotlin facade class with an explicit lifecycle. D
 
 - Implement `Closeable`; make `close()` idempotent (zero the handle before native destroy).
 - Validate direct buffers and preconditions at the boundary; return an error rather than proceeding on a closed handle.
-- Convert native errors into Kotlin exceptions or sealed error results at the boundary.
 
 ## Core rules
 

@@ -46,9 +46,10 @@ the required fix, and a `root-cause-phase` field.
 
 `root-cause-phase` valid values: `local` (fix within this phase's loop) | `research` |
 `clarify` (the requirement itself is fundamentally ambiguous — routes a backward edge to
-Clarify) | `plan` | `implement` | `code-review`. Tag only phases **earlier** than or equal
-to your own phase; a later-phase value is a mis-tag. The orchestrator routes backward
-handoff packets on this field.
+Clarify) | `plan` | `implement` | `code-review`. Tag only phases **strictly earlier**
+than your own phase; your own phase's fix is always `local` — never tag your own phase
+name. A same-phase or later-phase value other than `local` is a mis-tag; the orchestrator
+treats it as invalid. The orchestrator routes backward handoff packets on this field.
 
 ## Boundaries
 

@@ -41,7 +41,7 @@
 
 ## skills-ref/mypaint-engine-dev (authoring bundle)
 
-- **Path:** `skills-ref/mypaint-engine-dev/`
+- **Path:** `skills-ref/mypaint-engine-dev/` (historical; the `skills-ref/` folder was deleted from this machine — the bootstrap skill is now the sole source of truth)
 - **Last reviewed:** 2026-07-06
 - **Used for:**
   - `references/MyPaintProgrammingGuide.md` → extended maintainer guide distilled into focused references

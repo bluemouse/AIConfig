@@ -1,6 +1,6 @@
 ---
 name: gradle-dev
-description: Create, review, troubleshoot, optimize, and modernize Gradle builds for general JVM, Kotlin, and Java projects. Use when editing build.gradle.kts, settings.gradle.kts, gradle.properties, version catalogs, wrapper usage, custom tasks/plugins, test/check task wiring, CI commands, build cache, or configuration cache — even if the user says "fix my Gradle build" without naming a topic. For Android Gradle Plugin, AGP modules, variants, lint, R8, SDK configuration, or Android build performance, use gradle-android-dev. For Kotlin test design and framework patterns, use kotlin-coding. For Kotlin language/API design, use kotlin-coding. Avoids Android-specific guidance unless cross-referencing gradle-android-dev.
+description: Create, review, troubleshoot, optimize, and modernize Gradle builds for general JVM, Kotlin, and Java projects. Use when editing build.gradle.kts, settings.gradle.kts, gradle.properties, version catalogs, wrapper usage, custom tasks/plugins, test/check task wiring, CI commands, build cache, or configuration cache — even if the user says "fix my Gradle build" without naming a topic. For Android Gradle Plugin, AGP modules, variants, lint, R8, SDK configuration, or Android build performance, use gradle-android-dev. For Kotlin language/API design and test design, use kotlin-coding. Avoids Android-specific guidance unless cross-referencing gradle-android-dev.
 ---
 
 # Gradle Dev
@@ -62,7 +62,7 @@ the first root-cause stack-trace cause, not the whole build output.
 
 ## Tooling helper
 
-This skill includes `scripts/gradle_project_check.sh`. Use it only when a local project is available and the user wants command discovery or checks run. Default mode is `--quick`.
+This skill includes `scripts/gradle_project_check.sh`. Use it only when a local project is available and the user wants command discovery or checks run. Default mode is `--dry-run` (prints commands without executing); pass `--quick` to actually run the compact check pass.
 
 ```bash
 scripts/gradle_project_check.sh --dry-run

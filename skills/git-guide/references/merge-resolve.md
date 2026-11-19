@@ -37,7 +37,10 @@ $ <project install or typecheck command>
 
 # Stage only — no commit during active merge/rebase integration
 $ git add package-lock.json
-$ git rebase --continue    # or leave staged for git-merge-guide / final commit step
+$ GIT_EDITOR=true git rebase --continue
+# Bare `git rebase --continue` opens an editor for the replayed commit message —
+# always set GIT_EDITOR=true; see git-merge-guide's blocking-editor rule.
+# Or leave staged for git-merge-guide / the final commit step.
 ```
 
 ## Example: hand off semantic conflict

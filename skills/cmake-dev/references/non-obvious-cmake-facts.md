@@ -11,8 +11,9 @@ this file holds only the rules implementations tend to get wrong.
 - Default implementation dependencies to **PRIVATE**; PUBLIC only for headers/defs/libs
   consumers must see to compile/link against your API. Minimize PUBLIC surface — it
   propagates transitive compile cost and can leak internal API.
-- Do not mix multiple visibility keywords in one `target_link_libraries` item group
-  (`PRIVATE mylib PUBLIC common` is invalid) — one visibility per group.
+- One visibility keyword per item group in `target_link_libraries`
+  (`PRIVATE mylib PUBLIC common` is legal — each keyword governs the items after it —
+  but confusing to read; prefer one group per call).
 - Avoid PUBLIC warning flags — they force downstream warning levels. Gate flags per
   compiler/config with generator expressions (`$<CXX_COMPILER_ID:GNU,Clang>`,
   `$<CONFIG:Debug>`), never with `CMAKE_CXX_FLAGS` string surgery.

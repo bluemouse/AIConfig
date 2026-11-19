@@ -59,12 +59,6 @@ kotlinc file.kt -include-runtime -d app.jar && java -jar app.jar
 | Gradle build files, catalogs, task wiring, CI, caches | [gradle-dev](../gradle-dev/SKILL.md) |
 | AGP, Android variants, lint, R8, signing | [gradle-android-dev](../gradle-android-dev/SKILL.md) |
 
-## Companion Skills
-
-- Use [gradle-dev](../gradle-dev/SKILL.md) for Gradle build engineering, version catalogs, task wiring, CI, and build/configuration cache.
-- Use [gradle-android-dev](../gradle-android-dev/SKILL.md) for Android Gradle Plugin, AGP variants, and Android test task wiring.
-- Use [android-dev](../android-dev/SKILL.md) for Android app architecture, Compose, SDK framework code, and instrumentation/UI tests.
-
 ## References
 
 - [patterns.md](references/patterns.md): non-obvious gotchas — extension static resolution and sealed `when` exhaustiveness.

@@ -68,7 +68,7 @@
 
 ## Template base (skills-ref/cmake-guide)
 
-- **Path:** `skills-ref/cmake-guide/` (read-only input)
+- **Path:** `skills-ref/cmake-guide/` (read-only input) (historical; the `skills-ref/` folder was deleted from this machine — the bootstrap skill is now the sole source of truth)
 - **Last reviewed:** 2026-07-06
 - **Used for:**
   - Initial section outline and reference filenames

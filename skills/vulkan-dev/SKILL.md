@@ -78,13 +78,14 @@ pipeline creation, unbounded frames-in-flight, mobile-tiler-as-desktop assumptio
 
 ## Gotchas
 
-- `maxMemoryAllocationCount` is small (often ~4096); per-resource `vkAllocateMemory` works in a demo then fails — sub-allocate from large blocks.
-- `oldLayout` in a barrier must equal the image's actual current layout (or `UNDEFINED` to discard); a mismatch is undefined behavior.
-- Descriptor updates/destroys racing an in-flight frame — see the update-while-in-flight gotcha in [references/descriptors.md](references/descriptors.md).
-- Forgetting to set a declared dynamic state (`vkCmdSetViewport`/`Scissor`) leaves it undefined; first use of an uncompiled pipeline stalls — build at load with a warm cache.
-- Ignoring `VK_ERROR_OUT_OF_DATE_KHR`/`VK_SUBOPTIMAL_KHR` from acquire/present leaves a stale swapchain after resize — recreate it.
-- A queue-family release barrier without a matching acquire (or vice versa) corrupts the resource; semaphores order queues but do not replace intra-queue barriers.
-- Enabling/using a feature (descriptor indexing, timeline semaphores) without enabling its bit at device creation is invalid — query and enable first.
+One-line pointers — the reference above each carries the full gotcha:
+- Allocation-count cap and sub-allocation — [device-memory.md](references/device-memory.md)
+- `oldLayout` must match the image's tracked layout — [resources-and-barriers.md](references/resources-and-barriers.md)
+- Descriptor updates racing an in-flight frame — [descriptors.md](references/descriptors.md)
+- Unset dynamic state; uncompiled pipelines stall — [pipelines.md](references/pipelines.md)
+- `OUT_OF_DATE`/`SUBOPTIMAL` from acquire/present — recreate — [commands-and-swapchain.md](references/commands-and-swapchain.md)
+- Queue-family release/acquire barriers must pair — [resources-and-barriers.md](references/resources-and-barriers.md)
+- Feature bits must be enabled at device creation — [capabilities-and-setup.md](references/capabilities-and-setup.md)
 
 ## Companion Skills
 

@@ -395,7 +395,20 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "",
         run_summary = {c: run_summary[c] for c in ordered}
 
     if len(configs) >= 2:
-        p, b = (primary, baseline) if primary is not None else (configs[0], configs[1])
+        if primary is not None:
+            p, b = primary, baseline
+        else:
+            # No explicit roles: infer them by conventional config names so the
+            # delta keeps the documented "primary minus baseline" sign.
+            # Candidate/new arms win primary; baseline/without arms are baseline.
+            primary_names = ("with_skill", "new_skill", "candidate", "improved")
+            baseline_names = ("without_skill", "old_skill", "baseline", "original")
+            p = next((c for c in configs if c in primary_names), None)
+            b = next((c for c in configs if c in baseline_names), None)
+            if p is None or b is None:
+                # Unrecognized names: fall back to sorted order (first minus
+                # second) — callers comparing versions must pass --primary/--baseline.
+                p, b = configs[0], configs[1]
         run_summary["delta"] = calculate_delta(run_summary, p, b)
 
     # Build runs array for benchmark.json (graded runs only; infra-failed

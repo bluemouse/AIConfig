@@ -13,7 +13,7 @@ Manifest example:
     {"name": "computeMain", "stage": "compute"}
   ],
   "targets": ["vulkan", "metal"],
-  "extra_args": ["-Wall"]
+  "extra_args": ["-warnings-as-errors", "30047"]
 }
 """
 

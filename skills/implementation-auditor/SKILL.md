@@ -55,12 +55,7 @@ When invoked **inside the orchestrator**, the orchestrator assigns the output pa
 
 ## Verdict routing
 
-End every audit by routing on the verdict so defects are not carried forward:
-
-- `pass` — proceed to [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) for diff review, then delivery.
-- `pass with risks` — proceed to [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md), and pass the named risks in as explicit review focus.
-- `fail` — return to implementation: [../plan-executor/SKILL.md](../plan-executor/SKILL.md) for missing or incomplete behavior, or [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) when a test fails or a regression appears and the cause is unclear. Re-audit after the fix.
-- `blocked` — do not report pass. Document exactly what could not run and why; resolve the environment, credentials, devices, or dependencies, then re-audit.
+End every audit by routing on the verdict — see [references/audit-report-template.md](references/audit-report-template.md) "Next-action routing by verdict" for the full mapping: `pass`/`pass with risks` → code-reviewer for diff review, then delivery; `fail` → plan-executor or debugging-guide, then re-audit; `blocked` → resolve what could not run, then re-audit — never report pass when blocked.
 
 ## Evidence rules
 

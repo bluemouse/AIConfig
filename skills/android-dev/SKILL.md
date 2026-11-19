@@ -1,6 +1,6 @@
 ---
 name: android-dev
-description: kotlin-only native android app development guidance for android 16/api 36+ apps. use when designing, implementing, reviewing, or troubleshooting android sdk app code, jetpack compose ui, app architecture, camera and media flows, painting/image/photo app features, permissions, testing, app bundle release, performance, memory, accessibility, and quality. prefer this skill for app-layer kotlin, compose, camerax/media3, lifecycle, coroutines, storage, and release decisions. delegate c++/jni/library integration to android-ndk-dev and vulkan renderer details to android-vulkan-dev.
+description: kotlin-only android sdk app development guidance for android 16/api 36+ apps. use when designing, implementing, reviewing, or troubleshooting android sdk app code, jetpack compose ui, app architecture, camera and media flows, painting/image/photo app features, permissions, testing, app bundle release, performance, memory, accessibility, and quality. prefer this skill for app-layer kotlin, compose, camerax/media3, lifecycle, lifecycle-aware coroutines (viewModelScope, StateFlow), storage, and release decisions. delegate c++/jni/library integration to android-ndk-dev and vulkan renderer details to android-vulkan-dev.
 ---
 
 # Android Dev

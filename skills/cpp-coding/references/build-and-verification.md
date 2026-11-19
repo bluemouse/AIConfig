@@ -184,7 +184,7 @@ Non-obvious debugger rules for crash triage; core commands (`bt`, `frame`, `info
 - lcov flow (GNU): run the test binary to flush `.gcda` counters, then
   `lcov --capture --directory build --output-file coverage.info` and
   `genhtml coverage.info --output-dir out`; for Clang, run the binary to flush
-  `.profraw`, then `llvm-cov show`/`llvm-cov generate-report` with the `.profdata`.
+  `.profraw`, then `llvm-cov report` (or `llvm-cov show`) with the `.profdata`.
 - Prioritize coverage on error paths, ownership boundaries, and concurrency code.
 - Coverage percentage alone is not sufficient — assert meaningful behavior.
 

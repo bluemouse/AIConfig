@@ -96,7 +96,7 @@ selected scope (notes per scope), then a lightweight verify: reread the diff per
 candidate, drop unevidenced findings, dedupe across scopes. Cap at **10** findings.
 
 **`deep`** — full rigor via parallel scope passes when the environment supports them
-(see **Deep Effort: Parallel Scope Passes** and `## Tool notes`): per-scope passes →
+(see **Deep Effort: Parallel Scope Passes** and the Environment dispatch section of [references/parallel-scope-passes.md](references/parallel-scope-passes.md)): per-scope passes →
 cross-scope dedup → adversarial verify → final gap sweep. Cap at **15–20** findings.
 
 ## Interactive Mode

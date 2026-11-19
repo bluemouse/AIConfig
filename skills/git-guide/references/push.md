@@ -2,8 +2,8 @@
 
 The local-git steps that precede opening a PR / MR: publish the branch upstream, and
 rebase it onto the base so the diff is just this change. Driving the host — opening the
-PR, posting reviews — is the host skill's job (`github-guide`, `gitlab-guide`, or another
-host skill when installed); this file is the git half they defer to.
+PR, posting reviews — is the host skill's job (`github-guide` on GitHub hosts; other hosts' MR tooling is
+outside this catalog); this file is the git half they defer to.
 
 ## Push the branch upstream
 

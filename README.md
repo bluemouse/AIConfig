@@ -43,39 +43,7 @@ repo/
 │   ├── test_installer_bundles.py
 │   ├── test_installer_commands.py
 │   └── test_installer_tooltips.py
-├── skills/                            # Bootstrap skills (author here, then install)
-│   ├── skill-creator/                 # Meta: creates and improves skills
-│   ├── agent-creator/                 # Meta: creates and improves agents
-│   ├── command-creator/               # Meta: creates and improves slash commands and prompts
-│   ├── agent-runner/                  # Dispatch independent workstreams to subagents concurrently
-│   ├── code-reviewer/                 # Structured multi-scope code review
-│   ├── techdoc-reviewer/              # Technical documentation review and synchronization
-│   ├── code-professor/                # Evidence-based codebase learning and documentation guides
-│   ├── commit-message-writer/         # Conventional Commit message drafting from git diffs
-│   ├── github-guide/                  # GitHub PR/review delivery via gh CLI and gh api
-│   ├── prompt-clarifier/              # Iterative clarification of ambiguous requests before acting
-│   ├── advisory-council/              # Multi-perspective council deliberation on complex decisions
-│   ├── devil-advocate/                # Adversarial stress-test of proposals with verdicts
-│   ├── research-guide/                # Interactive research and brainstorming before planning
-│   ├── research-reviewer/             # Audit research reports for implementation readiness
-│   ├── plan-guide/                    # Author and repair implementation plans from research or specs
-│   ├── plan-reviewer/                 # Audit implementation plans before execution
-│   ├── plan-executor/                 # Execute implementation plans on the current branch
-│   ├── implementation-auditor/        # Evidence-based correctness audit
-│   ├── test-driven-dev-guide/         # Strict TDD red-green-refactor coaching
-│   ├── debugging-guide/               # Systematic root-cause debugging and minimal verified repair
-│   ├── tutorial-writer/               # Example-driven tutorials, quickstarts, and user guides
-│   ├── cpp-coding/                    # C++20 coding and GoogleTest/CTest testing
-│   ├── cpp-memory-guide/              # C++20 memory design and allocators
-│   ├── cpp-performance-guide/         # C++ performance profiling, benchmarking, and optimization
-│   ├── cmake-dev/                     # CMake 3.20+ target-based builds
-│   ├── gpu-rendering-guide/           # API-agnostic GPU renderer architecture
-│   ├── krita-engine-dev/              # Krita brush engines, paintops, stroke scheduling
-│   ├── mypaint-engine-dev/            # MyPaint/libmypaint brush engine and tiled surfaces
-│   ├── qt-dev/                        # Qt 6 Widgets/CMake desktop UI for render tools
-│   ├── qt-ui-guide/                   # Qt Widgets UI/UX design, review, and .ui authoring
-│   ├── vulkan-dev/                    # Vulkan 1.3 development
-│   └── slang-dev/                     # Slang shader development (SPIR-V / MSL)
+├── skills/                            # Bootstrap skills (author here, then install) — full table below
 ├── agents/                            # Optional bootstrap agents (author here, then install)
 ├── commands/                          # Optional bootstrap commands (author here, then install)
 └── tools/                           # Installer + dev-workflow validation scripts (tracked)

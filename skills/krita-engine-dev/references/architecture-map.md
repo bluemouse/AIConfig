@@ -51,7 +51,7 @@ Typical source anchors:
 
 - `libs/image/brushengine/kis_paintop.h`
 - `libs/image/brushengine/kis_paint_information.h`
-- `libs/image/brushengine/kis_distance_information.*`
+- `libs/image/kis_distance_information.*`
 - `libs/image/brushengine/kis_paintop_utils.h`
 - `libs/image/brushengine/kis_paintop_factory.h`
 - `libs/image/brushengine/kis_paintop_registry.*`

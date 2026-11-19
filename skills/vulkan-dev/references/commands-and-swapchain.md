@@ -34,11 +34,16 @@ FrameSlot slots[FRAMES_IN_FLIGHT];
 void drawFrame(uint64_t frame) {
     FrameSlot& s = slots[frame % FRAMES_IN_FLIGHT];
     vkWaitForFences(dev, 1, &s.inFlight, VK_TRUE, UINT64_MAX); // wait the slot we reuse
-    vkResetFences(dev, 1, &s.inFlight);
 
     uint32_t img = 0;
     VkResult r = vkAcquireNextImageKHR(dev, swapchain, UINT64_MAX, s.imageAvailable, VK_NULL_HANDLE, &img);
-    if (r == VK_ERROR_OUT_OF_DATE_KHR) { recreateSwapchain(); return; }
+    if (r == VK_ERROR_OUT_OF_DATE_KHR) { recreateSwapchain(); return; }  // early return before
+    if (r != VK_SUCCESS && r != VK_SUBOPTIMAL_KHR) return;               // any fence reset: no deadlock
+
+    vkResetFences(dev, 1, &s.inFlight);   // reset only after a successful acquire — resetting
+                                          // before acquire leaves the slot fence unsignaled when
+                                          // acquire fails/returns early, and the next reuse of
+                                          // this slot blocks forever in vkWaitForFences
 
     vkResetCommandPool(dev, s.pool, 0);                        // O(1); fence guarantees safe
     VkCommandBufferBeginInfo begin{

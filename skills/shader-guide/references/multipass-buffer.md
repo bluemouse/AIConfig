@@ -47,8 +47,11 @@ texel (x,1)-(x,12) = brick grid state
 
 ## Example
 
+All snippets declare the fragment output as `layout(location = 0) out vec4 fragColor;`.
+
 ```glsl
 // Helpers: hash-based value noise / FBM (authored inline); GLSL builtin noise() is invalid for SPIR-V
+layout(location = 0) out vec4 fragColor;
 void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
 

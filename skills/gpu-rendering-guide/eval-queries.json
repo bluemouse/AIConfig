@@ -63,7 +63,7 @@
     "query": "restructure this CPU particle array from AoS to SoA so the update loop stops missing cache",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: CPU-only data layout -> data-oriented-design-guide"
+    "rationale": "near-miss: CPU-only data layout belongs to cpp-performance-guide, not GPU rendering"
   },
   {
     "query": "how do I architect uploads of static GPU-resident data versus dynamic per-frame data — staging into a device-local tier for one, a persistent-mapped ring for the other",
@@ -129,7 +129,7 @@
     "query": "tune my CPU SoA particle update loop to stop missing cache — no GPU involved",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: CPU-only data layout -> data-oriented-design-guide, not GPU simulation"
+    "rationale": "near-miss: CPU-only data layout belongs to cpp-performance-guide, not GPU rendering or simulation"
   },
   {
     "query": "we submit draws in scene graph order and GPU time is dominated by pipeline switches — how should we sort and batch before recording",

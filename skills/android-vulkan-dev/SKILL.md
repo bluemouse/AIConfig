@@ -5,7 +5,7 @@ description: vulkan-through-ndk gpu rendering guidance for android 16/api 36+ ap
 
 # Android Vulkan Dev
 
-Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve paths to `references/` and `scripts/` from that directory.
+Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve paths to `references/` from that directory.
 
 Use this skill for **GPU rendering on Android using Vulkan through the NDK**. Generic Vulkan 1.3 API calls (`Vk*`, `vkCmd*`, synchronization2, dynamic rendering, descriptors, pipelines) live in [vulkan-dev](../vulkan-dev/SKILL.md); API-agnostic renderer architecture (render graph, frames-in-flight, memory strategy) lives in [gpu-rendering-guide](../gpu-rendering-guide/SKILL.md). This skill owns **Android surface lifecycle, WSI, AHB interop, Android Vulkan Profiles, wide color, and the Kotlin/NDK bridge**.
 

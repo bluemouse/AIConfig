@@ -102,12 +102,11 @@ CHECKS: dict[str, list[str]] = {
     ],
     "plugins/paintops/defaultpaintops/brush/KisDabRenderingQueue.cpp": [
         "KisDabRenderingQueue",
-        "sequence",
+        "seqNo",
     ],
     "plugins/paintops/libpaintop/KisDabCacheUtils.cpp": [
         "generateDab",
         "postProcessDab",
-        "DabRequestInfo",
     ],
     "libs/brush/kis_brush.cpp": [
         "KisBrush::generateMaskAndApplyMaskOrCreateDab",
@@ -216,7 +215,8 @@ def main() -> int:
     else:
         print(render_markdown(root, checks))
 
-    return 0
+    failed = any(not c.exists or c.missing_patterns for c in checks)
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

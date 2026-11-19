@@ -9,7 +9,7 @@ A backward handoff packet carries context from a later phase to an earlier phase
 
 ## Routing
 - From phase: <research | plan | implement | code-review>
-- To phase: <research | plan | implement | code-review>  (must be earlier)
+- To phase: <clarify | research | plan | implement | code-review>  (must be earlier; `clarify` only from Research, for fundamentally ambiguous requirements)
 - Backward edge count for target phase: <n> of 2
 - Created: <ISO timestamp>
 
@@ -37,7 +37,7 @@ A backward handoff packet carries context from a later phase to an earlier phase
 
 ## Rules
 
-- The `To phase` must be earlier in the pipeline than the `From phase`.
+- The `To phase` must be earlier in the pipeline than the `From phase` (`clarify` counts as earliest; only Research sends to it).
 - The `Backward edge count for target phase` must not exceed 2.
 - The `Finding id` must reference a real finding in the source artifact.
 - The packet is write-once by the discovering checker. The target phase reads it but does not edit it.

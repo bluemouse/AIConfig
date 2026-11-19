@@ -43,7 +43,7 @@ Resolve `<AGENT_CREATOR_ROOT>` as the directory containing **this** skill's `SKI
 | Create portable agent (direct) | `<AGENT_CREATOR_ROOT>/scripts/create_agent.py` |
 | Validate | `<AGENT_CREATOR_ROOT>/scripts/quick_validate.py` |
 
-Bootstrap source lives at `skills/agent-creator/`; installed copies at `.agents/skills/agent-creator/`. Run additional module scripts as `python -m scripts.*` with `<AGENT_CREATOR_ROOT>` as the working directory.
+Bootstrap source lives at `skills/agent-creator/`; installed copies at `.agents/skills/agent-creator/`. Run `create_agent.py` and `quick_validate.py` as `python -m scripts.<name>` with `<AGENT_CREATOR_ROOT>` as the working directory; run `install_portable_agent.py` by full path (`python <AGENT_CREATOR_ROOT>/scripts/install_portable_agent.py …` — it uses flat sibling imports and fails as a module).
 
 ### Layouts
 

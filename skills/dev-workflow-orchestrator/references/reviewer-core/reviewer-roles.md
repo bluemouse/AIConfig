@@ -37,20 +37,20 @@ set of roles, synthesize their findings, and report the result. Per-skill parame
 
 ## Optional specialist roles (both reviewers)
 
-Activate only when the domain materially changes findings:
+Activate only when the domain materially changes findings — the per-domain check lists live in [domain-lenses.md](domain-lenses.md):
 
-| role | activate when | primary checks |
-|---|---|---|
-| Graphics / Rendering Reviewer | Graphics, CAD visualization, GPU, OpenGL, Vulkan, shaders, viewport, material, scene graph, realtime rendering, visual fidelity. | Rendering pipeline impact, GPU capability tiers, sync/resource lifetimes, memory/frame pacing, visual regression, golden images, fallback, platform constraints. |
-| Security / Privacy Reviewer | Identity, permissions, data exposure, enterprise controls, compliance, secrets. | Threat model, least privilege, secret handling, auditability, retention, consent, abuse cases. |
-| Data / AI Reviewer | Data models, analytics, ML, LLMs, recommendations, evals. | Data quality, ground truth, evaluation metrics, drift, bias, monitoring, rollback. |
-| Infrastructure / DevOps Reviewer | Deployment, CI/CD, services, cloud, observability, reliability. | Environments, deployment gates, monitoring, SLOs, capacity, rollback, incident response. |
-| UX / Workflow Reviewer | User-facing workflows, screens, interactions, onboarding, accessibility. | States, accessibility, localization, error handling, discoverability, support burden. |
-| Performance Reviewer | Latency, throughput, memory, frame time, scalability, benchmarks. | Budgets, representative workloads, profiling, regression thresholds, observability. |
-| Migration / Compatibility Reviewer | Schema changes, file formats, public APIs, versioning, backward compatibility. | Migration safety, reversibility, version gates, compatibility tests, data repair. |
-| Product Strategy Reviewer (research) | Adoption, market, prioritization, roadmap, value, or differentiation matters. | Strategic fit, value clarity, opportunity cost, adoption path, stakeholder incentives. |
-| Financial / Business Reviewer (research) | Cost, pricing, revenue, procurement, or resourcing matters. | Cost model, return assumptions, budget risk, commercial constraints. |
-| Operations / Support Reviewer (research) | Rollout, incident handling, support, reliability, or administration matters. | Runbooks, monitoring, rollback, SLA/SLO impact, support ownership, customer communication. |
+| role | activate when |
+|---|---|
+| Graphics / Rendering Reviewer | Graphics, CAD visualization, GPU, OpenGL, Vulkan, shaders, viewport, material, scene graph, realtime rendering, visual fidelity. |
+| Security / Privacy Reviewer | Identity, permissions, data exposure, enterprise controls, compliance, secrets. |
+| Data / AI Reviewer | Data models, analytics, ML, LLMs, recommendations, evals. |
+| Infrastructure / DevOps Reviewer | Deployment, CI/CD, services, cloud, observability, reliability. |
+| UX / Workflow Reviewer | User-facing workflows, screens, interactions, onboarding, accessibility. |
+| Performance Reviewer | Latency, throughput, memory, frame time, scalability, benchmarks. |
+| Migration / Compatibility Reviewer | Schema changes, file formats, public APIs, versioning, backward compatibility. |
+| Product Strategy Reviewer (research) | Adoption, market, prioritization, roadmap, value, or differentiation matters. |
+| Financial / Business Reviewer (research) | Cost, pricing, revenue, procurement, or resourcing matters. |
+| Operations / Support Reviewer (research) | Rollout, incident handling, support, reliability, or administration matters. |
 
 ## Role selection rules
 

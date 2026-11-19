@@ -78,7 +78,7 @@ notification. Follow these rules to avoid that gap:
   "wait for notification" gap. This is the default and the strongly preferred mode.
 - **Async mode only for long-running processes.** Servers, watchers, dev daemons.
   End the turn and let the completion notification arrive; do not poll, `sleep`, or
-  loop on `get_terminal_output`.
+  loop on the host's terminal-output query.
 - **Never background terminating commands.** No `&`, `nohup`, `disown`, or
   daemonizing wrappers for builds/tests. Backgrounding breaks exit detection — the
   parent exits but the child holds the pty, so the terminal never sees EOF and never
@@ -95,8 +95,8 @@ notification. Follow these rules to avoid that gap:
   notification rather than polling.
 - **If a command exits early with an error, do not keep waiting.** Sync mode returns
   the error inline; act on it. For async, if no notification arrives within a
-  reasonable window, call `get_terminal_output` once to check status rather than
-  ending the turn and stalling the conversation.
+  reasonable window, query the terminal's output once (where the host exposes such a
+  tool) to check status rather than ending the turn and stalling the conversation.
 
 ## 6. Python Conventions
 

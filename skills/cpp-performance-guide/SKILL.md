@@ -11,7 +11,7 @@ Optimize by evidence, not intuition. Preserve correctness first, then improve th
 
 Target **C++20** unless the project explicitly uses another standard. Load bundled references on demand — do not read every reference file unless the task needs it.
 
-For general C++20 style, see [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md). For allocation and ownership design, see [`../cpp-memory-guide/SKILL.md`](../cpp-memory-guide/SKILL.md). For regression tests and Google Benchmark targets, see [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md). For root-cause diagnosis before optimizing, see [`../debugging-guide/SKILL.md`](../debugging-guide/SKILL.md). For learning how performance-related code paths work without optimizing, see [`../code-professor/SKILL.md`](../code-professor/SKILL.md).
+For general C++20 style, see [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md). For allocation and ownership design, see [`../cpp-memory-guide/SKILL.md`](../cpp-memory-guide/SKILL.md). For regression-test authoring, see [`../cpp-coding/SKILL.md`](../cpp-coding/SKILL.md); for Google Benchmark work, see [measurement-and-benchmarking.md](references/measurement-and-benchmarking.md) and the bundled scripts. For root-cause diagnosis before optimizing, see [`../debugging-guide/SKILL.md`](../debugging-guide/SKILL.md). For learning how performance-related code paths work without optimizing, see [`../code-professor/SKILL.md`](../code-professor/SKILL.md).
 
 ## Hotspot index
 

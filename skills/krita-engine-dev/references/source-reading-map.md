@@ -16,7 +16,7 @@ This map is a high-confidence guide for KDE/krita source navigation. Re-verify a
 10. `libs/image/kis_painter_blt_multi_fixed.cpp`
 11. `libs/image/brushengine/kis_paintop.h`
 12. `libs/image/brushengine/kis_paint_information.h`
-13. `libs/image/brushengine/kis_distance_information.*`
+13. `libs/image/kis_distance_information.*`
 14. `libs/image/brushengine/kis_paintop_utils.h`
 15. `libs/image/brushengine/kis_paintop_factory.h`
 16. `libs/image/brushengine/kis_paintop_registry.*`
