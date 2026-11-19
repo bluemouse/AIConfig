@@ -113,7 +113,7 @@ Applies to plans authored by [../../plan-guide/SKILL.md](../../plan-guide/SKILL.
 
 Check:
 - Test design section exists with test ids, scenarios, and red-phase expected failures (`mandatory` tasks) or stated alternative verification (`verification-led` tasks) when repository context allows.
-- Tests Designer collaboration with Requirements Mapper, Architecture Planner, Task Decomposer, and Verification Planner is reflected — not implied.
+- Test design visibly reconciles with the task decomposition and requirements table — stated, not implied.
 - Every must-have requirement maps to at least one planned failing test or verification check and at least one verification step.
 - `mandatory` code-producing tasks list red-phase tests before production implementation steps; `verification-led` tasks state their verification strategy and command.
 - Test discipline is explicit for code tasks: `mandatory`, or `verification-led` with a stated strategy; `n/a` only for non-code or check-only config/infra tasks with justification. Explicitly user-requested TDD must be `mandatory`.

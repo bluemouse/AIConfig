@@ -24,7 +24,8 @@ A graphics `VkPipeline` bakes the entire state — `VkShaderModule`s, vertex inp
 VkPipelineRenderingCreateInfo rci{  // dynamic rendering: declare formats, no VkRenderPass
     .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
     .colorAttachmentCount = 1,
-    .pColorAttachmentFormats = (VkFormat[]){VK_FORMAT_R16G16B16A16_SFLOAT},
+    static constexpr VkFormat kColorFormats[] = {VK_FORMAT_R16G16B16A16_SFLOAT};
+    .pColorAttachmentFormats = kColorFormats,
     .depthAttachmentFormat = VK_FORMAT_D32_SFLOAT,
 };
 VkDynamicState dyn[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};

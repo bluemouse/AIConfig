@@ -46,10 +46,9 @@ Reject or revise the plan if it contains:
 
 - Every code-producing task states its discipline: `mandatory` (strict red-green, red-phase failing tests specified before production steps), `verification-led` (code with a stated alternative verification strategy — the strategy and the command must be concrete), or `n/a` (non-code, justified, with concrete checks). Explicitly user-requested TDD is always `mandatory`.
 - For `verification-led` tasks, the alternative verification is stated in the plan and its expected result is observable; it is never a vague "tests will cover it".
-- Tests Designer collaboration with Requirements Mapper, Architecture Planner, Task Decomposer, and Verification Planner is reflected in the plan — not implied.
+- Test design visibly reconciles with the task decomposition and requirements table — decisions and conflicts are stated, not implied.
 - Every must-have requirement maps to at least one planned failing test or verification check and at least one verification step.
 - Planned tests name test file paths, test identifiers, scenarios, and expected failure or assertion intent when the repository context allows.
-- Test discipline is `mandatory` for code tasks; `n/a` appears only for non-code tasks or config/infra tasks verified by command/check-based validation, with explicit justification.
 - Task boundaries support independent red-green-refactor cycles per [../../test-driven-dev-guide/SKILL.md](../../test-driven-dev-guide/SKILL.md).
 - Edge cases, negative paths, and regression scenarios from the source context are covered in test design — not deferred.
 

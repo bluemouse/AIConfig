@@ -64,7 +64,7 @@ If `uic` is installed, also validate with the project's Qt toolchain, for exampl
 
 ## Repository-Aware Behavior
 
-- Inspect `CMakeLists.txt`, `.pro` files, nearby `.ui` files, shared style code, and relevant widget classes before introducing new conventions. Reuse existing custom widgets and design tokens when purposeful and accessible; preserve naming and file organization unless actively harmful.
+- Inspect `CMakeLists.txt`, nearby `.ui` files, shared style code, and relevant widget classes before introducing new conventions. Reuse existing custom widgets and design tokens when purposeful and accessible; preserve naming and file organization unless actively harmful.
 - With CMake, expect `.ui` files to be handled by AUTOUIC; do not add generated headers to source control unless the project does so. Keep UI changes focused — no unrelated refactoring.
 
 ## Reference Loading

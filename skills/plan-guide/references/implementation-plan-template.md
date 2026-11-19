@@ -64,7 +64,7 @@ Use this structure for a plan that should be executable by a developer, engineer
 |---|---|---|---|---|---|---|
 | t-001 | unit/integration/e2e/contract |  |  |  |  |  |
 
-Collaboration notes: [How Tests Designer aligned with Requirements Mapper, Architecture Planner, Task Decomposer, and Verification Planner.]
+Reconciliation: [How the test design resolves conflicts with the task decomposition and requirements table — stated, not implied.]
 
 ## 7. Task breakdown
 

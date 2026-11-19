@@ -20,14 +20,15 @@ Use this structure for the review output. Keep it concise, but include enough de
 [Short summary of whether the plan is executable and the main reason.]
 
 ## 3. Findings
-| id | severity | affected area | issue | required fix | plan-guide action |
-|---|---|---|---|---|---|
-| pr-001 | blocker/major/minor/question/nit | section/task/source item |  |  | revise plan / ask user / inspect codebase / research upstream / narrow scope / split plan / accept as execution risk / re-review |
+| id | severity | affected area | issue | root-cause-phase | required fix | plan-guide action |
+|---|---|---|---|---|---|---|
+| pr-001 | blocker/major/minor/question/nit | section/task/source item |  | local/research/clarify/plan/implement/code-review | revise plan / ask user / inspect codebase / research upstream / narrow scope / split plan / accept as execution risk / re-review |
 
 ### Finding details
 #### pr-001: [short title]
 - Severity:
 - Affected area:
+- Root-cause-phase: local/research/clarify/plan/implement/code-review
 - Issue:
 - Why it matters for execution:
 - Required fix:

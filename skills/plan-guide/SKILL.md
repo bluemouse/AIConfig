@@ -152,7 +152,7 @@ Do not finalize the plan while test design and task decomposition disagree. Reso
 
 ### 7. Decompose work
 
-Create a cohesive task sequence. Use tasks that are large enough to carry a meaningful review gate and small enough to be independently implemented and verified. Populate each task with the full field set defined in [references/implementation-plan-template.md](references/implementation-plan-template.md) — task id, source requirements, dependencies, exact file paths, execution class and file ownership, interfaces, red-phase tests, implementation steps, test discipline (`mandatory` default | `n/a` justified), verification command, acceptance criteria, and risks/stop conditions.
+Create a cohesive task sequence. Use tasks that are large enough to carry a meaningful review gate and small enough to be independently implemented and verified. Populate each task with the full field set defined in [references/implementation-plan-template.md](references/implementation-plan-template.md) — task id, source requirements, dependencies, exact file paths, execution class and file ownership, interfaces, red-phase tests, implementation steps, test discipline (`mandatory` default | `verification-led` with stated strategy | `n/a` justified), verification command, acceptance criteria, and risks/stop conditions.
 
 Avoid fixed-length plans. Use as many tasks as required, but split the plan when independent subsystems should be planned separately.
 

@@ -21,9 +21,9 @@ Use this structure for the final review-report. Adapt only when sections are irr
 - Sections or inputs missing from the review:
 
 ## 3. Top findings
-| id | severity | affected section | issue | required fix | research-guide action |
-|----|----------|------------------|-------|--------------|-----------------------|
-| rr-001 | blocker/major/minor/question/nit |  |  |  | revise report / ask user / inspect codebase / gather evidence / validate assumption / resolve open question / reconcile contradiction / narrow scope / expand alternatives / accept as planning risk / re-review |
+| id | severity | affected section | issue | root-cause-phase | required fix | research-guide action |
+|----|----------|------------------|-------|-----------------|--------------|-----------------------|
+| rr-001 | blocker/major/minor/question/nit |  |  | local/clarify/research | revise report / ask user / inspect codebase / gather evidence / validate assumption / resolve open question / reconcile contradiction / narrow scope / expand alternatives / accept as planning risk / re-review |
 
 ## 4. Cross-lens audit
 ### Completeness

@@ -55,7 +55,7 @@ instead of driving the whole plan.
 
 Do not write production code for a behavior until a test for that behavior has been written, run, and observed failing for the expected reason. Work one vertical behavior slice at a time: red (one focused failing test), green (the smallest production change that passes it), refactor (only while tests stay green), repeat.
 
-If code was already written before the test, do not adapt that code as the implementation. Treat it as exploratory work, discard or ignore it, then implement fresh from the failing test unless the user explicitly waives TDD.
+If code was already written before the test, treat it as unverified: do not adopt it as the implementation until the new failing test validates it. If it does not pass the red-green cycle, rewrite the affected slice from the failing test unless the user explicitly waives TDD.
 
 Verify the red state proves the missing behavior, not a broken test: the failure message must match the missing behavior — not a compile error, fixture mistake, missing import, bad mock, or typo. If the new test passes immediately, it proves nothing; change it. If it errors, fix the setup and rerun until it fails correctly.
 
