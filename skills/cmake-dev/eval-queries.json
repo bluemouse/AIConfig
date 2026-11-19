@@ -111,7 +111,7 @@
     "query": "configure dotnet test and xunit filter for this net8 solution",
     "should_trigger": false,
     "split": "train",
-    "rationale": "near-miss: .NET test toolchain, not a CMake build question"
+    "rationale": "near-miss: .NET test toolchain -> csharp-coding"
   },
   {
     "query": "set up Vulkan swapchain and render pass creation in C++",

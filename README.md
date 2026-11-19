@@ -69,6 +69,7 @@ repo/
 │   ├── cpp-memory-guide/              # C++20 memory design and allocators
 │   ├── cpp-performance-guide/         # C++ performance profiling, benchmarking, and optimization
 │   ├── cmake-dev/                     # CMake 3.20+ target-based builds
+│   ├── csharp-coding/                 # C#/.NET language, LangVersion/SDK selection, minimal build/test verify
 │   ├── gpu-rendering-guide/           # API-agnostic GPU renderer architecture
 │   ├── krita-engine-dev/              # Krita brush engines, paintops, stroke scheduling
 │   ├── mypaint-engine-dev/            # MyPaint/libmypaint brush engine and tiled surfaces
@@ -129,6 +130,7 @@ Bootstrap skills live under `skills/`. Installing one copies the package to `.ag
 | `cpp-memory-guide` | `skills/cpp-memory-guide/` | C++20 memory design: RAII, allocators, PMR, sanitizers |
 | `cpp-performance-guide` | `skills/cpp-performance-guide/` | C++ performance profiling, benchmarking, codegen tuning, and optimization with evidence |
 | `cmake-dev` | `skills/cmake-dev/` | CMake 3.20+ target-based builds, FetchContent, CTest, install/export |
+| `csharp-coding` | `skills/csharp-coding/` | C#/.NET language, LangVersion/SDK selection, minimal build/test verify |
 | `gpu-rendering-guide` | `skills/gpu-rendering-guide/` | API-agnostic explicit-API renderer architecture |
 | `krita-engine-dev` | `skills/krita-engine-dev/` | Krita brush engines, paintops, stroke scheduling, tiled compositing, canvas/GPU display |
 | `mypaint-engine-dev` | `skills/mypaint-engine-dev/` | MyPaint/libmypaint brush engine, `.myb` presets, dab scheduling, tiled surfaces, parity testing |
