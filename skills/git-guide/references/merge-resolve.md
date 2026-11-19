@@ -5,7 +5,7 @@
 Detect, classify, and resolve **simple mechanical** merge/rebase conflicts. Stage the
 result and validate with project checks. Do **not** create merge/rebase completion commits
 during an active integration — hand off final commits to
-[commit.md](commit.md) and [commit-message.md](commit-message.md).
+[commit.md](commit.md) and [commit-message-writer](../../commit-message-writer/SKILL.md).
 
 For semantic, API, behavioral, multi-file, or integration-verification work, hand off to
 [../../git-merge-guide/SKILL.md](../../git-merge-guide/SKILL.md).
@@ -63,7 +63,8 @@ All conflicts fixed but you are still merging.
 $ git commit -m "<user-supplied or pre-drafted message>"
 ```
 
-Use [commit-message.md](commit-message.md) when the user needs message drafting.
+Use [commit-message-writer](../../commit-message-writer/SKILL.md) when the user needs
+message drafting.
 
 ## Techniques
 

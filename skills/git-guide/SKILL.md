@@ -1,6 +1,6 @@
 ---
 name: git-guide
-description: "Use when running git operations or resolving repo-state issues. Triggers on worktrees, feature-worktree create/merge/abandon/cleanup, branch cleanup, push/rebase before a PR, staging and committing, final merge commits, history rewrites, stash, or simple single-file merge/rebase conflict triage including pick-ours/theirs mechanical resolution — even when the user doesn't say 'git'. Also triggers on drafting a git commit message in Conventional Commits format (subject plus body) from staged changes, the working tree, a single commit, or a commit range — even if the user does not say 'conventional commits'. Does not trigger on end-to-end local merge/rebase integration, semantic conflict resolution, integration review of merged code, impact-based verification, or merge reports — use git-merge-guide. Ends commit-message drafting by asking whether to proceed with git commit using the generated message; does not commit without explicit confirmation."
+description: "Use when running git operations or resolving repo-state issues. Triggers on worktrees, feature-worktree create/merge/abandon/cleanup, branch cleanup, push/rebase before a PR, staging and committing (when the user supplies or already has a message), final merge commits, history rewrites, stash, or simple single-file merge/rebase conflict triage including pick-ours/theirs mechanical resolution — even when the user doesn't say 'git'. Does not trigger on end-to-end local merge/rebase integration, semantic conflict resolution, integration review of merged code, impact-based verification, or merge reports — use git-merge-guide. For drafting Conventional Commit messages from diffs, use commit-message-writer."
 ---
 
 # Git Guidelines
@@ -15,7 +15,6 @@ requires them.
 ## When to Use
 
 - Staging, committing, pushing, or rebasing branches
-- Drafting a Conventional Commit message from a diff, commit, or commit range
 - Simple single-file or mechanical merge/rebase conflict triage and staging
 - Creating the final merge commit after a staged integration result
 - Creating, merging, validating, abandoning, or cleaning up feature worktrees
@@ -41,6 +40,9 @@ verification, or a merge report.
 - **End-to-end local merge/rebase integration** — semantic conflict resolution,
   integration code review of cleanly merged code, impact-based verification, merge
   reports — use [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md)
+- **Drafting Conventional Commit messages from diffs** — use
+  [commit-message-writer](../commit-message-writer/SKILL.md) for message composition,
+  type/scope selection, and compact/verbose output
 - **Authoring PR descriptions, sizing, or self-review** — use
   [github-guide](../github-guide/SKILL.md)
 - **Structured diff review without git operations** — use
@@ -49,17 +51,13 @@ verification, or a merge report.
 
 ## Core Principles
 
-- **Message drafting is built in** — draft the message with
-  [references/commit-message.md](references/commit-message.md), then run the commit
-  mechanics from [references/commit.md](references/commit.md); do not commit until
-  the user confirms the draft (or explicitly asked to commit)
+- **Message drafting is separate** — use [commit-message-writer](../commit-message-writer/SKILL.md) for Conventional Commit composition; this skill handles git mechanics once a message exists
 - **Isolated Development** — use worktrees for feature branches only when the current branch is `main`, `master`, or `dev`; always ask the user to confirm before creating — see [references/worktree-create.md](references/worktree-create.md)
 - **Validate Before Merge** — run the project's typecheck/lint/build/test, see [references/worktree-validate.md](references/worktree-validate.md)
 - **Publish and Rebase** — push a branch upstream and rebase onto the base before opening a PR / MR, see [references/push.md](references/push.md)
 
 ## Commit Operations
 
-- **Draft message** — Conventional Commits subject plus body from staged, working, commit, or range scope; self-contained messages, no attribution footers; see [references/commit-message.md](references/commit-message.md)
 - **Stage and commit** — status, stage, commit with a user-supplied or pre-drafted message, optional push; see [references/commit.md](references/commit.md)
 
 ## Branch Operations
@@ -88,6 +86,7 @@ verification, or a merge report.
 | Task | Path |
 |------|------|
 | End-to-end merge/rebase integration and verification | [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) |
+| Draft Conventional Commit messages from diffs | [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) |
 | PR description, sizing, self-review | [../github-guide/SKILL.md](../github-guide/SKILL.md) |
 | Structured diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
 | GitHub PR/review delivery (`gh pr create`, post review) | [../github-guide/SKILL.md](../github-guide/SKILL.md) |

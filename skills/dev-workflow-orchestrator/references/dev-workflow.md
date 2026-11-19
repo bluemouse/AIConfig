@@ -46,14 +46,14 @@ Start by deciding what kind of input you have.
 | Bug report, failing test, crash, regression, or flaky behavior | [debugging-guide](../../debugging-guide/SKILL.md) | Root cause must be proven before implementation changes |
 | Approved implementation plan | [plan-executor](../../plan-executor/SKILL.md) | Execution needs task tracking, working-tree safety, edits, and verification |
 | Finished code changes | [implementation-auditor](../../implementation-auditor/SKILL.md), then [code-reviewer](../../code-reviewer/SKILL.md), then [techdoc-reviewer](../../techdoc-reviewer/SKILL.md) when reader-visible contracts or documentation are in scope | Correctness evidence comes before reviewer-side diff risk analysis; documentation truth follows when APIs, setup, migration, or operational docs may be affected |
-| Ready-to-submit branch | [git-guide](../../git-guide/SKILL.md), [github-guide](../../github-guide/SKILL.md) | Delivery needs commit drafting + git mechanics, and a reviewable PR narrative |
+| Ready-to-submit branch | [commit-message-writer](../../commit-message-writer/SKILL.md), [git-guide](../../git-guide/SKILL.md), [github-guide](../../github-guide/SKILL.md) | Delivery needs commits, git mechanics, and a reviewable PR narrative |
 
 Each subsequent phase hands off to the next skill's documented entry conditions; the per-skill SKILL.md bodies own their own procedure and quality bar — this guide does not restate them.
 
 ### Phase guidance, delivery, handoffs, and staged mode
 
 - **Phase procedures and quality bars** (research → plan → implement → debug → QA → review): each owning skill's SKILL.md (see the intake table for routing).
-- **Delivery** (commit → push → PR): [git-guide](../../git-guide/SKILL.md) (message drafting + mechanics), then [github-guide](../../github-guide/SKILL.md) — none commit, push, or open a PR unless explicitly asked; one concern per PR.
+- **Delivery** (commit → push → PR): [commit-message-writer](../../commit-message-writer/SKILL.md), [git-guide](../../git-guide/SKILL.md), then [github-guide](../../github-guide/SKILL.md) — none commit, push, or open a PR unless explicitly asked; one concern per PR.
 - **Handoff and return paths** (routing on each skill's terminal state, backward edges): the orchestrator's loop contracts in [../SKILL.md](../SKILL.md) and [loop-contracts.md](loop-contracts.md). Loops are intentional and human-gated — never auto-cycle between two skills without an explicit decision.
 - **Staged mode** (when to use, per-stage topology, stage-exit review, final deep review): the orchestrator's Staged iterator and Final deep review sections in [../SKILL.md](../SKILL.md).
 - **Post-delivery defects found after merge:** re-enter with [debugging-guide](../../debugging-guide/SKILL.md) for root cause, then a regression test via [test-driven-dev-guide](../../test-driven-dev-guide/SKILL.md) before the fix, then the audit → review → delivery chain.

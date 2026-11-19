@@ -19,7 +19,7 @@ When `Run mode: staged` (declared in plan §10 and confirmed at the plan gate), 
 
 | Phase | Per-stage commit | Per-stage push | Final deep review fixes |
 |-------|-----------------|----------------|--------------------------|
-| Implement (staged) | yes (per-stage commit via git-guide: draft + commit) | no (default) | n/a |
+| Implement (staged) | yes (per-stage commit via commit-message-writer → git-guide) | no (default) | n/a |
 | Final deep review | yes (new commits on top, no amend/rebase — fixes land as new commits on top, no amend/rebase) | no (unless asked) | yes (code-review-resolver applies fixes as new commits) |
 | Terminal delivery (after final deep review) | no (the PR is opened, not committed) | yes (PR branch push, only when the user asks for delivery) | n/a |
 

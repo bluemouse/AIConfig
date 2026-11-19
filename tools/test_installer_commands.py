@@ -38,8 +38,8 @@ mod = load_installer_module()
 REPO_ROOT = TOOLS_DIR.parent
 
 GIT_COMMIT_DESCRIPTION = (
-    "Draft a Conventional Commit message for staged changes with the "
-    "git-guide commit-message reference, then commit without pushing."
+    "Draft a Conventional Commit message for staged changes with "
+    "commit-message-writer, then commit those staged changes without pushing."
 )
 
 def write_plain_skill(root: Path, name: str) -> Path:
@@ -126,7 +126,7 @@ class CommandDiscoveryTests(unittest.TestCase):
                 mod.REPO_ROOT = original_root
 
             self.assertIn("commit", descriptions)
-            self.assertIn("git-guide", descriptions["commit"])
+            self.assertIn("commit-message-writer", descriptions["commit"])
 
     def test_discover_commands_in_project_filters_by_flag(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

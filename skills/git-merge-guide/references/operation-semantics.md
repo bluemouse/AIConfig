@@ -93,7 +93,7 @@ If a merge conflicts, resolve and stage all intended changes but do not run `git
 This skill always leaves non-fast-forward merges **resolved and staged**. Creating the final
 merge commit is outside this skill — the user or [../../git-guide/SKILL.md](../../git-guide/SKILL.md)
 creates it separately, optionally drafting the message with
-[../../git-guide/SKILL.md](../../git-guide/SKILL.md) (commit-message drafting).
+[../../commit-message-writer/SKILL.md](../../commit-message-writer/SKILL.md).
 
 ## 5. Starting a rebase
 
