@@ -42,10 +42,10 @@ class BundleLoadingTests(unittest.TestCase):
     def test_load_production_bundles(self) -> None:
         bundles = mod.load_skill_bundles(BUNDLES_JSON_PATH)
         by_id = {bundle.id: bundle for bundle in bundles}
-        self.assertEqual(len(by_id["core-dev-workflow"].skills), 11)
+        self.assertEqual(len(by_id["core-dev-workflow"].skills), 12)
         # cr-001: the orchestrator must ship with the extended bundle so the
         # reviewers' folded reviewer-core links resolve in the target.
-        self.assertEqual(len(by_id["extended-dev-workflow"].skills), 19)
+        self.assertEqual(len(by_id["extended-dev-workflow"].skills), 20)
         self.assertIn("git-merge-guide", by_id["extended-dev-workflow"].skills)
         self.assertIn(
             "dev-workflow-orchestrator", by_id["extended-dev-workflow"].skills
@@ -68,7 +68,7 @@ class BundleLoadingTests(unittest.TestCase):
                 "implementation-auditor",
                 "code-review-resolver",
                 "code-reviewer",
-                "git-guide",
+                "commit-message-writer",
             }),
         )
         self.assertEqual(
@@ -400,7 +400,7 @@ class CliSkillResolutionTests(unittest.TestCase):
             bundle_ids=["core-dev-workflow"],
             skill_names=None,
         )
-        self.assertEqual(len(resolved), 11)
+        self.assertEqual(len(resolved), 12)
 
     def test_resolve_cli_skills_union(self) -> None:
         resolved = mod.resolve_cli_skills(
@@ -409,7 +409,7 @@ class CliSkillResolutionTests(unittest.TestCase):
         )
         self.assertIn("cpp-coding", resolved)
         self.assertIn("research-guide", resolved)
-        self.assertEqual(len(resolved), 12)
+        self.assertEqual(len(resolved), 13)
 
     def test_unknown_bundle_id(self) -> None:
         with self.assertRaises(mod.InstallerError) as ctx:
@@ -666,7 +666,7 @@ class TargetBundleTests(unittest.TestCase):
                 skill_names=None,
                 target_root=Path(tmp),
             )
-            self.assertEqual(len(resolved), 11)
+            self.assertEqual(len(resolved), 12)
 
     def test_resolve_cli_skills_explicit_bundles_no_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

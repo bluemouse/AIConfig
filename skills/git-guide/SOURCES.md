@@ -34,7 +34,7 @@
   - UU/AA/DD status markers → `references/merge-resolve.md`
   - Tool-agnostic post-resolution validation → `references/merge-resolve.md`
 
-## commit-message-writer boundary (repository, superseded by the 2026-11-19 merge)
+## commit-message-writer boundary (repository)
 
 - **Path:** `skills/commit-message-writer/`
 - **Last reviewed:** 2026-07-07
@@ -48,30 +48,6 @@
 ## Refresh Workflow
 
 1. Re-read upstream git worktree and push/rebase references
-2. Verify the commit-message drafting boundary (commit.md vs commit-message.md) has not drifted
+2. Verify commit-message-writer boundary has not drifted
 3. Re-run eval-queries against the skill description
 4. Bump **Last reviewed** dates above
-
-## Conventional Commits 1.0.0 (merged from commit-message-writer)
-
-- **URL:** https://www.conventionalcommits.org/en/v1.0.0/
-- **Last reviewed:** 2026-07-06
-- **Used for:** message grammar baseline (`references/commit-message.md` → message rules)
-- **Aspects extracted:** `<type>[optional scope]: <description>` structure, the
-  `feat`/`fix` plus extended type set, breaking change via `!` or
-  `BREAKING CHANGE:` footer
-
-## commit-message-writer skill (repository, merged 2026-11-19)
-
-- **Path:** `skills/commit-message-writer/` (removed by the merge)
-- **Last reviewed:** 2026-11-19
-- **Used for:**
-  - `references/commit-message.md` → scope modes (staged, working, commit, range),
-    output envelope, draft-first workflow with commit offer on confirmation
-  - `scripts/lint_message.py` → mechanical message lint (portable twin of
-    `tools/dev-workflow/checks/message_checks.py`)
-  - `evals/evals.json` → behavior evals asserting self-contained messages
-- **Aspects extracted:**
-  - Self-contained message rule (no ephemeral run-artifact ids or narration)
-  - No-attribution rule overriding host footers
-  - Style precedence: repo log → these rules → Conventional Commits defaults

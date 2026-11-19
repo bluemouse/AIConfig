@@ -1,5 +1,5 @@
 {
-  "skill_name": "git-guide",
+  "skill_name": "commit-message-writer",
   "notes": [
     "Task evals (behavior), not description trigger evals. Trigger coverage for the",
     "self-contained rule lives in ../eval-queries.json; this file asserts the drafted",

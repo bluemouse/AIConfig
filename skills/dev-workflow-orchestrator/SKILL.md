@@ -30,7 +30,7 @@ contracts, route backward edges, track state in the manifest, and enforce mode b
 ## When NOT to Use
 
 - **Individual phase tasks** — use the phase-specific skill directly (research-guide,
-  plan-guide, plan-executor, code-reviewer, code-review-resolver, git-guide)
+  plan-guide, plan-executor, code-reviewer, code-review-resolver, commit-message-writer)
 - **Git mechanics alone** — use [../git-guide/SKILL.md](../git-guide/SKILL.md)
 - **Code diff review without the full workflow** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 - **Interactive research or brainstorming** — use [../research-guide/SKILL.md](../research-guide/SKILL.md)
@@ -48,7 +48,7 @@ This skill automates the pipeline in [references/dev-workflow.md](references/dev
 | Plan | [../plan-guide/SKILL.md](../plan-guide/SKILL.md) | [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) |
 | Implement | [../plan-executor/SKILL.md](../plan-executor/SKILL.md) | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |
 | Code Review | [../code-review-resolver/SKILL.md](../code-review-resolver/SKILL.md) | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
-| Commit | [../git-guide/SKILL.md](../git-guide/SKILL.md) | — |
+| Commit | [../commit-message-writer/SKILL.md](../commit-message-writer/SKILL.md) | — |
 
 ## Workflow topology
 
@@ -89,7 +89,7 @@ Iterate over the stages declared in plan §10 `Stage breakdown`. Per-pass input/
 | 4. Post-flight + route audit | `check_post_phase.py --phase implement --run-dir <path>`. `pass`/`pass with risks` → `validate_phase.py --phase implement --run-dir <path>` (no `--stage` flag; resolves the first `30/31-stageN-*` match on disk) → step 5. `fail`+`local` → in-stage Loop 3 (cap 3) → step 2. `fail`+non-local → backward edge to the root-cause phase (Research, Clarify, or Plan). `blocked` → escalate |
 | 5. Review (light) | `code-reviewer` per the recorded dispatch mode (native subagent task packet or named pass) on the stage's diff/commit range, effort `standard` (the final deep review is cumulative) → `40-stageN-code-review.md`; `root-cause-phase` on every finding |
 | 6. Route review | `ready to commit`/`ready with notes` → step 7. `needs revision`+blocker/major → in-stage Loop 4 (cap 5, round-1 reviewer-first) → code-review-resolver. `needs revision`+non-local → backward edge |
-| 7. Per-stage commit | `git-guide` drafts the message and commits (per-stage only, no push); hash → manifest `## Stage status` |
+| 7. Per-stage commit | `commit-message-writer` drafts, `git-guide` commits (per-stage only, no push); hash → manifest `## Stage status` |
 | 8. Stage-exit review | Between stages only (last stage skips it). `plan-reviewer` in stage-exit mode per the recorded dispatch mode (native subagent task packet or named pass) over `30/31/40-stageN-*.md`, §4 assumptions, §10 remaining stages → `32-stageN-exit-review.md` |
 | 9. Route exit verdict | `plan-current` → `plan-guide` lightly refines the next stage's tasks; next stage. `plan-stale` → full re-plan of remaining stages, `plan-reviewer` re-audit, user re-confirms at a plan gate, resume from the affected stage |
 

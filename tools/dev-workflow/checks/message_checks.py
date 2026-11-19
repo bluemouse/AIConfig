@@ -3,10 +3,11 @@
 Lint commit messages made during a phase against the commit-message
 self-containment contract: no ephemeral planning/review ids, no run
 narration, a Conventional Commits subject within 72 characters, and no
-attribution footers. The rules mirror the git-guide skill's commit-message
-contract (references/commit-message.md, "Message rules"): a commit message
-must be readable from the repository alone, and finding/task/stage ids carry
-meaning only inside the run artifacts that define them.
+attribution footers. The rules mirror the commit-message-writer skill's
+message-style contract (references/message-style-contract.md, "Self-contained
+messages"): a commit message must be readable from the repository alone, and
+finding/task/stage ids carry meaning only inside the run artifacts that
+define them.
 
 Baseline mechanism (same as mode checks): commits in baseline_head..HEAD were
 made during this phase and are linted. In staged mode the per-stage commits
@@ -17,7 +18,7 @@ False positives follow the established repair: record the override with
 justification in the manifest validation log, re-record the baseline
 mid-phase (absorbing the commit), and re-run the checks.
 
-Portable twin: the same rule set ships with the git-guide skill
+Portable twin: the same rule set ships with the commit-message-writer skill
 as scripts/lint_message.py for ad-hoc draft-time use. Keep the two in sync.
 """
 

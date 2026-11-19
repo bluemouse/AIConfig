@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mechanical lint for drafted commit messages (git-guide commit-message reference).
+"""Mechanical lint for drafted commit messages (commit-message-writer skill).
 
 Enforces the vocabulary half of the message-style contract that drafting
 alone has repeatedly missed: no ephemeral planning/review ids, no run
