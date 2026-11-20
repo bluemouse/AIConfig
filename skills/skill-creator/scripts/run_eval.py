@@ -16,7 +16,14 @@ import uuid
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
-from scripts.utils import parse_skill_md
+from scripts.utils import (
+    DEFAULT_EVAL_MODEL,
+    SpawnBudgetExceededError,
+    SubprocessLimitError,
+    create_spawn_budget,
+    parse_skill_md,
+    subprocess_slot,
+)
 
 
 def find_project_root() -> Path:
@@ -59,6 +66,7 @@ def run_single_query(
     timeout: int,
     project_root: str,
     model: str | None = None,
+    budget_id: str | None = None,
 ) -> bool:
     """Run a single query and return whether the skill was triggered.
 
@@ -74,142 +82,143 @@ def run_single_query(
     command_file = project_commands_dir / f"{clean_name}.md"
 
     try:
-        project_commands_dir.mkdir(parents=True, exist_ok=True)
-        # Use YAML block scalar to avoid breaking on quotes in description
-        indented_desc = "\n  ".join(skill_description.split("\n"))
-        command_content = (
-            f"---\n"
-            f"description: |\n"
-            f"  {indented_desc}\n"
-            f"---\n\n"
-            f"# {skill_name}\n\n"
-            f"This skill handles: {skill_description}\n"
-        )
-        command_file.write_text(command_content)
+        with subprocess_slot(budget_id=budget_id):
+            project_commands_dir.mkdir(parents=True, exist_ok=True)
+            # Use YAML block scalar to avoid breaking on quotes in description
+            indented_desc = "\n  ".join(skill_description.split("\n"))
+            command_content = (
+                f"---\n"
+                f"description: |\n"
+                f"  {indented_desc}\n"
+                f"---\n\n"
+                f"# {skill_name}\n\n"
+                f"This skill handles: {skill_description}\n"
+            )
+            command_file.write_text(command_content)
 
-        cmd = [
-            "claude",
-            "-p", query,
-            "--output-format", "stream-json",
-            "--verbose",
-            "--include-partial-messages",
-        ]
-        if model:
-            cmd.extend(["--model", model])
+            cmd = [
+                "claude",
+                "-p", query,
+                "--output-format", "stream-json",
+                "--verbose",
+                "--include-partial-messages",
+            ]
+            if model:
+                cmd.extend(["--model", model])
 
-        # Remove CLAUDECODE env var to allow nesting claude -p inside a
-        # Claude Code session. The guard is for interactive terminal conflicts;
-        # programmatic subprocess usage is safe.
-        env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
+            # Remove CLAUDECODE env var to allow nesting claude -p inside a
+            # Claude Code session. The guard is for interactive terminal conflicts;
+            # programmatic subprocess usage is safe.
+            env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
 
-        process = subprocess.Popen(
-            cmd,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            cwd=project_root,
-            env=env,
-        )
+            process = subprocess.Popen(
+                cmd,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                cwd=project_root,
+                env=env,
+            )
 
-        triggered = False
-        start_time = time.time()
-        buffer = ""
-        pending_tool_name = None
-        accumulated_json = ""
+            triggered = False
+            start_time = time.time()
+            buffer = ""
+            pending_tool_name = None
+            accumulated_json = ""
 
-        try:
-            while time.time() - start_time < timeout:
-                if process.poll() is not None:
-                    while True:
-                        extra = os.read(process.stdout.fileno(), 8192)
-                        if not extra:
-                            break
-                        buffer += extra.decode("utf-8", errors="replace")
-                    break
+            try:
+                while time.time() - start_time < timeout:
+                    if process.poll() is not None:
+                        while True:
+                            extra = os.read(process.stdout.fileno(), 8192)
+                            if not extra:
+                                break
+                            buffer += extra.decode("utf-8", errors="replace")
+                        break
 
-                ready, _, _ = select.select([process.stdout], [], [], 1.0)
-                if not ready:
-                    continue
-
-                chunk = os.read(process.stdout.fileno(), 8192)
-                if not chunk:
-                    break
-                buffer += chunk.decode("utf-8", errors="replace")
-
-                while "\n" in buffer:
-                    line, buffer = buffer.split("\n", 1)
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        event = json.loads(line)
-                    except json.JSONDecodeError:
+                    ready, _, _ = select.select([process.stdout], [], [], 1.0)
+                    if not ready:
                         continue
 
-                    if event.get("type") == "stream_event":
-                        se = event.get("event", {})
-                        se_type = se.get("type", "")
+                    chunk = os.read(process.stdout.fileno(), 8192)
+                    if not chunk:
+                        break
+                    buffer += chunk.decode("utf-8", errors="replace")
 
-                        if se_type == "content_block_start":
-                            cb = se.get("content_block", {})
-                            if cb.get("type") == "tool_use":
-                                tool_name = cb.get("name", "")
-                                if tool_name in ("Skill", "Read"):
-                                    pending_tool_name = tool_name
-                                    accumulated_json = ""
+                    while "\n" in buffer:
+                        line, buffer = buffer.split("\n", 1)
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            event = json.loads(line)
+                        except json.JSONDecodeError:
+                            continue
 
-                        elif se_type == "content_block_delta" and pending_tool_name:
-                            delta = se.get("delta", {})
-                            if delta.get("type") == "input_json_delta":
-                                accumulated_json += delta.get("partial_json", "")
-                                if _matches_skill_trigger(
+                        if event.get("type") == "stream_event":
+                            se = event.get("event", {})
+                            se_type = se.get("type", "")
+
+                            if se_type == "content_block_start":
+                                cb = se.get("content_block", {})
+                                if cb.get("type") == "tool_use":
+                                    tool_name = cb.get("name", "")
+                                    if tool_name in ("Skill", "Read"):
+                                        pending_tool_name = tool_name
+                                        accumulated_json = ""
+
+                            elif se_type == "content_block_delta" and pending_tool_name:
+                                delta = se.get("delta", {})
+                                if delta.get("type") == "input_json_delta":
+                                    accumulated_json += delta.get("partial_json", "")
+                                    if _matches_skill_trigger(
+                                        accumulated_json,
+                                        skill_name,
+                                        clean_name,
+                                        pending_tool_name,
+                                    ):
+                                        return True
+
+                            elif se_type == "content_block_stop":
+                                if pending_tool_name and _matches_skill_trigger(
                                     accumulated_json,
                                     skill_name,
                                     clean_name,
                                     pending_tool_name,
                                 ):
                                     return True
+                                pending_tool_name = None
+                                accumulated_json = ""
 
-                        elif se_type == "content_block_stop":
-                            if pending_tool_name and _matches_skill_trigger(
-                                accumulated_json,
-                                skill_name,
-                                clean_name,
-                                pending_tool_name,
-                            ):
-                                return True
-                            pending_tool_name = None
-                            accumulated_json = ""
+                            elif se_type == "message_stop":
+                                if pending_tool_name and _matches_skill_trigger(
+                                    accumulated_json,
+                                    skill_name,
+                                    clean_name,
+                                    pending_tool_name,
+                                ):
+                                    return True
+                                pending_tool_name = None
+                                accumulated_json = ""
 
-                        elif se_type == "message_stop":
-                            if pending_tool_name and _matches_skill_trigger(
-                                accumulated_json,
-                                skill_name,
-                                clean_name,
-                                pending_tool_name,
-                            ):
-                                return True
-                            pending_tool_name = None
-                            accumulated_json = ""
+                        elif event.get("type") == "assistant":
+                            message = event.get("message", {})
+                            for content_item in message.get("content", []):
+                                if content_item.get("type") != "tool_use":
+                                    continue
+                                tool_name = content_item.get("name", "")
+                                tool_input = content_item.get("input", {})
+                                if tool_name in ("Skill", "Read") and _matches_skill_trigger(
+                                    tool_input, skill_name, clean_name, tool_name
+                                ):
+                                    return True
+            finally:
+                # Clean up process on any exit path (return, exception, timeout)
+                if process.poll() is None:
+                    process.kill()
+                    process.wait()
 
-                    elif event.get("type") == "assistant":
-                        message = event.get("message", {})
-                        for content_item in message.get("content", []):
-                            if content_item.get("type") != "tool_use":
-                                continue
-                            tool_name = content_item.get("name", "")
-                            tool_input = content_item.get("input", {})
-                            if tool_name in ("Skill", "Read") and _matches_skill_trigger(
-                                tool_input, skill_name, clean_name, tool_name
-                            ):
-                                return True
-        finally:
-            # Clean up process on any exit path (return, exception, timeout)
-            if process.poll() is None:
-                process.kill()
-                process.wait()
-
-        return triggered
+            return triggered
     finally:
         if command_file.exists():
             command_file.unlink()
@@ -225,9 +234,19 @@ def run_eval(
     runs_per_query: int = 1,
     trigger_threshold: float = 0.5,
     model: str | None = None,
+    spawn_budget_id: str | None = None,
 ) -> dict:
-    """Run the full eval set and return results."""
+    """Run the full eval set and return results.
+
+    When `spawn_budget_id` is not provided, a budget of exactly
+    len(eval_set) * runs_per_query is created: one spawn per submitted run,
+    no more. A SpawnBudgetExceededError from any worker propagates — a
+    budget breach means a retry/respawn regression, not a query failure.
+    """
     results = []
+
+    if spawn_budget_id is None:
+        spawn_budget_id = create_spawn_budget(len(eval_set) * runs_per_query)
 
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
         future_to_info = {}
@@ -241,11 +260,13 @@ def run_eval(
                     timeout,
                     str(project_root),
                     model,
+                    spawn_budget_id,
                 )
                 future_to_info[future] = (item, run_idx)
 
         query_triggers: dict[str, list[bool]] = {}
         query_items: dict[str, dict] = {}
+        dropped_runs: dict[str, int] = {}
         for future in as_completed(future_to_info):
             item, _ = future_to_info[future]
             query = item["query"]
@@ -254,11 +275,33 @@ def run_eval(
                 query_triggers[query] = []
             try:
                 query_triggers[query].append(future.result())
+            except SpawnBudgetExceededError:
+                # Budget breach = spawn regression. Re-raise hard: swallowing
+                # it as a query failure would hide the very bug the budget
+                # exists to catch, and continuing would keep spending.
+                raise
+            except SubprocessLimitError as e:
+                # Slot exhaustion is a capacity signal, not a trigger signal.
+                # Recording False here would poison tuning decisions: run_loop
+                # would chase phantom regressions. Drop the run instead.
+                print(f"Warning: run skipped (no subprocess slot): {e}", file=sys.stderr)
+                dropped_runs[query] = dropped_runs.get(query, 0) + 1
             except Exception as e:
                 print(f"Warning: query failed: {e}", file=sys.stderr)
                 query_triggers[query].append(False)
 
+    # Queries whose every run was dropped (slot exhaustion) are excluded from
+    # per-query results — scoring them would poison trigger rates — but are
+    # recorded in the summary so reports/history can explain a smaller total.
+    dropped = [
+        {"query": query, "dropped_runs": count}
+        for query, count in sorted(dropped_runs.items())
+        if not query_triggers.get(query)
+    ]
+
     for query, triggers in query_triggers.items():
+        if not triggers:
+            continue
         item = query_items[query]
         trigger_rate = sum(triggers) / len(triggers)
         should_trigger = item["should_trigger"]
@@ -286,6 +329,9 @@ def run_eval(
             "total": total,
             "passed": passed,
             "failed": total - passed,
+            # Queries excluded from scoring because every run was dropped
+            # to slot exhaustion — capacity signal, not trigger signal.
+            "dropped": dropped,
         },
     }
 
@@ -299,7 +345,7 @@ def main():
     parser.add_argument("--timeout", type=int, default=30, help="Timeout per query in seconds")
     parser.add_argument("--runs-per-query", type=int, default=3, help="Number of runs per query")
     parser.add_argument("--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold")
-    parser.add_argument("--model", default=None, help="Model to use for claude -p (default: user's configured model)")
+    parser.add_argument("--model", default=DEFAULT_EVAL_MODEL, help="Model for claude -p (default: %(default)s — cheap trigger evals; override to measure trigger behavior on the model your users run)")
     parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     args = parser.parse_args()
 

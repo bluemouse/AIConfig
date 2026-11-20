@@ -7,8 +7,14 @@ overfitting.
 """
 
 import argparse
+import fcntl
+import hashlib
 import json
+import os
 import random
+import signal
+import socket
+import subprocess
 import sys
 import tempfile
 import time
@@ -18,7 +24,129 @@ from pathlib import Path
 from scripts.generate_report import generate_html
 from scripts.improve_description import improve_description
 from scripts.run_eval import find_project_root, run_eval
-from scripts.utils import parse_skill_md
+from scripts.utils import _secure_dir, create_spawn_budget, DEFAULT_EVAL_MODEL, parse_skill_md
+
+# Per-skill lock so concurrent loops tuning the same skill fail fast instead
+# of duplicating API spend. Local /tmp only — no cross-machine protection.
+LOCK_DIR = Path(tempfile.gettempdir()) / "aiconfig-run-loop"
+
+# fd and content of the per-skill lock held by this process. acquire_lock
+# sets them; release_lock (or process exit) closes the fd, releasing the flock.
+_held_lock_fd: int | None = None
+_held_lock_info: dict | None = None
+
+
+class LoopLockError(Exception):
+    """Another live run_loop instance holds the lock for this skill."""
+
+
+def acquire_lock(skill_path: Path, lock_dir: Path = LOCK_DIR) -> Path:
+    """Take the per-skill lock, or raise LoopLockError if a live holder exists.
+
+    flock(LOCK_EX|LOCK_NB) on the lock file is the race-safe arbiter: two
+    processes starting simultaneously cannot both win it, and the kernel
+    releases it when the holder dies, so a killed loop leaves no stale lock.
+    The file's JSON content (pid, started, results_dir) is advisory —
+    written best-effort for the refusal message and post-hoc forensics.
+    """
+    lock_dir.mkdir(parents=True, exist_ok=True)
+    _secure_dir(lock_dir)
+    lock_path = lock_dir / (hashlib.sha256(str(skill_path.resolve()).encode()).hexdigest()[:16] + ".lock")
+    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        # flock held means a live holder (the kernel releases it on death,
+        # so there is no stale-lock case). The JSON content is advisory.
+        os.close(fd)
+        try:
+            holder = json.loads(lock_path.read_text())
+        except (json.JSONDecodeError, OSError):
+            holder = None
+        pid_desc = str(holder.get("pid")) if holder else "unknown"
+        started = (holder.get("started") or "unknown") if holder else "unknown"
+        results = (holder.get("results_dir") or "unknown") if holder else "unknown"
+        raise LoopLockError(
+            f"run_loop is already tuning {skill_path} "
+            f"(PID {pid_desc or 'unknown'}, started {started}, "
+            f"results in {results}). "
+            f"Re-run with --force to override."
+        )
+    info = {
+        "pid": os.getpid(),
+        "skill_path": str(skill_path.resolve()),
+        "started": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "results_dir": None,  # filled in by main() once the results dir exists
+    }
+    _write_lock_info(fd, info)
+    global _held_lock_fd, _held_lock_info
+    # Keep fd open until release — closing it releases the flock.
+    _held_lock_fd = fd
+    _held_lock_info = info
+    return lock_path
+
+
+def _write_lock_info(fd: int, info: dict) -> None:
+    """Rewrite the advisory JSON through the flocked fd (same inode, no
+    tmp+replace — replacing the file would swap the inode out from under
+    the held flock and re-introduce the orphaned-inode over-admission race)."""
+    os.lseek(fd, 0, os.SEEK_SET)
+    os.ftruncate(fd, 0)
+    os.write(fd, json.dumps(info).encode())
+
+
+def update_held_lock_results_dir(results_dir: Path | None) -> None:
+    """Record the results dir in the held lock so duplicates can point at it.
+
+    Operates on the module-global held lock (acquire_lock's single slot);
+    there is no path parameter because the lock is process state, not a
+    path-scoped resource.
+    """
+    if _held_lock_fd is None or _held_lock_info is None:
+        return
+    _held_lock_info["results_dir"] = str(results_dir) if results_dir else None
+    try:
+        _write_lock_info(_held_lock_fd, _held_lock_info)
+    except OSError:
+        pass  # best-effort annotation; lock is already held via flock
+
+
+def release_lock() -> None:
+    """Release the held per-skill lock (close the fd, dropping the flock).
+
+    Never unlinks the lock file: unlinking lets a racing acquirer flock the
+    orphaned inode while another creates a fresh file at the same path (same
+    over-admission race the subprocess-slot limiter avoids by never
+    unlinking its slot files). No path parameter — same reason as
+    update_held_lock_results_dir.
+    """
+    global _held_lock_fd, _held_lock_info
+    if _held_lock_fd is not None:
+        try:
+            os.close(_held_lock_fd)
+        except OSError:
+            pass
+        _held_lock_fd = None
+        _held_lock_info = None
+
+
+def write_run_metadata(results_dir: Path, args: argparse.Namespace) -> None:
+    """Persist run identity (PID, host, git head, flags) for post-hoc forensics."""
+    try:
+        head = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5,
+        ).stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        head = None
+    metadata = {
+        "pid": os.getpid(),
+        "hostname": socket.gethostname(),
+        "git_head": head,
+        "args": {k: v for k, v in vars(args).items()},
+        "started": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    (results_dir / "run_metadata.json").write_text(json.dumps(metadata, indent=2))
 
 
 def split_eval_set(eval_set: list[dict], holdout: float, seed: int = 42) -> tuple[list[dict], list[dict]]:
@@ -76,6 +204,17 @@ def run_loop(
     history = []
     exit_reason = "unknown"
 
+    # Loop-wide spawn budget: the expected total across all iterations.
+    # Each iteration evaluates len(all_queries) x runs_per_query, and every
+    # iteration except a last passing one runs improve_description (up to 2
+    # spawns each: improvement + optional over-limit rewrite). Budgeting the
+    # worst case means a normal run never notices it, but a retry/respawn
+    # regression trips SpawnBudgetExceededError instead of silently
+    # duplicating API spend.
+    expected_eval_spawns = len(train_set + test_set) * runs_per_query * max_iterations
+    expected_improve_spawns = 2 * max(0, max_iterations - 1)
+    spawn_budget_id = create_spawn_budget(expected_eval_spawns + expected_improve_spawns)
+
     for iteration in range(1, max_iterations + 1):
         if verbose:
             print(f"\n{'='*60}", file=sys.stderr)
@@ -96,6 +235,7 @@ def run_loop(
             runs_per_query=runs_per_query,
             trigger_threshold=trigger_threshold,
             model=model,
+            spawn_budget_id=spawn_budget_id,
         )
         eval_elapsed = time.time() - t0
 
@@ -129,6 +269,9 @@ def run_loop(
             "test_failed": test_summary["failed"] if test_summary else None,
             "test_total": test_summary["total"] if test_summary else None,
             "test_results": test_results["results"] if test_results else None,
+            # Queries dropped to slot exhaustion this iteration — carried
+            # into results.json/history so a shrunken total is explainable.
+            "dropped": all_results["summary"].get("dropped", []),
             # For backward compat with report generator
             "passed": train_summary["passed"],
             "failed": train_summary["failed"],
@@ -205,6 +348,7 @@ def run_loop(
             model=model,
             log_dir=log_dir,
             iteration=iteration,
+            budget_id=spawn_budget_id,
         )
         improve_elapsed = time.time() - t0
 
@@ -252,10 +396,11 @@ def main():
     parser.add_argument("--runs-per-query", type=int, default=3, help="Number of runs per query")
     parser.add_argument("--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold")
     parser.add_argument("--holdout", type=float, default=0.4, help="Fraction of eval set to hold out for testing (0 to disable)")
-    parser.add_argument("--model", required=True, help="Model for improvement")
+    parser.add_argument("--model", default=DEFAULT_EVAL_MODEL, help="Model for eval queries and description improvement (default: %(default)s — cheap evals; description is tuned against whatever model the eval runs)")
     parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     parser.add_argument("--report", default="auto", help="Generate HTML report at this path (default: 'auto' for temp file, 'none' to disable)")
     parser.add_argument("--results-dir", default=None, help="Save all outputs (results.json, report.html, log.txt) to a timestamped subdirectory here")
+    parser.add_argument("--force", action="store_true", help="Start even if another run_loop holds this skill's lock")
     args = parser.parse_args()
 
     eval_set = json.loads(Path(args.eval_set).read_text())
@@ -265,6 +410,29 @@ def main():
         print(f"Error: No SKILL.md found at {skill_path}", file=sys.stderr)
         sys.exit(1)
 
+    if not args.force:
+        try:
+            lock_path = acquire_lock(skill_path)
+        except LoopLockError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            sys.exit(2)
+        # Release on SIGTERM so a killed loop doesn't leave a stale lock, and
+        # on normal/abnormal exit. --force skips the lock entirely.
+        signal.signal(signal.SIGTERM, lambda *_: sys.exit(2))
+        try:
+            _run_locked(args, eval_set, skill_path, lock_path)
+        finally:
+            release_lock()
+    else:
+        _run_locked(args, eval_set, skill_path, None)
+
+
+def _run_locked(
+    args: argparse.Namespace,
+    eval_set: list[dict],
+    skill_path: Path,
+    lock_path: Path | None,
+) -> None:
     name, _, _ = parse_skill_md(skill_path)
 
     # Set up live report path
@@ -289,6 +457,11 @@ def main():
         results_dir = None
 
     log_dir = results_dir / "logs" if results_dir else None
+
+    if results_dir:
+        write_run_metadata(results_dir, args)
+    if lock_path:
+        update_held_lock_results_dir(results_dir)
 
     output = run_loop(
         eval_set=eval_set,

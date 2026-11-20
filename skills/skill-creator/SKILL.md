@@ -93,11 +93,12 @@ cd <SKILL_CREATOR_ROOT>
 python -m scripts.run_loop \
   --eval-set <path-to-trigger-eval.json> \
   --skill-path .agents/skills/<skill-name> \
-  --model <model-id-for-this-session> \
   --max-iterations 5 \
   --verbose
 ```
 
+- **Model default:** evals and description improvement run on `claude-haiku-5-5` by default (cheap iterative search). Pass `--model <model-id>` to eval on a different model — the description is tuned against whatever model the eval runs, so before shipping a tuned description, run one confirmation eval pass with `--model` set to the model your users actually run.
+- **Duplicate-loop lock:** a second `run_loop` on the same skill refuses with exit 2 before any API call; `--force` overrides. Concurrency is also capped machine-wide (flock slots, default 10 live `claude -p` processes).
 - **Cowork / headless:** subagents and `run_loop.py` (`claude -p`) work; pass `generate_review.py --static <path>` (before self-grading) when no browser is available.
 - **Claude.ai (no CLI):** no subagents or `run_loop.py` — run prompts sequentially inline and tune descriptions manually.
 
