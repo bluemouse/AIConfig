@@ -50,6 +50,37 @@ python tools/installer.py /path/to/project --bundles dev-workflow-harness
 - Combine with `--skills`, `--agents`, or `--commands` to add individual items beyond the bundle.
 - When no selector is passed, all discovered skills, agents, and commands are selected.
 
+### Dependency map (auto-selection)
+
+`tools/dependencies.json` declares the catalog's load-bearing dependency
+edges. Selecting a member automatically selects its transitive skill
+closure at **install** time, so an installed member's references always
+resolve in the target — no re-running with extra `--skills` flags.
+
+- **Schema:** `{"skills": {name: {"depends": [...]}}, "commands": {...},
+  "agents": {...}}` — every `depends` target must be a discovered plain
+  skill; unknown, misspelled, `guidelines-`-prefixed, or `cmd-`-prefixed
+  targets are install-time errors naming the edge.
+- **Edge kinds:** skill → skill, command → skill, agent → skill (a name
+  that exists as both skill and agent always means the skill, since
+  targets are skills by definition). Edges anchored only by a routing-class
+  body link (e.g. `agent-runner → dev-workflow-orchestrator`) are deliberate
+  over-inclusion: they satisfy the forward check but are exempt from the
+  reverse curation, so removing one changes install sets without failing
+  the suite.
+- **Install-only:** uninstall stays exactly-what-you-selected — the
+  closure applies only to install selections and `--dry-run` previews the
+  expanded set.
+- **All entry points route through the same resolution** (CLI explicit
+  names, bundles, GUI Install press).
+- **Drift protection:** `tools/test_installer_dependencies.py` runs a
+  two-directional consistency check — every map edge must have a body
+  reference in the dependent's source, and every curated load-bearing
+  body link (operational `references/` links, "Read and follow"/"Follow"
+  directives, the orchestrator's Companion Skills dispatch table) must
+  have a map edge. When adding a member with a real runtime dependency,
+  add its edges here in the same change.
+
 ### Target bundle (dynamic)
 
 The **Target bundle** is not stored in `bundles.json`. It is computed at runtime from members already installed in the destination project:

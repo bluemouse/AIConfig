@@ -1474,6 +1474,24 @@ class SelfInstallGuidelinesTests(unittest.TestCase):
                 "---\nname: demo\ndescription: demo.\n---\nbody\n",
                 encoding="utf-8",
             )
+            tools_src = repo_root / "tools"
+            tools_src.mkdir(parents=True, exist_ok=True)
+            for name in ("bundles.json", "dependencies.json"):
+                (tools_src / name).write_text("{}", encoding="utf-8")
+            # Bundle config: empty bases/bundles arrays are also valid; the
+            # fixture only needs the file to exist for run_cli's bundle lookups.
+            # A fixture bundle set mirroring the real config's ids so the
+            # refused invocations below (--dev-workflow) resolve bundles
+            # from the fixture repo and fail at the repo-root guard, not at
+            # bundle lookup.
+            (tools_src / "bundles.json").write_text(
+                '{"bases": [], "bundles": ['
+                '{"id": "fixture-bundle", "name": "Fixture", '
+                '"description": "fixture", "skills": ["demo"]}, '
+                '{"id": "dev-workflow-harness", "name": "Harness", '
+                '"description": "fixture harness", "skills": ["demo"]}]}',
+                encoding="utf-8",
+            )
 
             original_root = mod.REPO_ROOT
             mod.REPO_ROOT = repo_root

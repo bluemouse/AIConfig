@@ -555,6 +555,116 @@ def known_bundle_ids(path: Path = BUNDLES_JSON) -> list[str]:
     return sorted({bundle.id for bundle in load_skill_bundles(path)} | {TARGET_BUNDLE_ID})
 
 
+def plain_skill_catalog() -> set[str]:
+    """Return discovered plain skills (no guidelines- or cmd- prefixes).
+
+    Dependency edges may only target plain skills (settled edge scope:
+    skill-to-skill, command-to-skill, agent-to-skill). discover_skills()
+    returns guidelines-<name> and cmd-<name> dirs alongside plain skills,
+    so the prefix filters mirror the default-selection filters.
+    """
+    return {
+        name
+        for name in discover_skills()
+        if not name.startswith(GUIDELINE_SKILL_PREFIX)
+        and not name.startswith(COMMAND_SKILL_DIR_PREFIX)
+    }
+
+
+def load_dependencies(path: Path | None = None) -> dict[str, dict[str, dict[str, list[str]]]]:
+    """Load and validate the dependency map (tools/dependencies.json).
+
+    Schema: {"skills": {name: {"depends": [skill, ...]}},
+             "commands": {...}, "agents": {...}} — every member entry must
+    carry a depends list (a missing or non-list depends is a load error
+    naming the member). Every depends target must be a discovered plain
+    skill at load time; unknown, prefixed (guidelines-/cmd-), or
+    non-skill targets raise InstallerError naming the edge. A missing
+    file yields an empty map (older checkouts resolve no edges).
+    """
+    if path is None:
+        # Resolve at call time (not def time): tests rebind REPO_ROOT.
+        path = REPO_ROOT / "tools" / "dependencies.json"
+    if not path.is_file():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise InstallerError(f"Invalid dependency map {path}: {exc}")
+    if not isinstance(payload, dict):
+        raise InstallerError(f"Invalid dependency map {path}: top level must be an object.")
+    catalog = plain_skill_catalog()
+    deps: dict[str, dict[str, dict[str, list[str]]]] = {}
+    for kind in ("skills", "commands", "agents"):
+        entry = payload.get(kind, {})
+        if entry is None:
+            entry = {}
+        if not isinstance(entry, dict):
+            raise InstallerError(
+                f"Invalid dependency map {path}: {kind} must be an object."
+            )
+        kind_map: dict[str, dict[str, list[str]]] = {}
+        for member, spec in entry.items():
+            if not isinstance(spec, dict) or "depends" not in spec:
+                raise InstallerError(
+                    f"Invalid dependency map {path}: {kind}.{member} must "
+                    "carry a depends list."
+                )
+            depends = spec["depends"]
+            if not isinstance(depends, list):
+                raise InstallerError(
+                    f"Invalid dependency map {path}: {kind}.{member} depends "
+                    "must be a list."
+                )
+            for target in depends:
+                if not isinstance(target, str) or target not in catalog:
+                    raise InstallerError(
+                        f"Invalid dependency map {path}: {kind}.{member} "
+                        f"depends on {target!r}, which is not a discovered "
+                        "plain skill (typo, non-skill kind, or "
+                        "guidelines-/cmd- prefixed name)."
+                    )
+            kind_map[slugify_name(str(member))] = {
+                "depends": [slugify_name(str(t)) for t in depends]
+            }
+        deps[kind] = kind_map
+    return deps
+
+
+def resolve_dependencies(
+    selection: "BundleSelection", *, uninstall: bool = False
+) -> "BundleSelection":
+    """Transitively expand a selection with its skill dependencies.
+
+    Install-only (user decision at clarify): uninstall selections return
+    unchanged so teardown stays exactly-what-you-selected. Idempotent:
+    applying the closure twice yields the same selection.
+    """
+    if uninstall:
+        return selection
+    deps = load_dependencies()
+    if not deps:
+        return selection
+    queue: list[tuple[str, str]] = []
+    for name in selection.skills:
+        queue.append(("skills", name))
+    for name in selection.commands:
+        queue.append(("commands", name))
+    for name in selection.agents:
+        queue.append(("agents", name))
+    seen_members: set[tuple[str, str]] = set(queue)
+    added_skills: set[str] = set(selection.skills)
+    while queue:
+        kind, name = queue.pop()
+        for target in deps.get(kind, {}).get(name, {}).get("depends", []):
+            if ("skills", target) not in seen_members:
+                seen_members.add(("skills", target))
+                added_skills.add(target)
+                queue.append(("skills", target))
+    selection.skills = normalize_names(sorted(added_skills))
+    return selection
+
+
 @dataclass
 class BundleSelection:
     """Resolved members of one or more bundles, grouped by kind."""
@@ -595,10 +705,13 @@ class BundleSelection:
 def resolve_bundle(
     bundle_ids: Sequence[str],
     *,
-    path: Path = BUNDLES_JSON,
+    path: Path | None = None,
     target_root: Path | None = None,
 ) -> BundleSelection:
     """Resolve bundle ids from bundles.json into a grouped member selection."""
+    if path is None:
+        # Resolve at call time (not def time): tests rebind REPO_ROOT.
+        path = REPO_ROOT / "tools" / "bundles.json"
     bundles = load_skill_bundles(path)
     by_id = {bundle.id: bundle for bundle in bundles}
     normalized_bundle_ids = normalize_names(bundle_ids)
@@ -637,13 +750,14 @@ def resolve_bundle(
 def resolve_bundle_skills(
     bundle_ids: Sequence[str],
     *,
-    path: Path = BUNDLES_JSON,
+    path: Path | None = None,
     target_root: Path | None = None,
 ) -> list[str]:
     """Resolve bundle ids from bundles.json into a deduplicated skill list.
 
     Backward-compatible wrapper around resolve_bundle for callers that only
-    need skills.
+    need skills. path=None defers to resolve_bundle's call-time REPO_ROOT
+    resolution, so a rebound REPO_ROOT is honored here too.
     """
     return resolve_bundle(bundle_ids, path=path, target_root=target_root).skills
 
@@ -656,8 +770,15 @@ def resolve_cli_selection(
     command_names: Sequence[str] | None,
     guideline_names: Sequence[str] | None = None,
     target_root: Path | None = None,
+    uninstall: bool = False,
 ) -> BundleSelection:
-    """Resolve CLI selection from bundles, explicit names, or all discovered items."""
+    """Resolve CLI selection from bundles, explicit names, or all discovered items.
+
+    The resolved selection is expanded with its transitive skill
+    dependencies (tools/dependencies.json) unless uninstall is True —
+    dependency auto-selection is install-only; uninstall stays
+    exactly-what-you-selected.
+    """
     selection = BundleSelection()
     if bundle_ids:
         selection.extend(resolve_bundle(bundle_ids, target_root=target_root))
@@ -677,7 +798,7 @@ def resolve_cli_selection(
         or guideline_names
     ):
         selection.dedupe()
-        return selection
+        return resolve_dependencies(selection, uninstall=uninstall)
     # No explicit selection: default to all discovered items. Guidelines are
     # explicit-only — they change agent behavior in the target, so the
     # guidelines-<name> skill packages this repo carries are filtered out of
@@ -701,7 +822,7 @@ def resolve_cli_selection(
         commands=discover_commands(),
     )
     default_selection.dedupe()
-    return default_selection
+    return resolve_dependencies(default_selection, uninstall=uninstall)
 
 
 def resolve_cli_skills(
@@ -722,6 +843,30 @@ def resolve_cli_skills(
         command_names=None,
         target_root=target_root,
     ).skills
+
+
+def resolve_panel_selection(
+    skills: Sequence[str],
+    agents: Sequence[str],
+    commands: Sequence[str],
+    guidelines: Sequence[str],
+    *,
+    uninstall: bool,
+) -> BundleSelection:
+    """Resolve a GUI panel selection with its transitive skill dependencies.
+
+    InstallerApp._run's Install-press resolution (accepted ledger
+    deviation: the checkboxes do not visibly pre-check dependencies).
+    The selection math lives here rather than inside the Tk callback so
+    the GUI seam is testable on hosts without a display.
+    """
+    selection = BundleSelection(
+        skills=list(skills),
+        agents=list(agents),
+        commands=list(commands),
+        guidelines=list(guidelines),
+    )
+    return resolve_dependencies(selection, uninstall=uninstall)
 
 
 COMMAND_SKILL_FLAG = "disable-model-invocation"
@@ -2074,6 +2219,7 @@ def run_cli(argv: Sequence[str]) -> int:
             command_names=args.commands,
             guideline_names=args.guidelines,
             target_root=target,
+            uninstall=args.uninstall,
         )
         if selection.is_empty:
             if not args.purge_legacy:
@@ -2716,13 +2862,23 @@ class InstallerApp:
 
         uninstall = self.mode_var.get() == "uninstall"
         try:
+            # Inside the guard: an invalid dependency map raises
+            # InstallerError like every other install failure, so the GUI
+            # shows a dialog instead of silently aborting the callback.
+            selection = resolve_panel_selection(
+                skills,
+                agents,
+                commands,
+                guidelines,
+                uninstall=uninstall,
+            )
             target = Path(target_text).expanduser().resolve()
             code, message = run_operation(
                 target=target,
-                skills=skills,
-                agents=agents,
-                commands=commands,
-                guidelines=guidelines,
+                skills=selection.skills,
+                agents=selection.agents,
+                commands=selection.commands,
+                guidelines=selection.guidelines,
                 uninstall=uninstall,
                 override=self.override_var.get(),
             )

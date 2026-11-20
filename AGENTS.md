@@ -100,7 +100,7 @@ python tools/installer.py /path/to/other-project --purge-legacy
 python tools/installer.py   # GUI when no arguments
 ```
 
-Guidelines are explicit-only (`--guidelines`). The dev-workflow validation scripts are no longer a separate install kind — they ship inside the `dev-workflow-orchestrator` skill package. Full CLI flag and bundle reference: [README.md](README.md#distribute-to-another-project) and [tools/bundles.md](tools/bundles.md).
+Guidelines are explicit-only (`--guidelines`). The dev-workflow validation scripts are no longer a separate install kind — they ship inside the `dev-workflow-orchestrator` skill package. Install selections auto-select their transitive skill dependencies from `tools/dependencies.json` (see [tools/bundles.md](tools/bundles.md) § Dependency map); add edges there when adding a member with a runtime dependency. Full CLI flag and bundle reference: [README.md](README.md#distribute-to-another-project) and [tools/bundles.md](tools/bundles.md).
 
 **Trigger-eval a skill description** (41 of 45 bootstrap skills ship `skills/<name>/eval-queries.json`):
 

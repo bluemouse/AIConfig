@@ -1,0 +1,132 @@
+{
+  "skills": {
+    "agent-creator": {
+      "depends": [
+        "skill-creator"
+      ]
+    },
+    "agent-runner": {
+      "depends": [
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "code-review-resolver": {
+      "depends": [
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "command-creator": {
+      "depends": [
+        "skill-creator"
+      ]
+    },
+    "debugging-guide": {
+      "depends": [
+        "cpp-coding"
+      ]
+    },
+    "dev-workflow-orchestrator": {
+      "depends": [
+        "prompt-clarifier",
+        "research-guide",
+        "research-reviewer",
+        "plan-guide",
+        "plan-reviewer",
+        "plan-executor",
+        "implementation-auditor",
+        "code-review-resolver",
+        "code-reviewer",
+        "commit-message-writer"
+      ]
+    },
+    "github-guide": {
+      "depends": [
+        "git-guide"
+      ]
+    },
+    "plan-executor": {
+      "depends": [
+        "agent-runner"
+      ]
+    },
+    "plan-guide": {
+      "depends": [
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "plan-reviewer": {
+      "depends": [
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "research-guide": {
+      "depends": [
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "research-reviewer": {
+      "depends": [
+        "dev-workflow-orchestrator"
+      ]
+    }
+  },
+  "commands": {
+    "commit": {
+      "depends": [
+        "commit-message-writer",
+        "git-guide"
+      ]
+    },
+    "implement": {
+      "depends": [
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "plan": {
+      "depends": [
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "research": {
+      "depends": [
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "review": {
+      "depends": [
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "run-dev-workflow": {
+      "depends": [
+        "dev-workflow-orchestrator"
+      ]
+    }
+  },
+  "agents": {
+    "code-reviewer": {
+      "depends": [
+        "code-reviewer",
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "implementation-auditor": {
+      "depends": [
+        "implementation-auditor",
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "plan-reviewer": {
+      "depends": [
+        "plan-reviewer",
+        "dev-workflow-orchestrator"
+      ]
+    },
+    "research-reviewer": {
+      "depends": [
+        "research-reviewer",
+        "dev-workflow-orchestrator"
+      ]
+    }
+  }
+}

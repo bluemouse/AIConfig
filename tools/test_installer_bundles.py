@@ -364,7 +364,10 @@ class CliSkillResolutionTests(unittest.TestCase):
             bundle_ids=["core-dev-workflow"],
             skill_names=None,
         )
-        self.assertEqual(len(resolved), 12)
+        # 12 bundle members + 6 dependency-expanded skills (plan-guide,
+        # github-guide, debugging-guide, plan-executor -> their map edges;
+        # the orchestrator -> companions).
+        self.assertEqual(len(resolved), 18)
 
     def test_resolve_cli_skills_union(self) -> None:
         resolved = mod.resolve_cli_skills(
@@ -373,7 +376,11 @@ class CliSkillResolutionTests(unittest.TestCase):
         )
         self.assertIn("cpp-coding", resolved)
         self.assertIn("research-guide", resolved)
-        self.assertEqual(len(resolved), 13)
+        # 13 pre-expansion + 5 dependency-expanded skills (cpp-coding is
+        # explicitly selected, so debugging-guide's edge adds nothing new
+        # here — unlike the bundle-only case; plan-executor -> agent-runner
+        # still adds one).
+        self.assertEqual(len(resolved), 18)
 
     def test_unknown_bundle_id(self) -> None:
         with self.assertRaises(mod.InstallerError) as ctx:
@@ -496,6 +503,41 @@ class TargetBundleTests(unittest.TestCase):
             mod.resolve_bundle_skills([mod.TARGET_BUNDLE_ID], target_root=None)
         self.assertIn("requires a target project path", str(ctx.exception))
 
+    def test_resolve_bundle_skills_rebinds_repo_root(self) -> None:
+        """cr-003: no def-time BUNDLES_JSON default — a rebound REPO_ROOT's
+        own tools/bundles.json must be honored here exactly as in
+        resolve_bundle."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_target_skill(root, "fixture-skill")
+            tools = root / "tools"
+            tools.mkdir(parents=True, exist_ok=True)
+            (tools / "bundles.json").write_text(
+                json.dumps(
+                    {
+                        "bases": [],
+                        "bundles": [
+                            {
+                                "id": "fixture-bundle",
+                                "name": "Fixture",
+                                "description": "d",
+                                "skills": ["fixture-skill"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = root
+            try:
+                self.assertEqual(
+                    mod.resolve_bundle_skills(["fixture-bundle"]),
+                    ["fixture-skill"],
+                )
+            finally:
+                mod.REPO_ROOT = original_root
+
     def test_known_bundle_ids_includes_target_bundle(self) -> None:
         ids = mod.known_bundle_ids(BUNDLES_JSON_PATH)
         self.assertIn(mod.TARGET_BUNDLE_ID, ids)
@@ -606,14 +648,20 @@ class TargetBundleTests(unittest.TestCase):
                 skill_names=None,
                 target_root=Path(tmp),
             )
-            self.assertEqual(len(resolved), 12)
+            # 12 bundle members + 6 dependency-expanded skills (see above).
+            self.assertEqual(len(resolved), 18)
 
     def test_resolve_cli_skills_explicit_bundles_no_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._write_target_skill(root, "research-guide")
-            with mock.patch.object(
-                mod, "discover_skills", return_value=["research-guide", "other"]
+            with (
+                mock.patch.object(
+                    mod, "discover_skills", return_value=["research-guide", "other"]
+                ),
+                # The mocked catalog is inconsistent with the real map's
+                # targets; an empty map keeps the fixture coherent.
+                mock.patch.object(mod, "load_dependencies", return_value={}),
             ):
                 resolved = mod.resolve_cli_skills(
                     bundle_ids=["target-bundle"],

@@ -315,8 +315,13 @@ class GuidelineDiscoveryTests(unittest.TestCase):
     def test_default_selection_excludes_guideline_skills(self) -> None:
         # Simulate a repo carrying installed guideline skill packages: the
         # no-selector default must not pick them up as ordinary skills.
-        with mock.patch.object(
-            mod, "discover_skills", return_value=["cpp-coding", "guidelines-response"]
+        with (
+            mock.patch.object(
+                mod, "discover_skills", return_value=["cpp-coding", "guidelines-response"]
+            ),
+            # The mocked catalog is inconsistent with the real dependency
+            # map's targets; an empty map keeps the fixture coherent.
+            mock.patch.object(mod, "load_dependencies", return_value={}),
         ):
             selection = mod.resolve_cli_selection(
                 bundle_ids=None,
