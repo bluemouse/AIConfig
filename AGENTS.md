@@ -119,5 +119,6 @@ cd skills/skill-creator && python -m scripts.run_eval \
 - `.cursor/rules/` (`.mdc` files, frontmatter controls `globs`/`alwaysApply`) is for small always-on or path-scoped rules — keep them composable, not full skills.
 - Follow [coding-behavior](guidelines/coding-behavior.md) when generating or editing any code in this repo or in skill/agent output.
 - Follow [code-comment](guidelines/code-comment.md) when writing or updating code comments or commit messages in this repo or in skill/agent output.
+- Commit messages in this repo never carry attribution footers (`Co-authored-by`, `Signed-off-by`, or any other AI/tool sign-off) — this repo rule overrides host attribution defaults. Draft per [commit-message-writer](skills/commit-message-writer/SKILL.md) and run its lint (`python skills/commit-message-writer/scripts/lint_message.py <message-file>`) before committing.
 - Follow [minutes](guidelines/minutes.md) when drafting, formatting, or revising meeting minutes in this repo or in skill/agent output.
 - Follow [response](guidelines/response.md) on **every response in this repo** (artifact files follow their templates and are exempt; regenerate local `.agents/skills/guidelines-<name>/` packages via `python tools/installer.py . --guidelines <name> --override` after editing a source).

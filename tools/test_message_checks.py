@@ -370,5 +370,49 @@ class SkillScriptCliTests(unittest.TestCase):
         self.assertIn("Signed-off-by", result.stderr)
 
 
+class CommitHistoryAttributionTests(unittest.TestCase):
+    """The repo's own history must obey the no-attribution rule.
+
+    The lint only runs when the skill or harness is invoked; this gate makes
+    the suite red the moment a `Co-authored-by` footer lands in any commit,
+    regardless of which path produced it. Mirrors the lint's tiering:
+    `Co-authored-by` is a hard failure, `Signed-off-by` is warning-tier.
+    """
+
+    # Commits that predate the no-attribution rule (2026-11-09 reword era).
+    # Rewriting their messages is not worth the history churn; do not extend
+    # this set without removing the trailer from the new commit first.
+    LEGACY_EXEMPT = {
+        "a40b6fe960776cff22b6bbcc1b2c9b48241636d3",
+        "68449ce6487c172df0dd2739508bb85014df03bd",
+        "9f1b9e806ed5d8e2d13a50cd6034dd887535c501",
+    }
+
+    def test_no_coauthored_by_in_history(self) -> None:
+        result = subprocess.run(
+            ["git", "log", "--format=%H%x00%B%x01"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        offenders = []
+        for record in result.stdout.split("\x01"):
+            if not record.strip():
+                continue
+            sha, _, body = record.partition("\x00")
+            sha = sha.strip()
+            if sha in self.LEGACY_EXEMPT:
+                continue
+            if message_checks._COAUTHORED_RE.search(body):
+                offenders.append(sha)
+        self.assertEqual(
+            offenders,
+            [],
+            "commit messages must not carry Co-authored-by footers "
+            f"(offenders: {offenders}); see skills/commit-message-writer/SKILL.md",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
