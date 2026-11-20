@@ -121,10 +121,3 @@ Rules:
   in **Review target → Coverage** and **Effort used → Large-diff mode**.
 - For **natural-language fallback** (blocked git diff), set target accordingly and list
   files read instead of a unified diff command.
-
-Severity → GitHub handoff (when posting via github-guide):
-
-- `blocker` → `**blocker (blocking):**` prefix
-- `major` → `**major:**` prefix
-- `minor` → `**minor:**` prefix
-- Anchored findings (`path:line`) → inline PR comments; unanchored → summary body only

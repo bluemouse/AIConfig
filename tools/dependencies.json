@@ -34,11 +34,6 @@
         "cpp-coding"
       ]
     },
-    "code-reviewer": {
-      "depends": [
-        "github-guide"
-      ]
-    },
     "code-review-resolver": {
       "depends": [
         "code-reviewer",

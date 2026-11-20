@@ -46,7 +46,6 @@ Review code changes; do not implement fixes unless explicitly asked in a follow-
   - Missing/weak tests or requirement proof → [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md) or [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md)
   - Broad doc drift → [../techdoc-reviewer/SKILL.md](../techdoc-reviewer/SKILL.md); PR sizing/split → [../github-guide/SKILL.md](../github-guide/SKILL.md); git mechanics → [../git-guide/SKILL.md](../git-guide/SKILL.md)
 - **Re-review mode** (after `code-review-resolver`): verify each `fixed` finding on the amended diff (open a new finding referencing the original id if incomplete), carry forward `unresolved`/`deferred` findings, run a fresh pass for regressions introduced by fixes, and continue until the loop verdict is `ready to commit` or `ready with notes` (or round cap 5 is hit).
-- **Posting to GitHub:** always return the in-chat report first (unless explicitly asked to post silently), then hand off `gh` review posting (`gh auth status`, `gh pr view`, inline comments, verdict mapping) to [../github-guide/SKILL.md](../github-guide/SKILL.md).
 
 ## Resources
 

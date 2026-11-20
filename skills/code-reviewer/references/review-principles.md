@@ -133,5 +133,3 @@ These are reviewability issues, not substitutes for defect findings.
 
 - Route fixes per parent skill **Routing Findings Back**.
 - Recommend re-running this skill on the amended diff before merge or GitHub posting.
-- When posting to GitHub, hand off to [github-guide](../../github-guide/SKILL.md) — one
-  summary, anchored inline comments, appropriate `REQUEST_CHANGES` / `COMMENT` event.
