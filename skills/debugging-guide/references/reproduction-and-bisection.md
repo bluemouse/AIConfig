@@ -44,4 +44,3 @@ git bisect reset
 ## Related
 
 - `determinism-and-replay.md` — intermittent repro tactics
-- [../../git-guide/SKILL.md](../../git-guide/SKILL.md) — git mechanics during bisect

@@ -65,7 +65,6 @@
     },
     "debugging-guide": {
       "depends": [
-        "git-guide",
         "test-driven-dev-guide"
       ]
     },
