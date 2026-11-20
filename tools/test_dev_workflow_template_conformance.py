@@ -30,7 +30,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / "tools" / "dev-workflow"))
+sys.path.insert(0, str(REPO_ROOT / "skills" / "dev-workflow-orchestrator" / "scripts"))
 
 from checks import artifact_checks  # type: ignore[import-not-found]
 from checks import handoff_checks  # type: ignore[import-not-found]

@@ -24,7 +24,7 @@ edges for upstream root causes, artifact contracts, and mode enforcement.
 3. Follow the orchestrator skill's **Starting a run** procedure:
    - Create a feature slug and `.agents/workflow/<slug>/`.
    - Write `00-run-manifest.md` (per `.agents/skills/dev-workflow-orchestrator/references/manifest-format.md`) and `01-feature-brief.md`.
-   - Activate clarify mode, record the baseline (`python .agents/tools/dev-workflow/record_baseline.py --phase clarify --run-dir .agents/workflow/<slug>`), run the pre-flight check, and start Phase 0 (Clarify).
+   - Activate clarify mode, record the baseline (`python .agents/skills/dev-workflow-orchestrator/scripts/record_baseline.py --phase clarify --run-dir .agents/workflow/<slug>`), run the pre-flight check, and start Phase 0 (Clarify).
 
 4. Continue following the orchestrator skill through all phases, loops, backward edges, and validation checks until the workflow completes or escalates.
 

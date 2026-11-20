@@ -26,7 +26,7 @@ The **dev-workflow harness** automates the pipeline end-to-end with bounded doer
 
 - **Full pipeline:** run `/run-dev-workflow` to orchestrate all phases (clarify → research → plan → implement → code-review → commit). It loads the [dev-workflow-orchestrator](../SKILL.md) skill, which owns state, routing, and integration.
 - **Single phase:** run `/research`, `/plan`, `/implement`, or `/review` to run one phase's doer/checker loop to acceptance or escalation without driving the full pipeline.
-- **Install the harness:** `python tools/installer.py /path/to/project --bundles dev-workflow-harness` (installs the orchestrator, all phase skills, the commands, and the `.agents/tools/dev-workflow/` validation scripts as a unit).
+- **Install the harness:** `python tools/installer.py /path/to/project --bundles dev-workflow-harness` (installs the orchestrator, all phase skills, the commands, and the `.agents/skills/dev-workflow-orchestrator/scripts/` validation scripts as a unit).
 
 The harness relies on this guide's intake classification (§1) and governance tables to decide which phases and gates apply. When the harness is active, the orchestrator's artifact contracts and validation scripts enforce the workflow; this guide's prose describes the same workflow for manual or partial automation use.
 

@@ -23,11 +23,11 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / "tools" / "dev-workflow"))
+sys.path.insert(0, str(REPO_ROOT / "skills" / "dev-workflow-orchestrator" / "scripts"))
 
 from checks import mode_checks  # type: ignore[import-not-found]
 
-SCRIPT = REPO_ROOT / "tools" / "dev-workflow" / "record_baseline.py"
+SCRIPT = REPO_ROOT / "skills" / "dev-workflow-orchestrator" / "scripts" / "record_baseline.py"
 
 
 class ManifestPinRefreshTests(unittest.TestCase):

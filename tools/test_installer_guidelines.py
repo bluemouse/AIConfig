@@ -161,7 +161,6 @@ class GuidelineInstallTests(unittest.TestCase):
             skills=[],
             agents=[],
             commands=[],
-            scripts=[],
             guidelines=["sample"],
             override=override,
         )
@@ -198,7 +197,6 @@ class GuidelineInstallTests(unittest.TestCase):
             skills=[],
             agents=[],
             commands=[],
-            scripts=[],
             guidelines=["no-such-guideline"],
             override=False,
         )
@@ -221,7 +219,6 @@ class GuidelineInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
-                scripts=[],
                 guidelines=["sample"],
             )
         finally:
@@ -244,7 +241,6 @@ class GuidelineInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
-                scripts=[],
                 guidelines=["sample"],
             )
         finally:
@@ -272,7 +268,6 @@ class GuidelineInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
-                scripts=[],
                 guidelines=["sample"],
             )
         finally:
@@ -296,7 +291,6 @@ class RealRepoGuidelineInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
-                scripts=[],
                 guidelines=list(mod.INSTALLABLE_GUIDELINES),
                 override=False,
             )
@@ -329,7 +323,6 @@ class GuidelineDiscoveryTests(unittest.TestCase):
                 skill_names=None,
                 agent_names=None,
                 command_names=None,
-                script_names=None,
                 guideline_names=None,
                 target_root=None,
             )
@@ -486,7 +479,6 @@ class GuidelineUninstallGuardTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=[],
-                scripts=[],
                 guidelines=["response"],
                 override=False,
             )
@@ -498,7 +490,6 @@ class GuidelineUninstallGuardTests(unittest.TestCase):
                     skills=["guidelines-response"],
                     agents=[],
                     commands=[],
-                    scripts=[],
                     guidelines=[],
                 )
             finally:

@@ -49,7 +49,7 @@ import unittest
 from pathlib import Path
 
 # Allow importing checks/ whether run as a script or module.
-HARNESS_DIR = Path(__file__).resolve().parent / "dev-workflow"
+HARNESS_DIR = Path(__file__).resolve().parent.parent / "skills" / "dev-workflow-orchestrator" / "scripts"
 sys.path.insert(0, str(HARNESS_DIR))
 for _mod_name in [
     k for k in list(sys.modules)

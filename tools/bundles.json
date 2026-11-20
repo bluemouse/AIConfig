@@ -49,7 +49,7 @@
     {
       "id": "dev-workflow-harness",
       "name": "Dev-workflow harness",
-      "description": "Complete dev-workflow harness: the orchestrator plus all phase doer/checker skills, the dev-workflow command, and the .agents/tools/dev-workflow/ validation scripts. Installed/uninstalled as a unit.",
+      "description": "Complete dev-workflow harness: the orchestrator plus all phase doer/checker skills and the dev-workflow command (validation scripts ship inside the orchestrator skill package). Installed/uninstalled as a unit.",
       "skills": [
         "dev-workflow-orchestrator",
         "prompt-clarifier",
@@ -69,9 +69,6 @@
         "plan",
         "implement",
         "review"
-      ],
-      "scripts": [
-        "dev-workflow"
       ],
       "agents": [
         "research-reviewer",

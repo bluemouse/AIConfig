@@ -90,8 +90,7 @@ Direct scaffold: `python skills/command-creator/scripts/create_command.py --root
 **Refresh local scripts/guidelines or distribute to another project (`tools/installer.py`):**
 
 ```bash
-# Regenerate local untracked .agents/tools/dev-workflow/ and .agents/skills/guidelines-*/ in this repo
-python tools/installer.py . --scripts dev-workflow --override
+# Regenerate local untracked .agents/skills/guidelines-*/ in this repo
 python tools/installer.py . --guidelines coding-behavior response code-comment minutes --override
 
 # Distribute installed assets to another project (regenerate local installs first on a fresh clone)
@@ -101,7 +100,7 @@ python tools/installer.py /path/to/other-project --purge-legacy
 python tools/installer.py   # GUI when no arguments
 ```
 
-Scripts membership is allowlisted via `INSTALLABLE_SCRIPTS` in `tools/installer.py`; guidelines are explicit-only (`--guidelines`). Full CLI flag and bundle reference: [README.md](README.md#distribute-to-another-project) and [tools/bundles.md](tools/bundles.md).
+Guidelines are explicit-only (`--guidelines`). The dev-workflow validation scripts are no longer a separate install kind — they ship inside the `dev-workflow-orchestrator` skill package. Full CLI flag and bundle reference: [README.md](README.md#distribute-to-another-project) and [tools/bundles.md](tools/bundles.md).
 
 **Trigger-eval a skill description** (41 of 45 bootstrap skills ship `skills/<name>/eval-queries.json`):
 

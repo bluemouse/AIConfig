@@ -8,7 +8,7 @@ Checks that:
 - No unexpected dirty files overlap with the phase's scope
 
 Usage:
-    python .agents/tools/dev-workflow/check_pre_phase.py --phase plan --run-dir .agents/workflow/<slug>
+    python .agents/skills/dev-workflow-orchestrator/scripts/check_pre_phase.py --phase plan --run-dir .agents/workflow/<slug>
 
 Exit codes:
     0 — pre-flight checks passed

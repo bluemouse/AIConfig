@@ -383,7 +383,7 @@ class CommandInstallTests(unittest.TestCase):
                     uninstall=False,
                     override=False,
                 )
-            self.assertIn("skill, agent, command, scripts, or guideline", str(ctx.exception))
+            self.assertIn("skill, agent, command, or guideline", str(ctx.exception))
 
 class BridgeCreationTests(unittest.TestCase):
     """fd-002/fd-003/fd-019 regression coverage for bridge + default uninstall."""
@@ -1020,7 +1020,7 @@ class CliHelpTextTests(unittest.TestCase):
         # argparse hard-wraps lines, so compare on collapsed whitespace.
         commands_help = " ".join(
             help_text.split("Command names", 1)[1]
-            .split("Scripts directory", 1)[0]
+            .split("--guidelines", 1)[0]
             .split()
         )
         self.assertIn(".agents/skills/cmd-<name>/", commands_help)
@@ -1073,7 +1073,6 @@ class DocsCliRemovedTests(unittest.TestCase):
             skill_names=None,
             agent_names=None,
             command_names=None,
-            script_names=None,
         )
         self.assertFalse(hasattr(selection, "docs"))
 
@@ -1170,9 +1169,6 @@ class DryRunTests(unittest.TestCase):
             "---\nname: sample-agent\ndescription: A sample agent.\n---\nbody\n",
             encoding="utf-8",
         )
-        scripts = root / "tools" / "sample-scripts"
-        scripts.mkdir(parents=True)
-        (scripts / "README.md").write_text("# sample-scripts\n", encoding="utf-8")
         guideline = root / "guidelines" / "sample-guideline.md"
         guideline.parent.mkdir(parents=True, exist_ok=True)
         guideline.write_text(
@@ -1205,7 +1201,6 @@ class DryRunTests(unittest.TestCase):
                 skills=kwargs.get("skills", []),
                 agents=kwargs.get("agents", []),
                 commands=kwargs.get("commands", []),
-                scripts=kwargs.get("scripts", []),
                 guidelines=kwargs.get("guidelines", []),
                 uninstall=kwargs.get("uninstall", False),
                 override=kwargs.get("override", False),
@@ -1227,7 +1222,6 @@ class DryRunTests(unittest.TestCase):
                 skills=["sample-skill"],
                 agents=["sample-agent"],
                 commands=["sample-command"],
-                scripts=["sample-scripts"],
                 guidelines=["sample-guideline"],
                 dry_run=True,
             )
@@ -1322,7 +1316,6 @@ class DryRunTests(unittest.TestCase):
                 skills=["sample-skill"],
                 agents=["sample-agent"],
                 commands=["sample-command"],
-                scripts=["sample-scripts"],
                 guidelines=["sample-guideline"],
             )
             before = self._tree_digest(target)
@@ -1333,7 +1326,6 @@ class DryRunTests(unittest.TestCase):
                 skills=["sample-skill"],
                 agents=["sample-agent"],
                 commands=["sample-command"],
-                scripts=["sample-scripts"],
                 guidelines=["sample-guideline"],
                 uninstall=True,
                 dry_run=True,
@@ -1344,7 +1336,6 @@ class DryRunTests(unittest.TestCase):
                 ".agents/skills/sample-skill",
                 ".claude/agents/sample-agent.md",
                 ".agents/skills/cmd-sample-command",
-                ".agents/tools/sample-scripts",
                 ".agents/skills/guidelines-sample-guideline",
             ):
                 self.assertIn(member, message)
@@ -1434,15 +1425,18 @@ class UninstallMissingTargetTests(unittest.TestCase):
             self.assertIn("Target project not found", buf.getvalue())
 
 
-class SelfInstallScriptsGuidelinesTests(unittest.TestCase):
-    """C-01 / cr-004: explicit --scripts / --guidelines may target REPO_ROOT; other kinds may not."""
+class SelfInstallGuidelinesTests(unittest.TestCase):
+    """C-01 / cr-004: explicit --guidelines may target REPO_ROOT; other kinds may not."""
 
     def test_fresh_clone_bare_install_and_uninstall_refused(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo_root = Path(tmp) / "repo"
-            scripts_src = repo_root / "tools" / "dev-workflow"
-            scripts_src.mkdir(parents=True)
-            (scripts_src / "check.py").write_text("x = 1\n", encoding="utf-8")
+            skill_src = repo_root / ".agents" / "skills" / "demo"
+            skill_src.mkdir(parents=True)
+            (skill_src / "SKILL.md").write_text(
+                "---\nname: demo\ndescription: demo.\n---\nbody\n",
+                encoding="utf-8",
+            )
 
             original_root = mod.REPO_ROOT
             mod.REPO_ROOT = repo_root
@@ -1454,16 +1448,20 @@ class SelfInstallScriptsGuidelinesTests(unittest.TestCase):
                             code = mod.run_cli(argv)
                         self.assertEqual(code, 2)
                         self.assertIn("AIConfig repository root", err.getvalue())
-                self.assertFalse((repo_root / ".agents").exists())
+                # Refusal fired before any install write: no bridge symlink
+                # and no new .agents content beyond the fixture source.
+                self.assertFalse((repo_root / ".claude").exists())
+                self.assertTrue((repo_root / ".agents" / "skills" / "demo" / "SKILL.md").is_file())
+                self.assertEqual(
+                    sorted(p.name for p in (repo_root / ".agents" / "skills").iterdir()),
+                    ["demo"],
+                )
             finally:
                 mod.REPO_ROOT = original_root
 
-    def test_self_install_allows_scripts_and_guidelines_only(self) -> None:
+    def test_self_install_allows_guidelines_only(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo_root = Path(tmp) / "repo"
-            scripts_src = repo_root / "tools" / "dev-workflow"
-            scripts_src.mkdir(parents=True)
-            (scripts_src / "check.py").write_text("x = 1\n", encoding="utf-8")
             guideline_src = repo_root / "guidelines" / "response.md"
             guideline_src.parent.mkdir(parents=True)
             guideline_src.write_text(
@@ -1481,18 +1479,15 @@ class SelfInstallScriptsGuidelinesTests(unittest.TestCase):
             mod.REPO_ROOT = repo_root
             try:
                 code = mod.run_cli(
-                    [str(repo_root), "--scripts", "dev-workflow", "--guidelines", "response", "--override"]
+                    [str(repo_root), "--guidelines", "response", "--override"]
                 )
                 self.assertEqual(code, 0)
-                self.assertTrue((repo_root / ".agents" / "tools" / "dev-workflow" / "check.py").is_file())
                 self.assertTrue((repo_root / ".agents" / "skills" / "guidelines-response" / "SKILL.md").is_file())
 
                 for argv in (
                     [str(repo_root), "--skills", "demo"],
-                    [str(repo_root), "--scripts", "dev-workflow", "--skills", "demo"],
                     [str(repo_root), "--dev-workflow"],
                     [str(repo_root), "--uninstall", "--skills", "demo"],
-                    [str(repo_root), "--uninstall", "--scripts", "dev-workflow", "--skills", "demo"],
                     [str(repo_root), "--uninstall"],
                 ):
                     with self.subTest(argv=argv):
@@ -1503,14 +1498,12 @@ class SelfInstallScriptsGuidelinesTests(unittest.TestCase):
                         self.assertIn("AIConfig repository root", err.getvalue())
 
                 # Installed self-regenerable targets remain intact until explicitly uninstalled.
-                self.assertTrue((repo_root / ".agents" / "tools" / "dev-workflow" / "check.py").is_file())
                 self.assertTrue((repo_root / ".agents" / "skills" / "guidelines-response" / "SKILL.md").is_file())
 
                 uninstall_code = mod.run_cli(
-                    [str(repo_root), "--uninstall", "--scripts", "dev-workflow", "--guidelines", "response"]
+                    [str(repo_root), "--uninstall", "--guidelines", "response"]
                 )
                 self.assertEqual(uninstall_code, 0)
-                self.assertFalse((repo_root / ".agents" / "tools" / "dev-workflow").exists())
                 self.assertFalse((repo_root / ".agents" / "skills" / "guidelines-response").exists())
                 self.assertTrue((repo_root / ".agents" / "skills" / "demo" / "SKILL.md").is_file())
             finally:
@@ -1519,9 +1512,12 @@ class SelfInstallScriptsGuidelinesTests(unittest.TestCase):
     def test_programmatic_allow_self_defaults_false_and_guards_mixed_kinds(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo_root = Path(tmp) / "repo"
-            scripts_src = repo_root / "tools" / "dev-workflow"
-            scripts_src.mkdir(parents=True)
-            (scripts_src / "check.py").write_text("x = 1\n", encoding="utf-8")
+            guideline_src = repo_root / "guidelines" / "response.md"
+            guideline_src.parent.mkdir(parents=True)
+            guideline_src.write_text(
+                "---\ndescription: Response rules.\n---\n# Verdict First\n",
+                encoding="utf-8",
+            )
 
             original_root = mod.REPO_ROOT
             mod.REPO_ROOT = repo_root
@@ -1533,7 +1529,7 @@ class SelfInstallScriptsGuidelinesTests(unittest.TestCase):
                         skills=(),
                         agents=(),
                         commands=(),
-                        scripts=("dev-workflow",),
+                        guidelines=("response",),
                     )
                 with self.assertRaises(mod.InstallerError):
                     mod.install_items(
@@ -1542,7 +1538,7 @@ class SelfInstallScriptsGuidelinesTests(unittest.TestCase):
                         skills=("demo",),
                         agents=(),
                         commands=(),
-                        scripts=("dev-workflow",),
+                        guidelines=("response",),
                         allow_self=True,
                     )
                 with self.assertRaises(mod.InstallerError):
@@ -1551,7 +1547,7 @@ class SelfInstallScriptsGuidelinesTests(unittest.TestCase):
                         skills=("demo",),
                         agents=(),
                         commands=(),
-                        scripts=("dev-workflow",),
+                        guidelines=("response",),
                         allow_self=True,
                     )
             finally:

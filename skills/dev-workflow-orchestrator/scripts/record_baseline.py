@@ -25,7 +25,7 @@ against the baseline HEAD — so --manifest-only deliberately leaves those
 files untouched.
 
 Usage:
-    python .agents/tools/dev-workflow/record_baseline.py --phase research --run-dir .agents/workflow/<slug> [--repo-root <path>] [--manifest-only]
+    python .agents/skills/dev-workflow-orchestrator/scripts/record_baseline.py --phase research --run-dir .agents/workflow/<slug> [--repo-root <path>] [--manifest-only]
 
 Exit codes:
     0 — baseline recorded (or manifest pin refreshed)

@@ -15,18 +15,17 @@ Canonical bundle membership for tooling lives in [bundles.json](bundles.json). E
 [bundles.json](bundles.json) modularizes bundles with two layers:
 
 - **`bases`** — reusable member sets keyed by id. Shared membership (for example the core workflow skills) is defined once in the top-level `bases` array.
-- **`bundles`** — installable bundles shown in the installer GUI. Each bundle references zero or more base ids through its `bases` field and may add bundle-specific members in its own `skills`, `agents`, `commands`, and `scripts` lists.
+- **`bundles`** — installable bundles shown in the installer GUI. Each bundle references zero or more base ids through its `bases` field and may add bundle-specific members in its own `skills`, `agents`, and `commands` lists.
 
-A bundle (or base) may include any combination of four member kinds:
+A bundle (or base) may include any combination of three member kinds:
 
 | Field | Description |
 | --- | --- |
 | `skills` | Skill slugs (installed as single-root copies under `.agents/skills/<name>/`) |
 | `agents` | Agent slugs (installed as dual-target copies: `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md`) |
 | `commands` | Command slugs (installed as command-skills under `.agents/skills/cmd-<name>/` with `disable-model-invocation: true`) |
-| `scripts` | Scripts directory names under `tools/` — a directory is a member only when named in the `INSTALLABLE_SCRIPTS` allowlist in `tools/installer.py` (tracked source; copied verbatim as directory trees) |
 
-Guidelines are a fifth installer member kind but are **never bundle-carried**: they are selected explicitly via `--guidelines` (CLI) or the Guidelines panel (GUI) only. A guideline changes agent behavior in the target, so installing one is always a deliberate choice. Guidelines install as skill packages (`.agents/skills/guidelines-<name>/SKILL.md`) and activate through ordinary skill discovery.
+Guidelines are a fourth installer member kind but are **never bundle-carried**: they are selected explicitly via `--guidelines` (CLI) or the Guidelines panel (GUI) only. A guideline changes agent behavior in the target, so installing one is always a deliberate choice. Guidelines install as skill packages (`.agents/skills/guidelines-<name>/SKILL.md`) and activate through ordinary skill discovery.
 
 Resolved membership for tooling is:
 
@@ -47,9 +46,9 @@ python tools/installer.py /path/to/project --bundles core-dev-workflow --skills 
 python tools/installer.py /path/to/project --bundles dev-workflow-harness
 ```
 
-- `--bundles <id>` selects all members (skills, agents, commands, and scripts) from the resolved bundle for install or uninstall.
-- Combine with `--skills`, `--agents`, `--commands`, or `--scripts` to add individual items beyond the bundle.
-- When no selector is passed, all discovered skills, agents, commands, and scripts are selected.
+- `--bundles <id>` selects all members (skills, agents, and commands) from the resolved bundle for install or uninstall.
+- Combine with `--skills`, `--agents`, or `--commands` to add individual items beyond the bundle.
+- When no selector is passed, all discovered skills, agents, and commands are selected.
 
 ### Target bundle (dynamic)
 
@@ -60,7 +59,7 @@ The **Target bundle** is not stored in `bundles.json`. It is computed at runtime
 
 Membership is the intersection of:
 
-1. Skills and command-skills found under `<target>/.agents/skills/<name>/SKILL.md`; agents found under `<target>/.claude/agents/<name>.md` (and their `.github/agents/<name>.agent.md` twins); scripts found under `<target>/.agents/tools/<name>/`
+1. Skills and command-skills found under `<target>/.agents/skills/<name>/SKILL.md`; agents found under `<target>/.claude/agents/<name>.md` (and their `.github/agents/<name>.agent.md` twins)
 2. The same kinds available in this AIConfig repository catalog
 
 ```bash
@@ -69,7 +68,7 @@ python tools/installer.py /path/to/project --bundles target-bundle
 
 ## Dev-workflow harness bundle
 
-The **dev-workflow harness** is a bundle (`dev-workflow-harness`) that groups the complete dev-workflow harness as a single unit. It includes the orchestrator plus all phase doer/checker skills, the command, and the validation scripts the orchestrator invokes at runtime:
+The **dev-workflow harness** is a bundle (`dev-workflow-harness`) that groups the complete dev-workflow harness as a single unit. It includes the orchestrator plus all phase doer/checker skills and the command (the validation scripts the orchestrator invokes at runtime ship inside the orchestrator skill package):
 
 ```bash
 python tools/installer.py /path/to/project --bundles dev-workflow-harness
@@ -82,7 +81,7 @@ python tools/installer.py /path/to/project --dev-workflow
 - **Skills (11):** `dev-workflow-orchestrator` (the orchestrator) plus the phase doers and checkers — `prompt-clarifier`, `research-guide` / `research-reviewer`, `plan-guide` / `plan-reviewer`, `plan-executor` / `implementation-auditor`, `code-review-resolver` / `code-reviewer`, and `commit-message-writer`.
 - **Agents (4):** the four checker agents — `research-reviewer`, `plan-reviewer`, `implementation-auditor`, `code-reviewer` — installed as dual-target copies (`.claude/agents/<name>.md` verbatim from AGENT.md + `.github/agents/<name>.agent.md`). These run the checker skills with fresh-context isolation; read-only behavior is instruction-level (the agent body's Boundaries plus the harness's `check_post_phase.py` detection), not host-enforced frontmatter.
 - **Command (1):** `run-dev-workflow` — installed as a command-skill (`.agents/skills/cmd-run-dev-workflow/SKILL.md` with `disable-model-invocation: true`). Four per-phase commands — `research`, `plan`, `implement`, `review` — are also installed; each runs a single phase's doer/checker loop to acceptance or escalation without driving the full pipeline.
-- **Validation scripts:** the `.agents/tools/dev-workflow/` tree (including the `checks/` subpackage) — copied verbatim to `<target>/.agents/tools/dev-workflow/`.
+- **Validation scripts:** the `scripts/` tree inside the orchestrator skill package (including the `checks/` subpackage) — installed with the skill to `<target>/.agents/skills/dev-workflow-orchestrator/scripts/`.
 - **Guide:** the `dev-workflow.md` governance guide travels inside the orchestrator skill as `references/dev-workflow.md` — installing the skill installs the guide.
 
 The orchestrator formats escalations per the `guidelines-response` guideline-skill, which is **opt-in** (`--guidelines response`; guidelines are never bundle-carried). The escalation rules are restated inline in the orchestrator, so the harness works without it; install the guideline alongside when every-message output shaping is wanted in the target — it loads through ordinary skill discovery once installed.

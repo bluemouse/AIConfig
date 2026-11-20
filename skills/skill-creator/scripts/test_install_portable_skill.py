@@ -97,7 +97,7 @@ class InstallPortableSkillTests(unittest.TestCase):
 
             installed_skill = root / ".agents" / "skills" / DEV_WORKFLOW_SKILL / "SKILL.md"
             content = installed_skill.read_text(encoding="utf-8")
-            self.assertIn("python .agents/tools/dev-workflow/record_baseline.py", content)
+            self.assertIn("python .agents/skills/dev-workflow-orchestrator/scripts/record_baseline.py", content)
             self.assertNotIn("python tools/dev-workflow/", content)
 
     def test_rejects_category_subfolder_source(self) -> None:

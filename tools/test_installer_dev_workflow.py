@@ -56,18 +56,6 @@ def write_source_command(root: Path, name: str) -> None:
     )
 
 
-def write_source_scripts(root: Path, name: str = "dev-workflow") -> None:
-    """Write a minimal tools/<name>/ scripts tree with a checks/ subpackage."""
-    scripts = root / "tools" / name
-    scripts.mkdir(parents=True, exist_ok=True)
-    (scripts / "validate_phase.py").write_text("# validate_phase\n", encoding="utf-8")
-    (scripts / "check_pre_phase.py").write_text("# check_pre_phase\n", encoding="utf-8")
-    checks = scripts / "checks"
-    checks.mkdir(parents=True, exist_ok=True)
-    (checks / "__init__.py").write_text("", encoding="utf-8")
-    (checks / "mode_checks.py").write_text("# mode_checks\n", encoding="utf-8")
-
-
 def write_source_agent(root: Path, name: str) -> None:
     """Write a minimal agent in the dual-target layout.
 
@@ -92,7 +80,6 @@ def write_full_harness_source(root: Path) -> None:
         write_source_skill(root, skill)
     for command in mod.DEV_WORKFLOW_COMMANDS:
         write_source_command(root, command)
-    write_source_scripts(root)
     for agent in mod.DEV_WORKFLOW_AGENTS:
         write_source_agent(root, agent)
 
@@ -125,7 +112,6 @@ class DevWorkflowConstantsTests(unittest.TestCase):
                 "review",
             ),
         )
-        self.assertEqual(mod.DEV_WORKFLOW_SCRIPTS, ("dev-workflow",))
         self.assertEqual(
             mod.DEV_WORKFLOW_AGENTS,
             (
@@ -135,174 +121,6 @@ class DevWorkflowConstantsTests(unittest.TestCase):
                 "code-reviewer",
             ),
         )
-
-
-class ScriptsInstallTests(unittest.TestCase):
-    def test_install_scripts_copies_directory_tree(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            write_source_scripts(source)
-
-            result = mod.install_items(
-                source_root=source,
-                target_root=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=["dev-workflow"],
-                override=False,
-            )
-
-            self.assertTrue(result.ok, result.errors)
-            scripts = target / ".agents" / "tools" / "dev-workflow"
-            self.assertTrue(scripts.is_dir())
-            self.assertTrue((scripts / "validate_phase.py").is_file())
-            self.assertTrue((scripts / "checks" / "__init__.py").is_file())
-            self.assertIn(".agents/tools/dev-workflow", result.installed)
-
-    def test_install_scripts_skips_existing_without_override(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            write_source_scripts(source)
-            stale = target / ".agents" / "tools" / "dev-workflow" / "stale.txt"
-            stale.parent.mkdir(parents=True, exist_ok=True)
-            stale.write_text("stale", encoding="utf-8")
-
-            result = mod.install_items(
-                source_root=source,
-                target_root=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=["dev-workflow"],
-                override=False,
-            )
-
-            self.assertTrue(result.ok, result.errors)
-            self.assertIn(".agents/tools/dev-workflow", result.skipped)
-            self.assertEqual(stale.read_text(encoding="utf-8"), "stale")
-
-    def test_install_scripts_override_replaces(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            write_source_scripts(source)
-            stale = target / ".agents" / "tools" / "dev-workflow" / "stale.txt"
-            stale.parent.mkdir(parents=True, exist_ok=True)
-            stale.write_text("stale", encoding="utf-8")
-
-            result = mod.install_items(
-                source_root=source,
-                target_root=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=["dev-workflow"],
-                override=True,
-            )
-
-            self.assertTrue(result.ok, result.errors)
-            self.assertIn(".agents/tools/dev-workflow", result.installed)
-            self.assertFalse(stale.exists())
-
-    def test_install_scripts_missing_source_records_error(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            source.mkdir(parents=True, exist_ok=True)
-
-            result = mod.install_items(
-                source_root=source,
-                target_root=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=["dev-workflow"],
-                override=False,
-            )
-
-            self.assertFalse(result.ok)
-            self.assertTrue(
-                any("scripts dev-workflow" in msg for msg in result.errors),
-                result.errors,
-            )
-
-
-    def test_install_scripts_filters_pycache(self) -> None:
-        """fd-010: scripts installs never ship __pycache__/.pyc — stale
-        bytecode in a target can shadow freshly installed sources."""
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            write_source_scripts(source)
-            cache = (
-                source / "tools" / "dev-workflow" / "checks" / "__pycache__"
-            )
-            cache.mkdir()
-            (cache / "mode_checks.cpython-312.pyc").write_bytes(b"\x80\x04stale")
-
-            result = mod.install_items(
-                source_root=source,
-                target_root=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=["dev-workflow"],
-                override=False,
-            )
-
-            self.assertTrue(result.ok, result.errors)
-            installed = target / ".agents" / "tools" / "dev-workflow" / "checks"
-            self.assertTrue((installed / "mode_checks.py").is_file())
-            self.assertFalse((installed / "__pycache__").exists())
-
-
-class ScriptsUninstallTests(unittest.TestCase):
-    def test_uninstall_scripts_removes_directory(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            source = Path(tmp) / "source"
-            target = Path(tmp) / "target"
-            write_source_scripts(source)
-
-            mod.install_items(
-                source_root=source,
-                target_root=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=["dev-workflow"],
-                override=False,
-            )
-
-            result = mod.uninstall_items(
-                target_root=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=["dev-workflow"],
-            )
-
-            self.assertTrue(result.ok, result.errors)
-            self.assertFalse((target / ".agents" / "tools" / "dev-workflow").exists())
-            self.assertIn(".agents/tools/dev-workflow", result.removed)
-
-    def test_uninstall_scripts_when_not_installed(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            target = Path(tmp) / "target"
-            target.mkdir(parents=True, exist_ok=True)
-
-            result = mod.uninstall_items(
-                target_root=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=["dev-workflow"],
-            )
-
-            self.assertTrue(result.ok, result.errors)
-            self.assertEqual(result.removed, [])
 
 
 class DevWorkflowBundleTests(unittest.TestCase):
@@ -334,7 +152,6 @@ class DevWorkflowBundleTests(unittest.TestCase):
                 "run-dev-workflow",
             ],
         )
-        self.assertEqual(selection.scripts, ["dev-workflow"])
         self.assertEqual(
             selection.agents,
             [
@@ -372,7 +189,6 @@ class DevWorkflowBundleTests(unittest.TestCase):
                 skills=list(mod.DEV_WORKFLOW_SKILLS),
                 agents=list(mod.DEV_WORKFLOW_AGENTS),
                 commands=list(mod.DEV_WORKFLOW_COMMANDS),
-                scripts=list(mod.DEV_WORKFLOW_SCRIPTS),
                 override=False,
             )
 
@@ -380,7 +196,6 @@ class DevWorkflowBundleTests(unittest.TestCase):
             for skill in mod.DEV_WORKFLOW_SKILLS:
                 self.assertTrue((target / ".agents" / "skills" / skill / "SKILL.md").is_file())
             self.assertTrue((target / ".agents" / "skills" / "cmd-run-dev-workflow" / "SKILL.md").is_file())
-            self.assertTrue((target / ".agents" / "tools" / "dev-workflow" / "validate_phase.py").is_file())
             # t-014: agents are installed via --dev-workflow
             for agent in mod.DEV_WORKFLOW_AGENTS:
                 self.assertTrue((target / ".claude" / "agents" / f"{agent}.md").is_file())
@@ -399,7 +214,6 @@ class DevWorkflowBundleTests(unittest.TestCase):
                 skills=["dev-workflow-orchestrator"],
                 agents=[],
                 commands=[],
-                scripts=[],
                 override=False,
             )
 
@@ -424,7 +238,6 @@ class DevWorkflowBundleTests(unittest.TestCase):
                 skills=list(mod.DEV_WORKFLOW_SKILLS),
                 agents=list(mod.DEV_WORKFLOW_AGENTS),
                 commands=list(mod.DEV_WORKFLOW_COMMANDS),
-                scripts=list(mod.DEV_WORKFLOW_SCRIPTS),
                 override=False,
             )
             self.assertTrue(install_result.ok, install_result.errors)
@@ -434,7 +247,6 @@ class DevWorkflowBundleTests(unittest.TestCase):
                 skills=list(mod.DEV_WORKFLOW_SKILLS),
                 agents=list(mod.DEV_WORKFLOW_AGENTS),
                 commands=list(mod.DEV_WORKFLOW_COMMANDS),
-                scripts=list(mod.DEV_WORKFLOW_SCRIPTS),
             )
             self.assertTrue(uninstall_result.ok, uninstall_result.errors)
             for agent in mod.DEV_WORKFLOW_AGENTS:
@@ -461,7 +273,6 @@ class DevWorkflowBundleTests(unittest.TestCase):
                 skills=[],
                 agents=list(mod.DEV_WORKFLOW_AGENTS),
                 commands=[],
-                scripts=[],
                 override=False,
             )
             self.assertTrue(result1.ok, result1.errors)
@@ -477,7 +288,6 @@ class DevWorkflowBundleTests(unittest.TestCase):
                 skills=[],
                 agents=list(mod.DEV_WORKFLOW_AGENTS),
                 commands=[],
-                scripts=[],
                 override=True,
             )
             self.assertTrue(result2.ok, result2.errors)
@@ -500,7 +310,6 @@ class DevWorkflowBundleTests(unittest.TestCase):
                 skills=list(mod.DEV_WORKFLOW_SKILLS),
                 agents=list(mod.DEV_WORKFLOW_AGENTS),
                 commands=list(mod.DEV_WORKFLOW_COMMANDS),
-                scripts=list(mod.DEV_WORKFLOW_SCRIPTS),
                 override=False,
             )
             self.assertTrue(result.ok, result.errors)
@@ -509,20 +318,6 @@ class DevWorkflowBundleTests(unittest.TestCase):
                     (target / ".claude" / "agents" / f"{agent}.md").is_file(),
                     f"Composed install did not install agent {agent}",
                 )
-
-    def test_run_operation_scripts_only_does_not_raise(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            target = Path(tmp) / "target"
-            code, message = mod.run_operation(
-                target=target,
-                skills=[],
-                agents=[],
-                commands=[],
-                scripts=["dev-workflow"],
-                uninstall=False,
-                override=False,
-            )
-            self.assertIsInstance(message, str)
 
     def test_run_operation_no_selection_raises(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -533,11 +328,10 @@ class DevWorkflowBundleTests(unittest.TestCase):
                     skills=[],
                     agents=[],
                     commands=[],
-                    scripts=[],
                     uninstall=False,
                     override=False,
                 )
-            self.assertIn("scripts", str(ctx.exception))
+            self.assertIn("Select at least one", str(ctx.exception))
 
 
 class BundlesJsonPhaseCommandsTests(unittest.TestCase):
@@ -581,7 +375,6 @@ class PhaseCommandsInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=list(mod.DEV_WORKFLOW_COMMANDS),
-                scripts=[],
                 override=False,
             )
 
@@ -610,7 +403,6 @@ class PhaseCommandsInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=list(mod.DEV_WORKFLOW_COMMANDS),
-                scripts=[],
                 override=False,
             )
 
@@ -619,7 +411,6 @@ class PhaseCommandsInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=list(mod.DEV_WORKFLOW_COMMANDS),
-                scripts=[],
             )
 
             self.assertTrue(result.ok, result.errors)
@@ -641,7 +432,6 @@ class PhaseCommandsInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=list(mod.DEV_WORKFLOW_COMMANDS),
-                scripts=[],
                 override=False,
             )
 
@@ -655,7 +445,6 @@ class PhaseCommandsInstallTests(unittest.TestCase):
                 skills=[],
                 agents=[],
                 commands=list(mod.DEV_WORKFLOW_COMMANDS),
-                scripts=[],
                 override=True,
             )
 
@@ -690,7 +479,6 @@ class GuideTravelsWithOrchestratorTests(unittest.TestCase):
                 skills=["dev-workflow-orchestrator"],
                 agents=[],
                 commands=[],
-                scripts=[],
                 override=False,
             )
 
@@ -719,7 +507,6 @@ class GuideTravelsWithOrchestratorTests(unittest.TestCase):
                 skills=["dev-workflow-orchestrator"],
                 agents=[],
                 commands=[],
-                scripts=[],
                 override=False,
             )
             self.assertTrue(install_result.ok, install_result.errors)
@@ -729,7 +516,6 @@ class GuideTravelsWithOrchestratorTests(unittest.TestCase):
                 skills=["dev-workflow-orchestrator"],
                 agents=[],
                 commands=[],
-                scripts=[],
             )
 
             self.assertTrue(uninstall_result.ok, uninstall_result.errors)
@@ -792,7 +578,7 @@ class GuiSharedSlugBundleStateTests(unittest.TestCase):
                 app = mod.InstallerApp(root)
                 harness = next(b for b in app.skill_bundles if b.id == "dev-workflow-harness")
 
-                # Toggle bundle ON -> all skills, agents, commands, scripts checked.
+                # Toggle bundle ON -> all skills, agents, commands checked.
                 app._toggle_bundle(harness)
                 self.assertTrue(app.skill_vars["code-reviewer"].get())
                 self.assertTrue(app.agent_vars["code-reviewer"].get())
@@ -871,10 +657,6 @@ class GuiSharedSlugBundleStateTests(unittest.TestCase):
         app.command_vars = {
             name: _StubVar(False, on_change=app._on_selection_changed)
             for name in sorted(harness.commands)
-        }
-        app.scripts_vars = {
-            name: _StubVar(False, on_change=app._on_selection_changed)
-            for name in sorted(harness.scripts)
         }
         app.guideline_vars = {}
         app._bundle_buttons = {b.id: _StubButton() for b in app.skill_bundles}

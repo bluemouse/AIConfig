@@ -28,7 +28,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HARNESS_DIR = REPO_ROOT / "tools" / "dev-workflow"
+HARNESS_DIR = REPO_ROOT / "skills" / "dev-workflow-orchestrator" / "scripts"
 
 sys.path.insert(0, str(HARNESS_DIR))
 

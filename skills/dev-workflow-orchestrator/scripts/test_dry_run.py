@@ -5,7 +5,7 @@ Creates temporary run directories with various artifact configurations and
 verifies that the validation scripts produce the expected results.
 
 Usage:
-    python .agents/tools/dev-workflow/test_dry_run.py
+    python .agents/skills/dev-workflow-orchestrator/scripts/test_dry_run.py
 
 Exit codes:
     0 — all tests passed

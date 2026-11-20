@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Install or uninstall portable skills, agents, commands, scripts, and guidelines
+Install or uninstall portable skills, agents, commands, and guidelines
 from this repo into another project.
 
 Copies the single-root layout from AIConfig into a target project root:
-skills, command-skills, and scripts live under .agents/ (skills and commands
+skills and command-skills live under .agents/ (they
 share the .agents/skills/ namespace; commands carry
 disable-model-invocation: true), and each skill install creates the Claude
 Code bridge symlink .claude/skills -> ../.agents/skills. Agents distribute as
@@ -169,11 +169,10 @@ COMMAND_SKILL_DIR = ".agents/skills/" + COMMAND_SKILL_DIR_PREFIX + "{name}"
 CLAUDE_AGENT_FILE = ".claude/agents/{name}.md"
 GITHUB_AGENT_FILE = ".github/agents/{name}.agent.md"
 
-# Scripts install as directory trees: the bootstrap source lives under
-# tools/<name>/ in this repo (tracked) and installs to .agents/tools/<name>/
-# in the target (generated; the repo's own .agents/ copy is untracked).
-SHARED_SCRIPTS_DIR = ".agents/tools/{name}"
-SCRIPTS_SOURCE_DIR = "tools/{name}"
+# Scripts are no longer a separate asset kind: the dev-workflow validation
+# scripts moved into skills/dev-workflow-orchestrator/scripts/ and ship with
+# that skill. Legacy .agents/tools/<name>/ trees from a pre-move installer
+# are removed by --purge-legacy (see LEGACY_PURGE_REL_PATHS).
 
 # Behavioral guidelines installable to target projects (explicit selection only —
 # never part of the no-selector default or bundles). A guideline installs as a
@@ -189,16 +188,6 @@ INSTALLABLE_GUIDELINES = (
     "minutes",
 )
 
-# Scripts membership is intentional, not incidental: only subdirectories of
-# tools/ named here are scripts members (a random tracked directory under
-# tools/ must not silently join the default install). Add a name here when a
-# new scripts package is introduced, and keep tools/bundles.md's scripts
-# membership in sync.
-INSTALLABLE_SCRIPTS = ("dev-workflow",)
-
-# Scripts are discovered as subdirectories of tools/ in the repo root.
-TOOL_SCRIPTS_SCAN_REL_DIRS = ("tools",)
-
 # Skills (including command-skills) are discovered under .agents/skills/.
 TOOL_SKILL_SCAN_REL_DIRS = (".agents/skills",)
 
@@ -213,6 +202,8 @@ TOOL_AGENT_SCAN_REL_DIRS = (
 # real directory (the bridge symlink is left alone). .github/skills was the
 # old installer's Copilot skill-wrapper dir (removed TOOL_SKILL_DIRS layout);
 # .github/agents is current-layout and stays (exact-dir entries, no overlap).
+# .agents/tools held the standalone dev-workflow scripts before they moved
+# into the dev-workflow-orchestrator skill package.
 LEGACY_PURGE_REL_PATHS = (
     ".ai",
     ".cursor/skills",
@@ -221,6 +212,7 @@ LEGACY_PURGE_REL_PATHS = (
     ".github/prompts",
     ".github/skills",
     ".claude/commands",
+    ".agents/tools",
     # Pre-skill-layout guideline files (guidelines now install as
     # .agents/skills/guidelines-<name>/ skill packages).
     ".agents/guidelines",
@@ -243,14 +235,14 @@ BUNDLES_JSON = Path(__file__).resolve().parent / "bundles.json"
 TARGET_BUNDLE_ID = "target-bundle"
 TARGET_BUNDLE_NAME = "Target bundle"
 TARGET_BUNDLE_DESCRIPTION = (
-    "Skills, agents, commands, and scripts currently installed in the selected "
+    "Skills, agents, and commands currently installed in the selected "
     "target project (matching this AIConfig catalog)."
 )
 
-# Dev-workflow harness: the orchestrator plus all phase doer/checker skills,
-# the dev-workflow command, and the validation scripts tree. Installed/
-# uninstalled together via the dev-workflow-harness bundle (and the
-# --dev-workflow CLI alias).
+# Dev-workflow harness: the orchestrator plus all phase doer/checker skills
+# and the dev-workflow command (validation scripts ship inside the
+# orchestrator skill package). Installed/uninstalled together via the
+# dev-workflow-harness bundle (and the --dev-workflow CLI alias).
 DEV_WORKFLOW_SKILLS = (
     "dev-workflow-orchestrator",
     "prompt-clarifier",
@@ -271,7 +263,6 @@ DEV_WORKFLOW_COMMANDS = (
     "implement",
     "review",
 )
-DEV_WORKFLOW_SCRIPTS = ("dev-workflow",)
 DEV_WORKFLOW_AGENTS = (
     "research-reviewer",
     "plan-reviewer",
@@ -294,12 +285,11 @@ class Bundle:
     skills: frozenset[str]
     agents: frozenset[str] = frozenset()
     commands: frozenset[str] = frozenset()
-    scripts: frozenset[str] = frozenset()
 
     @property
     def is_empty(self) -> bool:
         """Return True if the bundle has no members of any kind."""
-        return not (self.skills or self.agents or self.commands or self.scripts)
+        return not (self.skills or self.agents or self.commands)
 
 
 # Backward-compatible alias.
@@ -393,9 +383,9 @@ def slugify_name(value: str) -> str:
 def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
     """Load workflow bundles from bundles.json.
 
-    Each bundle may define any combination of skills, agents, commands, and
-    scripts. Bases are reusable member sets keyed by id; a base may also carry
-    any combination of the four member types.
+    Each bundle may define any combination of skills, agents, and commands.
+    Bases are reusable member sets keyed by id; a base may also carry any
+    combination of the three member types.
     """
     if not path.is_file():
         raise InstallerError(f"Bundle config not found: {path}")
@@ -436,7 +426,6 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
         resolved_skills: set[str] = set()
         resolved_agents: set[str] = set()
         resolved_commands: set[str] = set()
-        resolved_scripts: set[str] = set()
 
         raw_bundle_bases = entry.get("bases", [])
         if raw_bundle_bases is None:
@@ -455,18 +444,15 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
             resolved_skills.update(base.skills)
             resolved_agents.update(base.agents)
             resolved_commands.update(base.commands)
-            resolved_scripts.update(base.scripts)
 
         resolved_skills.update(_parse_member_list(entry, "skills", path, index))
         resolved_agents.update(_parse_member_list(entry, "agents", path, index))
         resolved_commands.update(_parse_member_list(entry, "commands", path, index))
-        resolved_scripts.update(_parse_member_list(entry, "scripts", path, index))
 
         if not (
             resolved_skills
             or resolved_agents
             or resolved_commands
-            or resolved_scripts
         ):
             raise InstallerError(
                 f"Invalid bundle config {path}: bundles[{index}] resolved to an empty bundle."
@@ -480,7 +466,6 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
                 skills=frozenset(resolved_skills),
                 agents=frozenset(resolved_agents),
                 commands=frozenset(resolved_commands),
-                scripts=frozenset(resolved_scripts),
             )
         )
 
@@ -493,7 +478,7 @@ def _parse_member_list(
     path: Path,
     index: int,
 ) -> set[str]:
-    """Parse an optional member list (skills/agents/commands/scripts) from a bundle/base entry."""
+    """Parse an optional member list (skills/agents/commands) from a bundle/base entry."""
     if key not in entry:
         return set()
     raw = entry[key]
@@ -508,7 +493,7 @@ def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, Bundl
     """Parse the top-level bases registry from bundles.json.
 
     A base is a reusable member set. It must define at least one of skills,
-    agents, commands, or scripts. For backward compatibility, a base with only
+    agents, or commands. For backward compatibility, a base with only
     a ``skills`` key is valid.
     """
     if raw_bases is None:
@@ -535,12 +520,11 @@ def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, Bundl
         skills = frozenset(_parse_member_list(entry, "skills", path, index))
         agents = frozenset(_parse_member_list(entry, "agents", path, index))
         commands = frozenset(_parse_member_list(entry, "commands", path, index))
-        scripts = frozenset(_parse_member_list(entry, "scripts", path, index))
 
-        if not (skills or agents or commands or scripts):
+        if not (skills or agents or commands):
             raise InstallerError(
                 f"Invalid bundle config {path}: bases[{index}] must define at least one of "
-                "skills, agents, commands, or scripts."
+                "skills, agents, or commands."
             )
 
         base_registry[base_id] = Bundle(
@@ -550,7 +534,6 @@ def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, Bundl
             skills=skills,
             agents=agents,
             commands=commands,
-            scripts=scripts,
         )
 
     return base_registry
@@ -579,21 +562,18 @@ class BundleSelection:
     skills: list[str] = field(default_factory=list)
     agents: list[str] = field(default_factory=list)
     commands: list[str] = field(default_factory=list)
-    scripts: list[str] = field(default_factory=list)
     guidelines: list[str] = field(default_factory=list)
 
     def extend(self, other: "BundleSelection") -> None:
         self.skills.extend(other.skills)
         self.agents.extend(other.agents)
         self.commands.extend(other.commands)
-        self.scripts.extend(other.scripts)
         self.guidelines.extend(other.guidelines)
 
     def dedupe(self) -> None:
         self.skills = normalize_names(self.skills)
         self.agents = normalize_names(self.agents)
         self.commands = normalize_names(self.commands)
-        self.scripts = normalize_names(self.scripts)
         self.guidelines = normalize_names(self.guidelines)
         # Skills and command-skills share the .agents/skills/ namespace. A
         # name reached through both kinds (e.g. a bundle lists it as a skill
@@ -609,7 +589,7 @@ class BundleSelection:
 
     @property
     def is_empty(self) -> bool:
-        return not (self.skills or self.agents or self.commands or self.scripts or self.guidelines)
+        return not (self.skills or self.agents or self.commands or self.guidelines)
 
 
 def resolve_bundle(
@@ -637,7 +617,6 @@ def resolve_bundle(
                 skills=sorted(target_bundle.skills),
                 agents=sorted(target_bundle.agents),
                 commands=sorted(target_bundle.commands),
-                scripts=sorted(target_bundle.scripts),
             ))
             continue
         if bundle_id not in by_id:
@@ -650,7 +629,6 @@ def resolve_bundle(
             skills=sorted(bundle.skills),
             agents=sorted(bundle.agents),
             commands=sorted(bundle.commands),
-            scripts=sorted(bundle.scripts),
         ))
     selection.dedupe()
     return selection
@@ -676,7 +654,6 @@ def resolve_cli_selection(
     skill_names: Sequence[str] | None,
     agent_names: Sequence[str] | None,
     command_names: Sequence[str] | None,
-    script_names: Sequence[str] | None,
     guideline_names: Sequence[str] | None = None,
     target_root: Path | None = None,
 ) -> BundleSelection:
@@ -690,8 +667,6 @@ def resolve_cli_selection(
         selection.agents.extend(normalize_names(agent_names))
     if command_names:
         selection.commands.extend(normalize_names(command_names))
-    if script_names:
-        selection.scripts.extend(normalize_names(script_names))
     if guideline_names:
         selection.guidelines.extend(normalize_names(guideline_names))
     if (
@@ -699,7 +674,6 @@ def resolve_cli_selection(
         or skill_names
         or agent_names
         or command_names
-        or script_names
         or guideline_names
     ):
         selection.dedupe()
@@ -725,7 +699,6 @@ def resolve_cli_selection(
         ],
         agents=discover_agents(),
         commands=discover_commands(),
-        scripts=discover_scripts(),
     )
     default_selection.dedupe()
     return default_selection
@@ -747,7 +720,6 @@ def resolve_cli_skills(
         skill_names=skill_names,
         agent_names=None,
         command_names=None,
-        script_names=None,
         target_root=target_root,
     ).skills
 
@@ -828,18 +800,6 @@ def discover_commands_in_project(project_root: Path) -> list[str]:
     return sorted(names)
 
 
-def discover_scripts_in_project(project_root: Path) -> list[str]:
-    """Return scripts directory names installed under project_root/.agents/tools/."""
-    names: set[str] = set()
-    shared_root = project_root / ".agents" / "tools"
-    if not shared_root.is_dir():
-        return []
-    for child in shared_root.iterdir():
-        if child.is_dir() and not child.name.startswith(".") and not child.name.startswith("__"):
-            names.add(child.name)
-    return sorted(names)
-
-
 def discover_guidelines() -> list[str]:
     """Return allowlisted behavioral guidelines that exist in this repo."""
     return sorted(
@@ -870,7 +830,6 @@ def build_target_bundle(
     available_skills: Sequence[str] | None = None,
     available_agents: Sequence[str] | None = None,
     available_commands: Sequence[str] | None = None,
-    available_scripts: Sequence[str] | None = None,
 ) -> Bundle:
     """Build the dynamic target bundle from installed members in the target project.
 
@@ -884,8 +843,6 @@ def build_target_bundle(
         available_agents = discover_agents()
     if available_commands is None:
         available_commands = discover_commands()
-    if available_scripts is None:
-        available_scripts = discover_scripts()
 
     def _intersect(
         installed: Sequence[str], available: Sequence[str]
@@ -912,7 +869,6 @@ def build_target_bundle(
         ),
         agents=_intersect(discover_agents_in_project(target_root), available_agents),
         commands=_intersect(discover_commands_in_project(target_root), available_commands),
-        scripts=_intersect(discover_scripts_in_project(target_root), available_scripts),
     )
 
 
@@ -1060,45 +1016,6 @@ def load_command_descriptions(names: Sequence[str]) -> dict[str, str]:
     return descriptions
 
 
-def discover_scripts() -> list[str]:
-    """Return allowlisted scripts names present under REPO_ROOT/tools/.
-
-    tools/ is a mixed directory (installer, bundle config, test suite);
-    scripts membership is decided by INSTALLABLE_SCRIPTS, not by directory
-    shape — a subdirectory joins only when its name is allowlisted, so
-    discovery walks the allowlist itself and checks each entry for a
-    matching directory. Widening a prefix filter here can never add a
-    member; add the name to INSTALLABLE_SCRIPTS instead.
-    """
-    names: set[str] = set()
-    for rel_dir in TOOL_SCRIPTS_SCAN_REL_DIRS:
-        for name in INSTALLABLE_SCRIPTS:
-            if (REPO_ROOT / rel_dir / name).is_dir():
-                names.add(name)
-    return sorted(names)
-
-
-def load_scripts_descriptions(names: Sequence[str]) -> dict[str, str]:
-    """Map scripts names to a short description.
-
-    Scripts directories do not carry frontmatter; the description is derived
-    from a README.md in the directory if present, otherwise the name itself.
-    """
-    descriptions: dict[str, str] = {}
-    for name in names:
-        readme = REPO_ROOT / SCRIPTS_SOURCE_DIR.format(name=name) / "README.md"
-        if readme.is_file():
-            try:
-                text = readme.read_text(encoding="utf-8").strip()
-                first_line = text.splitlines()[0].lstrip("# ").strip() if text else ""
-                descriptions[name] = first_line or f"Scripts directory: {name}"
-            except OSError:
-                descriptions[name] = f"Scripts directory: {name}"
-        else:
-            descriptions[name] = f"Scripts directory: {name}"
-    return descriptions
-
-
 def validate_target(
     source: Path,
     target: Path,
@@ -1198,21 +1115,6 @@ def command_remove_paths(target_root: Path, name: str) -> list[Path]:
         target_root / SHARED_SKILL_DIR.format(name=name),
         target_root / COMMAND_SKILL_DIR.format(name=name),
     ]
-
-
-def scripts_copy_pairs(source_root: Path, target_root: Path, name: str) -> list[tuple[Path, Path]]:
-    """Return (src, dest) pairs for a scripts directory tree.
-
-    The tracked source lives at tools/<name>/; the target receives a copy at
-    .agents/tools/<name>/.
-    """
-    src = source_root / SCRIPTS_SOURCE_DIR.format(name=name)
-    dest = target_root / SHARED_SCRIPTS_DIR.format(name=name)
-    return [(src, dest)]
-
-
-def scripts_remove_paths(target_root: Path, name: str) -> list[Path]:
-    return [target_root / SHARED_SCRIPTS_DIR.format(name=name)]
 
 
 def guideline_skill_name(name: str) -> str:
@@ -1410,7 +1312,7 @@ def warn_unpaired_agent_skill(
     reference unresolvable in the target. Warn, do not block — non-checker
     agents may legitimately reference skills installed separately. The check
     reads the installed Claude copy; a skipped (existing) copy carries the
-    same body. Only meaningful for agent installs — skill, command, scripts,
+    same body. Only meaningful for agent installs — skill, command,
     and guideline installs never write the `.claude/agents/<name>.md` file
     this reads, so it is called only from the agents loop.
     """
@@ -1444,7 +1346,6 @@ def install_items(
     skills: Sequence[str],
     agents: Sequence[str],
     commands: Sequence[str],
-    scripts: Sequence[str] = (),
     guidelines: Sequence[str] = (),
     override: bool = False,
     dry_run: bool = False,
@@ -1455,7 +1356,7 @@ def install_items(
     # exist and nothing is ever created (create=False mirrors the uninstall
     # and purge precedent).
     effective_allow_self = bool(
-        allow_self and (scripts or guidelines) and not (skills or agents or commands)
+        allow_self and guidelines and not (skills or agents or commands)
     )
     target_root = validate_target(
         source_root, target_root, create=not dry_run, allow_self=effective_allow_self
@@ -1656,35 +1557,6 @@ def install_items(
         if not dry_run:
             ensure_bridge_symlink(target_root)
 
-    for name in scripts:
-        slug = slugify_name(name)
-        pairs = scripts_copy_pairs(source_root, target_root, slug)
-        shared_src = pairs[0][0]
-        if not shared_src.is_dir():
-            result.errors.append(
-                f"scripts {slug}: missing source {format_rel(shared_src, source_root)}"
-            )
-            continue
-
-        for src, dest in pairs:
-            rel_dest = format_rel(dest, target_root)
-            if dest.exists():
-                if not override:
-                    result.skipped.append(rel_dest)
-                    continue
-                if dry_run:
-                    result.installed.append(rel_dest)
-                    continue
-                remove_path(dest)
-            if dry_run:
-                result.installed.append(rel_dest)
-                continue
-            try:
-                copy_path(src, dest)
-                result.installed.append(rel_dest)
-            except OSError as exc:
-                result.errors.append(f"{rel_dest}: {exc}")
-
     for name in guidelines:
         slug = slugify_name(name)
         pairs = guideline_copy_pairs(source_root, target_root, slug)
@@ -1809,7 +1681,7 @@ def is_guideline_skill(skill_dir: Path) -> bool:
 
 
 # Removal contract (F1, settled by user decision): uninstall is
-# unconditional for skills, agents, commands, and scripts — scripted
+# unconditional for skills, agents, and commands — scripted
 # teardowns (CI cleanup, reprovisioning) rely on removal always happening,
 # so no provenance or user-modification check applies to those kinds. This
 # is deliberate, not an oversight: the docs member kind's
@@ -1825,7 +1697,6 @@ def uninstall_items(
     skills: Sequence[str],
     agents: Sequence[str],
     commands: Sequence[str],
-    scripts: Sequence[str] = (),
     guidelines: Sequence[str] = (),
     dry_run: bool = False,
     allow_self: bool = False,
@@ -1836,7 +1707,7 @@ def uninstall_items(
     # consistent with purge; a scripted uninstall of a missing target should
     # fail loudly rather than report an empty success.
     effective_allow_self = bool(
-        allow_self and (scripts or guidelines) and not (skills or agents or commands)
+        allow_self and guidelines and not (skills or agents or commands)
     )
     target_root = validate_target(
         REPO_ROOT, target_root, create=False, allow_self=effective_allow_self
@@ -1916,19 +1787,6 @@ def uninstall_items(
                 result.removed.append(format_rel(path, target_root))
             except OSError as exc:
                 result.errors.append(f"{format_rel(path, target_root)}: {exc}")
-
-    for name in scripts:
-        slug = slugify_name(name)
-        for path in scripts_remove_paths(target_root, slug):
-            if path.exists():
-                if dry_run:
-                    result.removed.append(format_rel(path, target_root))
-                    continue
-                try:
-                    remove_path(path)
-                    result.removed.append(format_rel(path, target_root))
-                except OSError as exc:
-                    result.errors.append(f"{format_rel(path, target_root)}: {exc}")
 
     for name in guidelines:
         slug = slugify_name(name)
@@ -2018,15 +1876,14 @@ def run_operation(
     skills: Sequence[str],
     agents: Sequence[str],
     commands: Sequence[str],
-    scripts: Sequence[str] = (),
     guidelines: Sequence[str] = (),
     uninstall: bool = False,
     override: bool = False,
     dry_run: bool = False,
     allow_self: bool = False,
 ) -> tuple[int, str]:
-    if not skills and not agents and not commands and not scripts and not guidelines:
-        raise InstallerError("Select at least one skill, agent, command, scripts, or guideline.")
+    if not skills and not agents and not commands and not guidelines:
+        raise InstallerError("Select at least one skill, agent, command, or guideline.")
 
     if uninstall:
         result = uninstall_items(
@@ -2034,7 +1891,6 @@ def run_operation(
             skills=skills,
             agents=agents,
             commands=commands,
-            scripts=scripts,
             guidelines=guidelines,
             dry_run=dry_run,
             allow_self=allow_self,
@@ -2046,7 +1902,6 @@ def run_operation(
             skills=skills,
             agents=agents,
             commands=commands,
-            scripts=scripts,
             guidelines=guidelines,
             override=override,
             dry_run=dry_run,
@@ -2062,7 +1917,7 @@ def run_operation(
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Install or uninstall portable skills, agents, commands, scripts, and "
+            "Install or uninstall portable skills, agents, commands, and "
             "guidelines from this AIConfig repository into another project."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -2077,7 +1932,6 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
             "  python tools/installer.py /path/to/project --bundles target-bundle\n"
             "  python tools/installer.py /path/to/project --bundles dev-workflow-harness\n"
             "  python tools/installer.py /path/to/project --dev-workflow\n"
-            "  python tools/installer.py /path/to/project --scripts dev-workflow\n"
             "  python tools/installer.py /path/to/project --uninstall --agents my-agent\n"
             "  python tools/installer.py /path/to/project --uninstall --commands commit\n"
             "\n"
@@ -2095,7 +1949,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         metavar="ID",
         help=(
             "Bundle ids from bundles.json or target-bundle to install or uninstall. "
-            "A bundle may include skills, agents, commands, and scripts."
+            "A bundle may include skills, agents, and commands."
         ),
     )
     parser.add_argument(
@@ -2121,12 +1975,6 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "--scripts",
-        nargs="+",
-        metavar="NAME",
-        help="Scripts directory names (under .agents/tools/) to install or uninstall (default: all discovered).",
-    )
-    parser.add_argument(
         "--guidelines",
         nargs="+",
         metavar="NAME",
@@ -2147,7 +1995,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser.add_argument(
         "--uninstall",
         action="store_true",
-        help="Remove the selected skills, agents, commands, scripts, and guidelines from the target project.",
+        help="Remove the selected skills, agents, commands, and guidelines from the target project.",
     )
     parser.add_argument(
         "--purge-legacy",
@@ -2155,16 +2003,16 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help=(
             "Remove the target's pre-single-root install leftovers: .ai/, "
             ".cursor/skills|commands|agents/, .github/prompts/, "
-            ".github/skills/, .claude/commands/, .agents/guidelines/, and "
-            ".claude/skills/ only when it is a real directory (the bridge "
-            "symlink is left alone). Composes with the kind selectors or "
-            "runs standalone; requires TARGET."
+            ".github/skills/, .claude/commands/, .agents/guidelines/, "
+            ".agents/tools/, and .claude/skills/ only when it is a real "
+            "directory (the bridge symlink is left alone). Composes with "
+            "the kind selectors or runs standalone; requires TARGET."
         ),
     )
     parser.add_argument(
         "--override",
         action="store_true",
-        help="Replace existing skills, agents, commands, scripts, and guidelines in the target project.",
+        help="Replace existing skills, agents, commands, and guidelines in the target project.",
     )
     parser.add_argument(
         "--dry-run",
@@ -2211,7 +2059,6 @@ def run_cli(argv: Sequence[str]) -> int:
             or args.skills
             or args.agents
             or args.commands
-            or args.scripts
             or args.guidelines
         )
         if args.purge_legacy and not has_kind_selectors:
@@ -2225,21 +2072,20 @@ def run_cli(argv: Sequence[str]) -> int:
             skill_names=args.skills,
             agent_names=args.agents,
             command_names=args.commands,
-            script_names=args.scripts,
             guideline_names=args.guidelines,
             target_root=target,
         )
         if selection.is_empty:
             if not args.purge_legacy:
                 raise InstallerError(
-                    "Select at least one skill, agent, command, scripts, or guideline."
+                    "Select at least one skill, agent, command, or guideline."
                 )
             # --purge-legacy composed with selectors that resolved empty.
             for purge_message in purge_messages:
                 print(purge_message)
             return 1 if purge_failed else 0
         explicit_self_regenerable_only = bool(
-            (args.scripts or args.guidelines)
+            args.guidelines
             and not (
                 bundle_ids
                 or args.dev_workflow
@@ -2254,7 +2100,6 @@ def run_cli(argv: Sequence[str]) -> int:
             skills=selection.skills,
             agents=selection.agents,
             commands=selection.commands,
-            scripts=selection.scripts,
             guidelines=selection.guidelines,
             uninstall=args.uninstall,
             override=args.override,
@@ -2370,17 +2215,14 @@ class InstallerApp:
         ]
         self.agents = discover_agents()
         self.commands = discover_commands()
-        self.scripts = discover_scripts()
         self.guidelines = discover_guidelines()
         self.skill_descriptions = load_skill_descriptions(self.skills)
         self.agent_descriptions = load_agent_descriptions(self.agents)
         self.command_descriptions = load_command_descriptions(self.commands)
-        self.scripts_descriptions = load_scripts_descriptions(self.scripts)
         self.guideline_descriptions = load_guidelines_descriptions(self.guidelines)
         self.skill_vars: dict[str, tk.BooleanVar] = {}
         self.agent_vars: dict[str, tk.BooleanVar] = {}
         self.command_vars: dict[str, tk.BooleanVar] = {}
-        self.scripts_vars: dict[str, tk.BooleanVar] = {}
         self.guideline_vars: dict[str, tk.BooleanVar] = {}
 
         self.target_var = tk.StringVar()
@@ -2442,19 +2284,10 @@ class InstallerApp:
         )
         self._add_checkbox_list(
             lists,
-            title="Scripts",
-            items=self.scripts,
-            var_map=self.scripts_vars,
-            column=3,
-            descriptions=self.scripts_descriptions,
-            help_command=self._show_scripts_help,
-        )
-        self._add_checkbox_list(
-            lists,
             title="Guidelines",
             items=self.guidelines,
             var_map=self.guideline_vars,
-            column=4,
+            column=3,
             descriptions=self.guideline_descriptions,
             help_command=self._show_guidelines_help,
         )
@@ -2628,8 +2461,6 @@ class InstallerApp:
             pairs.append((bundle.agents, self.agent_vars))
         if bundle.commands:
             pairs.append((bundle.commands, self.command_vars))
-        if bundle.scripts:
-            pairs.append((bundle.scripts, self.scripts_vars))
         return pairs
 
     def _bundle_present_members(self, members: frozenset[str], var_map: dict[str, tk.BooleanVar]) -> list[str]:
@@ -2727,7 +2558,6 @@ class InstallerApp:
             available_skills=self.skills,
             available_agents=self.agents,
             available_commands=self.commands,
-            available_scripts=self.scripts,
         )
         if bundle.is_empty:
             button.state(["disabled"])
@@ -2743,7 +2573,6 @@ class InstallerApp:
             (len(bundle.skills), "skill"),
             (len(bundle.agents), "agent"),
             (len(bundle.commands), "command"),
-            (len(bundle.scripts), "script"),
         ]
         parts = [f"{count} {word}{'s' if count != 1 else ''}" for count, word in counts if count]
         self._update_target_bundle_tooltip(
@@ -2853,12 +2682,6 @@ class InstallerApp:
         content = format_selection_help(entries, empty_message="No commands selected.")
         self._show_help_window("Commands — Help", content)
 
-    def _show_scripts_help(self) -> None:
-        names = self._selected(self.scripts_vars)
-        entries = self._help_entries_for_selection(names, self.scripts_descriptions)
-        content = format_selection_help(entries, empty_message="No scripts selected.")
-        self._show_help_window("Scripts — Help", content)
-
     def _show_guidelines_help(self) -> None:
         names = self._selected(self.guideline_vars)
         entries = self._help_entries_for_selection(names, self.guideline_descriptions)
@@ -2883,12 +2706,11 @@ class InstallerApp:
         skills = self._selected(self.skill_vars)
         agents = self._selected(self.agent_vars)
         commands = self._selected(self.command_vars)
-        scripts = self._selected(self.scripts_vars)
         guidelines = self._selected(self.guideline_vars)
-        if not skills and not agents and not commands and not scripts and not guidelines:
+        if not skills and not agents and not commands and not guidelines:
             messagebox.showerror(
                 "Nothing selected",
-                "Select at least one skill, agent, command, scripts, or guideline.",
+                "Select at least one skill, agent, command, or guideline.",
             )
             return
 
@@ -2900,7 +2722,6 @@ class InstallerApp:
                 skills=skills,
                 agents=agents,
                 commands=commands,
-                scripts=scripts,
                 guidelines=guidelines,
                 uninstall=uninstall,
                 override=self.override_var.get(),

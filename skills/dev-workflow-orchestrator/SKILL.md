@@ -16,7 +16,7 @@ Orchestrate state, routing, and validation — do not research, plan, implement,
 **Use when:** starting a full workflow run, resuming an interrupted run, or continuing after a backward edge or escalation.
 **Do not use when:** running a single phase task directly, standalone git mechanics ([../git-guide/SKILL.md](../git-guide/SKILL.md)), standalone diff review ([../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)), or open-ended brainstorming ([../research-guide/SKILL.md](../research-guide/SKILL.md)).
 
-> **Standalone / partial-bundle fallback:** Full script-gated execution requires the `--dev-workflow` (`dev-workflow-harness`) install. If `.agents/tools/dev-workflow/` scripts or `code-review-resolver` are absent (e.g. standalone or `extended-dev-workflow` install without `--dev-workflow`), inform the user to install `--dev-workflow` for automated script-gated enforcement, or run manual artifact/diff checks only if the user explicitly approves.
+> **Partial-bundle fallback:** If `code-review-resolver` is absent (e.g. standalone `dev-workflow-orchestrator` install without the `dev-workflow-harness` bundle), inform the user to install `--dev-workflow` for the full harness, or have the implementer apply review fixes directly only if the user explicitly approves. The validation scripts ship inside this skill (`scripts/`), so script-gated execution works in any install that includes this skill.
 
 ## Companion Skills
 
@@ -35,7 +35,7 @@ Enforce [references/permission-matrix.md](references/permission-matrix.md) acros
 
 ### Starting or resuming a run
 
-- **Start:** Classify intake per [references/dev-workflow.md](references/dev-workflow.md), create `.agents/workflow/<slug>/`, write `00-run-manifest.md` (`# Run Manifest`, `## Run metadata`, `## Phase status`, `## Artifact registry`, `## Dispatch log`) and `01-feature-brief.md`, record baseline (`python .agents/tools/dev-workflow/record_baseline.py --phase clarify --run-dir .agents/workflow/<slug>`), run `check_pre_phase.py --phase clarify --run-dir .agents/workflow/<slug>`, and start Phase 0 (Clarify).
+- **Start:** Classify intake per [references/dev-workflow.md](references/dev-workflow.md), create `.agents/workflow/<slug>/`, write `00-run-manifest.md` (`# Run Manifest`, `## Run metadata`, `## Phase status`, `## Artifact registry`, `## Dispatch log`) and `01-feature-brief.md`, record baseline (`python .agents/skills/dev-workflow-orchestrator/scripts/record_baseline.py --phase clarify --run-dir .agents/workflow/<slug>`), run `check_pre_phase.py --phase clarify --run-dir .agents/workflow/<slug>`, and start Phase 0 (Clarify).
 - **Resume:** Read `00-run-manifest.md` and continue from the recorded phase/round without restarting accepted phases unless routed by a backward edge.
 
 ### Within a phase (the loop)
@@ -88,7 +88,7 @@ In-stage backward edges (current-stage root-cause repair) and between-stage exit
 ## Dispatch model and state tracking
 
 - **Dispatch** ([references/dispatch-modes.md](references/dispatch-modes.md)): evaluate capability once (Phase 0 or command bootstrap), record `native`, `delegated`, or `simulated` in `## Dispatch log`, always read verdicts from the **on-disk `## Verdict` section** (never the subagent return message; the doer never reads the checker's verdict), and on transient spawn failure retry once before logging and falling back to `delegated` (hung/no-verdict checkers fall back immediately without blocking).
-- **Manifest pin refresh:** read `00-run-manifest.md` every turn, update it after every step, and immediately run `python .agents/tools/dev-workflow/record_baseline.py --phase <current-phase> --run-dir <path> --manifest-only` so `check_post_phase.py` accepts orchestrator writes without resetting git HEAD or dirty-path baselines (never run a full `record_baseline.py` mid-phase; doers/checkers never edit the manifest). At phase boundaries, mark superseded round artifacts in `## Artifact registry` or pause cleanly if context limits approach.
+- **Manifest pin refresh:** read `00-run-manifest.md` every turn, update it after every step, and immediately run `python .agents/skills/dev-workflow-orchestrator/scripts/record_baseline.py --phase <current-phase> --run-dir <path> --manifest-only` so `check_post_phase.py` accepts orchestrator writes without resetting git HEAD or dirty-path baselines (never run a full `record_baseline.py` mid-phase; doers/checkers never edit the manifest). At phase boundaries, mark superseded round artifacts in `## Artifact registry` or pause cleanly if context limits approach.
 
 ## References
 

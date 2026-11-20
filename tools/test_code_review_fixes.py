@@ -14,7 +14,7 @@ import unittest
 from pathlib import Path
 
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent / "dev-workflow"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "dev-workflow-orchestrator" / "scripts"))
 from checks import artifact_checks  # type: ignore[import-not-found]
 from checks import manifest_checks  # type: ignore[import-not-found]
 from checks import loop_checks  # type: ignore[import-not-found]

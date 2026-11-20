@@ -18,7 +18,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "dev-workflow"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "dev-workflow-orchestrator" / "scripts"))
 
 from checks import loop_checks  # type: ignore[import-not-found]
 

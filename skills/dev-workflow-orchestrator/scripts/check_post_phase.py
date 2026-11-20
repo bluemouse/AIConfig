@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Validate a dev-workflow phase after its loop exits.
+"""Post-flight check: verify only allowed artifacts were written after a phase step.
 
-Runs all check categories (artifact structure, manifest state, loop contract,
-mode enforcement, handoff integrity) for the specified phase and reports
-findings with severity (error/warning).
+Checks that:
+- Only artifacts with allowed prefixes were created/modified in the run dir
+- No forbidden files were touched (source in read-only phases)
+- The manifest is still valid after the phase step
 
 Usage:
-    python .agents/tools/dev-workflow/validate_phase.py --phase research --run-dir .agents/workflow/<slug>
+    python .agents/skills/dev-workflow-orchestrator/scripts/check_post_phase.py --phase research --run-dir .agents/workflow/<slug> [--repo-root <path>]
 
 Exit codes:
-    0 — no errors (warnings may be present)
+    0 — post-flight checks passed
     1 — one or more errors found
     2 — usage error or missing run directory
 """
@@ -20,65 +21,59 @@ import argparse
 import sys
 from pathlib import Path
 
-# Allow importing checks/ whether run as a script or module.
 sys.path.insert(0, str(Path(__file__).parent))
 
 from checks import Finding
-from checks import artifact_checks
-from checks import handoff_checks
 from checks import manifest_checks
 from checks import message_checks
 from checks import mode_checks
-from checks import loop_checks
 
 
-def run_phase_validation(
-    run_dir: Path,
-    phase: str,
-    repo_root: Path | None = None,
-    stage: int | None = None,
-) -> list[Finding]:
-    """Run all validation checks for a phase. Returns a list of findings."""
+def run_post_flight(run_dir: Path, phase: str, repo_root: Path | None = None) -> list[Finding]:
+    """Run post-flight checks after a phase step.
+
+    Post-flight checks are a lightweight subset of validation:
+    - Mode enforcement: only allowed artifacts written, no forbidden source edits,
+      no commits in non-commit phases. (Uses the baseline to distinguish
+      pre-existing changes from phase changes.)
+    - Manifest still exists and has required sections.
+
+    Content checks (artifact sections, verdicts, handoff integrity) are NOT
+    run here — they are run by validate_phase.py after the loop exits.
+    """
     findings: list[Finding] = []
-    findings.extend(artifact_checks.run_all(run_dir, phase, stage))
-    findings.extend(manifest_checks.run_all(run_dir, phase))
-    findings.extend(loop_checks.run_all(run_dir, phase, stage))
+    # Mode enforcement: only allowed artifacts written, no forbidden source edits.
     findings.extend(mode_checks.run_all(run_dir, phase, repo_root))
+    # Commit-message contract: lint commits made during this phase
+    # (staged-mode per-stage and fix-loop commits included).
     findings.extend(message_checks.check_commit_messages(run_dir, phase, repo_root))
-    findings.extend(handoff_checks.run_all(run_dir, phase, stage))
+    # Manifest still exists and is structurally valid.
+    findings.extend(manifest_checks.check_manifest_exists(run_dir))
+    findings.extend(manifest_checks.check_manifest_sections(run_dir))
     return findings
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Validate a dev-workflow phase after its loop exits."
+        description="Post-flight check after a dev-workflow phase step."
     )
     parser.add_argument(
         "--phase",
         required=True,
         choices=["clarify", "research", "plan", "implement", "code-review", "commit"],
-        help="The phase to validate.",
+        help="The phase that just ran.",
     )
     parser.add_argument(
         "--run-dir",
         required=True,
         type=Path,
-        help="Path to the run directory (e.g., .agents/workflow/<slug>).",
-    )
-    parser.add_argument(
-        "--stage",
-        type=int,
-        default=None,
-        help="Stage number in staged mode: scope stage-indexed artifact "
-             "resolution (e.g. --stage 2 validates 30-stage2-* only). "
-             "Omit to resolve the highest stage index.",
+        help="Path to the run directory.",
     )
     parser.add_argument(
         "--repo-root",
         type=Path,
         default=None,
-        help="Path to the git repository root (for mode enforcement checks). "
-             "Defaults to the first parent of run-dir containing .git.",
+        help="Path to the git repository root (for source-edit checks).",
     )
     args = parser.parse_args()
 
@@ -97,17 +92,17 @@ def main() -> int:
                 break
             current = current.parent
 
-    findings = run_phase_validation(run_dir, args.phase, repo_root, args.stage)
+    findings = run_post_flight(run_dir, args.phase, repo_root)
 
     errors = [f for f in findings if f.severity == "error"]
     warnings = [f for f in findings if f.severity == "warning"]
 
     if errors:
-        print(f"PHASE VALIDATION FAILED ({args.phase})")
+        print(f"POST-FLIGHT CHECK FAILED ({args.phase})")
         for f in errors:
             print(f"  ERROR: {f.check}: {f.message}")
     else:
-        print(f"PHASE VALIDATION PASSED ({args.phase})")
+        print(f"POST-FLIGHT CHECK PASSED ({args.phase})")
 
     if warnings:
         print("WARNINGS")

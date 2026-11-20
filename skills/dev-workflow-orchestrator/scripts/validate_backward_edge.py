@@ -5,7 +5,7 @@ Checks that the packet has all required fields, targets an earlier phase,
 respects the backward edge cap, and references a real finding id.
 
 Usage:
-    python .agents/tools/dev-workflow/validate_backward_edge.py --packet <path> [--run-dir <path>]
+    python .agents/skills/dev-workflow-orchestrator/scripts/validate_backward_edge.py --packet <path> [--run-dir <path>]
 
 Exit codes:
     0 — no errors (warnings may be present)

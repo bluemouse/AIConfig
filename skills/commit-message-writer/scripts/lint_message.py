@@ -17,7 +17,7 @@ Exit codes:
     2 — usage error
 
 Harness twin: the dev-workflow harness ships the same rule set as an
-enforcing phase gate at .agents/tools/dev-workflow/checks/message_checks.py.
+enforcing phase gate at .agents/skills/dev-workflow-orchestrator/scripts/checks/message_checks.py.
 Keep the two in sync.
 """
 

@@ -81,7 +81,6 @@ class BundleLoadingTests(unittest.TestCase):
                 "review",
             }),
         )
-        self.assertEqual(harness.scripts, frozenset({"dev-workflow"}))
         self.assertEqual(
             harness.agents,
             frozenset({
@@ -230,7 +229,6 @@ class CliSkillResolutionTests(unittest.TestCase):
                     skill_names=None,
                     agent_names=None,
                     command_names=None,
-                    script_names=None,
                 ).commands
             finally:
                 mod.REPO_ROOT = original_root
@@ -340,46 +338,12 @@ class CliSkillResolutionTests(unittest.TestCase):
                     skill_names=None,
                     agent_names=None,
                     command_names=["commit"],
-                    script_names=None,
                 )
             finally:
                 mod.REPO_ROOT = original_root
 
             self.assertEqual(commands, ["commit"])
             self.assertEqual(selection.commands, ["commit"])
-
-    def test_discover_scripts_scans_tools_root(self) -> None:
-        """t-014a: allowlisted scripts are discovered from the tracked tools/ root."""
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            tools_dir = root / "tools" / "dev-workflow"
-            tools_dir.mkdir(parents=True)
-            (tools_dir / "README.md").write_text("# dev-workflow\n", encoding="utf-8")
-            original_root = mod.REPO_ROOT
-            mod.REPO_ROOT = root
-            try:
-                discovered = mod.discover_scripts()
-            finally:
-                mod.REPO_ROOT = original_root
-
-            self.assertEqual(discovered, ["dev-workflow"])
-
-    def test_discover_scripts_ignores_non_allowlisted_dir(self) -> None:
-        """t-015: membership is intentional — a random tracked subdirectory
-        under tools/ is NOT a scripts member until added to the allowlist."""
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            tools_dir = root / "tools" / "future-helper"
-            tools_dir.mkdir(parents=True)
-            (tools_dir / "README.md").write_text("# future-helper\n", encoding="utf-8")
-            original_root = mod.REPO_ROOT
-            mod.REPO_ROOT = root
-            try:
-                discovered = mod.discover_scripts()
-            finally:
-                mod.REPO_ROOT = original_root
-
-            self.assertEqual(discovered, [])
 
     def test_no_default_exclusion_mechanism_remains(self) -> None:
         """fr-7 (t-108): the personal-preference exclusion mechanism is gone."""
@@ -476,11 +440,6 @@ class TargetBundleTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-    def _write_target_scripts(self, root: Path, name: str) -> None:
-        scripts_dir = root / ".agents" / "tools" / name
-        scripts_dir.mkdir(parents=True, exist_ok=True)
-        (scripts_dir / "README.md").write_text(f"# {name}\n", encoding="utf-8")
-
     def test_discover_skills_in_project(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -575,18 +534,6 @@ class TargetBundleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(mod.discover_commands_in_project(Path(tmp)), [])
 
-    def test_discover_scripts_in_project(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            self._write_target_scripts(root, "alpha")
-            self._write_target_scripts(root, "beta")
-            (root / ".agents" / "tools" / "__pycache__").mkdir(parents=True)
-            self.assertEqual(mod.discover_scripts_in_project(root), ["alpha", "beta"])
-
-    def test_discover_scripts_in_project_missing_shared(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            self.assertEqual(mod.discover_scripts_in_project(Path(tmp)), [])
-
     def test_build_target_bundle_includes_all_kinds(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -594,18 +541,15 @@ class TargetBundleTests(unittest.TestCase):
             self._write_target_skill(root, "only-in-target")
             self._write_target_agent(root, "alpha")
             self._write_target_command(root, "alpha")
-            self._write_target_scripts(root, "alpha")
             bundle = mod.build_target_bundle(
                 root,
                 available_skills=["alpha", "beta"],
                 available_agents=["alpha", "beta"],
                 available_commands=["alpha", "beta"],
-                available_scripts=["alpha", "beta"],
             )
             self.assertEqual(bundle.skills, frozenset({"alpha"}))
             self.assertEqual(bundle.agents, frozenset({"alpha"}))
             self.assertEqual(bundle.commands, frozenset({"alpha"}))
-            self.assertEqual(bundle.scripts, frozenset({"alpha"}))
             self.assertFalse(bundle.is_empty)
 
     def test_build_target_bundle_empty_when_no_matches(self) -> None:
@@ -618,7 +562,6 @@ class TargetBundleTests(unittest.TestCase):
                 available_skills=["alpha"],
                 available_agents=["alpha"],
                 available_commands=["alpha"],
-                available_scripts=["alpha"],
             )
             self.assertTrue(bundle.is_empty)
 
@@ -628,11 +571,9 @@ class TargetBundleTests(unittest.TestCase):
             self._write_target_skill(root, "research-guide")
             self._write_target_agent(root, "alpha")
             self._write_target_command(root, "commit")
-            self._write_target_scripts(root, "dev-workflow")
             with mock.patch.object(mod, "discover_skills", return_value=["research-guide"]), \
                  mock.patch.object(mod, "discover_agents", return_value=["alpha"]), \
-                 mock.patch.object(mod, "discover_commands", return_value=["commit"]), \
-                 mock.patch.object(mod, "discover_scripts", return_value=["dev-workflow"]):
+                 mock.patch.object(mod, "discover_commands", return_value=["commit"]):
                 selection = mod.resolve_bundle(
                     [mod.TARGET_BUNDLE_ID],
                     target_root=root,
@@ -640,7 +581,6 @@ class TargetBundleTests(unittest.TestCase):
             self.assertIn("research-guide", selection.skills)
             self.assertIn("alpha", selection.agents)
             self.assertIn("commit", selection.commands)
-            self.assertIn("dev-workflow", selection.scripts)
 
     def test_target_bundle_excludes_command_skill_dirs_from_skills(self) -> None:
         """F1 regression: cmd-<name> dirs are commands, never plain skills.
