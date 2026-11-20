@@ -364,10 +364,11 @@ class CliSkillResolutionTests(unittest.TestCase):
             bundle_ids=["core-dev-workflow"],
             skill_names=None,
         )
-        # 12 bundle members + 6 dependency-expanded skills (plan-guide,
-        # github-guide, debugging-guide, plan-executor -> their map edges;
-        # the orchestrator -> companions).
-        self.assertEqual(len(resolved), 18)
+        # 12 bundle members + 5 dependency-expanded skills (plan-guide,
+        # github-guide, plan-executor -> their map edges; the orchestrator
+        # -> companions; debugging-guide is language-agnostic and expands
+        # nothing).
+        self.assertEqual(len(resolved), 17)
 
     def test_resolve_cli_skills_union(self) -> None:
         resolved = mod.resolve_cli_skills(
@@ -376,10 +377,12 @@ class CliSkillResolutionTests(unittest.TestCase):
         )
         self.assertIn("cpp-coding", resolved)
         self.assertIn("research-guide", resolved)
-        # 13 pre-expansion + 5 dependency-expanded skills (cpp-coding is
-        # explicitly selected, so debugging-guide's edge adds nothing new
-        # here — unlike the bundle-only case; plan-executor -> agent-runner
-        # still adds one).
+        # 13 pre-expansion + 5 dependency-expanded skills (cpp-coding and
+        # debugging-guide are both explicitly present here, so the edge
+        # between them adds nothing new — the closure comes from
+        # research/plan/github/plan-executor edges and the orchestrator's
+        # companions; unlike the bundle-only case, cpp-coding was already
+        # named, so the flipped edge direction changes this count by 0).
         self.assertEqual(len(resolved), 18)
 
     def test_unknown_bundle_id(self) -> None:
@@ -648,8 +651,8 @@ class TargetBundleTests(unittest.TestCase):
                 skill_names=None,
                 target_root=Path(tmp),
             )
-            # 12 bundle members + 6 dependency-expanded skills (see above).
-            self.assertEqual(len(resolved), 18)
+            # 12 bundle members + 5 dependency-expanded skills (see above).
+            self.assertEqual(len(resolved), 17)
 
     def test_resolve_cli_skills_explicit_bundles_no_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

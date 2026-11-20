@@ -49,11 +49,10 @@ new approach. References carry the on-demand depth:
 - Load `references/diagnostic-techniques.md` for tracing, differential comparison, and bisection tactics.
 - Load `references/instrumentation-and-checks.md` when adding assertions, sanitizers, or tripwires — instrument to surface the fault **earlier** or where it is cheaper to act on, not to restate what the crash already showed.
 
-When reproduction exists and the defect is in **native C++**, apply the debugger
-(GDB/LLDB) and sanitizer toolchain directly; debugger rules and sanitizer build flags
-live in
-[cpp-coding's build-and-verification.md](../cpp-coding/references/build-and-verification.md#native-debugging-with-gdblldb)
-(via [cpp-coding](../cpp-coding/SKILL.md)).
+When reproduction exists, apply the language's debugger and sanitizer toolchain
+directly; the concrete invocation and build flags are owned by the language
+skill for the affected language (e.g. a C++ defect routes via that project's
+C++ skill), not restated here — this skill stays language-agnostic.
 
 ## Hypothesis discipline
 
@@ -135,4 +134,3 @@ When debugging was invoked from an active merge/rebase integration, return contr
 - `references/diagnostic-techniques.md` — tracing, comparison, bisection
 - `references/gotchas.md` — common misreadings and anti-patterns
 - `references/debugging-report.md` — final report template
-- [../cpp-coding/references/build-and-verification.md](../cpp-coding/references/build-and-verification.md) — C++ sanitizer builds, clang-tidy, coverage (via [cpp-coding](../cpp-coding/SKILL.md))

@@ -52,10 +52,34 @@ python tools/installer.py /path/to/project --bundles dev-workflow-harness
 
 ### Dependency map (auto-selection)
 
-`tools/dependencies.json` declares the catalog's load-bearing dependency
-edges. Selecting a member automatically selects its transitive skill
-closure at **install** time, so an installed member's references always
-resolve in the target — no re-running with extra `--skills` flags.
+`tools/dependencies.json` is the **single source of truth** for the
+dependency edges of the current catalog structure (skills, commands,
+agents). Selecting a member automatically selects its transitive skill
+closure at **install** time.
+
+**Goal.** A dependency edge exists to prevent an incomplete install: if A
+is installed into a user's project without a member A depends on, A has a
+functional gap — an instruction in its body points at something that is
+not there. The map is the mechanism that closes every such gap at install
+time, so an installed member is always fully functional in the target.
+
+**Definition.** A depends on B when A's own workflow *requires* B —
+unconditionally or in a stated situation — to complete A's task: a
+`Follow`/`apply`/`start with`/`switch to`/`hand off to` step inside a
+procedure, a stop-and-route guard, or an operational link into B's
+`references/`. The requirement may be conditional or situational; what
+makes it a dependency is that in the situations it names, the task cannot
+finish without B. A **scope boundary** is not a dependency: "When NOT to
+use A → use B" hands B a *different* task — A stands down, and B triggers
+on that task by its own description. Most cross-skill markdown links are
+boundaries of that kind, which is why the map is authored explicitly and
+never derived from a link scan.
+
+**Evaluation.** Edges are judged against the member bodies by
+`tools/test_installer_dependencies.py`, in two directions: every map edge
+must have a body reference in the dependent's source (forward — catches
+typos and stale entries), and every curated load-bearing body link class
+must have a map edge (reverse — catches missing dependencies).
 
 - **Schema:** `{"skills": {name: {"depends": [...]}}, "commands": {...},
   "agents": {...}}` — every `depends` target must be a discovered plain
@@ -64,7 +88,8 @@ resolve in the target — no re-running with extra `--skills` flags.
 - **Edge kinds:** skill → skill, command → skill, agent → skill (a name
   that exists as both skill and agent always means the skill, since
   targets are skills by definition). Edges anchored only by a routing-class
-  body link (e.g. `agent-runner → dev-workflow-orchestrator`) are deliberate
+  body link, or requirement phrasings outside the curated classes
+  ("live in", "see X", "per X", arrow-routing rows), are deliberate
   over-inclusion: they satisfy the forward check but are exempt from the
   reverse curation, so removing one changes install sets without failing
   the suite.
@@ -73,13 +98,50 @@ resolve in the target — no re-running with extra `--skills` flags.
   expanded set.
 - **All entry points route through the same resolution** (CLI explicit
   names, bundles, GUI Install press).
-- **Drift protection:** `tools/test_installer_dependencies.py` runs a
-  two-directional consistency check — every map edge must have a body
-  reference in the dependent's source, and every curated load-bearing
-  body link (operational `references/` links, "Read and follow"/"Follow"
-  directives, the orchestrator's Companion Skills dispatch table) must
-  have a map edge. When adding a member with a real runtime dependency,
-  add its edges here in the same change.
+- **Drift protection:** `tools/test_installer_dependencies.py` runs the
+  two-directional consistency check described under **Evaluation** above.
+  When adding a member with a real runtime dependency, add its edges here
+  in the same change.
+
+#### Selection dynamics
+
+The map drives the full selection lifecycle, not just install-time
+expansion. Four behaviors, all reading the same `tools/dependencies.json`:
+
+- **GUI auto-check.** Checking a member visibly checks its transitive
+  dependency checkboxes — the panel state always equals the selection
+  that would install (install mode only).
+- **GUI cascade deselect.** Unchecking a dependency deselects every
+  checked member that transitively depends on it. Unchecking a
+  non-dependency cascades nothing.
+- **CLI accounting.** Install expansion reports each auto-selected
+  dependency in the operation output as
+  `Also selecting (dependencies):` lines — the expansion is never
+  silent. The default install-all path (no selectors) resolves a full
+  closure already, so it prints no accounting lines.
+- **Orphan report.** After an uninstall removes the named members, the
+  operation output lists now-orphaned installed skills — skills no
+  remaining installed member depends on — under
+  `No longer needed by any installed member (remove with --skills <name>):`.
+  A `--dry-run` uninstall previews the same list from the would-be-removed
+  set (under the would-be heading `Would be no longer needed by any
+  installed member …`, matching the dry-run install/remove verbs). "Needed" means map-reachability: a skill stays off the orphan list
+  while any remaining installed member's transitive dependency closure
+  includes it — even when that member itself was only pulled in by an
+  earlier auto-selection, so a partial uninstall of an auto-installed
+  group commonly leaves other members of the group shielding each other.
+  Remove members outermost-first (dependents before dependencies) to
+  surface the full chain — except inside a map cycle (e.g. the
+  dev-workflow core: orchestrator ↔ plan-executor ↔ agent-runner),
+  where every member is reachable from the others and none can surface
+  as an orphan until the whole cycle is removed. The report is
+  informational only: **orphans are never removed automatically** —
+  removal is an explicit `--skills <name>` call.
+- **Uninstall-mode exception.** Both GUI behaviors are disabled in
+  uninstall mode (teardown stays exactly-what-you-selected); the orphan
+  report is that mode's dependency awareness instead. Batch toggles
+  (bundle check-toggles, Select all/none) reconcile once per batch with
+  the closure winning: a checked dependent forces its dependency checked.
 
 ### Target bundle (dynamic)
 

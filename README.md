@@ -389,7 +389,7 @@ Copilot reads `.agents/skills/` directly; reload VS Code after changes so Copilo
 
 ## Distribute to another project
 
-Use **`tools/installer.py`** to copy the **portable layout** from this checkout into another project root. This copies this checkout's generated `.agents/skills/<name>/` trees (skills and command-skills; regenerate them with the install scripts on a fresh clone) and the dual-target agent files (`.claude/agents/<name>.md` + `.github/agents/<name>.agent.md`) to the target project root, creating the `.claude/skills` bridge symlink there. It also installs behavioral guidelines from `guidelines/` as skill packages at `.agents/skills/guidelines-<name>/SKILL.md` when explicitly selected (the installer injects `name: guidelines-<name>` frontmatter at install time), so guidelines load through ordinary skill discovery in the target — no AGENTS.md citation needed. Selected members are expanded with their transitive skill dependencies from [tools/dependencies.json](tools/dependencies.json) at install time (see [tools/bundles.md](tools/bundles.md) § Dependency map): selecting a command or agent whose criteria skills are missing pulls them in automatically; uninstall selections are never expanded. It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
+Use **`tools/installer.py`** to copy the **portable layout** from this checkout into another project root. This copies this checkout's generated `.agents/skills/<name>/` trees (skills and command-skills; regenerate them with the install scripts on a fresh clone) and the dual-target agent files (`.claude/agents/<name>.md` + `.github/agents/<name>.agent.md`) to the target project root, creating the `.claude/skills` bridge symlink there. It also installs behavioral guidelines from `guidelines/` as skill packages at `.agents/skills/guidelines-<name>/SKILL.md` when explicitly selected (the installer injects `name: guidelines-<name>` frontmatter at install time), so guidelines load through ordinary skill discovery in the target — no AGENTS.md citation needed. Selected members are expanded with their transitive skill dependencies from [tools/dependencies.json](tools/dependencies.json) at install time, each auto-selection reported in the output as `Also selecting (dependencies)` lines (see [tools/bundles.md](tools/bundles.md) § Dependency map): selecting a command or agent whose criteria skills are missing pulls them in automatically; uninstall selections are never expanded, and the uninstall output instead lists now-orphaned installed skills (`No longer needed by any installed member`) without removing them. It does **not** install bootstrap sources from `skills/<name>/`, `agents/<name>/`, or `commands/<name>/` — run the matching `install_portable_*` script here first, then distribute.
 
 **CLI** (from this repository root):
 
@@ -459,6 +459,49 @@ python tools/installer.py
 - **Bundles** panel: batch toggles plus Select all/none; **Target bundle** appears after a valid target project path is set and selects skills, agents, and commands already installed in that project
 - **Help** (right side of each panel): descriptions for current selections; partial bundles labeled `(partial)`
 - **Hover tooltips** on individual checkboxes
+
+## Dependencies among members
+
+Dependencies exist to prevent incomplete installs: if A is installed
+into a user's project without a member A depends on, A has a functional
+gap — an instruction in its body points at something that is not there.
+A member (skill, command, or agent) **depends on** another when its own
+workflow *requires* the other to complete its task — the requirement may
+be conditional or situational, but in the situations it names, the task
+cannot finish without the dependency: a
+`Follow`/`apply`/`start with`/`switch to`/`hand off to` step inside a
+procedure, a stop-and-route guard, or an operational link into the
+dependency's `references/`. A scope boundary ("When NOT to use this → use
+that skill") is *not* a dependency — it hands a different task to another
+skill, which triggers on that task by its own description. Most
+cross-skill links in the catalog are boundaries, so the map is authored
+explicitly, never derived from link scans.
+
+[tools/dependencies.json](tools/dependencies.json) is the **single source
+of truth** for the current structure's dependency edges (skill → skill,
+command → skill, agent → skill). The installer expands every install
+selection with its transitive skill closure; uninstall selections are
+never expanded. The map drives the whole selection lifecycle:
+
+- **GUI install mode:** checking a member auto-checks its transitive
+  dependency checkboxes (the panel state equals the installable
+  selection), and unchecking a dependency deselects every checked member
+  that depends on it.
+- **CLI install:** the expansion is reported, not silent —
+  `Also selecting (dependencies):` lines list each auto-selected skill
+  in the operation output.
+- **CLI uninstall:** after removing the named members, the output lists
+  now-orphaned installed skills under
+  `No longer needed by any installed member (remove with --skills <name>):`
+  — informational only, orphans are never removed automatically.
+
+Edges are evaluated against the member bodies in both
+directions by `tools/test_installer_dependencies.py`: every map edge must
+be anchored by a body reference, and every curated load-bearing body link
+must have an edge. See [tools/bundles.md](tools/bundles.md) § Dependency
+map for the schema, edge kinds, selection dynamics, and the full
+evaluation policy; add an
+edge in the same change that adds a member with a runtime dependency.
 
 ## Skills
 

@@ -7,11 +7,31 @@
     },
     "agent-runner": {
       "depends": [
-        "dev-workflow-orchestrator"
+        "dev-workflow-orchestrator",
+        "prompt-clarifier"
+      ]
+    },
+    "android-dev": {
+      "depends": [
+        "gradle-android-dev",
+        "kotlin-coding"
+      ]
+    },
+    "android-vulkan-dev": {
+      "depends": [
+        "android-ndk-dev",
+        "vulkan-dev"
+      ]
+    },
+    "cmake-dev": {
+      "depends": [
+        "cpp-coding"
       ]
     },
     "code-review-resolver": {
       "depends": [
+        "code-reviewer",
+        "debugging-guide",
         "dev-workflow-orchestrator"
       ]
     },
@@ -20,9 +40,27 @@
         "skill-creator"
       ]
     },
-    "debugging-guide": {
+    "cpp-coding": {
+      "depends": [
+        "debugging-guide"
+      ]
+    },
+    "cpp-memory-guide": {
       "depends": [
         "cpp-coding"
+      ]
+    },
+    "cpp-performance-guide": {
+      "depends": [
+        "cpp-coding",
+        "cpp-memory-guide",
+        "debugging-guide"
+      ]
+    },
+    "debugging-guide": {
+      "depends": [
+        "git-guide",
+        "test-driven-dev-guide"
       ]
     },
     "dev-workflow-orchestrator": {
@@ -39,24 +77,48 @@
         "commit-message-writer"
       ]
     },
+    "git-guide": {
+      "depends": [
+        "commit-message-writer"
+      ]
+    },
     "github-guide": {
       "depends": [
         "git-guide"
       ]
     },
+    "glsl-coding": {
+      "depends": [
+        "vulkan-dev"
+      ]
+    },
+    "gpu-rendering-guide": {
+      "depends": [
+        "cpp-memory-guide"
+      ]
+    },
+    "kotlin-coding": {
+      "depends": [
+        "gradle-dev"
+      ]
+    },
     "plan-executor": {
       "depends": [
-        "agent-runner"
+        "agent-runner",
+        "debugging-guide",
+        "test-driven-dev-guide"
       ]
     },
     "plan-guide": {
       "depends": [
-        "dev-workflow-orchestrator"
+        "dev-workflow-orchestrator",
+        "plan-executor"
       ]
     },
     "plan-reviewer": {
       "depends": [
-        "dev-workflow-orchestrator"
+        "dev-workflow-orchestrator",
+        "plan-executor"
       ]
     },
     "research-guide": {
@@ -67,6 +129,19 @@
     "research-reviewer": {
       "depends": [
         "dev-workflow-orchestrator"
+      ]
+    },
+    "skill-creator": {
+      "depends": [
+        "agent-runner",
+        "prompt-clarifier"
+      ]
+    },
+    "vulkan-dev": {
+      "depends": [
+        "cpp-coding",
+        "cpp-memory-guide",
+        "gpu-rendering-guide"
       ]
     }
   },

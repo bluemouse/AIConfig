@@ -633,6 +633,23 @@ class GuiSharedSlugBundleStateTests(unittest.TestCase):
 
         app = mod.InstallerApp.__new__(mod.InstallerApp)
         app._syncing_bundle_selection = False
+        # Selection-dynamics wiring the trace handler and the batch
+        # reconcile read (the real __init__ sets these; the __new__ stub
+        # must mirror them).
+        app._reconciling_selection = False
+        app._prev_selection = {}
+
+        class _StubModeVar:
+            def __init__(self, value: str = "install") -> None:
+                self._value = value
+
+            def get(self) -> str:
+                return self._value
+
+            def set(self, value: str) -> None:
+                self._value = value
+
+        app.mode_var = _StubModeVar()
         app._target_bundle = None
         app.skill_bundles = mod.load_skill_bundles()
         harness = next(b for b in app.skill_bundles if b.id == "dev-workflow-harness")
@@ -691,10 +708,13 @@ class GuiSharedSlugBundleStateTests(unittest.TestCase):
             self.assertIn("selected", button.state())
             self.assertNotIn("alternate", button.state())
 
-            # _set_all batches trace callbacks into a single _sync_bundle_toggles call.
+            # _set_all batches trace callbacks into a single sync pass per
+            # phase: one inside the guarded batch (toggle highlighting),
+            # one from the trailing selection reconcile (pg-005 wiring —
+            # a batch's closure-wins pass). 2 sync calls, never 2N.
             before = sync_calls
             app._set_all(app.agent_vars, False)
-            self.assertEqual(sync_calls - before, 1)
+            self.assertEqual(sync_calls - before, 2)
             self.assertIn("alternate", button.state())
 
 

@@ -360,6 +360,14 @@ class OperationResult:
     removed: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    # Advisory fields (empty by default — rendering is conditional):
+    # - dependency_added: skills the resolver auto-selected beyond the
+    #   user's explicit picks ("Also selecting (dependencies)" lines,
+    #   AC-3). Known only at resolve time; run_cli threads it in.
+    # - orphaned_skills: installed skills no remaining installed member
+    #   depends on after an uninstall (AC-4 — reported, never removed).
+    dependency_added: list[str] = field(default_factory=list)
+    orphaned_skills: list[str] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
@@ -632,28 +640,63 @@ def load_dependencies(path: Path | None = None) -> dict[str, dict[str, dict[str,
 
 
 def resolve_dependencies(
-    selection: "BundleSelection", *, uninstall: bool = False
+    selection: "BundleSelection",
+    *,
+    uninstall: bool = False,
+    added_out: list[str] | None = None,
 ) -> "BundleSelection":
     """Transitively expand a selection with its skill dependencies.
 
     Install-only (user decision at clarify): uninstall selections return
     unchanged so teardown stays exactly-what-you-selected. Idempotent:
     applying the closure twice yields the same selection.
+
+    added_out (rr-012: an optional out-parameter, not a return-type
+    change — the default keeps every existing caller byte-identical)
+    receives the dependency skills the closure added beyond the incoming
+    selection, so the CLI can report "also selecting" (AC-3).
     """
     if uninstall:
         return selection
-    deps = load_dependencies()
+    incoming_skills = set(selection.skills)
+    expanded = _resolve_dependency_closure(selection)
+    if added_out is not None:
+        added_out.extend(
+            name for name in expanded.skills if name not in incoming_skills
+        )
+    selection.skills = expanded.skills
+    return selection
+
+
+def _resolve_dependency_closure(
+    selection: "BundleSelection",
+    deps: dict[str, dict[str, dict[str, list[str]]]] | None = None,
+) -> "BundleSelection":
+    """Return a new selection with the transitive skill closure applied.
+
+    Shared walker behind resolve_dependencies (install accounting) and
+    reconcile_selection's batch fixpoint — one BFS, one termination
+    discipline.
+    """
+    if deps is None:
+        deps = load_dependencies()
+    closure = BundleSelection(
+        skills=list(selection.skills),
+        agents=list(selection.agents),
+        commands=list(selection.commands),
+        guidelines=list(selection.guidelines),
+    )
     if not deps:
-        return selection
+        return closure
     queue: list[tuple[str, str]] = []
-    for name in selection.skills:
+    for name in closure.skills:
         queue.append(("skills", name))
-    for name in selection.commands:
+    for name in closure.commands:
         queue.append(("commands", name))
-    for name in selection.agents:
+    for name in closure.agents:
         queue.append(("agents", name))
     seen_members: set[tuple[str, str]] = set(queue)
-    added_skills: set[str] = set(selection.skills)
+    added_skills: set[str] = set(closure.skills)
     while queue:
         kind, name = queue.pop()
         for target in deps.get(kind, {}).get(name, {}).get("depends", []):
@@ -661,8 +704,190 @@ def resolve_dependencies(
                 seen_members.add(("skills", target))
                 added_skills.add(target)
                 queue.append(("skills", target))
-    selection.skills = normalize_names(sorted(added_skills))
-    return selection
+    closure.skills = normalize_names(sorted(added_skills))
+    return closure
+
+
+def _merged_direct_dependencies(
+    deps: dict[str, dict[str, dict[str, list[str]]]] | None = None,
+) -> dict[str, set[str]]:
+    """Return {member name: direct depends targets} merged across kinds.
+
+    Names DO collide across kinds on the real map — skill/agent twin
+    slugs exist (code-reviewer, implementation-auditor, plan-reviewer,
+    research-reviewer) and their edges diverge — so the union is a real
+    semantic choice, not a no-op. It is deliberate for the dependent-side
+    analyses (cascade deselect, orphan report): those ask "who still
+    needs this skill", and a dependent reached through either twin's
+    entry keeps the skill needed. The expansion paths (check and batch
+    reconcile) must NOT use this map — they stay kind-aware, reading
+    each member's own-kind entry (cr-001/cr-003), so a checked skill
+    never inherits its agent twin's edges.
+    """
+    if deps is None:
+        deps = load_dependencies()
+    direct: dict[str, set[str]] = {}
+    for kind_map in deps.values():
+        for member, spec in kind_map.items():
+            direct.setdefault(member, set()).update(spec.get("depends", []))
+    return direct
+
+
+def reverse_dependencies(
+    deps: dict[str, dict[str, dict[str, list[str]]]] | None = None,
+) -> dict[str, set[str]]:
+    """Return {skill name: members that transitively depend on it}.
+
+    Transitive: A→B→C puts A in reverse[C] (through B). The seen-set
+    bounds the walk, so cycles in the map terminate. Shared foundation of
+    cascade deselect and the orphan report; pure function over the map.
+    """
+    direct = _merged_direct_dependencies(deps)
+    reverse: dict[str, set[str]] = {}
+    for member, targets in direct.items():
+        seen: set[str] = set()
+        queue = list(targets)
+        while queue:
+            target = queue.pop()
+            if target in seen:
+                continue
+            seen.add(target)
+            reverse.setdefault(target, set()).add(member)
+            queue.extend(direct.get(target, ()))
+    return reverse
+
+
+def reconcile_selection(
+    selection: "BundleSelection",
+    *,
+    event: str,
+    member: str | None,
+    uninstall: bool,
+    member_kind: str | None = None,
+) -> "BundleSelection":
+    """Apply one selection-lifecycle event to a panel selection.
+
+    Headless seam behind the GUI checkbox dynamics (pr-001: a pure state
+    transition — the caller applies the returned states to the checkbox
+    vars). Event kinds (rr-004 — manual and batch events follow different
+    rules, because auto-check on every write would re-check a just-
+    unchecked dependency before the cascade could fire, making AC-2
+    unreachable):
+
+    - "check" (member required): auto-check — add the member's transitive
+      dependency skills. No cascade: nothing was lost.
+    - "uncheck" (member required): cascade — drop the member plus every
+      member (any kind) that transitively depends on it. No auto-check.
+      member_kind ("skills"/"agents"/"commands", GUI-supplied) matters on
+      shared slugs: depends targets are always skills by schema, so only
+      a skill uncheck can have dependents — unchecking agent
+      "code-reviewer" must not cascade to the same-named skill.
+    - "batch" (member must be None): closure-wins fixpoint — auto-check
+      dependencies of all checked members, uncheck dependents whose
+      dependency is still missing, iterate (a checked dependent forces its
+      dependency; never ship a known gap).
+
+    Uninstall mode is a no-op returning the selection unchanged (rr-003)
+    — teardown stays exactly-what-you-selected; the orphan report is the
+    uninstall-mode analog of dependency awareness. The argument is never
+    mutated; a new BundleSelection is returned.
+    """
+    if uninstall:
+        return selection
+    if event not in ("check", "uncheck", "batch"):
+        raise InstallerError(f"Unknown selection reconcile event {event!r}.")
+    if event in ("check", "uncheck") and member is None:
+        raise InstallerError(f"Event {event!r} requires a member name.")
+    if event == "batch" and member is not None:
+        raise InstallerError("Event 'batch' must not name a member.")
+
+    new = BundleSelection(
+        skills=list(selection.skills),
+        agents=list(selection.agents),
+        commands=list(selection.commands),
+        guidelines=list(selection.guidelines),
+    )
+
+    if event == "check":
+        # Auto-check: walk the member's own-kind dependency chain; every
+        # reached skill joins the selection (AC-1). ia-006: the chain's
+        # FIRST hop is the member's own-kind map entry (commands and
+        # agents have real edges — commands.implement -> the orchestrator
+        # — so a kind gate would silently disable AC-1 for two panels).
+        # Every later hop reads the skills map (cr-003: kind-tagged for
+        # real, not just claimed — depends targets are skills by schema,
+        # so a shared slug's twin edges in another kind can never leak
+        # into the walk). The own-kind first hop also resolves the
+        # shared slug naturally: checking agent "code-reviewer" walks
+        # agents.code-reviewer's edges, never the same-named skill's.
+        deps = load_dependencies()
+        kind_map = deps.get(member_kind or "skills", {})
+        skills_map = deps.get("skills", {})
+        added = set(new.skills)
+        queue = list(kind_map.get(member, {}).get("depends", ()))
+        while queue:
+            target = queue.pop()
+            if target in added:
+                continue
+            added.add(target)
+            queue.extend(skills_map.get(target, {}).get("depends", ()))
+        new.skills = normalize_names(sorted(added))
+        return new
+
+    if event == "uncheck":
+        # Cascade: the member leaves its own kind, plus its transitive
+        # dependents leave every kind (AC-2). Dependents exist only when
+        # the member is a skill (schema: depends targets are skills), so a
+        # shared-slug agent uncheck drops only the agent — the same-named
+        # skill is a dependency target, not a dependent.
+        # member_kind and the field share their names ("skills",
+        # "agents", "commands"), so the own-kind drop is one setattr.
+        own = member_kind if member_kind in ("skills", "agents", "commands") else "skills"
+        setattr(new, own, [n for n in getattr(new, own) if n != member])
+        if member_kind in (None, "skills"):
+            removed = reverse_dependencies().get(member, ())
+            if removed:
+                new.skills = [n for n in new.skills if n not in removed]
+                new.agents = [n for n in new.agents if n not in removed]
+                new.commands = [n for n in new.commands if n not in removed]
+        return new
+
+    # Batch: closure-wins fixpoint. The auto-check pass adds every
+    # dependency of every checked member — a typed (kind, name) walk
+    # (cr-001: the merged bare-name map unions a shared slug's twin
+    # kinds, so a checked skill would inherit its agent twin's edges and
+    # over-select; the typed walk reads each member's own-kind entry,
+    # matching the check branch's own-kind discipline). The cascade pass
+    # then drops members with a still-missing dependency, read from each
+    # member's own-kind map entry (unreachable while the map validates
+    # targets as discovered skills — kept so a future map semantics
+    # change cannot silently ship a known gap). Each iteration either
+    # stabilizes or shrinks the selection, so the loop terminates.
+    deps = load_dependencies()
+    while True:
+        new.skills = _resolve_dependency_closure(new, deps).skills
+        added = set(new.skills)
+        missing = [
+            name
+            for kind, names in (
+                ("skills", new.skills),
+                ("agents", new.agents),
+                ("commands", new.commands),
+            )
+            for name in names
+            if any(
+                target not in added
+                for target in deps.get(kind, {}).get(name, {}).get(
+                    "depends", ()
+                )
+            )
+        ]
+        if not missing:
+            return new
+        dropped = set(missing)
+        new.skills = [n for n in new.skills if n not in dropped]
+        new.agents = [n for n in new.agents if n not in dropped]
+        new.commands = [n for n in new.commands if n not in dropped]
 
 
 @dataclass
@@ -771,13 +996,16 @@ def resolve_cli_selection(
     guideline_names: Sequence[str] | None = None,
     target_root: Path | None = None,
     uninstall: bool = False,
+    added_out: list[str] | None = None,
 ) -> BundleSelection:
     """Resolve CLI selection from bundles, explicit names, or all discovered items.
 
     The resolved selection is expanded with its transitive skill
     dependencies (tools/dependencies.json) unless uninstall is True —
     dependency auto-selection is install-only; uninstall stays
-    exactly-what-you-selected.
+    exactly-what-you-selected. added_out (optional out-parameter,
+    rr-012) receives the auto-added dependency skills for the
+    "also selecting" accounting (AC-3).
     """
     selection = BundleSelection()
     if bundle_ids:
@@ -798,7 +1026,9 @@ def resolve_cli_selection(
         or guideline_names
     ):
         selection.dedupe()
-        return resolve_dependencies(selection, uninstall=uninstall)
+        return resolve_dependencies(
+            selection, uninstall=uninstall, added_out=added_out
+        )
     # No explicit selection: default to all discovered items. Guidelines are
     # explicit-only — they change agent behavior in the target, so the
     # guidelines-<name> skill packages this repo carries are filtered out of
@@ -806,8 +1036,8 @@ def resolve_cli_selection(
     # the same catalog intersection). discover_skills() has no
     # command-skill filter, so a command-skill name lands in BOTH lists and
     # must run through the same dedupe as the explicit-selection path (fd-019)
-    # — without it, the default uninstall hits the cr-004 cross-kind guard for
-    # every command-skill and false-fails with exit 1 on a clean teardown.
+    # — without it, the default uninstall hits the cr-004 cross-kind guard
+    # for every command-skill and false-fails with exit 1 on a clean teardown.
     default_selection = BundleSelection(
         skills=[
             name
@@ -822,7 +1052,9 @@ def resolve_cli_selection(
         commands=discover_commands(),
     )
     default_selection.dedupe()
-    return resolve_dependencies(default_selection, uninstall=uninstall)
+    return resolve_dependencies(
+        default_selection, uninstall=uninstall, added_out=added_out
+    )
 
 
 def resolve_cli_skills(
@@ -852,13 +1084,17 @@ def resolve_panel_selection(
     guidelines: Sequence[str],
     *,
     uninstall: bool,
+    added_out: list[str] | None = None,
 ) -> BundleSelection:
     """Resolve a GUI panel selection with its transitive skill dependencies.
 
     InstallerApp._run's Install-press resolution (accepted ledger
     deviation: the checkboxes do not visibly pre-check dependencies).
     The selection math lives here rather than inside the Tk callback so
-    the GUI seam is testable on hosts without a display.
+    the GUI seam is testable on hosts without a display. added_out
+    (optional out-parameter, rr-012) mirrors resolve_cli_selection's
+    accounting for the GUI operation log (pr-003 — defense-in-depth:
+    with live auto-check the panel closure is already consistent).
     """
     selection = BundleSelection(
         skills=list(skills),
@@ -866,7 +1102,9 @@ def resolve_panel_selection(
         commands=list(commands),
         guidelines=list(guidelines),
     )
-    return resolve_dependencies(selection, uninstall=uninstall)
+    return resolve_dependencies(
+        selection, uninstall=uninstall, added_out=added_out
+    )
 
 
 COMMAND_SKILL_FLAG = "disable-model-invocation"
@@ -1970,6 +2208,104 @@ def uninstall_items(
     return result
 
 
+def _removed_path_member_name(path: str) -> tuple[str, str] | None:
+    """Map a format_rel removed path back to its (kind, member name).
+
+    Uninstall removal records store target-relative paths (OperationResult
+    .removed); orphan analysis needs kind-tagged member names (cr-002: a
+    shared slug must leave only the kind whose path was removed, so a
+    dry-run preview cannot conflate a removed agent with its same-named
+    installed skill). Both dual-target agent paths collapse to the same
+    pair and dedupe naturally via the set. Unrecognized shapes are
+    skipped — never guessed (pr-004).
+    """
+    rel = path.strip("/")
+    parts = rel.split("/")
+    if rel.startswith(".claude/agents/") and rel.endswith(".md"):
+        return ("agents", parts[-1][: -len(".md")])
+    if rel.startswith(".github/agents/") and rel.endswith(".agent.md"):
+        return ("agents", parts[-1][: -len(".agent.md")])
+    if rel.startswith(".agents/skills/") and len(parts) == 3:
+        name = parts[-1]
+        if name.startswith(COMMAND_SKILL_DIR_PREFIX):
+            return ("commands", name[len(COMMAND_SKILL_DIR_PREFIX):])
+        return ("skills", name)
+    return None
+
+
+def orphaned_skills(
+    target_root: Path, result: OperationResult, *, dry_run: bool = False
+) -> list[str]:
+    """Return installed skills no remaining installed member depends on.
+
+    Called after uninstall_items, per remaining-set rule (rr-002): a real
+    run re-discovers the target (a removal that errored or was refused
+    leaves the member installed, correctly counting as a remaining
+    dependent); a dry run subtracts the removed-path names from discovery
+    instead (rr-011 — the resolved selection would wrongly exclude
+    guard-refused members from the remaining dependents).
+
+    Kind filters (rr-001): guidelines-<name> packages are explicit-only
+    and never map members; cmd-<name> dirs are commands, not plain
+    skills, and their dependents are read from the commands kind.
+    Reported only (AC-5) — nothing is removed here.
+    """
+    remaining_skills = set(discover_skills_in_project(target_root))
+    remaining_agents = set(discover_agents_in_project(target_root))
+    remaining_commands = set(discover_commands_in_project(target_root))
+    if dry_run:
+        # rr-011: derive what a real run would leave from the recorded
+        # would-be-removed paths, not from the selection. The pairs are
+        # kind-tagged (cr-002): each name leaves only its own kind's
+        # remaining set, so a shared slug's other-kind twin stays
+        # counted as a remaining member.
+        removed: dict[str, set[str]] = {
+            "skills": set(),
+            "agents": set(),
+            "commands": set(),
+        }
+        for path in result.removed:
+            tagged = _removed_path_member_name(path)
+            if tagged is not None:
+                kind, name = tagged
+                removed[kind].add(name)
+        remaining_skills -= removed["skills"]
+        remaining_agents -= removed["agents"]
+        remaining_commands -= removed["commands"]
+
+    deps = load_dependencies()
+    if not deps:
+        return []
+    direct = _merged_direct_dependencies(deps)
+
+    # Every remaining installed member that the map knows pulls in its
+    # dependency targets — the "still needed" set.
+    needed: set[str] = set()
+    for name in [*remaining_skills, *remaining_agents, *remaining_commands]:
+        queue = list(direct.get(name, ()))
+        while queue:
+            target = queue.pop()
+            if target in needed:
+                continue
+            needed.add(target)
+            queue.extend(direct.get(target, ()))
+
+    # Candidates are remaining plain skills the map knows as dependency
+    # targets — a skill no edge ever names may exist for reasons the map
+    # cannot see (risk 4: never claim orphan-hood outside map reachability).
+    known_targets: set[str] = set()
+    for targets in direct.values():
+        known_targets.update(targets)
+    candidates = {
+        name
+        for name in remaining_skills
+        if not name.startswith(GUIDELINE_SKILL_PREFIX)
+        and not name.startswith(COMMAND_SKILL_DIR_PREFIX)
+        and name in known_targets
+    }
+    return sorted(name for name in candidates if name not in needed)
+
+
 def format_result(
     result: OperationResult, *, uninstall: bool, dry_run: bool = False
 ) -> str:
@@ -1993,11 +2329,30 @@ def format_result(
         if result.installed:
             lines.append(f"{verb_install}:")
             lines.extend(f"  - {path}" for path in result.installed)
+        if result.dependency_added:
+            # AC-3 accounting: the resolver pulled these skills in beyond
+            # the user's explicit picks — one line so the expansion is
+            # never silent. Empty on the default install-all path.
+            lines.append("Also selecting (dependencies):")
+            lines.extend(f"  - {name}" for name in result.dependency_added)
         if result.skipped:
             lines.append("Skipped (already exists; use --override to replace):")
             lines.extend(f"  - {path}" for path in result.skipped)
         if not result.installed and not result.skipped:
             lines.append(f"{verb_install}: (nothing copied)")
+
+    if result.orphaned_skills:
+        # AC-4/AC-5: informational only — the orphaned skills stay on disk;
+        # removal is the user's explicit call via --skills <name>. Under a
+        # dry run nothing was removed, so the heading reads as a preview
+        # (cr-006), matching the would-be install/remove verbs above.
+        orphan_verb = (
+            "Would be no longer needed by any installed member "
+            if dry_run
+            else "No longer needed by any installed member "
+        )
+        lines.append(f"{orphan_verb}(remove with --skills <name>):")
+        lines.extend(f"  - {name}" for name in result.orphaned_skills)
 
     if result.errors:
         lines.append("Errors:")
@@ -2026,6 +2381,7 @@ def run_operation(
     override: bool = False,
     dry_run: bool = False,
     allow_self: bool = False,
+    dependency_added: Sequence[str] = (),
 ) -> tuple[int, str]:
     if not skills and not agents and not commands and not guidelines:
         raise InstallerError("Select at least one skill, agent, command, or guideline.")
@@ -2040,6 +2396,9 @@ def run_operation(
             dry_run=dry_run,
             allow_self=allow_self,
         )
+        result.orphaned_skills = orphaned_skills(
+            target, result, dry_run=dry_run
+        )
     else:
         result = install_items(
             source_root=REPO_ROOT,
@@ -2052,6 +2411,7 @@ def run_operation(
             dry_run=dry_run,
             allow_self=allow_self,
         )
+        result.dependency_added = list(dependency_added)
 
     message = format_result(result, uninstall=uninstall, dry_run=dry_run)
     if result.errors:
@@ -2212,6 +2572,10 @@ def run_cli(argv: Sequence[str]) -> int:
             for purge_message in purge_messages:
                 print(purge_message)
             return 1 if purge_failed else 0
+        # AC-3: capture what the closure auto-added so run_operation can
+        # render "Also selecting (dependencies)" lines; empty by default
+        # (default install-all, uninstall, and no-dependency selections).
+        added_dependencies: list[str] = []
         selection = resolve_cli_selection(
             bundle_ids=bundle_ids or None,
             skill_names=args.skills,
@@ -2220,6 +2584,7 @@ def run_cli(argv: Sequence[str]) -> int:
             guideline_names=args.guidelines,
             target_root=target,
             uninstall=args.uninstall,
+            added_out=added_dependencies,
         )
         if selection.is_empty:
             if not args.purge_legacy:
@@ -2251,6 +2616,7 @@ def run_cli(argv: Sequence[str]) -> int:
             override=args.override,
             dry_run=args.dry_run,
             allow_self=explicit_self_regenerable_only,
+            dependency_added=added_dependencies,
         )
     except InstallerError as exc:
         # cr-009: a purge already happened irreversibly before this error —
@@ -2375,6 +2741,15 @@ class InstallerApp:
         self.mode_var = tk.StringVar(value="install")
         self.override_var = tk.BooleanVar(value=False)
         self._syncing_bundle_selection = False
+        # Selection-dynamics guards (distinct from the bundle guard the
+        # bundle code toggles independently):
+        # - _reconciling_selection: suppresses the trace handler while a
+        #   reconcile pass mutates vars — the cascade's own writes must not
+        #   re-enter the handler against a stale snapshot.
+        self._reconciling_selection = False
+        # Previous checkbox states, diffed by the trace handler to tell a
+        # user check from a user uncheck (the trace fires on any write).
+        self._prev_selection: dict[str, bool] = {}
         self.skill_bundles = load_skill_bundles()
         self._bundle_buttons: dict[str, ttk.Checkbutton] = {}
         self._target_bundle: Bundle | None = None
@@ -2385,6 +2760,9 @@ class InstallerApp:
         self._build_ui()
         self.target_var.trace_add("write", lambda *_args: self._refresh_target_bundle())
         self._refresh_target_bundle()
+        # Seed the selection snapshot after the panels exist: the trace
+        # handler diffs against it to classify user events.
+        self._update_prev_selection()
 
     def _build_ui(self) -> None:
         outer = ttk.Frame(self.root, padding=12)
@@ -2580,6 +2958,108 @@ class InstallerApp:
         if not items:
             ttk.Label(inner, text="(none discovered)").pack(anchor=tk.W)
 
+    def _selection_var_maps(self) -> list[dict[str, tk.BooleanVar]]:
+        return [self.skill_vars, self.agent_vars, self.command_vars]
+
+    def _current_selection(self) -> "BundleSelection":
+        return BundleSelection(
+            skills=self._selected(self.skill_vars),
+            agents=self._selected(self.agent_vars),
+            commands=self._selected(self.command_vars),
+        )
+
+    def _update_prev_selection(self) -> None:
+        # Keyed by (kind, name): a skill and an agent can share a slug
+        # (e.g. code-reviewer), and a name-keyed snapshot would conflate
+        # the two panels' states.
+        snapshot: dict[tuple[str, str], bool] = {}
+        for kind, var_map in zip(
+            ("skills", "agents", "commands"), self._selection_var_maps()
+        ):
+            for name, var in var_map.items():
+                snapshot[(kind, name)] = bool(var.get())
+        self._prev_selection = snapshot
+
+    def _reconcile_after_batch(self) -> None:
+        """One closure-wins reconcile pass over all panel vars (pr-002).
+
+        Called at the end of every batch mutator that sets vars under
+        _syncing_bundle_selection — a batch toggle must not fire per-
+        checkbox cascade logic dozens of times; the one pass applies the
+        event-kind dispatch's "batch" rule (auto-check deps, uncheck
+        dependents of missing deps, fixpoint).
+        """
+        if self.mode_var.get() == "uninstall":
+            # rr-003: no reconciliation in uninstall mode — teardown
+            # stays exactly-what-you-selected.
+            self._update_prev_selection()
+            return
+        reconciled = reconcile_selection(
+            self._current_selection(),
+            event="batch",
+            member=None,
+            uninstall=False,
+        )
+        self._apply_reconciled_states(reconciled)
+
+    def _apply_reconciled_states(self, selection: "BundleSelection") -> None:
+        # pr-014: writes under _reconciling_selection with the snapshot
+        # refreshed before the guard releases.
+        self._reconciling_selection = True
+        try:
+            for var_map, names in (
+                (self.skill_vars, selection.skills),
+                (self.agent_vars, selection.agents),
+                (self.command_vars, selection.commands),
+            ):
+                for name, var in var_map.items():
+                    var.set(name in set(names))
+            self._update_prev_selection()
+        finally:
+            self._reconciling_selection = False
+        self._sync_bundle_toggles()
+
+    def _on_selection_changed(self) -> None:
+        if self._syncing_bundle_selection or self._reconciling_selection:
+            return
+        self._sync_bundle_toggles()
+        if self.mode_var.get() == "uninstall":
+            # rr-003: uninstall mode only mirrors bundle highlighting;
+            # the orphan report is that mode's dependency awareness.
+            self._update_prev_selection()
+            return
+        # Event-kind dispatch (rr-004): diff the current states against the
+        # snapshot to classify this write as a user check or uncheck, then
+        # run exactly that rule. A check never cascades (nothing was
+        # lost); an uncheck never auto-checks (it would re-check the
+        # dependency the user just removed, making AC-2 unreachable).
+        current: dict[tuple[str, str], bool] = {}
+        for kind, var_map in zip(
+            ("skills", "agents", "commands"), self._selection_var_maps()
+        ):
+            for name, var in var_map.items():
+                current[(kind, name)] = bool(var.get())
+        events: list[tuple[str, str, str]] = []
+        for (kind, name), state in current.items():
+            previous = self._prev_selection.get((kind, name), False)
+            if state and not previous:
+                events.append(("check", kind, name))
+            elif previous and not state:
+                events.append(("uncheck", kind, name))
+        self._prev_selection = current
+        if not events:
+            return
+        selection = self._current_selection()
+        for event_kind, kind, name in events:
+            selection = reconcile_selection(
+                selection,
+                event=event_kind,
+                member=name,
+                uninstall=False,
+                member_kind=kind,
+            )
+        self._apply_reconciled_states(selection)
+
     def _set_all(self, var_map: dict[str, tk.BooleanVar], value: bool) -> None:
         self._syncing_bundle_selection = True
         try:
@@ -2588,6 +3068,10 @@ class InstallerApp:
         finally:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
+        # Guidelines are outside the dependency graph (explicit-only) — a
+        # guidelines Select all/none must not re-check member panels.
+        if var_map is not self.guideline_vars:
+            self._reconcile_after_batch()
 
     def _set_all_skills(self, value: bool) -> None:
         self._set_all(self.skill_vars, value)
@@ -2632,6 +3116,7 @@ class InstallerApp:
         finally:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
+        self._reconcile_after_batch()
 
     def _bundle_present_vars(self, bundle: Bundle) -> list[tk.BooleanVar]:
         """Return every present BooleanVar across all member kinds in bundle."""
@@ -2654,6 +3139,7 @@ class InstallerApp:
         finally:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
+        self._reconcile_after_batch()
 
     def _toggle_target_bundle(self) -> None:
         if self._target_bundle is None:
@@ -2724,11 +3210,6 @@ class InstallerApp:
         self._update_target_bundle_tooltip(
             f"{TARGET_BUNDLE_DESCRIPTION} {', '.join(parts)} installed in target."
         )
-        self._sync_bundle_toggles()
-
-    def _on_selection_changed(self) -> None:
-        if self._syncing_bundle_selection:
-            return
         self._sync_bundle_toggles()
 
     def _apply_bundle_toggle_state(
@@ -2865,12 +3346,14 @@ class InstallerApp:
             # Inside the guard: an invalid dependency map raises
             # InstallerError like every other install failure, so the GUI
             # shows a dialog instead of silently aborting the callback.
+            added_dependencies: list[str] = []
             selection = resolve_panel_selection(
                 skills,
                 agents,
                 commands,
                 guidelines,
                 uninstall=uninstall,
+                added_out=added_dependencies,
             )
             target = Path(target_text).expanduser().resolve()
             code, message = run_operation(
@@ -2881,6 +3364,7 @@ class InstallerApp:
                 guidelines=selection.guidelines,
                 uninstall=uninstall,
                 override=self.override_var.get(),
+                dependency_added=added_dependencies,
             )
         except InstallerError as exc:
             messagebox.showerror("Error", str(exc))
