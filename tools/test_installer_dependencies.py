@@ -1150,9 +1150,11 @@ class MapBodyConsistencyTests(unittest.TestCase):
     Load-bearing classes (the curation policy that makes ledger AC-6's
     cross-check safe; see plan pg-004):
       1. links into ../<name>/references/... (operational templates)
-      2. the first sibling link directly governed by a requirement
-         directive inside a workflow step ("Follow"/"switch to"/
-         "hand off to"/"start with"/"apply [../...", capital or lowercase)
+      2. sibling links governed by a requirement directive inside a
+         workflow step ("Follow"/"switch to"/"hand off"/"start with"/
+         "apply [../...", capital or lowercase — the directive may be
+         separated from the link by intervening text and may govern
+         several links)
       3. dev-workflow-orchestrator's Companion Skills dispatch table only
     Routing-exclusion contexts ("When NOT to use", "Does not trigger",
     handoff bullets) and other skills' deferral tables are exempt by design
@@ -1180,6 +1182,15 @@ class MapBodyConsistencyTests(unittest.TestCase):
     SKILLS_ROOT = REPO_ROOT / "skills"
     AGENTS_ROOT = REPO_ROOT / "agents"
     COMMANDS_ROOT = REPO_ROOT / "commands"
+
+    # Class 2 helpers: a requirement directive opens a governed span that
+    # runs to the first sentence/list/heading bound (:.|#) outside markdown
+    # link syntax; every sibling-skill link in that span is load-bearing.
+    _DIRECTIVE_SPAN = re.compile(
+        r"(?:[Ff]ollow|[Ss]witch to|[Hh]and off|[Ss]tart with|[Aa]pply)\b"
+        r"(?:\[[^\]]*\]\([^)]*\)|[^:.|#])*"
+    )
+    _SIBLING_LINKS = re.compile(r"\]\(\.\.(?:/\.\.|)/([a-z0-9-]+)/")
 
     def setUp(self) -> None:
         # Earlier classes rebind mod.REPO_ROOT to temp fixtures; pin it to
@@ -1282,19 +1293,23 @@ class MapBodyConsistencyTests(unittest.TestCase):
                     r"\.\./([a-z0-9-]+)/references/", line
                 ):
                     pairs.add((skill_dir.name, target))
-                # Class 2: the first sibling link directly governed by a
-                # requirement directive inside a workflow step ("Follow",
-                # "switch to", "hand off to", "start with", "apply" —
-                # capital or lowercase, ia-004/cr-gap); scope boundaries
-                # ("use X instead" in When-NOT lists) are excluded above,
-                # and broad forms catch illustrative asides.
-                m2 = re.search(
-                    r"(?:[Ff]ollow|[Ss]witch to|[Hh]and off to|"
-                    r"[Ss]tart with|[Aa]pply) \[\.\./([a-z0-9-]+)/",
-                    line,
-                )
-                if m2:
-                    pairs.add((skill_dir.name, m2.group(1)))
+                # Class 2: sibling links governed by a requirement
+                # directive inside a workflow step ("Follow", "switch to",
+                # "hand off", "start with", "apply" — capital or lowercase,
+                # ia-004/cr-gap). The directive may be separated from the
+                # link by intervening text (e.g. "hand off `gh` review
+                # posting ... to [../github-guide/...]") and may govern
+                # more than one link ("Apply [cpp-coding] and
+                # [cpp-memory-guide]"), so scan the governed span after
+                # the directive — bounded by sentence/list/heading
+                # punctuation outside link syntax — and collect every
+                # sibling-skill link in it (one or two levels up).
+                # Scope boundaries ("use X instead" in When-NOT lists)
+                # are excluded above, and broad forms catch illustrative
+                # asides.
+                for m2 in self._DIRECTIVE_SPAN.finditer(line):
+                    for target in self._SIBLING_LINKS.findall(m2.group(0)):
+                        pairs.add((skill_dir.name, target))
         return pairs
 
     def test_load_bearing_links_have_edges(self) -> None:
@@ -1312,8 +1327,19 @@ class MapBodyConsistencyTests(unittest.TestCase):
         # code-professor's rule 6 hands a DIFFERENT task (verified repair)
         # to debugging-guide; code-professor's own task (a learning guide)
         # completes without it, and debugging-guide self-triggers on
-        # repair requests via its description.
-        boundary_restatements = {("code-professor", "debugging-guide")}
+        # repair requests via its description. The same shape applies to:
+        # git-merge-guide -> debugging-guide (hands root-cause proof of a
+        # pre-existing failure to a different task, then returns here),
+        # git-merge-guide -> git-guide (hands standard cherry-pick/revert
+        # mechanics to a different sequencer task unless explicitly
+        # extended), and plan-executor -> plan-guide (returns an
+        # execution-blocker report to the plan author — a different task).
+        boundary_restatements = {
+            ("code-professor", "debugging-guide"),
+            ("git-merge-guide", "debugging-guide"),
+            ("git-merge-guide", "git-guide"),
+            ("plan-executor", "plan-guide"),
+        }
         for source, target in sorted(self._load_bearing_links()):
             if (source, target) in boundary_restatements:
                 continue
@@ -1323,6 +1349,62 @@ class MapBodyConsistencyTests(unittest.TestCase):
                 f"load-bearing skill link {source} -> {target} has no "
                 "dependency map edge",
             )
+
+
+    def test_directive_span_regex_shapes(self) -> None:
+        # cr-001: pin the class-2 span-scan shapes that live content
+        # exercises only incidentally. The link alternative must stay
+        # first in the span regex — with the single-char alternative
+        # first, it consumes "[" before the link alternative can match
+        # and every targets() case below returns [].
+        def targets(line: str) -> list[str]:
+            return [
+                target
+                for match in self._DIRECTIVE_SPAN.finditer(line)
+                for target in self._SIBLING_LINKS.findall(match.group(0))
+            ]
+
+        # Directive separated from its link by intervening text.
+        self.assertEqual(
+            targets(
+                "Hand off `gh` review posting to "
+                "[github-guide](../github-guide/SKILL.md) instead."
+            ),
+            ["github-guide"],
+        )
+        # One directive governing multiple links in a single span.
+        self.assertEqual(
+            targets(
+                "Apply [cpp-coding](../cpp-coding/SKILL.md) and "
+                "[cpp-memory-guide](../cpp-memory-guide/SKILL.md) here."
+            ),
+            ["cpp-coding", "cpp-memory-guide"],
+        )
+        # Two-level ../../ paths from a references/ file.
+        self.assertEqual(
+            targets(
+                "Follow [gradle-android-dev](../../gradle-android-dev/SKILL.md)"
+                " for AGP wiring."
+            ),
+            ["gradle-android-dev"],
+        )
+        # The span ends at sentence punctuation outside link syntax;
+        # a later link with no directive of its own is not governed.
+        self.assertEqual(
+            targets(
+                "Follow [git-guide](../git-guide/SKILL.md). Then "
+                "[git-merge-guide](../git-merge-guide/SKILL.md) is separate."
+            ),
+            ["git-guide"],
+        )
+        # Scope-boundary phrasing has no directive, so no pair.
+        self.assertEqual(
+            targets(
+                "Use [debugging-guide](../debugging-guide/SKILL.md)"
+                " instead when a repro exists."
+            ),
+            [],
+        )
 
 
 class GuiSelectionDynamicsTests(unittest.TestCase):

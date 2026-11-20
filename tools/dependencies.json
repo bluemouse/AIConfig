@@ -16,6 +16,13 @@
         "kotlin-coding"
       ]
     },
+    "android-ndk-dev": {
+      "depends": [
+        "cpp-coding",
+        "cpp-memory-guide",
+        "gradle-android-dev"
+      ]
+    },
     "android-vulkan-dev": {
       "depends": [
         "android-ndk-dev",
@@ -25,6 +32,11 @@
     "cmake-dev": {
       "depends": [
         "cpp-coding"
+      ]
+    },
+    "code-reviewer": {
+      "depends": [
+        "github-guide"
       ]
     },
     "code-review-resolver": {
@@ -105,6 +117,8 @@
       "depends": [
         "agent-runner",
         "debugging-guide",
+        "git-merge-guide",
+        "prompt-clarifier",
         "test-driven-dev-guide"
       ]
     },
@@ -128,6 +142,11 @@
     "research-reviewer": {
       "depends": [
         "dev-workflow-orchestrator"
+      ]
+    },
+    "shader-guide": {
+      "depends": [
+        "glsl-coding"
       ]
     },
     "skill-creator": {

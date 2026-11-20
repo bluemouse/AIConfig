@@ -89,7 +89,7 @@ must have a map edge (reverse — catches missing dependencies).
   that exists as both skill and agent always means the skill, since
   targets are skills by definition). Edges anchored only by a routing-class
   body link, or requirement phrasings outside the curated classes
-  ("live in", "see X", "per X", arrow-routing rows), are deliberate
+  ("live in", "see X", "per X", "via X", arrow-routing rows), are deliberate
   over-inclusion: they satisfy the forward check but are exempt from the
   reverse curation, so removing one changes install sets without failing
   the suite.
