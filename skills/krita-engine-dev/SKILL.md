@@ -1,6 +1,6 @@
 ---
 name: krita-engine-dev
-description: Write, review, debug, and implement Krita brush engines, paintops, stroke scheduling, tiled compositing, presets/resources, layer projection, and canvas/GPU display. Use when working on KDE/krita source navigation, adding or modifying a paint engine, designing a new painting application's stroke system, optimizing dab generation and live drawing, or explaining how pixels flow from stylus samples to layers and canvas updates — even if the user doesn't say Krita. Triggers on KisPaintOp, KisBrushOp, KisStrokesQueue, KisResourcesSnapshot, KisPaintDevice, dab cache, spacing/timing, LOD buddy strokes, KisTransaction, and paintop plugin registration.
+description: Write, review, debug, and implement Krita brush engines, paintops, stroke scheduling, tiled compositing, presets, layer projection, and canvas/GPU display. Use for KDE/krita source work, KisPaintOp, KisBrushOp, KisStrokesQueue, KisResourcesSnapshot, KisPaintDevice, dab cache, spacing, LOD strokes, KisTransaction, or Krita-inspired stroke systems — even without saying Krita. Excludes MyPaint (mypaint-engine-dev).
 ---
 
 # Krita Engine Dev
@@ -114,7 +114,7 @@ Keep these rules explicit in design and review answers:
 | Add/modify brush engines, register paintop plugins, design a new painting app | [implementation-playbooks.md](references/implementation-playbooks.md) |
 | Tiled pixel storage, layer/projection, canvas/GPU interaction, performance | [pixel-layer-gpu-performance.md](references/pixel-layer-gpu-performance.md) |
 | Navigate a Krita checkout or validate claims against source | [source-reading-map.md](references/source-reading-map.md) |
-| Extended background when focused references are insufficient (~750 lines) | [krita-programming-guide.md](references/krita-programming-guide.md) |
+| Extended background when focused references are insufficient (~90 lines) | [krita-programming-guide.md](references/krita-programming-guide.md) |
 
 When a task spans multiple areas, read **every matching row** — e.g. a new paintop plugin needs
 [implementation-playbooks.md](references/implementation-playbooks.md),
@@ -136,7 +136,3 @@ python <SKILL_ROOT>/scripts/krita_source_probe.py --root <krita-root>
 4. If a path or symbol is missing, say it may have moved and search the checkout rather than guessing.
 
 If no checkout is available, use the bundled references as a high-confidence map, but phrase source-specific claims as path guidance rather than guaranteed current truth.
-
-## Resources
-
-- [SOURCES.md](SOURCES.md) — provenance and external references (read for attribution only)

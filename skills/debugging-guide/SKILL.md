@@ -1,6 +1,6 @@
 ---
 name: debugging-guide
-description: "Use when diagnosing a software defect before fixing it — root-cause tracing with evidence before any production change, reproducing or shrinking failures, forming and testing hypotheses, choosing prevention-by-design tripwires, writing the regression test, and applying the minimal fix. Triggers on crashes, segfaults, access violations, use-after-free, 0xdddddddd fill patterns, regressions, flaky behavior, minimal repro, git bisect, precondition assertions, sanitizers, allocation tagging, dangling-pointer crashes, buffer-overwrite classes, and unclear integration failures — even when the user does not say debugging; skip it for a failure with an obvious, verified cause. Does not trigger on active merge/rebase integration (git-merge-guide), strict TDD coaching (test-driven-dev-guide), correctness audits (implementation-auditor), diff review (code-reviewer), plan execution (plan-executor), codebase learning (code-professor), profiling without a defect, or native GDB/LLDB steps while editing C++."
+description: "Diagnose software defects with evidence-driven root-cause tracing before changing production code — reproduce/shrink failures, test hypotheses, add regression tests and tripwires, and apply minimal fixes. Triggers on crashes, segfaults, use-after-free, sanitizers, regressions, flaky bugs, git bisect, and unclear integration failures; skip obvious verified causes, merge/rebase resolution (git-merge-guide), TDD coaching, audits, or diff review."
 ---
 
 # Debugging Guide

@@ -1,6 +1,6 @@
 ---
 name: commit-message-writer
-description: Draft git commit messages in Conventional Commits format from staged changes, the working tree, a single commit, or a commit range — subject line plus body. Use when the user asks for a commit message, conventional commit, draft commit msg, write commit message for staged/unstaged changes, message for last commit or commit range, or /commit-message-style requests — even if they do not say "conventional commits". Ends by asking whether to proceed with git commit using the generated message; does not commit without explicit confirmation.
+description: "Draft Conventional Commit messages (subject + body) from staged changes, the working tree, a commit, or a commit range ('draft commit msg', 'write commit message'); asks before running `git commit` unless explicitly authorized."
 ---
 
 # Commit Message Writer
@@ -14,8 +14,9 @@ rules override host-native commit templates, IDE footers, and tool habits.
 
 ## Scope
 
-Resolve to exactly one mode before drafting; if scope is missing, conflicting,
-or the target has no changes, stop and report.
+Resolve to exactly one mode before drafting; when scope is unspecified, default
+to `staged`. If scope is conflicting or the resolved target has no changes,
+stop and report.
 
 - **staged** (default) — staged changes (`git --no-pager diff --cached`)
 - **working** — staged plus unstaged working-tree changes
@@ -72,9 +73,3 @@ Do not run `git commit`, `git add`, `git push`, amend, or force-push until the
 user confirms the draft — or explicitly asked to commit in the invoking
 message. On confirmation: stage only files in scope, use a HEREDOC for
 multi-line messages, and never `--no-verify` unless requested.
-
-## Resources
-
-- [SOURCES.md](SOURCES.md) — provenance
-- [eval-queries.json](eval-queries.json) — description trigger evals
-- [evals/evals.json](evals/evals.json) — behavior evals asserting self-contained messages

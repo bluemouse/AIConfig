@@ -85,7 +85,7 @@ configure/build/ctest must be stated explicitly.
 
 ## Common gotchas
 
-Verified against [cmake.org](https://cmake.org/cmake/help/latest/) — see [SOURCES.md](SOURCES.md).
+Verified against [cmake.org](https://cmake.org/cmake/help/latest/).
 
 - **`target_link_libraries` visibility** — `PRIVATE` links and propagates usage requirements
   only to the target; `PUBLIC` also exports link/usage to dependents; `INTERFACE` exports
@@ -112,7 +112,6 @@ Verified against [cmake.org](https://cmake.org/cmake/help/latest/) — see [SOUR
 | Root layout, `add_subdirectory`, include interfaces | [project-structure.md](references/project-structure.md) |
 | `$<BUILD_INTERFACE:…>`, `$<CONFIG:…>`, toolchain conditionals | [generator-expressions.md](references/generator-expressions.md) |
 | `install(TARGETS …)`, `install(EXPORT …)`, relocatable packages | [installation.md](references/installation.md) |
-| Provenance and external references (attribution only) | [SOURCES.md](SOURCES.md) |
 
 When a change spans multiple areas, read **every matching row** — e.g. installable libraries
 need [project-structure.md](references/project-structure.md), [generator-expressions.md](references/generator-expressions.md),

@@ -1023,7 +1023,7 @@ class CliHelpTextTests(unittest.TestCase):
             .split("Scripts directory", 1)[0]
             .split()
         )
-        self.assertIn(".agents/skills/<name>/", commands_help)
+        self.assertIn(".agents/skills/cmd-<name>/", commands_help)
         self.assertIn("model-invocation", commands_help)
         self.assertNotIn(".github/prompts", commands_help)
         self.assertNotIn(".claude/commands", commands_help)
@@ -1038,7 +1038,9 @@ class CliHelpTextTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 mod.parse_args(["--help"])
 
-        self.assertIn("--purge-legacy", buf.getvalue())
+        help_text = " ".join(buf.getvalue().split())
+        self.assertIn("--purge-legacy", help_text)
+        self.assertIn(".agents/guidelines/", help_text)
 
     def test_tool_command_files_constant_deleted(self) -> None:
         self.assertFalse(hasattr(mod, "TOOL_COMMAND_FILES"))
@@ -1430,6 +1432,130 @@ class UninstallMissingTargetTests(unittest.TestCase):
                 )
             self.assertEqual(code, 2)
             self.assertIn("Target project not found", buf.getvalue())
+
+
+class SelfInstallScriptsGuidelinesTests(unittest.TestCase):
+    """C-01 / cr-004: explicit --scripts / --guidelines may target REPO_ROOT; other kinds may not."""
+
+    def test_fresh_clone_bare_install_and_uninstall_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_root = Path(tmp) / "repo"
+            scripts_src = repo_root / "tools" / "dev-workflow"
+            scripts_src.mkdir(parents=True)
+            (scripts_src / "check.py").write_text("x = 1\n", encoding="utf-8")
+
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = repo_root
+            try:
+                for argv in ([str(repo_root)], [str(repo_root), "--uninstall"]):
+                    with self.subTest(argv=argv):
+                        err = io.StringIO()
+                        with contextlib.redirect_stderr(err):
+                            code = mod.run_cli(argv)
+                        self.assertEqual(code, 2)
+                        self.assertIn("AIConfig repository root", err.getvalue())
+                self.assertFalse((repo_root / ".agents").exists())
+            finally:
+                mod.REPO_ROOT = original_root
+
+    def test_self_install_allows_scripts_and_guidelines_only(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_root = Path(tmp) / "repo"
+            scripts_src = repo_root / "tools" / "dev-workflow"
+            scripts_src.mkdir(parents=True)
+            (scripts_src / "check.py").write_text("x = 1\n", encoding="utf-8")
+            guideline_src = repo_root / "guidelines" / "response.md"
+            guideline_src.parent.mkdir(parents=True)
+            guideline_src.write_text(
+                "---\ndescription: Response rules.\n---\n# Verdict First\n",
+                encoding="utf-8",
+            )
+            skill_src = repo_root / ".agents" / "skills" / "demo"
+            skill_src.mkdir(parents=True)
+            (skill_src / "SKILL.md").write_text(
+                "---\nname: demo\ndescription: demo.\n---\nbody\n",
+                encoding="utf-8",
+            )
+
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = repo_root
+            try:
+                code = mod.run_cli(
+                    [str(repo_root), "--scripts", "dev-workflow", "--guidelines", "response", "--override"]
+                )
+                self.assertEqual(code, 0)
+                self.assertTrue((repo_root / ".agents" / "tools" / "dev-workflow" / "check.py").is_file())
+                self.assertTrue((repo_root / ".agents" / "skills" / "guidelines-response" / "SKILL.md").is_file())
+
+                for argv in (
+                    [str(repo_root), "--skills", "demo"],
+                    [str(repo_root), "--scripts", "dev-workflow", "--skills", "demo"],
+                    [str(repo_root), "--dev-workflow"],
+                    [str(repo_root), "--uninstall", "--skills", "demo"],
+                    [str(repo_root), "--uninstall", "--scripts", "dev-workflow", "--skills", "demo"],
+                    [str(repo_root), "--uninstall"],
+                ):
+                    with self.subTest(argv=argv):
+                        err = io.StringIO()
+                        with contextlib.redirect_stderr(err):
+                            refused_code = mod.run_cli(argv)
+                        self.assertEqual(refused_code, 2)
+                        self.assertIn("AIConfig repository root", err.getvalue())
+
+                # Installed self-regenerable targets remain intact until explicitly uninstalled.
+                self.assertTrue((repo_root / ".agents" / "tools" / "dev-workflow" / "check.py").is_file())
+                self.assertTrue((repo_root / ".agents" / "skills" / "guidelines-response" / "SKILL.md").is_file())
+
+                uninstall_code = mod.run_cli(
+                    [str(repo_root), "--uninstall", "--scripts", "dev-workflow", "--guidelines", "response"]
+                )
+                self.assertEqual(uninstall_code, 0)
+                self.assertFalse((repo_root / ".agents" / "tools" / "dev-workflow").exists())
+                self.assertFalse((repo_root / ".agents" / "skills" / "guidelines-response").exists())
+                self.assertTrue((repo_root / ".agents" / "skills" / "demo" / "SKILL.md").is_file())
+            finally:
+                mod.REPO_ROOT = original_root
+
+    def test_programmatic_allow_self_defaults_false_and_guards_mixed_kinds(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_root = Path(tmp) / "repo"
+            scripts_src = repo_root / "tools" / "dev-workflow"
+            scripts_src.mkdir(parents=True)
+            (scripts_src / "check.py").write_text("x = 1\n", encoding="utf-8")
+
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = repo_root
+            try:
+                with self.assertRaises(mod.InstallerError):
+                    mod.install_items(
+                        source_root=repo_root,
+                        target_root=repo_root,
+                        skills=(),
+                        agents=(),
+                        commands=(),
+                        scripts=("dev-workflow",),
+                    )
+                with self.assertRaises(mod.InstallerError):
+                    mod.install_items(
+                        source_root=repo_root,
+                        target_root=repo_root,
+                        skills=("demo",),
+                        agents=(),
+                        commands=(),
+                        scripts=("dev-workflow",),
+                        allow_self=True,
+                    )
+                with self.assertRaises(mod.InstallerError):
+                    mod.uninstall_items(
+                        target_root=repo_root,
+                        skills=("demo",),
+                        agents=(),
+                        commands=(),
+                        scripts=("dev-workflow",),
+                        allow_self=True,
+                    )
+            finally:
+                mod.REPO_ROOT = original_root
 
 
 if __name__ == "__main__":

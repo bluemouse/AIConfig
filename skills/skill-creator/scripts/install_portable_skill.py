@@ -37,8 +37,30 @@ SHARED_SKILL_DIR = ".agents/skills/{name}"
 BRIDGE_LINK = ".claude/skills"
 BRIDGE_TARGET = "../.agents/skills"
 
-IGNORE_DIR_NAMES = {"__pycache__"}
-IGNORE_FILE_GLOBS = ("*.pyc", "*.skill")
+IGNORE_DIR_NAMES = {
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".mypy_cache",
+    ".hypothesis",
+    "node_modules",
+    "testdata",
+    "fixtures",
+    "evals",
+}
+IGNORE_FILE_GLOBS = (
+    "*.pyc",
+    "*.pyo",
+    "*.skill",
+    ".DS_Store",
+    ".coverage",
+    ".coverage.*",
+    "eval-queries.json",
+    "SOURCES.md",
+    "conftest.py",
+    "test_*.py",
+    "*_test.py",
+)
 
 
 def should_ignore(name: str) -> bool:

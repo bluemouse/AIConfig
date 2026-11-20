@@ -101,9 +101,12 @@ wrong, Why it matters, and Proposed fix, because the orchestrator only receives 
 text message.
 ```
 
-**GitHub Copilot** — Copilot Chat does not expose parallel subagents; run scope passes
-**sequentially** in one session, reading `scope-checklists.md` for each scope (and
-matching Conditional Extensions), applying the *how to look* heuristic, and keeping
-notes separate per scope. After all scopes, run cross-scope dedup, verify pass, and gap
-sweep yourself. Do not skip the verify or gap-sweep stages just because passes were
-sequential — they are what separate `deep` from `standard`.
+**GitHub Copilot** — when the active Copilot surface exposes concurrent subagent/task
+dispatch (e.g. VS Code Copilot agent/SDK), dispatch one subagent per *selected* scope
+concurrently in a single turn using the prompt template above (with verbatim
+`scope-checklists.md` bullets and matching Conditional Extensions), then run cross-scope
+dedup, verify pass, and gap sweep yourself. When the surface exposes only single-session
+chat without subagent dispatch, run scope passes **sequentially** in one session
+(keeping notes separate per scope), then still run cross-scope dedup, verify pass, and
+gap sweep yourself — do not skip verify or gap-sweep, as they are what separate `deep`
+from `standard`.

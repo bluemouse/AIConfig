@@ -126,6 +126,7 @@ The extended bundle includes the full core bundle plus these additional skills:
 
 | Skill | Primary role | Use when |
 | --- | --- | --- |
+| [dev-workflow-orchestrator](../skills/dev-workflow-orchestrator/SKILL.md) | Workflow routing, governance, and shared reviewer references | End-to-end phase routing or governance guidance is needed, and so `research-reviewer` / `plan-reviewer` shared `reviewer-core` references resolve (full automated script-gated harness execution uses `--dev-workflow` / `dev-workflow-harness`) |
 | [research-reviewer](../skills/research-reviewer/SKILL.md) | Research readiness audit | A research report must be validated before planning starts |
 | [plan-reviewer](../skills/plan-reviewer/SKILL.md) | Plan readiness audit | A plan must be checked before execution by a developer or AI agent |
 | [advisory-council](../skills/advisory-council/SKILL.md) | Multi-perspective decision deliberation | Competing options, policy disputes, or explicit council/panel requests need ranked recommendations with dissent |

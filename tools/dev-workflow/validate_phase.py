@@ -42,10 +42,10 @@ def run_phase_validation(
     findings: list[Finding] = []
     findings.extend(artifact_checks.run_all(run_dir, phase, stage))
     findings.extend(manifest_checks.run_all(run_dir, phase))
-    findings.extend(loop_checks.run_all(run_dir, phase))
+    findings.extend(loop_checks.run_all(run_dir, phase, stage))
     findings.extend(mode_checks.run_all(run_dir, phase, repo_root))
     findings.extend(message_checks.check_commit_messages(run_dir, phase, repo_root))
-    findings.extend(handoff_checks.run_all(run_dir, phase))
+    findings.extend(handoff_checks.run_all(run_dir, phase, stage))
     return findings
 
 

@@ -1,6 +1,6 @@
 ---
 name: kotlin-coding
-description: Write, review, refactor, debug, test, and explain plain Kotlin/JVM language code, standard-library APIs, idioms, coroutines, kotlinc workflows, and tests. Use when implementing Kotlin classes or functions, sealed-class hierarchies and exhaustive when expressions, reviewing Kotlin diffs, fixing compiler or runtime errors, choosing stdlib APIs, improving null-safety and type modeling, writing or fixing kotlin.test/JUnit/Kotest/MockK tests, adding property or data-driven tests, or debugging failing, flaky, or assertion/coroutine test failures — even if the user says "add tests" or "Kotlin help" without naming a topic. For Gradle build files, version catalogs, task wiring, CI, or build cache, use gradle-dev. For Android Gradle Plugin builds, use gradle-android-dev. Excludes Android, KMP, Kotlin/Native, Kotlin/JS/Web, Compose, Ktor/backend, and platform-specific architecture or testing.
+description: 'Write, review, refactor, debug, and test plain Kotlin/JVM code: language idioms, sealed hierarchies and exhaustive when, null safety, stdlib APIs, coroutines, kotlinc, and kotlin.test/JUnit/Kotest/MockK or flaky tests — even when the user says "Kotlin help" or "add tests". Excludes Gradle build files/caches/CI (gradle-dev), Android Gradle Plugin (gradle-android-dev), and Android/Compose/KMP/Ktor platforms.'
 ---
 
 # Kotlin Coding
@@ -9,17 +9,13 @@ Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. 
 
 Write, review, debug, and test plain Kotlin/JVM code: language semantics, standard-library APIs, idioms, coroutines-as-language, `kotlinc`, compiler/runtime debugging, test design, and maintainability. Read bundled references on demand — do not load all reference files unless the task requires them.
 
-## Scope
+## Scope and Boundaries
 
-Use this skill for plain Kotlin programming and its tests: language semantics, standard-library APIs, Kotlin/JVM command-line compilation, code review, refactoring, unit and module-level test design, and flaky-test triage.
+Covers plain Kotlin/JVM programming and unit/module tests (`kotlinc`, stdlib, language-level coroutines, code review, refactoring, flaky-test triage). Excludes KMP, Kotlin/Native, Kotlin/JS/Web, Ktor, and server/framework architecture; when platform code is supplied, help with generic Kotlin language/API correctness only and defer build or platform wiring:
 
-Do not provide Android, KMP, Kotlin/Native, Kotlin/JS/Web, Compose, Ktor, server/backend architecture, or platform-specific guidance. When a user supplies such code, still help with generic Kotlin correctness, syntax, style, and APIs, but defer platform build or platform test wiring to the appropriate companion skill.
-
-## When NOT to Use
-
-- Gradle build engineering, version catalogs, task wiring, CI, or build/configuration cache — [gradle-dev](../gradle-dev/SKILL.md)
-- Android Gradle Plugin, AGP variants, lint, R8, or Android Studio sync, including Android test **task** wiring — [gradle-android-dev](../gradle-android-dev/SKILL.md)
-- Android app architecture, Jetpack Compose, CameraX/Media3, permissions, SDK framework code, and Android instrumentation/UI tests — [android-dev](../android-dev/SKILL.md)
+- Gradle build files, version catalogs, task wiring, CI, or build/configuration cache — [gradle-dev](../gradle-dev/SKILL.md)
+- Android Gradle Plugin, variants, lint, R8, sync, or Android test **task** wiring — [gradle-android-dev](../gradle-android-dev/SKILL.md)
+- Android app architecture, Jetpack Compose, CameraX/Media3, SDK code, and Android instrumentation/UI tests — [android-dev](../android-dev/SKILL.md)
 
 ## Testing
 
@@ -55,16 +51,4 @@ kotlinc file.kt -include-runtime -d app.jar && java -jar app.jar
 | Compiler/runtime/performance debugging | [debugging.md](references/debugging.md) |
 | Non-obvious null-safety, coroutine, collection, and validation rules | [best-practices.md](references/best-practices.md) |
 | `runTest`, virtual time, dispatchers, Flow tests, coroutine flakes | [coroutine-testing.md](references/coroutine-testing.md) |
-| Failed-test diagnosis, flake triage | [debugging-flaky-tests.md](references/debugging-flaky-tests.md) |
-| Gradle build files, catalogs, task wiring, CI, caches | [gradle-dev](../gradle-dev/SKILL.md) |
-| AGP, Android variants, lint, R8, signing | [gradle-android-dev](../gradle-android-dev/SKILL.md) |
-
-## References
-
-- [patterns.md](references/patterns.md): non-obvious gotchas — extension static resolution and sealed `when` exhaustiveness.
-- [tooling.md](references/tooling.md): toolchain rules, `kotlinc` repros, dependency hygiene, and the local check script.
-- [debugging.md](references/debugging.md): compiler/runtime/performance debugging and verification commands.
-- [best-practices.md](references/best-practices.md): non-obvious null-safety, coroutine, collection, and validation rules.
-- [coroutine-testing.md](references/coroutine-testing.md): `runTest`, dispatchers, virtual time, cancellation, Flow tests, and flaky coroutine triage.
-- [debugging-flaky-tests.md](references/debugging-flaky-tests.md): failed-test diagnosis, flake triage, concurrency/time/random/global-state failure modes, and stabilization checklist.
-- [source-notes.md](references/source-notes.md): source synthesis and scope notes.
+| Failed-test diagnosis, flake triage, stabilization checklist | [debugging-flaky-tests.md](references/debugging-flaky-tests.md) |

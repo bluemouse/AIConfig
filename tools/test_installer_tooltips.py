@@ -197,6 +197,31 @@ class BundleHelpEntriesTests(unittest.TestCase):
             ],
         )
 
+    def test_shared_slug_kind_name_tuples_partial_selection(self) -> None:
+        harness = mod.Bundle(
+            id="dev-workflow-harness",
+            name="Dev-workflow harness",
+            description="Dev-workflow harness description",
+            skills=frozenset({"code-reviewer"}),
+            agents=frozenset({"code-reviewer"}),
+        )
+        selected_members = {
+            ("skill", "code-reviewer"): True,
+            ("agent", "code-reviewer"): False,
+        }
+        entries = mod.bundle_help_entries(
+            [harness],
+            present_members=lambda bundle: [
+                *(("skill", s) for s in sorted(bundle.skills)),
+                *(("agent", a) for a in sorted(bundle.agents)),
+            ],
+            is_selected=lambda member: selected_members[member],
+        )
+        self.assertEqual(
+            entries,
+            [("Dev-workflow harness (partial)", "Dev-workflow harness description")],
+        )
+
 
 class ParseFrontmatterEmbeddedDelimTests(unittest.TestCase):
     """t-003: an embedded `---` line must not silently truncate frontmatter.

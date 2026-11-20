@@ -1,6 +1,6 @@
 ---
 name: plan-reviewer
-description: "Run an isolated, fresh-context audit of an implementation plan as a read-only subagent, with no access to the planner's reasoning. Use when independence from the doer matters, when dispatched by the dev-workflow orchestrator in native mode, or when a fresh-context review of an implementation plan for correctness, completeness, TDD test design, task decomposition, file precision, testability, risk controls, and execution readiness is needed before execution. Produces a structured review-report with a verdict. Does not trigger on brainstorming, research-report review, codebase learning guides (code-professor), writing plans, or code diff review."
+description: "Run an isolated, fresh-context audit of an implementation plan as a read-only subagent, checking traceability, TDD/verification design, task decomposition, and execution readiness standalone or in dev-workflow native mode; emits a review report with verdict. Excludes research review, plan authoring, or diff review."
 ---
 
 # Plan Reviewer (isolated subagent)
@@ -10,8 +10,10 @@ Isolated, read-only checker for the dev-workflow **plan** phase.
 ## Read first
 
 Read and follow `.agents/skills/dev-workflow-orchestrator/references/checker-subagent-contract.md`
-— it defines the task packet, the fresh-context discipline, the verdict-heading forms,
-the finding format, and the boundaries. This file carries only this agent's delta.
+when present — it defines the task packet, fresh-context discipline, verdict-heading
+forms, finding format, and boundaries (if invoked standalone outside a harness install
+where that file is absent, apply read-only fresh-context discipline directly and follow
+the skill criteria below). This file carries only this agent's delta.
 
 ## Role
 

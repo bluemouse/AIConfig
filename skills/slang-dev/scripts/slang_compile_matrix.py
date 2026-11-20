@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -35,60 +36,67 @@ TARGETS = {
 }
 
 
+class ManifestError(ValueError):
+    """Raised when the Slang compile manifest is invalid."""
+
+
 def load_manifest(path: Path) -> dict[str, Any]:
     try:
         with path.open("r", encoding="utf-8") as f:
             data = json.load(f)
     except Exception as exc:  # pragma: no cover - CLI error path
-        raise SystemExit(f"failed to read manifest {path}: {exc}") from exc
+        raise ManifestError(f"failed to read manifest {path}: {exc}") from exc
     if not isinstance(data, dict):
-        raise SystemExit("manifest must be a JSON object")
+        raise ManifestError("manifest must be a JSON object")
     return data
 
 
 def require_str(data: dict[str, Any], key: str) -> str:
     value = data.get(key)
     if not isinstance(value, str) or not value:
-        raise SystemExit(f"manifest field '{key}' must be a non-empty string")
+        raise ManifestError(f"manifest field '{key}' must be a non-empty string")
     return value
 
 
 def build_commands(data: dict[str, Any]) -> list[list[str]]:
     slangc = data.get("slangc", "slangc")
     if not isinstance(slangc, str) or not slangc:
-        raise SystemExit("manifest field 'slangc' must be a non-empty string when provided")
+        raise ManifestError("manifest field 'slangc' must be a non-empty string when provided")
 
     source = require_str(data, "source")
-    out_dir = Path(data.get("out_dir", "build/slang"))
+    out_dir_raw = data.get("out_dir", "build/slang")
+    if not isinstance(out_dir_raw, str) or not out_dir_raw:
+        raise ManifestError("manifest field 'out_dir' must be a non-empty string when provided")
+    out_dir = Path(out_dir_raw)
     profile = data.get("profile")
     if profile is not None and not isinstance(profile, str):
-        raise SystemExit("manifest field 'profile' must be a string when provided")
+        raise ManifestError("manifest field 'profile' must be a string when provided")
 
     entries = data.get("entries")
     if not isinstance(entries, list) or not entries:
-        raise SystemExit("manifest field 'entries' must be a non-empty array")
+        raise ManifestError("manifest field 'entries' must be a non-empty array")
 
     targets = data.get("targets", ["vulkan", "metal"])
     if not isinstance(targets, list) or not targets:
-        raise SystemExit("manifest field 'targets' must be a non-empty array")
+        raise ManifestError("manifest field 'targets' must be a non-empty array")
     for target in targets:
-        if target not in TARGETS:
-            raise SystemExit(f"unsupported target '{target}', expected one of {sorted(TARGETS)}")
+        if not isinstance(target, str) or target not in TARGETS:
+            raise ManifestError(f"unsupported target '{target}', expected one of {sorted(TARGETS)}")
 
     extra_args = data.get("extra_args", [])
     if not isinstance(extra_args, list) or not all(isinstance(x, str) for x in extra_args):
-        raise SystemExit("manifest field 'extra_args' must be an array of strings")
+        raise ManifestError("manifest field 'extra_args' must be an array of strings")
 
     commands: list[list[str]] = []
     for entry in entries:
         if not isinstance(entry, dict):
-            raise SystemExit("each entry must be an object with name and stage")
+            raise ManifestError("each entry must be an object with name and stage")
         name = entry.get("name")
         stage = entry.get("stage")
-        if not isinstance(name, str) or not name:
-            raise SystemExit("each entry requires a non-empty string 'name'")
-        if stage not in {"vertex", "fragment", "compute"}:
-            raise SystemExit("each entry stage must be one of: vertex, fragment, compute")
+        if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
+            raise ManifestError("each entry requires a valid identifier 'name'")
+        if not isinstance(stage, str) or stage not in {"vertex", "fragment", "compute"}:
+            raise ManifestError("each entry stage must be one of: vertex, fragment, compute")
         for target in targets:
             target_info = TARGETS[target]
             out = out_dir / target / f"{name}{target_info['ext']}"
@@ -110,15 +118,19 @@ def build_commands(data: dict[str, Any]) -> list[list[str]]:
     return commands
 
 
-def main(argv: list[str]) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", type=Path, help="path to JSON compile manifest")
     parser.add_argument("--print-only", action="store_true", help="print commands without running them")
     parser.add_argument("--allow-missing-slangc", action="store_true", help="print commands and exit 0 if slangc is not found")
     args = parser.parse_args(argv)
 
-    data = load_manifest(args.manifest)
-    commands = build_commands(data)
+    try:
+        data = load_manifest(args.manifest)
+        commands = build_commands(data)
+    except ManifestError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
 
     slangc = commands[0][0] if commands else "slangc"
     if shutil.which(slangc) is None:

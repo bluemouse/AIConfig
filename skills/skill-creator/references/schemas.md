@@ -35,6 +35,8 @@ Defines the evals for a skill. Located at `evals/evals.json` within the skill di
 - `evals[].files`: Optional list of input file paths (relative to skill root)
 - `evals[].expectations`: List of verifiable statements
 
+Behavior evals may also live as human-readable prompt+expected-behavior rubrics in `evals/` (e.g. `evals/evaluation-cases.md`) — same purpose as `evals.json`, authored when a prose rubric beats JSON. Both are install-time excluded (bootstrap-only).
+
 ---
 
 ## eval_metadata.json

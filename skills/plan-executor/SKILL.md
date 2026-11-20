@@ -1,185 +1,66 @@
 ---
 name: plan-executor
-description: "Use when executing a provided implementation plan in the current git working tree — decomposing it into independent units, dispatching concurrent subagents through agent-runner when possible, integrating on the current branch without creating or switching branches unless explicitly requested, running verifications, and producing an implementation report. Triggers on prompts to implement a written plan, execute plan tasks, or run an approved implementation plan on the current branch. Does not trigger on plan authoring, plan-reviewer audit, generic parallel dispatch without a plan, active merge/rebase integration (git-merge-guide), post-execution correctness audit (implementation-auditor), or post-implementation diff review."
+description: "Execute a provided implementation plan on the current git branch — decomposing independent units, dispatching concurrent subagents via agent-runner when supported, integrating results, running verifications, and producing an implementation report. Use when asked to implement/execute/run a written or approved plan, decompose a plan into units and execute them, implement a plan and verify the changes, or carry out plan tasks on the current branch without creating a new one. Does not trigger on plan authoring (plan-guide), plan audit (plan-reviewer), ad-hoc parallel dispatch without a plan, active merge/rebase integration (git-merge-guide), correctness audit (implementation-auditor), or diff review (code-reviewer)."
 ---
 
 # Plan Executor
 
-Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve
-paths to `references/` from that directory.
+Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`, and resolve `references/` paths from it.
 
-Execute a provided implementation plan against the current git branch. Prefer dividing the plan into independent execution units and running those units concurrently with subagents; always finish with a review-ready implementation report.
+Execute a provided implementation plan on the current git branch — dividing independent units across concurrent subagents when supported and always finishing with a review-ready implementation report. State at the start that `plan-executor` is active (and [../agent-runner/SKILL.md](../agent-runner/SKILL.md) when dispatching concurrent units).
 
-## Primary Directive
+## Primary Directive and Boundaries
 
-Your job is to **execute an implementation plan and produce an implementation report**, not to author plans, run a full pre-execution plan audit, dispatch generic parallel work without a plan, or review code diffs.
+Execute an implementation plan and produce an implementation report — do not author plans, run a full pre-execution plan audit, dispatch ad-hoc parallel tasks without a plan, or review code diffs.
 
-## When to Use
-
-- The user supplies an implementation plan (inline or as a file path) to execute
-- Running approved plan tasks on the current git branch without creating or switching branches unless explicitly requested
-- Decomposing a plan into units, optionally parallelizing via [../agent-runner/SKILL.md](../agent-runner/SKILL.md), and integrating results
-- Producing an implementation report for testing, debugging, and later code review
-
-## When NOT to Use
-
-- **Plan authoring or repair** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
-- **Pre-execution plan audit** — use [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
-- **Generic parallel dispatch without a plan** — use [../agent-runner/SKILL.md](../agent-runner/SKILL.md)
-- **Post-implementation diff review** — use [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
-- **Post-execution correctness audit** — use
-  [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md)
-- **Codebase learning or architecture guides without a plan** — use
-  [../code-professor/SKILL.md](../code-professor/SKILL.md)
-- **Commit, push, branch, worktree, or active merge/rebase operations** — use
-  [../git-guide/SKILL.md](../git-guide/SKILL.md) for mechanics and
-  [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) for complex local integration
-
-## Overview
-
-At the start, state that you are using the `plan-executor` skill. If concurrent subagents are available and two or more independent units exist, state that you are also using [../agent-runner/SKILL.md](../agent-runner/SKILL.md) for parallel execution.
+**When NOT to use:**
+- **Plan authoring or repair** → [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
+- **Pre-execution plan audit** → [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md)
+- **Generic parallel dispatch without a plan** → [../agent-runner/SKILL.md](../agent-runner/SKILL.md)
+- **Post-execution correctness audit or diff review** → [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) or [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
+- **Codebase learning guides without a plan** → [../code-professor/SKILL.md](../code-professor/SKILL.md)
+- **Commit, push, branch, worktree, or active merge/rebase integration** → [../git-guide/SKILL.md](../git-guide/SKILL.md) or [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md)
 
 ## Non-Negotiable Rules
 
-- Require an implementation plan as input, either inline or as a readable file path. If no plan is available, ask for it.
-- Implement on the current git branch. Do not create, switch, or rename branches unless the user explicitly asks.
-- Do not commit, push, deploy, migrate production data, or run destructive commands unless the user explicitly asks.
-- Protect existing user work. Inspect the working tree before editing and do not overwrite unrelated uncommitted changes.
-- Follow the plan unless it is unsafe, impossible, internally inconsistent, or conflicts with current repository state.
-- Run the plan's stated verifications and the smallest relevant repository verifications needed to prove integration.
-- Generate an implementation report even when execution is partial or blocked.
+- Require a readable implementation plan (inline or file path); ask for it if missing.
+- Stay on the current git branch — never create, switch, or rename branches unless explicitly asked.
+- Never commit, push, deploy, migrate production data, run destructive commands, or use unapproved secrets/external writes unless explicitly asked.
+- Inspect `git status --short` before editing; stop and ask if unrelated dirty files overlap planned write paths, otherwise preserve them untouched.
+- Follow the plan unless unsafe, impossible, internally inconsistent, or contradicted by repository state (prefer the plan's intent with a safer repo-consistent path over blind wording).
+- Run stated and touched-area verifications, and produce an implementation report even if execution is partial or blocked.
 
 ## Workflow
 
-### 1. Load and review the plan
+### 1. Load, scope, and sanity-check the plan
 
-1. Read the full plan and identify the intended outcome, required files, dependencies, and verification steps.
-2. **Stage scope (staged mode only):** If a stage scope is provided (e.g., `--stage stage-2` or an equivalent parameter), read only that stage's tasks from plan §10 `Stage breakdown` and execute only those units. Produce a stage-indexed implementation report (e.g., `30-stageN-implementation-report.md`). If no stage scope is provided, execute the whole plan (linear behavior). Stage-scoped execution still follows all non-negotiable rules: no commit, no push, protect user work, run verifications, generate a report.
-3. Review critically before editing. Look for missing prerequisites, contradictory steps, unsafe actions, broad refactors hidden inside small tasks, or dependencies that prevent parallelization. This is a lightweight execution sanity check — not a substitute for [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md).
-4. Stop for clarification only when the blocker would make implementation unsafe or likely wrong. Otherwise, make a conservative assumption and record it in the report. When the gap is a requirement-level ambiguity rather than an execution detail, resolve it in this session with [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) or return to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) — never pass the ambiguity down to a subagent, which cannot ask the user.
+1. Read the plan's intended outcome, target files, dependencies, test discipline, and verification commands; record current branch and `git status --short`.
+2. **Stage scope (staged mode only):** If a stage scope is provided (e.g., `--stage stage-2`), read and execute only that stage's §10 `Stage breakdown` tasks and emit a stage-indexed report (`30-stageN-implementation-report.md`); otherwise execute the full plan. All non-negotiable rules still apply.
+3. Sanity-check for missing prerequisites, contradictory steps, hidden broad refactors, or write overlaps before editing (lightweight execution check, not a full `plan-reviewer` audit).
+4. Stop only when a gap makes execution unsafe or likely wrong (settle requirement-level ambiguity in the parent session via [../prompt-clarifier/SKILL.md](../prompt-clarifier/SKILL.md) or return to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) — never pass ambiguity to a subagent); otherwise record a conservative assumption.
 
-### 2. Establish baseline
+### 2. Partition into execution units and waves
 
-Before editing, record the current branch and `git status --short`. If unrelated user changes overlap files required by the plan, stop and ask how to proceed; if they do not overlap, continue and avoid touching them.
+Split work into cohesive units classified as **`parallel`** (strictly disjoint write paths and no ordering dependency), **`sequential`** (ordered dependency or shared mutable files), or **`integration`** (parent-led glue, docs, conflict resolution, and cross-unit checks). Execute wave by wave; if tasks are tightly coupled or share mutable files on the current branch, run them sequentially and note why in the report.
 
-### 3. Divide the plan into execution units
+### 3. Dispatch concurrent waves (`agent-runner`)
 
-Decompose the plan into units that are independently implementable. A good unit has:
+When ≥2 `parallel` units exist in a wave and the host supports isolated subagents, follow [../agent-runner/SKILL.md](../agent-runner/SKILL.md) to launch the wave in a single batch using [references/execution-unit-template.md](references/execution-unit-template.md) (which defines the required plan/stage context, file ownership, branch/commit prohibitions, verification commands, and `Status`/`Findings`/`Changes`/`Verification`/`Risks` return contract). Keep integration authority in the parent session, inspect every subagent diff, and reject or redo out-of-scope edits, skipped verifications, or unrequested refactors. When concurrent subagents are unavailable, execute sequentially in dependency order and label it honestly.
 
-- One clear objective.
-- A bounded file/module ownership set.
-- Minimal need for global context.
-- Its own local verification command or inspection target.
-- No write overlap with another concurrent unit.
+### 4. Implement and integrate
 
-Classify units as:
+Apply each task's planned test discipline:
+- **`mandatory`** (or code tasks omitting discipline — note the assumption): strict red-green-refactor via [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md), observing the failing test before production edits.
+- **`verification-led`**: run the plan's stated verification command and record the observed result (neither silently substitute TDD nor skip verification).
+- **`n/a`**: run the stated non-code/config checks without TDD.
 
-- **parallel**: can run at the same time with disjoint write scopes and no dependency ordering.
-- **sequential**: depends on another unit's result or shares write ownership.
-- **integration**: final parent-led glue, conflict resolution, cleanup, docs, and verification.
+After each wave, inspect diffs for ownership violations or churn, resolve unit-level glue in the parent (hand off active git merge/rebase conflicts to [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md), restricting subagents to read-only while active), and run targeted wave checks.
 
-Use waves when needed: run all independent units in the current wave concurrently, integrate their results, then run the next dependent wave.
+### 5. Run final verification
 
-On the current branch, parallel units require strictly disjoint write paths. If units share mutable files or ordering dependencies, run them sequentially and explain why in the report.
+- Run all plan-specified verification commands plus relevant touched-area test/build/lint/typecheck commands in **sync terminal mode** (never `&`/`nohup`/`disown`; use `timeout` only as a hang safety net; prefer concise output flags and quote only failing summaries + root-cause errors).
+- On failure: fix obvious within-scope execution mistakes first; if the root cause is unclear, switch to [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md); if the plan itself contradicts the repo or is unsafe, stop and return an execution-blocker report to [../plan-guide/SKILL.md](../plan-guide/SKILL.md). Do not expand scope endlessly on persistent out-of-scope failures.
 
-Do not force parallelism. If the plan is tightly coupled, execute sequentially and explain why in the report.
+### 6. Produce the implementation report
 
-### 4. Dispatch concurrent units with agent-runner
-
-If two or more independent units exist and the host supports isolated subagents, read and follow [../agent-runner/SKILL.md](../agent-runner/SKILL.md) to dispatch all units in the same concurrent batch. Apply its wave sequencing, blocked/failed handling, and integration rules.
-
-For each subagent, provide a self-contained task packet. Use [references/execution-unit-template.md](references/execution-unit-template.md) when composing the packet. Include:
-
-- The relevant plan excerpt and exact unit objective.
-- Allowed file ownership and files explicitly out of scope.
-- Current branch constraint: work on the current branch context; do not create branches, commit, push, or deploy.
-- Required commands or tests for that unit.
-- Expected structured return matching the `agent-runner` contract: `Status` (`completed`, `blocked`, or `failed`), `Findings`, `Changes`, `Verification`, and `Risks`.
-
-Parent responsibilities:
-
-- Dispatch all agents for a parallel wave together, not one after another.
-- Keep integration authority in the parent session.
-- Review each agent's diff before accepting it.
-- Reject or redo agent work that exceeds scope, edits shared files unexpectedly, skips verification, or makes unexplained broad changes.
-
-If concurrent subagents are unavailable, execute the units directly in dependency order. Do not describe sequential work as parallel.
-
-### 5. Implement and integrate
-
-Before implementing a unit, read the plan's test discipline for its tasks. For tasks marked `mandatory` (explicitly user-requested TDD, or code work whose risk profile calls for it), apply strict red-green-refactor by following [../test-driven-dev-guide/SKILL.md](../test-driven-dev-guide/SKILL.md): write and observe a failing test before the production change. For `verification-led` tasks, follow the plan's stated verification strategy and record the command and its observed result — do not silently substitute TDD for it, and do not skip verification. For `n/a` tasks (non-code or check-only config/infra with justification), follow the plan's verification steps without TDD. If the plan omits test discipline on a code task, treat it as `mandatory` and note the assumption in the report.
-
-For direct or parent-led work, make the smallest plan-consistent change and treat a unit as complete only after its verification runs (or a recorded reason it could not).
-
-For subagent work:
-
-1. Read every subagent result fully.
-2. Inspect diffs for ownership violations, conflicts, hidden refactors, generated files, and formatting-only churn.
-3. If the repository has an active merge/rebase operation or the conflict is branch-integration work, hand off to [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md) instead of resolving it inline. While that operation is active, allow only read-only subagent investigation.
-4. Resolve other conflicts in the parent session.
-5. Run a targeted verification after each integration wave if the repo supports it.
-
-### 6. Run final verification
-
-After all units are integrated:
-
-- Run every verification command specified by the plan.
-- Run the most relevant existing test/build/lint/typecheck commands for touched areas.
-- Prefer targeted verification first, then broader verification when cost is reasonable.
-- Run all verification in **sync terminal mode**. Never background builds/tests with
-  `&`/`nohup`/`disown`; a missed
-  completion notification stalls the wave and the whole plan. Set a `timeout` only as a
-  safety net for suites you suspect may hang.
-- Report verification outcomes and the failure slice, not raw output streams — prefer
-  output-limiting flags and filtered reads; quote only failing tests' summaries and the
-  first root-cause error, never full build or test logs.
-- If verification fails, first retry within the plan's scope: re-read the failing task, correct an obvious execution mistake, and rerun.
-- If the failure is not an obvious execution mistake and its cause is unclear, switch to [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md) to prove root cause, apply the minimal fix, then resume execution.
-- If the plan itself is unsafe, impossible, internally inconsistent, or contradicts the repository, stop and return to [../plan-guide/SKILL.md](../plan-guide/SKILL.md) with an execution-blocker report instead of forcing the plan through.
-- If verification remains blocked or failing after these steps, stop expanding scope and report the exact failure, likely cause, and next debugging step.
-
-### 7. Produce implementation report
-
-Use [references/implementation-report-template.md](references/implementation-report-template.md) for the final report. Include enough detail for later testing, debugging, and code review:
-
-- Branch and working-tree summary.
-- Plan units executed, including parallel waves and subagents used.
-- Files changed and why.
-- Behavior/API/config/schema changes.
-- Verification commands and outcomes.
-- Known failures, skipped checks, assumptions, risks, and review focus areas.
-- Suggested next manual tests or code-review checkpoints.
-- When requirement-level proof is needed beyond the integration report, suggest
-  [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) before
-  [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md).
-
-Do not create a report file in the repository unless the user or plan asks for one. Otherwise, provide the report in the final response.
-
-## Stop Conditions
-
-Stop and ask for help when:
-
-- The implementation plan is missing or unreadable.
-- The plan requires secrets, credentials, production access, deployment, destructive data operations, or external writes not explicitly authorized.
-- The current working tree contains overlapping user changes that would be overwritten.
-- The plan is ambiguous in a way that could produce the wrong architecture or public API.
-- Required verification repeatedly fails for reasons outside the plan's scope.
-
-## Quality Bar
-
-- Preserve the plan's intent over incidental wording when repository evidence shows a safer equivalent path.
-- Keep changes reviewable: small diffs, no unrelated cleanup, no opportunistic rewrites.
-- Prefer existing project conventions over new patterns.
-- Keep subagent scopes narrow; broad agents produce broad, risky diffs.
-- Treat tests and reports as part of implementation, not an afterthought.
-
-## Companion Skills
-
-| Task | Path |
-| --- | --- |
-| Plan authoring and repair | [../plan-guide/SKILL.md](../plan-guide/SKILL.md) |
-| Pre-execution plan audit | [../plan-reviewer/SKILL.md](../plan-reviewer/SKILL.md) |
-| Parallel subagent dispatch | [../agent-runner/SKILL.md](../agent-runner/SKILL.md) |
-| Post-implementation diff review | [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md) |
-| Post-execution correctness audit | [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) |
-| Commit, push, branch, worktree | [../git-guide/SKILL.md](../git-guide/SKILL.md) |
+Format the report per [references/implementation-report-template.md](references/implementation-report-template.md) (summary, execution units/waves, `Files changed`, behavior/interface changes, verification table, assumptions, risks, and review focus). Suggest [../implementation-auditor/SKILL.md](../implementation-auditor/SKILL.md) when requirement-level proof is needed before [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md). Return the report in chat unless the user or orchestrator specifies an output file path.

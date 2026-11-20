@@ -55,8 +55,7 @@ cd "$root"
 if [ -x "./gradlew" ]; then
   gradle_cmd="./gradlew"
 elif [ -f "./gradlew" ]; then
-  chmod +x ./gradlew 2>/dev/null || true
-  gradle_cmd="./gradlew"
+  gradle_cmd="sh ./gradlew"
 elif command -v gradle >/dev/null 2>&1; then
   gradle_cmd="gradle"
 else

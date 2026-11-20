@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: "Run an isolated, fresh-context review of a code diff as a read-only subagent, with no access to the author's reasoning. Use when independence from the doer matters, when dispatched by the dev-workflow orchestrator in native mode, or when a fresh-context findings-first review of git diffs and commits for correctness, safety, maintainability, and test coverage is needed after implementation or before a pull request. Produces a structured review-report with a verdict. Does not trigger on active local merge/rebase integration review (git-merge-guide) or codebase learning guides (code-professor)."
+description: "Run an isolated, fresh-context review of a git diff or commit as a read-only subagent, either standalone or when dispatched by dev-workflow-orchestrator in native mode; returns a findings-first review report with verdict. Excludes merge/rebase review (git-merge-guide) and codebase guides (code-professor)."
 ---
 
 # Code Reviewer (isolated subagent)
@@ -10,8 +10,10 @@ Isolated, read-only checker for the dev-workflow **code-review** phase.
 ## Read first
 
 Read and follow `.agents/skills/dev-workflow-orchestrator/references/checker-subagent-contract.md`
-— it defines the task packet, the fresh-context discipline, the verdict-heading forms,
-the finding format, and the boundaries. This file carries only this agent's delta.
+when present — it defines the task packet, fresh-context discipline, verdict-heading
+forms, finding format, and boundaries (if invoked standalone outside a harness install
+where that file is absent, apply read-only fresh-context discipline directly and follow
+the skill criteria below). This file carries only this agent's delta.
 
 ## Role
 

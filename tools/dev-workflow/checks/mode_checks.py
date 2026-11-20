@@ -48,6 +48,42 @@ COMMIT_PHASES = {"commit"}
 SOURCE_EDIT_CHECK_PHASES = {"research", "plan", "commit"}
 
 
+def parse_porcelain_z(stdout: str) -> list[str]:
+    """Parse NUL-delimited `git status --porcelain -z` output into working-tree paths.
+
+    In porcelain v1 `-z` format, entries are `XY PATH\\0`, except renames and
+    copies (`R` or `C` in `XY`) which emit `XY DEST_PATH\\0ORIG_PATH\\0` without
+    C-quoting filenames. Rename entries record both `DEST_PATH` and `ORIG_PATH`
+    so moving a tracked file into an exempt directory (e.g. `.agents/`) still
+    surfaces the origin path; copy entries skip `ORIG_PATH` because copying does
+    not modify the origin file.
+    """
+    paths: list[str] = []
+    seen: set[str] = set()
+    entries = stdout.split("\x00")
+    i = 0
+    while i < len(entries):
+        entry = entries[i]
+        if not entry:
+            i += 1
+            continue
+        xy = entry[:2]
+        filepath = entry[3:]
+        if filepath and filepath not in seen:
+            seen.add(filepath)
+            paths.append(filepath)
+        if "R" in xy:
+            orig_path = entries[i + 1] if i + 1 < len(entries) else ""
+            i += 1
+            if orig_path and orig_path not in seen:
+                seen.add(orig_path)
+                paths.append(orig_path)
+        elif "C" in xy:
+            i += 1
+        i += 1
+    return paths
+
+
 def _read_baseline(run_dir: Path) -> dict[str, str] | None:
     """Read the baseline file for the current phase.
 
@@ -60,11 +96,11 @@ def _read_baseline(run_dir: Path) -> dict[str, str] | None:
     baseline_path = run_dir / "baseline.txt"
     if not baseline_path.exists():
         return None
-    lines = baseline_path.read_text(encoding="utf-8").strip().splitlines()
-    if not lines:
+    lines = baseline_path.read_text(encoding="utf-8").splitlines()
+    if not lines or not lines[0].strip():
         return None
     head = lines[0].strip()
-    dirty_paths = {line.strip() for line in lines[1:] if line.strip()}
+    dirty_paths = {line for line in lines[1:] if line}
     return {"head": head, "dirty_paths": dirty_paths}
 
 
@@ -72,7 +108,7 @@ def _get_current_dirty_paths(repo_root: Path) -> set[str] | None:
     """Get the current set of dirty paths from git status."""
     try:
         result = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain", "-z"],
             cwd=repo_root,
             capture_output=True,
             text=True,
@@ -84,13 +120,7 @@ def _get_current_dirty_paths(repo_root: Path) -> set[str] | None:
     if result.returncode != 0:
         return None
 
-    paths: set[str] = set()
-    for line in result.stdout.splitlines():
-        if not line.strip():
-            continue
-        filepath = line[3:].strip()
-        paths.add(filepath)
-    return paths
+    return set(parse_porcelain_z(result.stdout))
 
 
 def _get_current_head(repo_root: Path) -> str | None:

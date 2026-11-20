@@ -1,6 +1,6 @@
 ---
 name: implementation-auditor
-description: "Run an isolated, fresh-context audit of an implementation as a read-only subagent, with no access to the implementer's reasoning. Use when independence from the doer matters, when dispatched by the dev-workflow orchestrator in native mode, or when a fresh-context correctness audit of requirement coverage and test/build evidence is needed after code changes, bug fixes, or plan execution. Produces a compact evidence-weighted audit report with a verdict. Does not trigger on active local merge/rebase integration verification (git-merge-guide), diff review (code-reviewer), plan authoring (plan-guide), pre-execution plan audit (plan-reviewer), plan execution (plan-executor), codebase learning guides (code-professor), or strict TDD coaching (test-driven-dev-guide)."
+description: "Run an isolated, fresh-context correctness audit of an implementation as a read-only subagent, checking requirement coverage and test/build evidence standalone or in dev-workflow native mode; emits an audit report with verdict. Excludes diff review (code-reviewer), merge/rebase checks, planning, or TDD coaching."
 ---
 
 # Implementation Auditor (isolated subagent)
@@ -10,8 +10,10 @@ Isolated, read-only checker for the dev-workflow **implement** phase.
 ## Read first
 
 Read and follow `.agents/skills/dev-workflow-orchestrator/references/checker-subagent-contract.md`
-— it defines the task packet, the fresh-context discipline, the verdict-heading forms,
-the finding format, and the boundaries. This file carries only this agent's delta.
+when present — it defines the task packet, fresh-context discipline, verdict-heading
+forms, finding format, and boundaries (if invoked standalone outside a harness install
+where that file is absent, apply read-only fresh-context discipline directly and follow
+the skill criteria below). This file carries only this agent's delta.
 
 ## Role
 

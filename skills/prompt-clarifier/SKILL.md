@@ -1,64 +1,39 @@
 ---
 name: prompt-clarifier
-description: Iteratively clarify ambiguous requirements, definitions, intent, scope, constraints, acceptance criteria, environment, risks, and expected outputs before or during a task. Use when a prompt has multiple plausible interpretations, uses vague or overloaded terms, omits decisions that would materially change the result, contains conflicting requirements, or leaves the AI unsure what successful completion means. Ask adaptive, high-information questions in small batches, update the working interpretation after every answer, and continue until the task is actionable, the user accepts explicit assumptions, or safety requires stopping.
+description: "Iteratively clarify ambiguous requirements, definitions, intent, scope, constraints, acceptance criteria, and authority before or during a task. Use when a prompt has multiple plausible readings, vague terms ('make it better', 'clean this up', 'fast and complete'), conflicting requirements or documents, or missing decisions that change the outcome — including when the user hands over a task and invites questions, or asks for something built from an underspecified spec or migration/plan request. Asks adaptive questions and produces a requirement ledger. Does not trigger on open-ended research (research-guide), planning (plan-guide), or debugging (debugging-guide)."
 ---
 
 # Prompt Clarifier
 
-Clarify only what materially affects the result. Use a short adaptive dialogue instead of a static questionnaire, then proceed as soon as the task is actionable.
-
-The dialogue is a simple loop — INSPECT (read what is available before asking), ASK (the section below), UPDATE (map each answer into the ledger and detect contradictions), CHECK (apply the stopping rules) — named here only because the Tool notes refer to these states.
+Clarify only what materially affects the result through a short adaptive loop — `INSPECT` (read available context first) → `ASK` → `UPDATE` (map answers into the ledger and detect contradictions) → `CHECK` (apply stopping rules) — then proceed or hand off as soon as the task is `actionable`.
 
 ## Scope and boundaries
 
-This skill owns the clarification dialogue: deciding what is unresolved, what to ask, when to stop asking, and how to record the resulting interpretation. Settle blocking decisions, then hand the settled requirement ledger to the skill that performs the work (see **When NOT to Use**).
+This skill owns the clarification dialogue and produces a settled requirement ledger following [references/requirement-ledger.md](references/requirement-ledger.md) (`.agents/workflow/<slug>/02-requirement-ledger.md` inside the dev-workflow harness; an inline confirmation summary standalone). Once settled, hand off execution to the downstream skill:
 
-The requirement ledger is this skill's terminal output. Its shape is defined in
-[references/requirement-ledger.md](references/requirement-ledger.md) — read it before writing a
-ledger. Inside the dev-workflow harness the ledger is the Phase 0 artifact
-(`.agents/workflow/<slug>/02-requirement-ledger.md`) consumed by `research-guide`; standalone, it is the
-confirmation summary you carry into the handoff.
-
-## When NOT to Use
-
-- **Open-ended discovery and feature research with agreement gates** — use [../research-guide/SKILL.md](../research-guide/SKILL.md)
-- **Turning a settled interpretation into an ordered implementation plan** — use [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
-- **Root-cause investigation of a reproducible defect** — use [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md)
-- **Multi-perspective council deliberation with ranked synthesis and dissent** — use [../advisory-council/SKILL.md](../advisory-council/SKILL.md) after clarifying the decision framing when needed
-- **Adversarial stress-test of a settled proposal with a proceed/rework/reject verdict** — use [../devil-advocate/SKILL.md](../devil-advocate/SKILL.md)
+- **Open-ended discovery and feature research** → [../research-guide/SKILL.md](../research-guide/SKILL.md)
+- **Ordered implementation planning** → [../plan-guide/SKILL.md](../plan-guide/SKILL.md)
+- **Root-cause defect investigation** → [../debugging-guide/SKILL.md](../debugging-guide/SKILL.md)
+- **Multi-perspective council deliberation** → [../advisory-council/SKILL.md](../advisory-council/SKILL.md)
+- **Single-proposal adversarial stress-test** → [../devil-advocate/SKILL.md](../devil-advocate/SKILL.md)
 
 ## What to clarify
 
-Read the prompt, conversation, provided files, and other low-risk sources before asking; never re-ask for facts already supplied or answerable with a quick, low-risk lookup. Track unresolved decisions that could change the approach, output, safety, cost, or definition of success. After each answer, map it into the ledger, mark unanswered items unresolved rather than silently guessing, and detect contradictions or newly revealed dependent questions; when an answer conflicts with an earlier requirement, name the conflict and ask for a single resolution instead of inventing a compromise silently.
+Inspect the prompt, conversation, attached files, and low-risk workspace context before asking — never re-ask for supplied or cheaply discoverable facts. Map each answer into the ledger, keep unanswered items explicit rather than silently guessing, and surface contradictions directly instead of inventing a silent compromise (conflict pattern in [references/question-patterns.md](references/question-patterns.md)).
 
-Classify each unresolved item:
+Classify unresolved items and probe only relevant ledger dimensions (outcome, operational definitions, scope/constraints, acceptance criteria, environment, risk/authority — detailed in [references/requirement-ledger.md](references/requirement-ledger.md) and [references/question-patterns.md](references/question-patterns.md)):
 
-- **Blocker:** Different answers would materially change the work or make it unsafe to proceed.
-- **Useful:** Improves quality but a reasonable default exists.
-- **Optional:** Nice to know; do not ask unless the user invites deeper refinement.
+- **Blocker:** different answers materially change architecture, workload, or safety — ask first.
+- **Useful:** improves quality, but a reasonable default exists — state as a default/assumption unless the user wants to refine.
+- **Optional:** omit unless invited.
 
-Ask about blockers first. Usually defer useful items to defaults and omit optional items.
-
-Track only dimensions relevant to the task; typical ones:
-
-- **Outcome:** What change, answer, decision, or artifact is wanted, and what downstream decision should it support?
-- **Definitions:** What do vague, overloaded, domain-specific, or subjective terms mean here?
-- **Scope and constraints:** What is included, excluded, or explicitly unchanged; what technical, policy, cost, or dependency limits apply?
-- **Acceptance criteria:** What observable conditions make the result correct or complete?
-
-Turn subjective language into observable criteria: ask for a measurable threshold, a concrete example and non-example, or the domain-specific meaning among plausible alternatives. Prioritize decisions that alter architecture or workload — must-have versus preferred behavior, in- and out-of-scope cases, compatibility targets, expected inputs and outputs, failure behavior, acceptance tests.
+Turn subjective terms ("fast", "clean", "safe") into measurable thresholds or concrete examples/non-examples.
 
 ## Asking
 
-Ask one to three questions per turn by default. Ask up to five only when they are independent, easy to answer together, and delaying them would create extra rounds.
+Ask 1–3 questions per turn by default (up to 5 only when independent, quick to answer together, and delaying them would force an extra round). When an active host workflow specifies its own pacing (e.g., one question per turn in `research-guide` or `plan-guide`), follow that skill's pacing.
 
-When another skill is driving the task and specifies its own question pacing — for example one decision per turn during a research dialogue or a planning pass — follow that skill's rule instead. Its pacing reflects the rhythm of that workflow; batching against it costs more than it saves.
-
-Choose the next question by expected information gain: prefer a question that eliminates several plausible interpretations; prefer decisions that affect scope, architecture, safety, or acceptance criteria; ask prerequisites before dependents; skip what can be inferred, discovered, or safely defaulted; do not ask speculative future questions before the current branch is selected.
-
-Make each question easy to answer: one concrete decision per question; short numbered questions; mutually distinct options when the likely answers are known; a marked recommended default; compact reply forms such as `1b 2a` or `defaults`; an example and a non-example when a subjective term needs an operational definition. Never re-ask what the prompt, conversation, or a quick low-risk inspection already answered, and never ask a question whose answer would not change the work.
-
-Use this pattern when suitable:
+Rank questions by information gain: prerequisites before dependents, scope/architecture/safety decisions first, no speculative downstream branch questions before the parent branch is chosen. Format each question as one concrete decision with short numbered items, mutually distinct lettered options, a marked `(recommended)` default, and a compact reply hint:
 
 ```text
 I need two decisions before I can proceed:
@@ -78,88 +53,41 @@ Reply with `defaults`, `1c 2a`, or your own wording.
 
 ## Handling user responses
 
-When the user gives a partial answer, acknowledge the resolved part and ask only the remaining blocker.
+- **Partial answer:** acknowledge resolved items and re-ask only remaining blockers.
+- **"Use your judgment":** apply recommended defaults and record them in the ledger/summary without re-confirming (unless high-impact or irreversible).
+- **"Just do it":** proceed with explicit minimal assumptions on reversible low-risk work; still ask the smallest authorization question for destructive, external, costly, or safety-critical actions.
+- **"Unsure":** offer 2–3 concrete options, recommend one with a one-sentence tradeoff, or propose a small reversible probe that gathers the missing fact.
 
-### User says "use your judgment"
+## Stopping (`CHECK`)
 
-Choose the recommended default and continue. Record the decision in the confirmation instead of asking for confirmation again, unless the action is high-impact or irreversible.
+Stop asking and mark the task `actionable` when outcome, deliverable, critical definitions, and success criteria are known or safely defaulted and authorized — do not chase complete knowledge when remaining uncertainty is low-impact and reversible. Before substantial execution, summarize the settled outcome, key constraint/scope, and acceptance criteria or assumptions in 1–3 sentences (combine with execution on small tasks).
 
-### User says "just do it"
+If required information cannot be obtained safely, mark `blocked`: state the exact missing or conflicting requirement, why it blocks safe progress, and the smallest decision needed. During execution, re-open clarification only when new evidence exposes a hidden requirement, contradiction, or irreversible/safety risk.
 
-Proceed with explicit, minimal assumptions for reversible low-risk work. For destructive, externally visible, costly, legally sensitive, or safety-critical work, ask the smallest required authorization question.
+## References
 
-### User is unsure
-
-Offer two or three concrete choices, recommend one, and explain the decisive tradeoff in one sentence. When possible, propose a reversible exploratory step that produces information.
-
-## Stopping
-
-Proceed when the intended outcome, deliverable, critical definitions, and success criteria are known, safely defaulted, and authorized. Do not confuse complete knowledge with sufficient specification — stop asking when remaining uncertainty is low-impact, safely reversible, or covered by an explicit default.
-
-Stop the loop when:
-
-- The task is actionable.
-- The user explicitly accepts stated assumptions or recommended defaults.
-- Further questions have diminishing value and a reversible path is available.
-- The user cannot provide more detail; propose a concrete default or a small exploratory step.
-- The task cannot be performed safely without missing information; explain the specific blocker.
-
-If safe progress is impossible, state the exact missing or conflicting requirement, why it blocks the task, and the smallest decision needed to continue.
-
-Before substantial execution, summarize the interpretation in one to three sentences — the requested outcome, the most important scope or constraint, and the definition of success or accepted assumptions. For small tasks, combine confirmation with immediate execution.
-
-During execution, re-open clarification when new evidence reveals a hidden requirement, a contradiction with the environment, or a safety, authorization, or irreversible-action concern. Do not reopen settled decisions without new evidence.
-
-## Interaction examples
-
-Read [references/examples.md](references/examples.md) when the current task involves multiple clarification rounds, conflicting requirements, or ambiguity discovered during execution.
-
-Read [references/question-patterns.md](references/question-patterns.md) when selecting a question form for definitions, scope, acceptance criteria, technical environments, risk, or authority.
+- [references/requirement-ledger.md](references/requirement-ledger.md) — required/optional ledger sections and `CHECK` rules
+- [references/question-patterns.md](references/question-patterns.md) — question forms, operational definitions, and conflict-resolution template
+- [references/examples.md](references/examples.md) — multi-round, conflicting-requirement, and mid-execution clarification examples
 
 ## Tool notes
 
 ### Claude Code
 
-There is no structured question widget — questions are plain text and you must **end the turn** to receive an answer. That makes turn economy the main constraint:
-
-1. Complete the INSPECT state before ending a turn. Read, Grep, and Glob are cheap; a wasted question round is not.
-2. Send the whole current batch in one message using the numbered format with lettered options, a marked recommendation, and an explicit reply hint such as `Reply with defaults, 1c 2a, or your own wording`.
-3. Do not end the turn for a question that a default and a stated assumption would cover.
-4. When only part of the task is blocked, do the unblocked reversible work first and end the turn with both the progress and the remaining question.
-
-Use Read, Grep, and Glob for anything discoverable in the repository; dispatch a read-only subagent when the lookup is broad enough to need its own context, and keep clarifying other dimensions while it runs.
-
-Subagents cannot reach the user. When running as a subagent, skip the ASK state, apply the assumption rules, and return every assumption explicitly in the status report along with any blocker that needed a human decision. Headless / `claude -p` runs are non-interactive for the same reason — prefer the STOP output (the exact missing requirement, why it blocks, and the smallest decision needed) over guessing on irreversible work. Before dispatching subagents yourself, resolve blockers first: an unclear task packet multiplies the ambiguity across every agent in the wave.
-
-On Claude.ai, interactive clarification works normally, but repository inspection may be unavailable. When you cannot inspect, treat facts that would have been discoverable as unknown and ask for them, or ask the user to paste the relevant file or configuration.
+Questions are plain text and require **ending the turn** to get a reply:
+1. Finish `INSPECT` (Read, Grep, Glob, or a read-only subagent for broad searches) before ending a turn; never burn a turn on a question a stated default covers.
+2. Send the full question batch in one numbered message with lettered options, `(recommended)`, and the compact reply hint; complete any unblocked reversible work before ending the turn.
+3. **Subagents and headless (`claude -p`):** cannot ask the user — skip `ASK`, apply safe defaults, report all assumptions explicitly, and emit the `blocked` summary instead of guessing on irreversible work. Resolve blockers in the parent before dispatching subagents.
+4. **Claude.ai (no repo access):** ask for facts that would otherwise be inspected, or ask the user to paste relevant files/configs.
 
 ### Cursor
 
-Use the **AskQuestion tool** for the ASK state whenever the question set is a small number of discrete decisions. It renders selectable options and collects structured answers, which is more reliable than options listed in prose:
+Use the **AskQuestion tool** for discrete choice batches (one question object per decision; put `(Recommended)` first; include `Not sure - use the recommended default` when safe; set `allow_multiple: true` only for true multi-select; fall back to numbered text for open-ended thresholds or examples). Treat open/attached files as supplied context and run Read/Grep/Glob (or an `explore` Task subagent) during `INSPECT`.
 
-1. One question object per decision — do not pack several decisions into one prompt string.
-2. Put the recommended option **first** and append `(Recommended)` to its label, matching the default-marking rule.
-3. Add `Not sure - use the recommended default` as an option when a safe default exists; the user can always answer freely through "Other".
-4. Set `allow_multiple: true` only for genuinely multi-select decisions such as scope sets or platform targets.
-5. Fall back to the numbered-text format when a question needs an open-ended answer (a threshold, an example and non-example, an exact definition) or when the options cannot be made mutually distinct.
-
-Prefer Read, Grep, and Glob over asking about anything discoverable in the workspace; attached context, open files, and recently viewed files count as supplied facts. Dispatch an `explore` subagent through the Task tool when resolving the question would otherwise take many searches, and continue clarifying other dimensions while it runs.
-
-In **Plan mode**, clarification and plan drafting happen together — front-load the blocking decisions before proposing the plan, and record accepted defaults in the plan itself. Switching to Plan mode with `SwitchMode` is often better than a long clarification round when the task turns out to be large or architecture-shaped. In read-only modes, still apply the authority rules: confirm before proposing actions the current mode cannot perform.
-
-Subagents launched with the Task tool cannot ask the user anything. When running as a subagent, do not enter the ASK state — apply the assumption rules, state each assumption explicitly in the returned report, and flag any blocker that genuinely required a human decision.
+In **Plan mode**, front-load blocking decisions and record accepted defaults in the plan (`SwitchMode` to Plan mode when a request turns out to be architecture-shaped). Subagents spawned via the Task tool cannot ask the user — skip `ASK`, state assumptions in the return packet, and flag human-only blockers.
 
 ### GitHub Copilot
 
-Copilot runs both interactive chat sessions and non-interactive coding-agent sessions, and the two demand different behavior from the ASK state.
-
-Interactive chat has no structured question widget — use the numbered format with lettered options, a marked recommendation, and an explicit reply hint. Keep each question short; chat panes are narrow and long option blocks get skimmed. Complete the INSPECT state with workspace search and file reads before asking; open editors, selections, and `#file` / `#selection` references are supplied context — never ask for what they already contain.
-
-When Copilot is assigned an issue or runs as a background coding agent, there is no user to answer. Do not stall waiting for a reply:
-
-1. Apply the assumption rules and choose the recommended defaults.
-2. Record every assumption in the pull request description, next to what would change if the assumption is wrong.
-3. Prefer the smallest reversible change when a decision is genuinely undetermined, so a reviewer can redirect cheaply.
-4. For work the STOP criteria mark unsafe without the missing decision — destructive, externally visible, costly, or security-sensitive — leave the work undone and state the specific blocker in the pull request or issue comment instead of guessing.
-
-Recurring answers belong in `.github/copilot-instructions.md`, a path-scoped `*.instructions.md` file, or a `.github/prompts/*.prompt.md` prompt rather than in a repeated question. When the same project-level question recurs across sessions, suggest recording it there.
+- **Interactive chat / agent:** use the host's structured question tool (e.g. `ask_user`) when exposed on the active Copilot surface; otherwise send concise numbered questions with lettered options, `(recommended)`, and a compact reply hint. Treat open editors and `#file`/`#selection` attachments as supplied context during `INSPECT`.
+- **Background / issue coding agent (non-interactive):** do not stall waiting for a reply — apply recommended defaults, document every assumption and redirect impact in the PR description, prefer the smallest reversible change, and leave unsafe/irreversible work undone with a clear blocker note in the PR or issue comment.
+- Suggest recording recurring project-level answers in `.github/copilot-instructions.md` or path-scoped `*.instructions.md`.

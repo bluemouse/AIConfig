@@ -10,23 +10,45 @@ import unittest
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
-if str(SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_DIR))
+_SIBLING_MODULES = (
+    "quick_validate",
+    "create_agent",
+    "install_portable_agent",
+)
 
 
-def load_module(name: str, path: Path):
-    spec = importlib.util.spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Could not load module from {path}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    return module
+def _load_agent_modules():
+    stashed = {
+        mod_name: sys.modules.pop(mod_name)
+        for mod_name in _SIBLING_MODULES
+        if mod_name in sys.modules
+    }
+    old_path = list(sys.path)
+    try:
+        sys.path.insert(0, str(SCRIPTS_DIR))
+
+        def _load(name: str, path: Path):
+            spec = importlib.util.spec_from_file_location(name, path)
+            if spec is None or spec.loader is None:
+                raise RuntimeError(f"Could not load module from {path}")
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[name] = module
+            spec.loader.exec_module(module)
+            return module
+
+        return (
+            _load("install_portable_agent_test", SCRIPTS_DIR / "install_portable_agent.py"),
+            _load("quick_validate_test", SCRIPTS_DIR / "quick_validate.py"),
+            _load("create_agent_test", SCRIPTS_DIR / "create_agent.py"),
+        )
+    finally:
+        sys.path[:] = old_path
+        for mod_name in _SIBLING_MODULES:
+            sys.modules.pop(mod_name, None)
+        sys.modules.update(stashed)
 
 
-install_mod = load_module("install_portable_agent_test", SCRIPTS_DIR / "install_portable_agent.py")
-validate_mod = load_module("quick_validate_test", SCRIPTS_DIR / "quick_validate.py")
-create_mod = load_module("create_agent_test", SCRIPTS_DIR / "create_agent.py")
+install_mod, validate_mod, create_mod = _load_agent_modules()
 
 AgentCreatorError = install_mod.AgentCreatorError
 install_portable_agent = install_mod.install_portable_agent

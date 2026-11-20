@@ -1,6 +1,6 @@
 ---
 name: qt-dev
-description: Write, review, debug, and explain Qt 6 desktop C++ applications with Widgets/Designer UI and CMake builds for graphics tools that host Vulkan or Metal renderers. Use when working on QApplication, QMainWindow, QAction, layouts, docks, .ui files, qt_add_executable, qt_standard_project_setup, QVulkanWindow, QVulkanInstance, QWidget::createWindowContainer, QRhiWidget, Qt Test, QSignalSpy, qt-cmake, or embedding render viewports in a Linux/Windows/macOS desktop app — even if the user says "Qt help" without naming Widgets. Qt 6 only, CMake only, Widgets only (no QML/Qt Quick).
+description: "Write, review, and debug Qt 6 C++ Widgets/CMake desktop applications hosting Vulkan or Metal renderers: `QApplication`, `QMainWindow`, layouts/docks, `.ui` integration, `qt_add_executable`, `QVulkanWindow`, `createWindowContainer`, `QRhiWidget`, and Qt Test (`QSignalSpy`) — Qt 6 + CMake + Widgets only (no QML/Qt Quick)."
 ---
 
 # Qt Dev
@@ -122,4 +122,4 @@ When a change spans multiple areas, read **every matching row** — viewport int
 
 ## Resources
 
-Provenance: [SOURCES.md](SOURCES.md). External: [Build with CMake](https://doc.qt.io/qt-6/cmake-manual.html).
+External: [Build with CMake](https://doc.qt.io/qt-6/cmake-manual.html).

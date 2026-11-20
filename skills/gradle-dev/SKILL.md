@@ -1,23 +1,19 @@
 ---
 name: gradle-dev
-description: Create, review, troubleshoot, optimize, and modernize Gradle builds for general JVM, Kotlin, and Java projects. Use when editing build.gradle.kts, settings.gradle.kts, gradle.properties, version catalogs, wrapper usage, custom tasks/plugins, test/check task wiring, CI commands, build cache, or configuration cache — even if the user says "fix my Gradle build" without naming a topic. For Android Gradle Plugin, AGP modules, variants, lint, R8, SDK configuration, or Android build performance, use gradle-android-dev. For Kotlin language/API design and test design, use kotlin-coding. Avoids Android-specific guidance unless cross-referencing gradle-android-dev.
+description: Create, review, troubleshoot, and optimize Gradle builds for JVM, Kotlin, and Java projects. Use for build.gradle.kts, settings.gradle.kts, gradle.properties, version catalogs, wrapper, custom tasks/plugins, test/check wiring, CI, and build or configuration cache — including "fix my Gradle build". Excludes Android/AGP (gradle-android-dev) and Kotlin code/tests (kotlin-coding).
 ---
 
 # Gradle Dev
 
 Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve paths to `references/` and `scripts/` from that directory.
 
-## Scope
+## Scope and Boundaries
 
-Use this skill for general Gradle build work: wrapper usage, build lifecycle, Kotlin DSL or Groovy DSL build scripts, dependency management, version catalogs, task configuration, custom build logic, JVM/Kotlin/Java builds, testing/check tasks, CI commands, performance, and troubleshooting. Read bundled references on demand.
+Covers general Gradle build engineering: wrapper, lifecycle, Kotlin/Groovy DSL, version catalogs, dependencies, custom tasks/plugins, JVM/Kotlin/Java builds, check/CI wiring, caches, and troubleshooting. Read bundled references on demand.
 
-Do NOT use this skill for:
-
-- Android Gradle Plugin, AGP variants, lint, R8, signing, or Android Studio sync — [gradle-android-dev](../gradle-android-dev/SKILL.md)
-- Kotlin test design, Kotest/MockK patterns, property tests, or flaky-test triage — [kotlin-coding](../kotlin-coding/SKILL.md)
-- Kotlin language/API design in source files — [kotlin-coding](../kotlin-coding/SKILL.md)
-
-This skill may explain general Gradle concepts that Android builds inherit, but it must not duplicate Android-specific rules.
+Out of scope:
+- Android Gradle Plugin, variants, lint, R8, signing, or Studio sync — [gradle-android-dev](../gradle-android-dev/SKILL.md) (explain inherited Gradle fundamentals without duplicating AGP rules)
+- Kotlin source language/API design, test frameworks (Kotest/MockK), or flaky-test triage — [kotlin-coding](../kotlin-coding/SKILL.md)
 
 ## Default workflow
 

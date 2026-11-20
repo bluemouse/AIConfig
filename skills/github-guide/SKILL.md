@@ -1,6 +1,6 @@
 ---
 name: github-guide
-description: "Use when delivering a pull request and its review on GitHub (github.com or GitHub Enterprise Server) from the command line with the `gh` CLI and `gh api` — opening a PR with `gh pr create`, writing or self-reviewing the PR description or body (what/why/how, how-tested, tradeoffs, sizing and splitting), posting a structured review with line-anchored inline comments, resolving review threads, detecting that the host is GitHub from the git remote, and scoping a classic or fine-grained token. Triggers on a github.com / GHES remote, `gh pr create`, `gh api .../pulls/.../reviews`, writing a PR description / PR body, sizing or splitting a large change into reviewable PRs, self-reviewing a PR before requesting review, draft vs ready, an inline review comment by path+line, resolving a review thread (resolveReviewThread), REQUEST_CHANGES / branch-protection merge gating, or GH_TOKEN / GH_ENTERPRISE_TOKEN scopes — even when the user doesn't say 'gh' or 'PR', e.g. 'write the PR description'."
+description: "Deliver pull requests and reviews on GitHub or GitHub Enterprise Server via `gh` CLI and `gh api` — `gh pr create`, PR description/body authoring, PR sizing/splitting, self-review, line-anchored inline review comments, thread resolution (`resolveReviewThread`), `REQUEST_CHANGES`/branch protection, and `GH_TOKEN`/`GH_ENTERPRISE_TOKEN` scoping, even when the user does not mention `gh`."
 ---
 
 # GitHub PR & review delivery — quick reference

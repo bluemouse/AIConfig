@@ -1,6 +1,6 @@
 ---
 name: mypaint-engine-dev
-description: Write, review, debug, and implement MyPaint and libmypaint brush engines, stroke-to-dab rendering, tiled surfaces, layers, symmetry, smudge/pigment behavior, and GPU surface backends. Use when working on mypaint/mypaint or mypaint/libmypaint source navigation, .myb presets, live drawing, brush-engine parity, resource management, or designing a new painting application inspired by MyPaint — even if the user doesn't say MyPaint. Triggers on libmypaint, mypaint_brush_stroke_to, BrushInfo, BrushworkModeMixin, MyPaintTiledSurface, .myb, smudge buckets, paint_mode, and dab scheduling.
+description: "Write, review, debug, and implement MyPaint and libmypaint brush engines: `mypaint_brush_stroke_to`, `.myb` v3 presets, dab scheduling, `MyPaintTiledSurface` 64x64 tiles, layers, symmetry, smudge buckets, `paint_mode` spectral pigment, and GPU surface backends — even when the user does not say MyPaint."
 ---
 
 # MyPaint Engine Dev
@@ -116,10 +116,9 @@ Preserve these unless the user explicitly wants a non-compatible engine:
 | Tiles, compositing, symmetry, layer rendering, GPU/Skia/Vulkan backends | [surface-layer-gpu.md](references/surface-layer-gpu.md) |
 | Live drawing performance, debugging, regression and parity testing | [performance-validation.md](references/performance-validation.md) |
 | Source navigation or verification against repositories | [source-map.md](references/source-map.md) |
-| Extended background when focused references are insufficient (~2000 lines) | [MyPaintProgrammingGuide.md](references/MyPaintProgrammingGuide.md) |
+| Extended background when focused references are insufficient (~310 lines) | [MyPaintProgrammingGuide.md](references/MyPaintProgrammingGuide.md) |
 
-When a task spans multiple areas, read **every matching row**. Provenance and external
-references are tracked in [SOURCES.md](SOURCES.md) — read for attribution only.
+When a task spans multiple areas, read **every matching row**.
 
 ## Source verification workflow
 

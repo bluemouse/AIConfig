@@ -3,7 +3,7 @@
 
 Captures:
 - The current git HEAD sha
-- The set of dirty paths (from git status --porcelain)
+- The set of dirty paths (from git status --porcelain -z)
 - Content hashes for dirty paths and files in the run directory
 
 These are written to `baseline.txt`, `phase-start-dirty-hashes.json`, and
@@ -42,10 +42,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Orchestrator-owned run-dir files: only the orchestrator writes these, and
-# check_no_manifest_edits_by_phase pins them against the run-dir snapshot.
-# Keep in lockstep with ORCHESTRATOR_OWNED in checks/mode_checks.py.
-ORCHESTRATOR_OWNED = {"00-run-manifest.md", "01-feature-brief.md"}
+sys.path.insert(0, str(Path(__file__).parent))
+
+from checks.mode_checks import ORCHESTRATOR_OWNED, parse_porcelain_z  # noqa: F401
 
 # The pin refresh is for the manifest only: the orchestrator legitimately
 # updates the manifest mid-phase, but never the feature brief — so
@@ -147,7 +146,7 @@ def record_baseline(run_dir: Path, repo_root: Path | None) -> int:
     # Record dirty paths.
     try:
         status_result = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain", "-z"],
             cwd=repo_root,
             capture_output=True,
             text=True,
@@ -161,14 +160,11 @@ def record_baseline(run_dir: Path, repo_root: Path | None) -> int:
         print(f"ERROR: git status failed: {status_result.stderr.strip()}")
         return 1
 
-    dirty_paths: list[str] = []
-    dirty_hashes: dict[str, str | None] = {}
-    for line in status_result.stdout.splitlines():
-        if not line.strip():
-            continue
-        filepath = line[3:].strip()
-        dirty_paths.append(filepath)
-        dirty_hashes[filepath] = _file_digest(repo_root / filepath)
+    dirty_paths = parse_porcelain_z(status_result.stdout)
+    dirty_hashes: dict[str, str | None] = {
+        filepath: _file_digest(repo_root / filepath)
+        for filepath in dirty_paths
+    }
 
     # Write baseline file.
     baseline_lines = [head_sha] + dirty_paths

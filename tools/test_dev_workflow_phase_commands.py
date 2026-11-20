@@ -18,7 +18,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COMMAND_CREATOR_SCRIPTS = REPO_ROOT / "skills" / "command-creator" / "scripts"
 
-# Load quick_validate as a module (it lives outside the tools/ package).
+# Load quick_validate as a module (it lives outside the tools/ package),
+# stashing and restoring sys.modules["quick_validate"] so sibling test suites
+# loading skill-creator/agent-creator quick_validate are unaffected.
+_QUICK_VALIDATE_MISSING = object()
+_prior_quick_validate = sys.modules.get("quick_validate", _QUICK_VALIDATE_MISSING)
 _spec = importlib.util.spec_from_file_location(
     "quick_validate", COMMAND_CREATOR_SCRIPTS / "quick_validate.py"
 )
@@ -26,7 +30,13 @@ if _spec is None or _spec.loader is None:
     raise RuntimeError(f"Could not load quick_validate from {COMMAND_CREATOR_SCRIPTS}")
 quick_validate = importlib.util.module_from_spec(_spec)
 sys.modules["quick_validate"] = quick_validate
-_spec.loader.exec_module(quick_validate)
+try:
+    _spec.loader.exec_module(quick_validate)
+finally:
+    if _prior_quick_validate is _QUICK_VALIDATE_MISSING:
+        sys.modules.pop("quick_validate", None)
+    else:
+        sys.modules["quick_validate"] = _prior_quick_validate  # type: ignore[assignment]
 
 
 PHASE_COMMANDS = (
@@ -221,6 +231,45 @@ class CommandConformanceTests(unittest.TestCase):
         orch = ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
         self.assertIn("## Dispatch log", orch,
                       "orchestrator: dispatch-log read missing")
+
+    def test_commands_bootstrap_manifest_sections_explicit(self) -> None:
+        """cr-014: all 4 PHASE_COMMANDS explicitly name the required manifest
+        headings (`# Run Manifest`, `## Run metadata`, `## Phase status`,
+        `## Artifact registry`) in their bootstrap rules."""
+        required_headings = (
+            "# Run Manifest",
+            "## Run metadata",
+            "## Phase status",
+            "## Artifact registry",
+        )
+        for name in PHASE_COMMANDS:
+            body = self._command_body(name)
+            for heading in required_headings:
+                self.assertIn(
+                    heading,
+                    body,
+                    f"{name}: bootstrap manifest rule missing required heading {heading!r}",
+                )
+
+    def test_review_bootstrap_clean_tree_and_files_changed_sections(self) -> None:
+        """cr-014: `/review` bootstrap checks `git status --porcelain` (not
+        `if `git diff --stat``) and synthesizes `## Files changed`."""
+        review_body = self._command_body("review")
+        self.assertIn(
+            "git status --porcelain",
+            review_body,
+            "review: bootstrap must check working tree via `git status --porcelain`",
+        )
+        self.assertNotIn(
+            "if `git diff --stat`",
+            review_body,
+            "review: stale `if `git diff --stat`` clean-tree check must not appear",
+        )
+        self.assertIn(
+            "## Files changed",
+            review_body,
+            "review: synthesized 30-implementation-report.md must include `## Files changed`",
+        )
 
 
 if __name__ == "__main__":

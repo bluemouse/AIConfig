@@ -120,103 +120,12 @@ names, source conflicts, or support material that was provided but not
 discussed.]
 ```
 
-## Style examples
+## Calibration and phrasing
 
-Use this style for source-grounded uncertainty:
-
-- `The transcript does not specify a due date for this action item.`
-- `The group discussed this option, but the transcript does not show a final
-  decision.`
-- `The agenda lists this topic, but it was not discussed in the provided
-  transcript.`
-- `Beta release criteria were listed on the agenda but were not reached because
-  the meeting ran out of time.`
-- `The supporting document describes this requirement, but the transcript does
-  not show that it was reviewed in the meeting.`
-
-Use this style for decisions:
-
-- `The team agreed to keep the current API contract for the beta release and
-  revisit the migration plan after performance testing.`
-- `No final decision was recorded on the proposed data model change.`
-
-## Worked example
-
-Calibrate decision vs discussion separation, action-item grounding, and `not
-specified` usage against this abbreviated sample before drafting.
-
-**Sample source (excerpt)**
-
-**Agenda:** API versioning for the Payments service beta  
-**Transcript excerpt:**
-
-```text
-Alex (facilitator): Thanks everyone. Goal today is whether we keep v1 for beta or start v2 now.
-
-Jordan: v2 fixes the idempotency bug but needs two more sprints. I'd lean v1 for beta.
-
-Sam: What about mobile clients still on v1.2?
-
-Jordan: They can stay on v1.2 through beta if we don't change the contract.
-
-Alex: Any objections to shipping beta on v1 and revisiting v2 after perf testing?
-
-Sam: Works for me.
-
-Alex: Jordan, can you write up the rollout checklist?
-
-Jordan: Sure.
-
-Alex: We didn't get to error-code mapping — let's carry that to next week's arch sync.
-
-[Meeting ends — no due date stated for the checklist.]
-```
-
-**Metadata and uncertainty** — use stated facts; mark gaps plainly:
-
-```markdown
-**Date:** not specified  
-**Facilitator:** Alex  
-**Participants:** Alex, Jordan, Sam  
-```
-
-**Discussion (past tense, no decision implied):**
-
-- Jordan described v2 as fixing an idempotency bug but requiring two additional
-  sprints.
-- Sam asked how mobile clients on v1.2 would be affected.
-
-**Decision (only when the transcript shows agreement):**
-
-| # | Decision | Context / Rationale | Impact / Notes |
-|---|----------|---------------------|----------------|
-| D1 | Ship the Payments service beta on v1 and revisit v2 after performance testing. | Jordan proposed v1 for beta; Alex asked for objections; Sam agreed. | Mobile clients on v1.2 can remain on v1.2 through beta if the contract is unchanged. |
-
-**Not a decision (label correctly):**
-
-- The group did not reach a decision on error-code mapping; Alex deferred it to
-  the next architecture sync.
-
-**Action item:**
-
-| # | Action Item | Owner | Due Date | Notes / Dependencies |
-|---|-------------|-------|----------|----------------------|
-| A1 | Write up the rollout checklist for the beta release. | Jordan | not specified | Alex requested this follow-up; the transcript does not specify a due date. |
-
-**Agenda not reached:**
-
-- Error-code mapping was listed for discussion but was not reached; Alex
-  scheduled it for the next week's architecture sync.
-
-**Anti-patterns to avoid:**
-
-| Bad pattern | Why it fails | Better |
-| --- | --- | --- |
-| "The team decided to adopt v2 after beta." | Transcript shows v1 for beta, v2 deferred | Match D1 above |
-| Action owner "Sam" for the checklist | Jordan accepted the task | Owner: Jordan |
-| Due date "Friday" | Not stated in transcript | Due Date: not specified |
-| "Sam raised concerns about security." | Security not mentioned | Omit or quote only what was said |
-| Summary adds latency SLO targets | Not in sources | Omit unsupported metrics |
+- **Uncertainty / unreached agenda:** `"The transcript does not specify a due date."` / `"The group discussed this option without reaching a decision."` / `"Error-code mapping was on the agenda but deferred when time ran out."`
+- **Confirmed decision (requires explicit agreement):** `"Ship Payments beta on v1 and revisit v2 after perf testing"` (Alex asked for objections; Sam agreed).
+- **Action item:** record only accepted/assigned tasks (`Owner: Jordan`, `Due Date: not specified` when unstated — never invent `"Friday"` or reassign to another speaker).
+- **Never fabricate:** do not invert deferred options into post-beta commitments, invent unmentioned topics (e.g. security concerns), or add metrics/SLOs absent from the sources.
 
 ## Quick fidelity check
 

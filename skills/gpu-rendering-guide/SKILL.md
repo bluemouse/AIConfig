@@ -1,6 +1,6 @@
 ---
 name: gpu-rendering-guide
-description: "Design and review explicit-API renderer architecture (Vulkan/D3D12/Metal/WebGPU): render graphs, RDG, shader systems, binding model, bindless, sync, frames-in-flight, GPU memory, scene submission, GPU-driven rendering, indirect draw, Nanite-style culling, HDR output. Use when architecting or debugging a custom renderer, render passes, barriers, pipeline stalls, async compute, or draw submission — even without naming an API. Patterns align with Unreal RDG, Unity RenderGraph/SRP, and Frostbite FrameGraph at the conceptual level."
+description: "Design and review explicit-API GPU renderer architecture (Vulkan/D3D12/Metal/WebGPU): render graphs (RDG/FrameGraph), shader/binding models, bindless, barriers/sync, frames-in-flight, GPU memory, indirect GPU-driven culling, async compute, and HDR output — even without naming an API."
 ---
 
 # GPU Rendering Guidelines (Explicit-API Architecture)

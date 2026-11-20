@@ -1,6 +1,6 @@
 ---
 name: code-professor
-description: "Investigate unfamiliar repositories and produce evidence-based guides for learning, tracing, and documenting code. Use when asked to understand, explain, learn, or document a repo, module, library, feature, algorithm, execution path, data flow, failure, or dev workflow; create an orientation guide, reading path, architecture map, module deep dive, workflow trace, or failure investigation guide; or find grounded improvements and candidate fixes — even without saying 'code professor' (e.g. 'teach me this codebase', 'how does this work', 'trace this request end to end', 'help me onboard'). Supports four deliverables, study depths (overview, standard, deep), and interactive mode ('guided study'). Does not trigger on diff review (code-reviewer), product/requirements research (research-guide), implementation plan authoring or execution (plan-guide, plan-executor), verified defect repair (debugging-guide), or C++ performance optimization (cpp-performance-guide)."
+description: "Investigate unfamiliar codebases and produce evidence-backed learning guides — repository orientation, architecture maps, module deep dives, end-to-end workflow traces, failure-investigation guides, or interactive guided study ('teach me this codebase', 'how does this work', 'help me onboard'). Not for diff review (code-reviewer), product research (research-guide), implementation planning/execution, or defect repair (debugging-guide)."
 ---
 
 # Code Professor
@@ -80,7 +80,3 @@ If restoration or verification fails, stop and report the affected paths. Do not
 ### Write the document
 
 Lead with the mental model, then evidence and operational detail. Follow the selected deliverable template and study depth — the templates in `references/` specify the required structure, including any recommendations/candidate-fix section; label confidence and tradeoffs. For file output, follow [references/document-output.md](references/document-output.md). Before responding, verify every item in [references/quality-gate.md](references/quality-gate.md).
-
-## Evaluation
-
-Use `eval-queries.json` for trigger testing; [references/evaluation-cases.md](references/evaluation-cases.md) for behavioral rubrics when refining this skill.

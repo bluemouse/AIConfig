@@ -1,6 +1,6 @@
 ---
 name: android-dev
-description: kotlin-only android sdk app development guidance for android 16/api 36+ apps. use when designing, implementing, reviewing, or troubleshooting android sdk app code, jetpack compose ui, app architecture, camera and media flows, painting/image/photo app features, permissions, testing, app bundle release, performance, memory, accessibility, and quality. prefer this skill for app-layer kotlin, compose, camerax/media3, lifecycle, lifecycle-aware coroutines (viewModelScope, StateFlow), storage, and release decisions. delegate c++/jni/library integration to android-ndk-dev and vulkan renderer details to android-vulkan-dev.
+description: Kotlin-only Android SDK app guidance for Android 16/API 36+. Use for Jetpack Compose UI, app architecture, CameraX/Media3, Photo Picker/storage, painting/photo features, permissions, lifecycle coroutines (viewModelScope, StateFlow), testing, performance, and App Bundle release. Excludes C++/JNI (android-ndk-dev), Vulkan renderers (android-vulkan-dev), and AGP builds (gradle-android-dev).
 ---
 
 # Android Dev
@@ -34,7 +34,7 @@ Apply [kotlin-coding](../kotlin-coding/SKILL.md) for language/stdlib correctness
 Use Compose as the default UI toolkit; read [ui-camera-media.md](references/ui-camera-media.md) before any screen with camera preview, media playback, painting canvases, or heavyweight images.
 
 - Use `AndroidView` for SDK views such as camera preview or platform media surfaces when Compose wrappers are not enough.
-- Edge-to-edge and predictive back are API 36 release blockers, not polish — handle them per the Android 16 checks below.
+- Treat edge-to-edge (system-enforced starting at `targetSdk 35`, with `windowOptOutEdgeToEdgeEnforcement` opt-out removed at API 36) and predictive back (default system back animations enabled at `targetSdk 36`; migrate legacy `onBackPressed` / key interception to `OnBackInvokedCallback` or Compose `BackHandler` / `PredictiveBackHandler`) as release requirements — verify per the Android 16 checks below.
 
 ## Camera, media, painting, and photography defaults
 
@@ -46,8 +46,8 @@ Use Compose as the default UI toolkit; read [ui-camera-media.md](references/ui-c
 
 These platform behavior changes break apps that still compile cleanly — verify each on an emulator/device before release, not just with compile checks.
 
-- **Edge-to-edge is enforced.** Apps targeting API 36 cannot opt out; `windowOptOutEdgeToEdgeEnforcement` is ignored. Call `enableEdgeToEdge()` in `Activity.onCreate()` and handle insets explicitly (`WindowInsets.safeDrawing`, scaffold `innerPadding`) — system bars overlay content by default. Details and code: [ui-camera-media.md](references/ui-camera-media.md).
-- **Predictive back is on by default.** `onBackPressed()` and `KEYCODE_BACK` are no longer dispatched for custom back handling; use `OnBackInvokedCallback` or Navigation Compose back stacks with predictive animations, and test back from camera preview, modal sheets, and export flows.
+- **Edge-to-edge enforcement (API 35+, opt-out removed at API 36).** System-enforced starting at `targetSdk 35`, and `windowOptOutEdgeToEdgeEnforcement` is removed at API 36. Call `enableEdgeToEdge()` in `Activity.onCreate()` and handle insets explicitly (`WindowInsets.safeDrawing`, scaffold `innerPadding`) — system bars overlay content by default. Details and code: [ui-camera-media.md](references/ui-camera-media.md).
+- **Predictive back by default (`targetSdk 36`).** Default system back animations are enabled at `targetSdk 36`; legacy `onBackPressed()` and `KEYCODE_BACK` interception are not dispatched. Migrate custom back handling to `OnBackInvokedCallback` or Compose `BackHandler` / `PredictiveBackHandler` (and Navigation Compose back stacks), and test back from camera preview, modal sheets, and export flows.
 - **JobScheduler/WorkManager quota behavior changed.** Do not assume pre-16 scheduling rates — test deferrable and expedited work under quota limits, including restricted standby buckets.
 - **Foreground-service and notification rules.** Every foreground service needs a declared type (e.g. `camera`, `mediaPlayback`) with its required permission and a posted notification; FGS launches from the background are restricted, and runtime `POST_NOTIFICATIONS` denial must not break the feature.
 - Also verify: large-screen/adaptive layouts, camera/media permission flows (denied, one-time, settings-disabled), and picker flows after process death.

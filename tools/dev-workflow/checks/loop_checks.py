@@ -48,7 +48,9 @@ PHASE_DOER: dict[str, str] = {
 }
 
 
-def _resolve_checker_path(run_dir: Path, phase: str) -> Path | None:
+def _resolve_checker_path(
+    run_dir: Path, phase: str, stage: int | None = None
+) -> Path | None:
     """Resolve the checker artifact path, including stage-indexed variants.
 
     In staged mode, 31-stage1-implementation-audit.md satisfies the
@@ -59,16 +61,22 @@ def _resolve_checker_path(run_dir: Path, phase: str) -> Path | None:
     if not checker_file:
         return None
     staged = artifact_checks._is_staged_mode(run_dir)
-    return artifact_checks._resolve_artifact_path(run_dir, checker_file, phase, staged)
+    return artifact_checks._resolve_artifact_path(
+        run_dir, checker_file, phase, staged, stage
+    )
 
 
-def _resolve_doer_path(run_dir: Path, phase: str) -> Path | None:
+def _resolve_doer_path(
+    run_dir: Path, phase: str, stage: int | None = None
+) -> Path | None:
     """Resolve the doer artifact path, including stage-indexed variants."""
     doer_file = PHASE_DOER.get(phase)
     if not doer_file:
         return None
     staged = artifact_checks._is_staged_mode(run_dir)
-    return artifact_checks._resolve_artifact_path(run_dir, doer_file, phase, staged)
+    return artifact_checks._resolve_artifact_path(
+        run_dir, doer_file, phase, staged, stage
+    )
 
 PHASE_ARTIFACT_PREFIXES: dict[str, set[str]] = {
     "research": {"10", "11", "12", "13", "14", "15"},
@@ -78,13 +86,15 @@ PHASE_ARTIFACT_PREFIXES: dict[str, set[str]] = {
 }
 
 
-def check_verdict_valid(run_dir: Path, phase: str) -> list[Finding]:
+def check_verdict_valid(
+    run_dir: Path, phase: str, stage: int | None = None
+) -> list[Finding]:
     """Check that the checker's verdict is one of the allowed values."""
     findings: list[Finding] = []
     checker_file = PHASE_CHECKER.get(phase)
     if not checker_file:
         return []
-    path = _resolve_checker_path(run_dir, phase)
+    path = _resolve_checker_path(run_dir, phase, stage)
     if path is None:
         return []  # Already reported by artifact_checks
 
@@ -103,7 +113,7 @@ def check_verdict_valid(run_dir: Path, phase: str) -> list[Finding]:
         findings.append(Finding(
             severity="error",
             check="loop_contract",
-            message=f"No verdict found in {checker_file}",
+            message=f"No verdict found in {path.name}",
         ))
     elif valid_verdicts:
         # Use exact matching via the verdicts module.
@@ -113,20 +123,22 @@ def check_verdict_valid(run_dir: Path, phase: str) -> list[Finding]:
                 severity="error",
                 check="loop_contract",
                 message=(
-                    f"Invalid verdict in {checker_file}: '{found_verdict}'. "
+                    f"Invalid verdict in {path.name}: '{found_verdict}'. "
                     f"Expected one of: {', '.join(sorted(valid_verdicts))}"
                 ),
             ))
     return findings
 
 
-def check_root_cause_phase_present(run_dir: Path, phase: str) -> list[Finding]:
+def check_root_cause_phase_present(
+    run_dir: Path, phase: str, stage: int | None = None
+) -> list[Finding]:
     """Check that findings in the checker report include root-cause-phase field."""
     findings: list[Finding] = []
     checker_file = PHASE_CHECKER.get(phase)
     if not checker_file:
         return []
-    path = _resolve_checker_path(run_dir, phase)
+    path = _resolve_checker_path(run_dir, phase, stage)
     if path is None:
         return []
 
@@ -148,7 +160,7 @@ def check_root_cause_phase_present(run_dir: Path, phase: str) -> list[Finding]:
             severity="error",
             check="loop_contract",
             message=(
-                f"Findings present in {checker_file} but no "
+                f"Findings present in {path.name} but no "
                 f"'root-cause-phase' field found"
             ),
         ))
@@ -196,7 +208,7 @@ def check_root_cause_phase_present(run_dir: Path, phase: str) -> list[Finding]:
                 severity="error",
                 check="loop_contract",
                 message=(
-                    f"Finding {finding_id} in {checker_file} has no "
+                    f"Finding {finding_id} in {path.name} has no "
                     f"'root-cause-phase' field in its block"
                 ),
             ))
@@ -214,7 +226,7 @@ def check_root_cause_phase_present(run_dir: Path, phase: str) -> list[Finding]:
                 severity="error",
                 check="loop_contract",
                 message=(
-                    f"root-cause-phase '{value_match.group(1)}' in {checker_file} "
+                    f"root-cause-phase '{value_match.group(1)}' in {path.name} "
                     f"is not in the phase's vocabulary {sorted(allowed)}"
                 ),
             ))
@@ -269,14 +281,16 @@ def check_root_cause_phase_present(run_dir: Path, phase: str) -> list[Finding]:
                         check="loop_contract",
                         message=(
                             f"root-cause-phase '{row_cells[value_index].strip().strip('`')}' "
-                            f"in {checker_file} is not in the phase's vocabulary "
+                            f"in {path.name} is not in the phase's vocabulary "
                             f"{sorted(allowed)}"
                         ),
                     ))
     return findings
 
 
-def check_loop_cap_respected(run_dir: Path, phase: str) -> list[Finding]:
+def check_loop_cap_respected(
+    run_dir: Path, phase: str, stage: int | None = None
+) -> list[Finding]:
     """Check that the number of round artifacts doesn't exceed the loop cap."""
     findings: list[Finding] = []
     cap = LOOP_CAPS.get(phase)
@@ -286,6 +300,7 @@ def check_loop_cap_respected(run_dir: Path, phase: str) -> list[Finding]:
     # Round artifacts are named with a -rN suffix. The highest suffix within the
     # current phase's prefix range is the number of iterations.
     rounds = 1
+    staged = artifact_checks._is_staged_mode(run_dir)
     prefixes = artifact_checks.allowed_prefixes_for_phase(
         run_dir, phase, PHASE_ARTIFACT_PREFIXES.get(phase, set())
     )
@@ -294,6 +309,10 @@ def check_loop_cap_respected(run_dir: Path, phase: str) -> list[Finding]:
             continue
         if path.name[:2] not in prefixes:
             continue
+        if stage is not None and staged:
+            file_stage = _stage_index_of(path)
+            if file_stage != stage:
+                continue
         match = re.search(r"-r(\d+)\.md$", path.name, re.IGNORECASE)
         if match:
             rounds = max(rounds, int(match.group(1)))
@@ -320,7 +339,9 @@ def _stage_index_of(path: Path) -> int | None:
     return None
 
 
-def check_doer_precedes_checker(run_dir: Path, phase: str) -> list[Finding]:
+def check_doer_precedes_checker(
+    run_dir: Path, phase: str, stage: int | None = None
+) -> list[Finding]:
     """Check that the checker artifact was written after its doer input.
 
     Validation runs on an accept verdict, and every accept verdict is written
@@ -341,8 +362,8 @@ def check_doer_precedes_checker(run_dir: Path, phase: str) -> list[Finding]:
     if not checker_file or not doer_file:
         return []
 
-    checker_path = _resolve_checker_path(run_dir, phase)
-    doer_path = _resolve_doer_path(run_dir, phase)
+    checker_path = _resolve_checker_path(run_dir, phase, stage)
+    doer_path = _resolve_doer_path(run_dir, phase, stage)
     if checker_path is None or doer_path is None:
         return []  # Artifact structure checks report the missing file.
 
@@ -366,14 +387,16 @@ def check_doer_precedes_checker(run_dir: Path, phase: str) -> list[Finding]:
     return []
 
 
-def run_all(run_dir: Path, phase: str) -> list[Finding]:
+def run_all(
+    run_dir: Path, phase: str, stage: int | None = None
+) -> list[Finding]:
     """Run all loop contract checks for a phase."""
     findings: list[Finding] = []
     # Clarify phase has no checker, no verdict, no round cap, no root-cause-phase.
     if phase == "clarify":
         return findings
-    findings.extend(check_verdict_valid(run_dir, phase))
-    findings.extend(check_root_cause_phase_present(run_dir, phase))
-    findings.extend(check_loop_cap_respected(run_dir, phase))
-    findings.extend(check_doer_precedes_checker(run_dir, phase))
+    findings.extend(check_verdict_valid(run_dir, phase, stage))
+    findings.extend(check_root_cause_phase_present(run_dir, phase, stage))
+    findings.extend(check_loop_cap_respected(run_dir, phase, stage))
+    findings.extend(check_doer_precedes_checker(run_dir, phase, stage))
     return findings

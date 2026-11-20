@@ -1,6 +1,6 @@
 ---
 name: shader-guide
-description: "Author, review, and debug creative real-time GLSL visual effects: ray marching, 2D/3D SDFs, CSG, domain warping, FBM terrain, voronoi patterns, procedural noise, soft shadows, AO, Monte Carlo path tracing, volumetrics, Gerstner waves, fluids, ping-pong simulation, Turing/reaction-diffusion patterns, particles, bloom/ACES post-processing, and multi-pass buffers. Use for generative art, implicit-surface scenes, domain-warped organic blobs, or standalone fragment-shader demos — even when the user does not say SDF, ray marching, or ping-pong."
+description: "Author, review, and debug creative real-time GLSL effects: ray marching, 2D/3D SDFs, CSG, domain warping, FBM/Voronoi noise, soft shadows, AO, path tracing, volumetrics, fluids, ping-pong reaction-diffusion/particles, and bloom/ACES multi-pass post-processing — even without naming SDF or ray marching."
 ---
 
 # Shader Guide (Creative GLSL Effects)

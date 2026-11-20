@@ -1,6 +1,6 @@
 ---
 name: research-reviewer
-description: "Use when reviewing, auditing, re-reviewing, grilling, or validating a research report produced by research-guide or similar discovery workflows before implementation planning — assessing completeness, consistency, evidence quality, risk awareness, and planning readiness across product, user, technical, security, data, compliance, operations, or domain-specific concerns. Triggers on prompts to review or grill a research report, validate requirements, audit assumptions, challenge conclusions, find gaps, assign severity, disposition prior findings, produce required revisions, or decide whether a report is ready for an implementation plan — even when the user doesn't say 'research review'. Does not trigger on brainstorming new ideas, codebase learning guides (code-professor), implementation plan authoring, plan-reviewer audit, or code diff review."
+description: "Audit, grill, or re-review a research report before implementation planning — checking completeness, consistency, evidence quality, assumptions, risks, prior-finding dispositions, and planning readiness. Not for initial brainstorming (research-guide), codebase learning (code-professor), implementation plan authoring or review (plan-guide, plan-reviewer), or code diff review."
 ---
 
 # Research Reviewer

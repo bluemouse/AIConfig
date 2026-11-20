@@ -1,6 +1,6 @@
 ---
 name: plan-reviewer
-description: "Use when reviewing, auditing, or validating an implementation plan before execution by a developer, engineer, or AI agent — checking correctness, completeness, consistency with source research/spec/requirements, TDD test design, task decomposition, file precision, testability, risk controls, and execution readiness. Triggers on prompts to review an implementation plan, validate a work plan, audit plan tasks, approve execution readiness, or produce a Guide handoff packet — even when the user doesn't say 'plan review'. Does not trigger on brainstorming, research-report review, codebase learning guides (code-professor), writing plans, or code diff review."
+description: "Audit or validate an implementation plan before execution — checking correctness, source traceability, TDD/verification design, task decomposition, file precision, risk controls, execution readiness, and Guide handoff packets. Not for brainstorming, research-report review (research-reviewer), codebase learning, plan authoring (plan-guide), or diff review."
 ---
 
 # Plan Reviewer

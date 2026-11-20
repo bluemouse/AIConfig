@@ -1,13 +1,13 @@
 ---
 name: slang-dev
-description: "Develop, review, port, compile, test, debug, and optimize Slang shaders and C++ host integration for Vulkan SPIR-V and Metal MSL renderers: modules, import/__include, capabilities, ParameterBlock, generics/interfaces, slangc, IGlobalSession/ISession, ProgramLayout reflection, descriptor/argument-buffer layout, and cross-backend portability. Use for .slang files, slang compiler API, SPIR-V/MSL emission, shader entry points, or shader correctness/performance — even when the user does not say 'Slang'."
+description: "Develop, review, compile, and debug Slang shaders (`.slang`) and C++ host integration for Vulkan SPIR-V and Metal MSL: modules, capabilities, `ParameterBlock`, generics/interfaces, `slangc`, `IGlobalSession`/`ProgramLayout` reflection, and cross-backend layout portability."
 ---
 
 # Slang Development
 
 Resolve `<SKILL_ROOT>` as the directory containing **this** skill's `SKILL.md`. Resolve paths to `references/` and `scripts/` from that directory.
 
-> Verified against Slang source docs last reviewed **2026-07-05** ([SOURCES.md](SOURCES.md)); no pinned release — confirm version-specific syntax against the installed `slangc`/C++ API before relying on it.
+> Verified against Slang source docs last reviewed **2026-07-05**; no pinned release — confirm version-specific syntax against the installed `slangc`/C++ API before relying on it.
 
 Covers Slang shader authoring and C++ host integration through SPIR-V/MSL emission, reflection-driven layout, and cross-backend portability; D3D12, CUDA, CPU, and WebGPU are comparison context only. Do not invent syntax — verify against the installed Slang version with `slangc` or the C++ API (grammar disputes: [Slang spec](https://github.com/shader-slang/spec) → user guide → compiler diagnostics).
 
@@ -75,18 +75,26 @@ Read only the row matching the task.
 - Every entry point has `[shader(...)]`, stage semantics, and `[numthreads]` for compute; syntax is valid or labeled pseudocode.
 - Debugging gathers Slang version, targets, diagnostics, generated code, failure phase; perf advice names bottleneck and tradeoff.
 
-## Tool notes
+## Compile Matrix
 
-### Compile matrix
-
-Run the bundled script from the skill root for repeatable SPIR-V/MSL builds across entry points:
+Run the bundled script for repeatable SPIR-V/MSL builds across entry points:
 
 ```bash
-python .agents/skills/slang-dev/scripts/slang_compile_matrix.py manifest.json [--print-only]
+python <SKILL_ROOT>/scripts/slang_compile_matrix.py manifest.json [--print-only]
 ```
 
-`--print-only` emits commands without executing; `--allow-missing-slangc` when `slangc` is not on PATH.
+`--print-only` emits commands without executing; `--allow-missing-slangc` exits `0` when `slangc` is not on `PATH`; invalid manifests exit `2`.
 
-### Per-host notes
+## Tool notes
 
-- After installing or editing the skill, reload the coding agent (Claude Code session, Cursor window, VS Code for Copilot) so the skill is rediscovered. Relative cross-links resolve on every host.
+### Claude Code
+
+- Reload the session after installing or editing the skill so updated frontmatter and relative cross-links are rediscovered.
+
+### Cursor
+
+- Reload the window after installing or editing the skill so the skill catalog refreshes.
+
+### GitHub Copilot
+
+- Reload VS Code or start a new chat session after installing or editing the skill so the updated skill is rediscovered.

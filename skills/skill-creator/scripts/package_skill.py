@@ -11,32 +11,24 @@ Example:
 """
 
 import fnmatch
+import os
 import sys
 import zipfile
 from pathlib import Path
+from install_portable_skill import IGNORE_DIR_NAMES, IGNORE_FILE_GLOBS, should_ignore
 from quick_validate import validate_skill
 
-# Patterns to exclude when packaging skills.
-EXCLUDE_DIRS = {"__pycache__", "node_modules"}
-EXCLUDE_GLOBS = {"*.pyc"}
-EXCLUDE_FILES = {".DS_Store"}
-# Directories excluded only at the skill root (not when nested deeper).
-ROOT_EXCLUDE_DIRS = {"evals"}
+# Patterns to exclude when packaging skills (wired to install_portable_skill so
+# sibling scripts cannot drift).
+EXCLUDE_DIRS = set(IGNORE_DIR_NAMES)
+EXCLUDE_GLOBS = set(IGNORE_FILE_GLOBS)
 
 
 def should_exclude(rel_path: Path) -> bool:
     """Check if a path should be excluded from packaging."""
-    parts = rel_path.parts
-    if any(part in EXCLUDE_DIRS for part in parts):
+    if any(part in EXCLUDE_DIRS for part in rel_path.parts):
         return True
-    # rel_path is relative to skill_path.parent, so parts[0] is the skill
-    # folder name and parts[1] (if present) is the first subdir.
-    if len(parts) > 1 and parts[1] in ROOT_EXCLUDE_DIRS:
-        return True
-    name = rel_path.name
-    if name in EXCLUDE_FILES:
-        return True
-    return any(fnmatch.fnmatch(name, pat) for pat in EXCLUDE_GLOBS)
+    return any(fnmatch.fnmatch(rel_path.name, pat) for pat in EXCLUDE_GLOBS)
 
 
 def package_skill(skill_path, output_dir=None):
@@ -89,16 +81,21 @@ def package_skill(skill_path, output_dir=None):
     # Create the .skill file (zip format)
     try:
         with zipfile.ZipFile(skill_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # Walk through the skill directory, excluding build artifacts
-            for file_path in skill_path.rglob('*'):
-                if not file_path.is_file():
-                    continue
-                arcname = file_path.relative_to(skill_path.parent)
-                if should_exclude(arcname):
-                    print(f"  Skipped: {arcname}")
-                    continue
-                zipf.write(file_path, arcname)
-                print(f"  Added: {arcname}")
+            # Walk through the skill directory, pruning excluded directories
+            for dirpath, dirnames, filenames in os.walk(skill_path):
+                dirnames[:] = [d for d in sorted(dirnames) if not should_ignore(d)]
+                current_dir = Path(dirpath)
+                for filename in sorted(filenames):
+                    file_path = current_dir / filename
+                    if not file_path.is_file():
+                        continue
+                    arcname = file_path.relative_to(skill_path.parent)
+                    rel_inside_skill = file_path.relative_to(skill_path)
+                    if should_ignore(filename) or should_exclude(rel_inside_skill):
+                        print(f"  Skipped: {arcname}")
+                        continue
+                    zipf.write(file_path, arcname)
+                    print(f"  Added: {arcname}")
 
         print(f"\n✅ Successfully packaged skill to: {skill_filename}")
         return skill_filename

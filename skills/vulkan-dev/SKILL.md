@@ -1,6 +1,6 @@
 ---
 name: vulkan-dev
-description: "Develop, modernize, review, and debug Vulkan 1.3 renderers and GPU-compute programs: instance/device/queue setup, pNext feature chains and extension detection, VkDeviceMemory sub-allocation and staging, VkImageMemoryBarrier2 and layout transitions, timeline/binary semaphores and fences, descriptor sets and descriptor-indexing bindless, VkPipeline + pipeline cache + dynamic rendering, command pools and swapchain, compute dispatch, validation and performance triage. Use for Vk*/vkCmd*/vkCreate* code and Vulkan API decisions even when the user does not say 'Vulkan'."
+description: "Develop, modernize, review, and debug Vulkan 1.3 renderers and compute pipelines: instance/device/queues, `pNext` features, `VkDeviceMemory` staging/sub-allocation, `VkImageMemoryBarrier2` sync2, timeline semaphores, descriptor indexing/bindless, dynamic rendering, swapchain, and validation/perf triage (`Vk*`/`vkCmd*`)."
 ---
 
 # Vulkan Development (Vulkan 1.3)

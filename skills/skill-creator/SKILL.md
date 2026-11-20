@@ -1,59 +1,40 @@
 ---
 name: skill-creator
-description: Create portable skills for GitHub Copilot, Cursor, and Claude Code using a single-root layout, and iteratively improve them. Use when users want to create a skill from scratch, bootstrap under the skills directory and install to .agents/skills, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance, or optimize a skill's description for better triggering accuracy — even if they do not say "portable skill" explicitly. Does not trigger on creating custom agents (agent-creator) or slash commands and Copilot prompts (command-creator).
+description: "Create, evaluate, and iteratively improve portable skills for GitHub Copilot, Cursor, and Claude Code using the single-root layout (bootstrap under skills/ and install to .agents/skills/). Use to author a skill from scratch, edit or benchmark an existing skill, run evals, or tune a skill description for triggering accuracy. Does not trigger on custom agents (agent-creator) or slash commands (command-creator)."
 ---
 
 # Skill Creator
 
-At a high level: capture intent → **choose an authoring path** (bootstrap under `skills/<name>/`, preferred, or direct scaffold with `create_skill.py`) → write a tool-neutral `SKILL.md` body with tool-specific guidance in `## Tool notes` → install when bootstrapping → run realistic test prompts with an agent that has the skill → evaluate results (qualitatively, and quantitatively when supported) → rewrite based on feedback → repeat, then expand the test set.
+Flow: capture intent → choose bootstrap (`skills/<name>/`, preferred) or direct scaffold (`create_skill.py`) → write a tool-neutral `SKILL.md` body with host mechanics in `## Tool notes` → validate and install → run realistic test prompts → evaluate qualitatively/quantitatively → iterate, then tune `description`. Meet the user where they are (jump straight to eval/iterate on an existing draft, or skip formal evals if they want a quick pass); preserve user-supplied exact wording **verbatim**.
 
-The shared creation skeleton — authoring-path decision, authoritative-edit rule, capture-intake flow, description-tuning loop, output summary, and the generic test-and-iterate loop — lives in [references/creation-common.md](references/creation-common.md); this body holds only the skill-specific delta.
-
-**Tool-specific execution** (how to spawn eval runs, baselines, description optimization, and reload steps) lives in the `## Tool notes` section of the skill — read it after the tool-neutral body. Do not assume subagents, a particular CLI, or a browser unless the Tool notes document them.
-
-Figure out where the user is in this process and help them progress. If they already have a draft skill, go straight to eval/iterate. If they prefer a lightweight pass without formal evals, follow their lead.
+Shared authoring rules — bootstrap vs direct choice, authoritative-edit rule, intake, manual description tuning, output summary, and the iterate loop — live in [references/creation-common.md](references/creation-common.md); this file carries only the skill-specific delta.
 
 ## When NOT to Use
 
-- **Creating a custom agent** — use [../agent-creator/SKILL.md](../agent-creator/SKILL.md)
-- **Creating a slash command or Copilot prompt** — use [../command-creator/SKILL.md](../command-creator/SKILL.md)
-
----
-
-## Communicating with the user
-
-Match the user's vocabulary; briefly explain terms like "Tool notes", "eval", or "assertion" when unsure they know them. If the user provides exact wording for skill instructions or the description, use it **verbatim** in generated files.
+- **Creating a custom agent** → [../agent-creator/SKILL.md](../agent-creator/SKILL.md)
+- **Creating a slash command or Copilot prompt** → [../command-creator/SKILL.md](../command-creator/SKILL.md)
 
 ---
 
 ## Creating a skill
 
-### Capture intent
+### Intake and edit paths
 
-Per [references/creation-common.md](references/creation-common.md). Skill-specific intake: what the skill enables, when it should trigger, where files are written, expected output format, tool-specific notes (eval mechanics, reload steps) per tool, and whether to set up test cases (objective outputs benefit; subjective outputs often don't).
-
-### Where to edit (by path)
-
-Per the authoritative-edit rule in [references/creation-common.md](references/creation-common.md). For skills: bootstrap edits go in `skills/<name>/SKILL.md` (+ `references/`, `scripts/`, `assets/`) and reinstall with `install_portable_skill.py`; direct-path edits go in `.agents/skills/<name>/SKILL.md`. Runtime read target is always `.agents/skills/<name>/`.
+Follow [references/creation-common.md](references/creation-common.md). Skill-specific intake: target capability, trigger phrases, output format, per-host `## Tool notes` (eval/reload mechanics), and whether objective test cases are warranted. Edit bootstrap skills in `skills/<name>/` and reinstall via `install_portable_skill.py` (never hand-edit `.agents/skills/<name>/` when bootstrap exists); runtime discovery always reads `.agents/skills/<name>/`.
 
 ### Bundled scripts
 
-`<SKILL_CREATOR_ROOT>` is the directory containing **this** skill's `SKILL.md`; `<SKILL_ROOT>` the directory containing the **target** skill's `SKILL.md` (after install). Two invocation forms, per script:
+`<SKILL_CREATOR_ROOT>` is the directory containing **this** skill's `SKILL.md`; `<SKILL_ROOT>` is the installed target skill's directory.
 
-- **Module form** — `python -m scripts.<name>` with `<SKILL_CREATOR_ROOT>` as the working directory: `quick_validate`, `aggregate_benchmark`, `run_loop`, `run_eval` (and `eval-viewer/generate_review.py` by full path).
-- **Direct form** — `python <SKILL_CREATOR_ROOT>/scripts/<name>.py` (these use flat sibling imports and fail as `-m` modules): `install_portable_skill`, `create_skill`, `init_skill`, `package_skill`.
+- **Module form** (`python -m scripts.<name>` from `<SKILL_CREATOR_ROOT>`): `quick_validate`, `aggregate_benchmark`, `run_loop`, `run_eval` (plus `eval-viewer/generate_review.py` by path).
+- **Direct form** (`python <SKILL_CREATOR_ROOT>/scripts/<name>.py` — flat sibling imports): `install_portable_skill`, `create_skill`, `init_skill`, `package_skill`.
 
-### Anatomy and authoring
+### Anatomy, frontmatter, and installation
 
-Installed layout (single root): `.agents/skills/<skill-name>/` — SKILL.md plus optional `scripts/`, `references/`, `assets/`; one real copy, no per-tool wrappers. Claude Code discovers skills through the `.claude/skills -> ../.agents/skills` bridge symlink (auto-created on install; install refuses and asks you to purge it first if `.claude/skills` is a real legacy directory); Cursor and GitHub Copilot read `.agents/skills/` directly.
+Installed single-root layout: `.agents/skills/<skill-name>/` (`SKILL.md` + optional `scripts/`, `references/`, `assets/`), read directly by Cursor and GitHub Copilot and via the `.claude/skills -> ../.agents/skills` symlink by Claude Code (layout/examples/checklist in `references/portable-skill-layout.md`).
 
-**Progressive disclosure:** metadata (frontmatter) → `SKILL.md` body → bundled resources on demand. The body must be **tool-neutral** above `## Tool notes`, with tool-native mechanics in that `## Tool notes` H2. Bootstrap layout, worked install/scaffold/packaging examples, and a quality checklist: `references/portable-skill-layout.md`.
-
-**Frontmatter:** `name` — kebab-case (lowercase letters, digits, hyphens; max 64 chars). `description` — primary trigger mechanism: what the skill does **and** when to use it, specific and slightly expansive to avoid under-triggering; keep all "when to use" phrasing here, not the body. `compatibility` — optional, rarely needed.
-
-Quality bars: **correct** (clear scope, accurate capabilities, verifiable success criteria), **complete** (edge cases, explicit output format, stated boundaries), **efficient** (lean body, tool-specific shortcuts in `## Tool notes`, repeated work under `scripts/`), **no surprises** (no hidden behavior; decline misleading or unauthorized-access skills). When specifying output format, match the strictness to the need — exact templates for rigid formats, adaptable defaults otherwise; when style matters, input/output examples convey the desired style and level of detail better than descriptions alone.
-
-**Bootstrap authoring:** create `skills/<skill-name>/` (SKILL.md with tool-neutral frontmatter and body — resolve `<SKILL_ROOT>` so paths work after install; optional `scripts/`, `references/`, `assets/`; `## Tool notes` when the skill has tool-specific mechanics), copying from an existing skill under `skills/` when starting from a known pattern. Then validate and install:
+- **Progressive disclosure:** frontmatter (`name` kebab-case ≤64 chars; `description` ≤1,024 chars with no `<`/`>`, stating both **what** the skill does and **when** to trigger; optional `compatibility`) → lean tool-neutral `SKILL.md` body → `## Tool notes` H2 + on-demand `references/` and `scripts/`.
+- **Bootstrap:** author `skills/<skill-name>/SKILL.md` (resolving `<SKILL_ROOT>` for bundled paths), then validate and install:
 
 ```bash
 python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py skills/<skill-name>
@@ -61,77 +42,43 @@ python <SKILL_CREATOR_ROOT>/scripts/install_portable_skill.py \
   --root <repo_root> --name <skill-name> --source skills/<skill-name> --overwrite
 ```
 
-**Direct scaffold:** `create_skill.py --root <repo_root> --name <skill-name> --overwrite` — do **not** hand-create `.agents/skills/` directories. **Standalone copy** outside the single-root layout: `init_skill.py <skill-name> --path <install-path>` — the parent must be a skills root; the validator rejects category subfolders. Both commands in full: worked examples in `references/portable-skill-layout.md`.
-
-**Updating an existing skill:** preserve the original `name` unless the user wants a rename; edit at the authoritative location per creation-common.md. Output summary per creation-common.md.
+- **Direct / standalone:** scaffold into `.agents/skills/` via `create_skill.py --root <repo_root> --name <skill-name> --overwrite`, or standalone via `init_skill.py <skill-name> --path <skills-root>` (flat skills root only — category subfolders are rejected).
 
 ---
 
-## Test prompts
+## Test prompts and evaluation
 
-Draft 2–3 realistic user prompts that should invoke this skill; confirm with the user before running. For each prompt note the expected behavior, the efficiency signal to watch for (unnecessary steps, over-long output, wrong tool usage), and which environment to test in.
+Draft 2–3 realistic prompts with expected behavior and efficiency signals, confirm with the user, and save to `skills/<skill-name>/evals/evals.json` (or `.agents/skills/<skill-name>/evals/evals.json` on the direct path) per `references/schemas.md`. Read `references/schemas.md` before running a full eval:
 
-Save eval prompts to `skills/<skill-name>/evals/evals.json` (bootstrap) or `.agents/skills/<skill-name>/evals/evals.json` (direct path) — prompts first, assertions later. Schema and example: `references/schemas.md`.
-
-Follow the skill's `## Tool notes` for how to execute eval runs (Task subagent, parallel baselines, etc.).
-
----
-
-## Running and evaluating test cases
-
-The shared workspace layout, run-loop artifacts, and grading schemas live in `references/schemas.md` — read it before running a full eval. This section holds only the operating rules:
-
-- Do not stop partway through a planned eval iteration. Do not use unrelated testing skills.
-- Cap concurrent eval runs at the [../agent-runner/SKILL.md](../agent-runner/SKILL.md) defaults — at most 4 with-skill/baseline pairs (8 subagents) in flight; queue excess test cases in later batches within the same iteration.
-- Spawn each test case's with-skill + baseline runs in the **same turn** — never with-skill first and baselines later. Baseline is `without_skill/` for new skills; snapshot the old skill and use `old_skill/` when comparing versions.
-- Grade with `agents/grader.md` → `grading.json` per run (required by the viewer); aggregate with `python -m scripts.aggregate_benchmark` (pass `--primary/--baseline` explicitly whenever more than two arm directories exist — unselected multi-arm input is rejected rather than guessed); analyst pass with `agents/analyzer.md`; then **always** launch the viewer and show results to the human **before** revising the skill yourself. For iteration 2+, pass `--previous-workspace`.
-- `run_status.json` (`{"status": "completed"|"errored"|"timeout"}`) in a run directory marks infrastructure failures, which are excluded from deltas and listed in `comparisons[].failed_runs`.
-- Read `feedback.json` when the user is done; empty feedback means accepted. Kill any background viewer server when finished.
-- Never eval on a dirty tree; sweep untracked files after every eval run (spawned runs can leave demo projects and other residue behind).
-
----
-
-## Reviewing and improving the skill
-
-After test runs, check for correctness (scope, accuracy, hallucinated files or APIs), completeness (edge cases, output format, escalation when needed), and efficiency (prompt too long to follow, repeated work, ignored native tool features documented in Tool notes). Improvement rules and the iterate loop: [references/creation-common.md](references/creation-common.md). After edits: rerun evals into `iteration-<N+1>/`, regenerate the viewer, collect feedback, repeat until the user is satisfied or progress stalls.
-
----
-
-## Advanced: Blind comparison
-
-Optional rigor when comparing two skill versions. Read `agents/comparator.md` and `agents/analyzer.md`. Requires independent parallel runs — see the skill's `## Tool notes`.
+- Complete the planned iteration without stopping midway or invoking unrelated testing skills.
+- Cap concurrency per [../agent-runner/SKILL.md](../agent-runner/SKILL.md) (≤4 with-skill/baseline pairs = 8 subagents in flight) and spawn each case's with-skill + baseline (`without_skill/` or snapshotted `old_skill/`) in the **same turn**.
+- Grade with `agents/grader.md` → `grading.json`; aggregate with `python -m scripts.aggregate_benchmark` (pass `--primary/--baseline` explicitly when >2 arms exist); analyze with `agents/analyzer.md` (and `agents/comparator.md` for optional blind A/B comparison); then launch the viewer (`--previous-workspace` on iteration 2+) and show the user **before** revising.
+- Record infra failures via `run_status.json` (`{"status": "completed"|"errored"|"timeout"}`); read `feedback.json` when done, stop any viewer server, and never eval on a dirty tree (clean up residue after runs).
+- Iterate on correctness, completeness, and efficiency per [references/creation-common.md](references/creation-common.md) into `iteration-<N+1>/`.
 
 ---
 
 ## Simplification and retirement decisions
 
-A skill or guideline earns its place. When trimming, simplifying, or retiring guidance, do not argue from instruction length or compliance alone — compare arms:
+When trimming, simplifying, or retiring guidance, compare frozen, hashed arms rather than arguing from length alone:
 
-1. **Arms**: `baseline` (target guidance removed, everything else identical), `current` (today's bytes), `candidate` (the simplification). Freeze each arm's bytes and hash them before running anything.
-2. **Grade correctness and safety first**; efficiency only after correctness holds on the same paired cases. A baseline with worse efficiency but equal correctness says the guidance is process overhead; a baseline failing safety or task checks says it is load-bearing.
-3. **Pair runs** by task and repeat number. Missing, errored, or mismatched runs are incomplete results — never a pass or a free efficiency win. Record uncertainty: a tie in a small sample is not equivalence.
-4. **Report scope honestly**: the exact tested host/model. No cross-host or cross-model claim without testing them.
-
-Retirement (removing a skill from the catalog) requires the same representative evidence plus a compatibility assessment of its consumers (cross-links, installed copies, docs). Trigger this review on each major frontier-model release, recording the tested model version and date with the decision.
+1. **Arms:** `baseline` (target removed), `current` (today's bytes), `candidate` (proposed simplification).
+2. **Order:** grade correctness and safety first, efficiency only when correctness holds on paired cases.
+3. **Pairing & uncertainty:** pair by task and repeat; treat missing/errored runs as incomplete (never a pass), and report small-sample ties as uncertain rather than equivalent.
+4. **Scope:** report the exact tested host/model (plus consumer/cross-link impact when retiring a skill on a new model release).
 
 ---
 
-## Description optimization
+## Description optimization and packaging
 
-The `description` field drives skill discovery. Manual tuning steps (trigger-eval queries, user review, apply): [references/creation-common.md](references/creation-common.md), skill-specific notes in `references/description-eval-queries.md`; review UI asset: `assets/eval_review.html` (replace the `__EVAL_DATA_PLACEHOLDER__`, `__SKILL_NAME_PLACEHOLDER__`, `__SKILL_DESCRIPTION_PLACEHOLDER__` placeholders). Automated `run_loop.py` runs **only** where the skill's `## Tool notes` documents it (Claude Code / Cowork).
+Manual description tuning follows [references/creation-common.md](references/creation-common.md) + `references/description-eval-queries.md` and `assets/eval_review.html` (`__EVAL_DATA_PLACEHOLDER__`, `__SKILL_NAME_PLACEHOLDER__`, `__SKILL_DESCRIPTION_PLACEHOLDER__`). Automated `run_loop.py` applies only where `## Tool notes` documents it.
 
----
-
-## Packaging
-
-Validate, then package the installed skill:
+Package an installed skill after validation:
 
 ```bash
 python <SKILL_CREATOR_ROOT>/scripts/quick_validate.py .agents/skills/<skill-name>
 python <SKILL_CREATOR_ROOT>/scripts/package_skill.py .agents/skills/<skill-name>
 ```
-
-Direct the user to the resulting `.skill` file for installation elsewhere.
 
 ---
 
@@ -139,9 +86,7 @@ Direct the user to the resulting `.skill` file for installation elsewhere.
 
 ### Claude Code
 
-Claude Code supports **subagents** — run the shared loop from **Running and evaluating test cases** in full (with-skill + baseline pairs spawned in one turn).
-
-**Description optimization (shared Step 3, automated):** after shared Steps 1–2, run:
+Supports **subagents** — run the full parallel with-skill + baseline eval loop. Automated description optimization (shared Step 3, after skill content stabilizes):
 
 ```bash
 cd <SKILL_CREATOR_ROOT>
@@ -153,37 +98,18 @@ python -m scripts.run_loop \
   --verbose
 ```
 
-Use the model ID from the current session; apply `best_description` per shared Step 4. Run this **after** the skill content is in good shape and the user agrees.
-
-**Cowork / headless:** subagents work (fall back to serial runs if timeouts are severe); no browser — use `generate_review.py --static <path>` and share the link, feedback downloads as `feedback.json`; generate the eval viewer **before** evaluating outputs yourself; `run_loop.py` works (uses `claude -p`).
-
-**Claude.ai (no Claude Code CLI):** no subagents, no `run_loop.py`. Run test prompts sequentially, skip baselines and quantitative benchmarks, present results inline, use manual description optimization only (shared Steps 1–2 and 4).
+- **Cowork / headless:** subagents and `run_loop.py` (`claude -p`) work; pass `generate_review.py --static <path>` (before self-grading) when no browser is available.
+- **Claude.ai (no CLI):** no subagents or `run_loop.py` — run prompts sequentially inline and tune descriptions manually.
 
 ### Cursor
 
-Same shared loop as Claude Code, but spawn subagents with the **Task tool** (two Task subagents per test case, same turn). Deltas:
-
-- **No `run_loop.py`** — it requires the Claude Code CLI. Use the manual description-optimization path: draft queries, review with `assets/eval_review.html`, revise the description, sync it, and ask the user to test with realistic prompts.
-- **No browser / remote dev:** pass `--static <output.html>` and share the file path; the user downloads `feedback.json` from the static page — copy it into the workspace for the next iteration. Kill the background viewer with `kill $VIEWER_PID`.
-- Optional frontmatter: add `disable-model-invocation: true` if the skill should load only when explicitly requested rather than via description matching.
+Run the shared eval loop using concurrent **Task** subagents (with-skill + baseline in the same turn):
+- **No `run_loop.py`** (requires Claude Code CLI) — use manual description tuning with `assets/eval_review.html`.
+- **Remote / headless:** pass `--static <output.html>`, collect downloaded `feedback.json`, and stop any background viewer (`kill <PID>`).
+- Optional frontmatter: `disable-model-invocation: true` for explicit-only skills.
 
 ### GitHub Copilot
 
-Copilot Chat does not expose parallel subagents — use a **qualitative, sequential** loop unless the user explicitly runs scripts in a terminal:
-
-1. Write `evals/evals.json` per the shared spec.
-2. For each test prompt, write `eval_metadata.json` in the eval directory (even for qualitative runs).
-3. Send the eval prompt in Copilot Chat as the user would naturally phrase it; save outputs under `<skill-name>-workspace/iteration-1/eval-<ID>/with_skill/outputs/` when the agent produces files.
-4. **Skip parallel baselines** in chat — optionally ask the user to rerun the same prompt in a fresh chat without @-mentioning the skill and save to `without_skill/outputs/` for informal comparison.
-5. Present each prompt + output to the user in chat, or generate a static review page when Python is available:
-
-```bash
-python <SKILL_CREATOR_ROOT>/eval-viewer/generate_review.py \
-  <workspace>/iteration-1 \
-  --skill-name "<name>" \
-  --static /tmp/<skill-name>-review.html
-```
-
-Skip `aggregate_benchmark` unless both with-skill and baseline runs exist. Prefer **human judgment** for Copilot evals; programmatic assertions and `agents/grader.md` apply only when outputs are saved to disk and graded in a separate step. Collect feedback in chat after each eval or batch; optionally document in `feedback.json` per the shared schema.
-
-**Description optimization:** shared Step 3 (`run_loop.py`) is **not available** in Copilot — manual path only (shared Steps 1, 2, and 4). Write descriptions that state both **what** the skill does and **when** Copilot should use it — include file types, task phrases, and adjacent scenarios. Skills load when Copilot matches the skill `description` to the user's request.
+- **Agent surfaces with concurrent subagent/task dispatch** (e.g. VS Code Copilot agent/SDK): run independent with-skill + baseline eval pairs concurrently per **Test prompts and evaluation**, saving artifacts under `<workspace>/iteration-1/eval-<ID>/` and generating `<workspace>/<skill-name>-review.html` via `eval-viewer/generate_review.py --static` when Python is available.
+- **Single-session chat surfaces** (no subagent dispatch): run a **qualitative, sequential** loop — write `evals/evals.json` and `eval_metadata.json`, send each prompt sequentially in chat (saving file outputs under `with_skill/outputs/`), optionally compare informally in a fresh session without the skill (`without_skill/outputs/`), and review in chat or via `generate_review.py --static <workspace>/<skill-name>-review.html` (skip `aggregate_benchmark` unless both arms exist).
+- **Description optimization:** `run_loop.py` is not available in Copilot — use the manual path (shared Steps 1, 2, and 4), stating both **what** the skill does and **when** Copilot should load it.

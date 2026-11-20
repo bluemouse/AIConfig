@@ -48,7 +48,7 @@ import yaml
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal
+from typing import Literal, TypeVar
 
 # The CLI must import on hosts without python3-tk (containers, minimal WSL,
 # headless CI) — only the GUI mode needs tkinter, so a missing install
@@ -305,15 +305,17 @@ class Bundle:
 # Backward-compatible alias.
 SkillBundle = Bundle
 
+_T = TypeVar("_T")
+
 
 def bundle_selection_state(
-    members: Sequence[str],
-    selected: Callable[[str], bool],
+    members: Sequence[_T],
+    selected: Callable[[_T], bool],
 ) -> BundleSelectionState:
     """Return whether all, none, or some bundle members are selected."""
     if not members:
         return "none"
-    selected_count = sum(1 for name in members if selected(name))
+    selected_count = sum(1 for member in members if selected(member))
     if selected_count == 0:
         return "none"
     if selected_count == len(members):
@@ -346,8 +348,8 @@ def format_selection_help(
 def bundle_help_entries(
     bundles: Sequence[Bundle],
     *,
-    present_members: Callable[[Bundle], Sequence[str]],
-    is_selected: Callable[[str], bool],
+    present_members: Callable[[Bundle], Sequence[_T]],
+    is_selected: Callable[[_T], bool],
 ) -> list[tuple[str, str]]:
     """Return display name and description tuples for bundles with any selected members."""
     entries: list[tuple[str, str]] = []
@@ -1097,10 +1099,16 @@ def load_scripts_descriptions(names: Sequence[str]) -> dict[str, str]:
     return descriptions
 
 
-def validate_target(source: Path, target: Path, *, create: bool) -> Path:
+def validate_target(
+    source: Path,
+    target: Path,
+    *,
+    create: bool,
+    allow_self: bool = False,
+) -> Path:
     target = target.resolve()
     source = source.resolve()
-    if target == source:
+    if target == source and not allow_self:
         raise InstallerError("Target cannot be the AIConfig repository root.")
     if source in target.parents:
         raise InstallerError(
@@ -1313,14 +1321,45 @@ def remove_path(path: Path) -> None:
         path.unlink()
 
 
+# Non-runtime directory names and file globs omitted by copy_path.
+# Twin site: skills/skill-creator/scripts/install_portable_skill.py
+# (IGNORE_DIR_NAMES, IGNORE_FILE_GLOBS) — keep the union identical.
+COPY_IGNORE_PATTERNS = (
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".mypy_cache",
+    ".hypothesis",
+    "node_modules",
+    "testdata",
+    "fixtures",
+    "evals",
+    "*.pyc",
+    "*.pyo",
+    "*.skill",
+    ".DS_Store",
+    ".coverage",
+    ".coverage.*",
+    "eval-queries.json",
+    "SOURCES.md",
+    "conftest.py",
+    "test_*.py",
+    "*_test.py",
+)
+
+
 def copy_path(src: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     if src.is_dir():
         # fd-010: never ship interpreter caches — stale .pyc bytecode in a
         # target shadows the freshly installed .py until the mtime/hash
         # revalidation happens to run. The bootstrap skill installer filters
-        # the same names (make_copy_ignore); keep the sets in sync.
-        shutil.copytree(src, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        # the same names (make_copy_ignore); keep COPY_IGNORE_PATTERNS in sync.
+        shutil.copytree(
+            src,
+            dest,
+            ignore=shutil.ignore_patterns(*COPY_IGNORE_PATTERNS),
+        )
     elif src.is_file():
         shutil.copy2(src, dest)
     else:
@@ -1379,18 +1418,23 @@ def warn_unpaired_agent_skill(
     if not agent_path.is_file():
         return
     agent_md = agent_path.read_text(encoding="utf-8", errors="replace")
-    paired_skill_dir = target_root / SHARED_SKILL_DIR.format(name=slug)
-    skill_in_install_set = slug in {slugify_name(s) for s in skills}
-    if (
-        ".agents/skills/" in agent_md
-        and not paired_skill_dir.is_dir()
-        and not skill_in_install_set
-    ):
-        result.warnings.append(
-            f"agent {slug}: references a skill under .agents/skills/ but the "
-            f"paired skill is not in this install set — also pass "
-            f"--skills {slug} so the agent's skill reference resolves"
-        )
+    install_set = {slugify_name(s) for s in skills}
+    referenced = sorted(
+        {
+            ref
+            for ref in re.findall(r"\.agents/skills/([a-z0-9-]+)(?:/|\b)", agent_md)
+            if not ref.startswith(COMMAND_SKILL_DIR_PREFIX)
+            and not ref.startswith(GUIDELINE_SKILL_PREFIX)
+        }
+    )
+    for ref_slug in referenced:
+        ref_dir = target_root / SHARED_SKILL_DIR.format(name=ref_slug)
+        if not ref_dir.is_dir() and ref_slug not in install_set:
+            result.warnings.append(
+                f"agent {slug}: references skill {ref_slug} under .agents/skills/ "
+                f"but it is not installed and not in this install set — also pass "
+                f"--skills {ref_slug} so the agent's skill reference resolves"
+            )
 
 
 def install_items(
@@ -1404,12 +1448,18 @@ def install_items(
     guidelines: Sequence[str] = (),
     override: bool = False,
     dry_run: bool = False,
+    allow_self: bool = False,
 ) -> OperationResult:
     result = OperationResult()
     # A dry run previews an operation on a real project: the target must
     # exist and nothing is ever created (create=False mirrors the uninstall
     # and purge precedent).
-    target_root = validate_target(source_root, target_root, create=not dry_run)
+    effective_allow_self = bool(
+        allow_self and (scripts or guidelines) and not (skills or agents or commands)
+    )
+    target_root = validate_target(
+        source_root, target_root, create=not dry_run, allow_self=effective_allow_self
+    )
 
     # Skills and command-skills share .agents/skills/: a name passed as both
     # installs once (the command pass would otherwise see the skill pass's
@@ -1778,13 +1828,19 @@ def uninstall_items(
     scripts: Sequence[str] = (),
     guidelines: Sequence[str] = (),
     dry_run: bool = False,
+    allow_self: bool = False,
 ) -> OperationResult:
     result = OperationResult()
     # validate_target owns missing-target handling (create=False raises for
     # an absent target) — a teardown of a non-existent project is an error,
     # consistent with purge; a scripted uninstall of a missing target should
     # fail loudly rather than report an empty success.
-    target_root = validate_target(REPO_ROOT, target_root, create=False)
+    effective_allow_self = bool(
+        allow_self and (scripts or guidelines) and not (skills or agents or commands)
+    )
+    target_root = validate_target(
+        REPO_ROOT, target_root, create=False, allow_self=effective_allow_self
+    )
 
     for name in skills:
         slug = slugify_name(name)
@@ -1967,6 +2023,7 @@ def run_operation(
     uninstall: bool = False,
     override: bool = False,
     dry_run: bool = False,
+    allow_self: bool = False,
 ) -> tuple[int, str]:
     if not skills and not agents and not commands and not scripts and not guidelines:
         raise InstallerError("Select at least one skill, agent, command, scripts, or guideline.")
@@ -1980,6 +2037,7 @@ def run_operation(
             scripts=scripts,
             guidelines=guidelines,
             dry_run=dry_run,
+            allow_self=allow_self,
         )
     else:
         result = install_items(
@@ -1992,6 +2050,7 @@ def run_operation(
             guidelines=guidelines,
             override=override,
             dry_run=dry_run,
+            allow_self=allow_self,
         )
 
     message = format_result(result, uninstall=uninstall, dry_run=dry_run)
@@ -2058,7 +2117,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help=(
             "Command names to install or uninstall (default: all discovered "
             "commands). Commands install as command-skills under "
-            ".agents/skills/<name>/ with disable-model-invocation: true."
+            ".agents/skills/cmd-<name>/ with disable-model-invocation: true."
         ),
     )
     parser.add_argument(
@@ -2096,10 +2155,10 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help=(
             "Remove the target's pre-single-root install leftovers: .ai/, "
             ".cursor/skills|commands|agents/, .github/prompts/, "
-            ".github/skills/, .claude/commands/, and .claude/skills/ only "
-            "when it is a real directory (the bridge symlink is left alone). "
-            "Composes with the kind selectors or runs standalone; requires "
-            "TARGET."
+            ".github/skills/, .claude/commands/, .agents/guidelines/, and "
+            ".claude/skills/ only when it is a real directory (the bridge "
+            "symlink is left alone). Composes with the kind selectors or "
+            "runs standalone; requires TARGET."
         ),
     )
     parser.add_argument(
@@ -2179,6 +2238,17 @@ def run_cli(argv: Sequence[str]) -> int:
             for purge_message in purge_messages:
                 print(purge_message)
             return 1 if purge_failed else 0
+        explicit_self_regenerable_only = bool(
+            (args.scripts or args.guidelines)
+            and not (
+                bundle_ids
+                or args.dev_workflow
+                or args.skills
+                or args.agents
+                or args.commands
+                or args.purge_legacy
+            )
+        )
         code, message = run_operation(
             target=target,
             skills=selection.skills,
@@ -2189,6 +2259,7 @@ def run_cli(argv: Sequence[str]) -> int:
             uninstall=args.uninstall,
             override=args.override,
             dry_run=args.dry_run,
+            allow_self=explicit_self_regenerable_only,
         )
     except InstallerError as exc:
         # cr-009: a purge already happened irreversibly before this error —
@@ -2518,7 +2589,8 @@ class InstallerApp:
         for item in items:
             var = tk.BooleanVar(value=False)
             var_map[item] = var
-            var.trace_add("write", lambda *_args: self._on_selection_changed())
+            if var_map is not self.guideline_vars:
+                var.trace_add("write", lambda *_args: self._on_selection_changed())
             button = ttk.Checkbutton(inner, text=item, variable=var)
             button.pack(anchor=tk.W)
             if descriptions is not None:
@@ -2530,16 +2602,16 @@ class InstallerApp:
             ttk.Label(inner, text="(none discovered)").pack(anchor=tk.W)
 
     def _set_all(self, var_map: dict[str, tk.BooleanVar], value: bool) -> None:
-        for var in var_map.values():
-            var.set(value)
-
-    def _set_all_skills(self, value: bool) -> None:
         self._syncing_bundle_selection = True
         try:
-            self._set_all(self.skill_vars, value)
+            for var in var_map.values():
+                var.set(value)
         finally:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
+
+    def _set_all_skills(self, value: bool) -> None:
+        self._set_all(self.skill_vars, value)
 
     def _effective_bundles(self) -> list[Bundle]:
         bundles = list(self.skill_bundles)
@@ -2584,33 +2656,27 @@ class InstallerApp:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
 
-    def _toggle_bundle(self, bundle: Bundle) -> None:
-        # Collect all present members across all kinds to determine the toggle state.
-        all_present: list[str] = []
-        member_var_pairs: list[tuple[list[str], dict[str, tk.BooleanVar]]] = []
+    def _bundle_present_vars(self, bundle: Bundle) -> list[tk.BooleanVar]:
+        """Return every present BooleanVar across all member kinds in bundle."""
+        vars_list: list[tk.BooleanVar] = []
         for members, var_map in self._bundle_member_pairs(bundle):
-            present = self._bundle_present_members(members, var_map)
-            all_present.extend(present)
-            member_var_pairs.append((present, var_map))
-        if not all_present:
+            for name in self._bundle_present_members(members, var_map):
+                vars_list.append(var_map[name])
+        return vars_list
+
+    def _toggle_bundle(self, bundle: Bundle) -> None:
+        present_vars = self._bundle_present_vars(bundle)
+        if not present_vars:
             return
-        state = bundle_selection_state(all_present, lambda name: self._member_is_selected(name, bundle))
+        state = bundle_selection_state(present_vars, lambda var: var.get())
         new_value = bundle_toggle_target_state(state)
         self._syncing_bundle_selection = True
         try:
-            for present, var_map in member_var_pairs:
-                for name in present:
-                    var_map[name].set(new_value)
+            for var in present_vars:
+                var.set(new_value)
         finally:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
-
-    def _member_is_selected(self, name: str, bundle: Bundle) -> bool:
-        """Return True if a bundle member is currently checked in its var_map."""
-        for members, var_map in self._bundle_member_pairs(bundle):
-            if name in var_map:
-                return var_map[name].get()
-        return False
 
     def _toggle_target_bundle(self) -> None:
         if self._target_bundle is None:
@@ -2710,13 +2776,8 @@ class InstallerApp:
             button = self._bundle_buttons.get(bundle.id)
             if button is None:
                 continue
-            all_present: list[str] = []
-            for members, var_map in self._bundle_member_pairs(bundle):
-                all_present.extend(self._bundle_present_members(members, var_map))
-            state = bundle_selection_state(
-                all_present,
-                lambda name: self._member_is_selected(name, bundle),
-            )
+            present_vars = self._bundle_present_vars(bundle)
+            state = bundle_selection_state(present_vars, lambda var: var.get())
             self._apply_bundle_toggle_state(button, state)
 
         target_button = self._bundle_buttons.get(TARGET_BUNDLE_ID)
@@ -2805,32 +2866,13 @@ class InstallerApp:
         self._show_help_window("Guidelines — Help", content)
 
     def _show_bundles_help(self) -> None:
-        def present(bundle: Bundle) -> Sequence[str]:
-            names: list[str] = []
-            for members, var_map in self._bundle_member_pairs(bundle):
-                names.extend(self._bundle_present_members(members, var_map))
-            return names
-
         entries = bundle_help_entries(
             self._effective_bundles(),
-            present_members=present,
-            is_selected=lambda name: self._member_is_selected_any(name),
+            present_members=self._bundle_present_vars,
+            is_selected=lambda var: var.get(),
         )
         content = format_selection_help(entries, empty_message="No bundles selected.")
         self._show_help_window("Bundles — Help", content)
-
-    def _member_is_selected_any(self, name: str) -> bool:
-        """Return True if name is checked in any var_map."""
-        for var_map in (
-            self.skill_vars,
-            self.agent_vars,
-            self.command_vars,
-            self.scripts_vars,
-        ):
-            var = var_map.get(name)
-            if var is not None and var.get():
-                return True
-        return False
 
     def _run(self) -> None:
         target_text = self.target_var.get().strip()

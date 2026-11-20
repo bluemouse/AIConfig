@@ -49,15 +49,25 @@ import unittest
 from pathlib import Path
 
 # Allow importing checks/ whether run as a script or module.
-sys.path.insert(0, str(Path(__file__).resolve().parent / "dev-workflow"))
+HARNESS_DIR = Path(__file__).resolve().parent / "dev-workflow"
+sys.path.insert(0, str(HARNESS_DIR))
+for _mod_name in [
+    k for k in list(sys.modules)
+    if k in {"checks", "check_pre_phase", "record_baseline"} or k.startswith("checks.")
+]:
+    _mod_file = getattr(sys.modules[_mod_name], "__file__", "") or ""
+    if str(HARNESS_DIR) not in _mod_file:
+        del sys.modules[_mod_name]
 
 from checks import artifact_checks  # type: ignore[import-not-found]
+from checks import backward_edge_checks  # type: ignore[import-not-found]
 from checks import handoff_checks  # type: ignore[import-not-found]
 from checks import loop_checks  # type: ignore[import-not-found]
 from checks import manifest_checks  # type: ignore[import-not-found]
 from checks import mode_checks  # type: ignore[import-not-found]
 from checks import verdicts  # type: ignore[import-not-found]
 import check_pre_phase  # type: ignore[import-not-found]
+import record_baseline  # type: ignore[import-not-found]
 
 
 def _make_run_dir(tmpdir: str, manifest: str = "# Run Manifest\n\n## Run metadata\n- Run mode: linear\n") -> Path:
@@ -852,6 +862,505 @@ class BackwardPacketStageIndexedSourceTests(unittest.TestCase):
             self.assertTrue(
                 any("cr-999" in f.message for f in findings),
                 f"Bogus cr-999 against stage-indexed source must be flagged: {[f.message for f in findings]}",
+            )
+
+
+class PorcelainZDirtyPathTests(unittest.TestCase):
+    """t-009 / C-08: git status --porcelain -z detects renamed and spaced edits."""
+
+    @staticmethod
+    def _git(repo_root: Path, *args: str) -> None:
+        subprocess.run(
+            ["git", "--no-pager", "-c", "user.email=test@example.com", "-c", "user.name=Test", *args],
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_renamed_and_spaced_dirty_paths_detected_in_readonly_phase(self) -> None:
+        """Modifying a staged-renamed file (`git mv old.py new.py`) or a file
+        with spaces (`a b.py`) during a read-only `plan` phase is flagged."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir) / "repo"
+            repo_root.mkdir()
+            self._git(repo_root, "init", "-q")
+            (repo_root / "old.py").write_text("x = 1\n", encoding="utf-8")
+            (repo_root / "a b.py").write_text("s = 1\n", encoding="utf-8")
+            self._git(repo_root, "add", "old.py", "a b.py")
+            self._git(repo_root, "commit", "-qm", "initial")
+
+            # Pre-existing staged rename + dirty spaced file before `plan` starts.
+            self._git(repo_root, "mv", "old.py", "new.py")
+            (repo_root / "a b.py").write_text("s = 2\n", encoding="utf-8")
+
+            run_dir = Path(tmpdir) / "run"
+            run_dir.mkdir()
+            (run_dir / "00-run-manifest.md").write_text(
+                "# Run Manifest\n\n## Run metadata\n- Run mode: linear\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(record_baseline.record_baseline(run_dir, repo_root), 0)
+
+            # Unchanged since baseline -> clean.
+            self.assertEqual(
+                mode_checks.check_no_forbidden_source_edits(repo_root, "plan", run_dir),
+                [],
+            )
+
+            # Mutate both files during the read-only `plan` phase.
+            (repo_root / "new.py").write_text("x = 99\n", encoding="utf-8")
+            (repo_root / "a b.py").write_text("s = 99\n", encoding="utf-8")
+
+            findings = mode_checks.check_no_forbidden_source_edits(
+                repo_root, "plan", run_dir
+            )
+            messages = [f.message for f in findings if f.severity == "error"]
+            self.assertTrue(
+                any(m.endswith("modified source file: new.py") for m in messages),
+                f"Expected modified staged-renamed file 'new.py' to be flagged: {messages}",
+            )
+            self.assertTrue(
+                any(m.endswith("modified source file: a b.py") for m in messages),
+                f"Expected modified spaced file 'a b.py' to be flagged without quotes: {messages}",
+            )
+
+    def test_rename_into_agents_dir_caught_in_readonly_phase(self) -> None:
+        """cr-005(a): `git mv src.py .agents/stashed.py` during read-only `plan`
+        records the origin path `src.py` instead of hiding behind `.agents/`."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir) / "repo"
+            repo_root.mkdir()
+            self._git(repo_root, "init", "-q")
+            (repo_root / "src.py").write_text("value = 1\n", encoding="utf-8")
+            self._git(repo_root, "add", "src.py")
+            self._git(repo_root, "commit", "-qm", "initial")
+
+            run_dir = repo_root / ".agents" / "workflow" / "run"
+            run_dir.mkdir(parents=True)
+            (run_dir / "00-run-manifest.md").write_text(
+                "# Run Manifest\n\n## Run metadata\n- Run mode: linear\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(record_baseline.record_baseline(run_dir, repo_root), 0)
+
+            self._git(repo_root, "mv", "src.py", ".agents/stashed.py")
+
+            findings = mode_checks.check_no_forbidden_source_edits(
+                repo_root, "plan", run_dir
+            )
+            messages = [f.message for f in findings if f.severity == "error"]
+            self.assertTrue(
+                any(m.endswith("modified source file: src.py") for m in messages),
+                f"Expected origin path 'src.py' to be flagged on git mv into .agents/: {messages}",
+            )
+
+    def test_leading_space_filename_baseline_and_mutation(self) -> None:
+        """cr-005(b): a dirty file with a leading space (`' leading.py'`) recorded
+        at baseline is not falsely flagged when untouched and IS flagged when modified."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir) / "repo"
+            repo_root.mkdir()
+            self._git(repo_root, "init", "-q")
+            leading_file = repo_root / " leading.py"
+            leading_file.write_text("x = 1\n", encoding="utf-8")
+            self._git(repo_root, "add", "--", " leading.py")
+            self._git(repo_root, "commit", "-qm", "initial")
+
+            # Dirty before baseline.
+            leading_file.write_text("x = 2\n", encoding="utf-8")
+
+            run_dir = Path(tmpdir) / "run"
+            run_dir.mkdir()
+            (run_dir / "00-run-manifest.md").write_text(
+                "# Run Manifest\n\n## Run metadata\n- Run mode: linear\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(record_baseline.record_baseline(run_dir, repo_root), 0)
+
+            # Untouched since baseline -> no false positive.
+            self.assertEqual(
+                mode_checks.check_no_forbidden_source_edits(repo_root, "plan", run_dir),
+                [],
+            )
+
+            # Modified during read-only `plan` -> flagged.
+            leading_file.write_text("x = 3\n", encoding="utf-8")
+            findings = mode_checks.check_no_forbidden_source_edits(
+                repo_root, "plan", run_dir
+            )
+            messages = [f.message for f in findings if f.severity == "error"]
+            self.assertTrue(
+                any(m.endswith("modified source file:  leading.py") for m in messages),
+                f"Expected modified ' leading.py' to be flagged: {messages}",
+            )
+
+    def testparse_porcelain_z_status_codes_and_dedup(self) -> None:
+        """cr-005(c): direct `parse_porcelain_z` unit checks across porcelain-z codes."""
+        self.assertIs(
+            record_baseline.parse_porcelain_z,
+            mode_checks.parse_porcelain_z,
+        )
+        self.assertIs(
+            record_baseline.ORCHESTRATOR_OWNED,
+            mode_checks.ORCHESTRATOR_OWNED,
+        )
+        self.assertEqual(mode_checks.parse_porcelain_z(""), [])
+        self.assertEqual(
+            mode_checks.parse_porcelain_z("?? untracked.py\x00"),
+            ["untracked.py"],
+        )
+        self.assertEqual(
+            mode_checks.parse_porcelain_z(" M modified.py\x00"),
+            ["modified.py"],
+        )
+        self.assertEqual(
+            mode_checks.parse_porcelain_z(" D unstaged_del.py\x00"),
+            ["unstaged_del.py"],
+        )
+        self.assertEqual(
+            mode_checks.parse_porcelain_z("D  staged_del.py\x00"),
+            ["staged_del.py"],
+        )
+        self.assertEqual(
+            mode_checks.parse_porcelain_z("R  .agents/stashed.py\x00src/module.py\x00"),
+            [".agents/stashed.py", "src/module.py"],
+        )
+        self.assertEqual(
+            mode_checks.parse_porcelain_z(
+                "RM dest.py\x00orig.py\x00?? orig.py\x00"
+            ),
+            ["dest.py", "orig.py"],
+        )
+        self.assertEqual(
+            mode_checks.parse_porcelain_z("C  copied.py\x00origin_unchanged.py\x00"),
+            ["copied.py"],
+        )
+
+
+class BackwardEdgeStrictValidationTests(unittest.TestCase):
+    """t-010 / C-08: strict backward-edge count format, disk count, and field unwrapping."""
+
+    PACKET_TEMPLATE = (
+        "# Backward Handoff Packet\n\n"
+        "## Routing\n"
+        "- From phase: {from_phase}\n"
+        "- To phase: {to_phase}\n"
+        "- {count_line}\n\n"
+        "## Source finding\n"
+        "- Finding id: {finding_id}\n"
+        "- Severity: major\n"
+        "- Source artifact: {source_artifact}\n\n"
+        "## Root cause classification\n"
+        "- Classification: upstream\n\n"
+        "## What the target phase must resolve\n"
+        "- Issue: detail\n\n"
+        "## Context from the source phase\n"
+        "- What was attempted: detail\n"
+    )
+
+    def test_malformed_and_spoofed_backward_edge_counts_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = _make_run_dir(tmpdir)
+            # 1. Missing 'of 2' (previously bypassed check_backward_edge_cap silently).
+            malformed = run_dir / "back-implement-to-plan-1.md"
+            malformed.write_text(
+                self.PACKET_TEMPLATE.format(
+                    from_phase="implement",
+                    to_phase="plan",
+                    count_line="Backward edge count for target phase: 3",
+                    finding_id="ia-001",
+                    source_artifact="31-implementation-audit.md",
+                ),
+                encoding="utf-8",
+            )
+            malformed_findings = backward_edge_checks.check_backward_edge_cap(
+                run_dir, malformed
+            )
+            self.assertTrue(
+                any(f.severity == "error" for f in malformed_findings),
+                f"Malformed count missing 'of 2' must fail: {malformed_findings}",
+            )
+
+            # 2. Count 0 of 2 (< 1) must also fail.
+            zero_pkt = run_dir / "back-implement-to-plan-1.md"
+            zero_pkt.write_text(
+                self.PACKET_TEMPLATE.format(
+                    from_phase="implement",
+                    to_phase="plan",
+                    count_line="Backward edge count for target phase: 0 of 2",
+                    finding_id="ia-001",
+                    source_artifact="31-implementation-audit.md",
+                ),
+                encoding="utf-8",
+            )
+            zero_findings = backward_edge_checks.check_backward_edge_cap(
+                run_dir, zero_pkt
+            )
+            self.assertTrue(
+                any(f.severity == "error" for f in zero_findings),
+                f"Zero count '0 of 2' must fail: {zero_findings}",
+            )
+
+            # 3. 3rd packet on disk claiming '1 of 2' must fail disk cap check.
+            for idx in (1, 2, 3):
+                pkt = run_dir / f"back-implement-to-plan-{idx}.md"
+                pkt.write_text(
+                    self.PACKET_TEMPLATE.format(
+                        from_phase="implement",
+                        to_phase="plan",
+                        count_line="Backward edge count for target phase: 1 of 2",
+                        finding_id="ia-001",
+                        source_artifact="31-implementation-audit.md",
+                    ),
+                    encoding="utf-8",
+                )
+            spoofed_findings = backward_edge_checks.check_backward_edge_cap(
+                run_dir, run_dir / "back-implement-to-plan-3.md"
+            )
+            self.assertTrue(
+                any(f.severity == "error" for f in spoofed_findings),
+                f"3rd packet on disk claiming '1 of 2' must fail: {spoofed_findings}",
+            )
+
+    def test_backtick_wrapped_fields_parse_cleanly(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = _make_run_dir(tmpdir)
+            (run_dir / "40-code-review.md").write_text(
+                "# Code Review Report\n## Verdict\nneeds revision\n\n#### cr-001: issue\n",
+                encoding="utf-8",
+            )
+            packet = run_dir / "back-code-review-to-plan-1.md"
+            packet.write_text(
+                self.PACKET_TEMPLATE.format(
+                    from_phase="`code-review`",
+                    to_phase="**`plan`**",
+                    count_line="Backward edge count for target phase: `1 of 2`",
+                    finding_id="`cr-001`",
+                    source_artifact="`40-code-review.md`",
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(backward_edge_checks.run_all(run_dir, packet), [])
+            self.assertEqual(
+                handoff_checks.check_backward_packet_finding_exists(run_dir, packet),
+                [],
+            )
+
+            # Negative check: bogus backtick-wrapped finding id against backtick-wrapped source is caught.
+            packet.write_text(
+                self.PACKET_TEMPLATE.format(
+                    from_phase="`code-review`",
+                    to_phase="`plan`",
+                    count_line="Backward edge count for target phase: `1 of 2`",
+                    finding_id="`cr-999`",
+                    source_artifact="`40-code-review.md`",
+                ),
+                encoding="utf-8",
+            )
+            bogus = handoff_checks.check_backward_packet_finding_exists(run_dir, packet)
+            self.assertTrue(
+                any("cr-999" in f.message for f in bogus),
+                f"Bogus finding id in backticks must be flagged: {bogus}",
+            )
+
+    def test_empty_or_malformed_finding_id_rejected(self) -> None:
+        """cr-007: `Finding id: \\`\\`` (empty after strip) and non-conforming ids emit errors."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = _make_run_dir(tmpdir)
+            (run_dir / "40-code-review.md").write_text(
+                "# Code Review Report\n## Verdict\nneeds revision\n\n#### cr-001: issue\n",
+                encoding="utf-8",
+            )
+            packet = run_dir / "back-code-review-to-plan-1.md"
+            for bad_id in ("``", "****", "cr-12", "foo-001"):
+                packet.write_text(
+                    self.PACKET_TEMPLATE.format(
+                        from_phase="code-review",
+                        to_phase="plan",
+                        count_line="Backward edge count for target phase: 1 of 2",
+                        finding_id=bad_id,
+                        source_artifact="40-code-review.md",
+                    ),
+                    encoding="utf-8",
+                )
+                findings = handoff_checks.check_backward_packet_finding_exists(
+                    run_dir, packet
+                )
+                self.assertTrue(
+                    any(
+                        f.severity == "error" and "invalid finding id" in f.message
+                        for f in findings
+                    ),
+                    f"Malformed Finding id {bad_id!r} must emit error: {findings}",
+                )
+
+    def test_self_referential_traversal_and_missing_source_artifact_rejected(self) -> None:
+        """cr-007: self-referential, path-traversal, and missing `Source artifact:` emit errors."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "outside.md").write_text("cr-001\n", encoding="utf-8")
+            run_dir = root / "run"
+            run_dir.mkdir()
+            _make_run_dir(str(run_dir))
+
+            packet = run_dir / "back-code-review-to-plan-1.md"
+            for bad_source in (
+                "back-code-review-to-plan-1.md",
+                "../outside.md",
+                "/etc/hosts",
+                ".agents/workflow/x/40-code-review.md",
+            ):
+                packet.write_text(
+                    self.PACKET_TEMPLATE.format(
+                        from_phase="code-review",
+                        to_phase="plan",
+                        count_line="Backward edge count for target phase: 1 of 2",
+                        finding_id="cr-001",
+                        source_artifact=bad_source,
+                    ),
+                    encoding="utf-8",
+                )
+                findings = handoff_checks.check_backward_packet_finding_exists(
+                    run_dir, packet
+                )
+                self.assertTrue(
+                    any(
+                        f.severity == "error" and "invalid source artifact" in f.message
+                        for f in findings
+                    ),
+                    f"Invalid Source artifact {bad_source!r} must emit error: {findings}",
+                )
+
+            # Valid bare checker filename that does not exist in run_dir must error too.
+            packet.write_text(
+                self.PACKET_TEMPLATE.format(
+                    from_phase="code-review",
+                    to_phase="plan",
+                    count_line="Backward edge count for target phase: 1 of 2",
+                    finding_id="cr-001",
+                    source_artifact="40-code-review.md",
+                ),
+                encoding="utf-8",
+            )
+            missing_findings = handoff_checks.check_backward_packet_finding_exists(
+                run_dir, packet
+            )
+            self.assertTrue(
+                any(
+                    f.severity == "error"
+                    and "source artifact not found in run directory" in f.message
+                    for f in missing_findings
+                ),
+                f"Missing explicit Source artifact must emit error: {missing_findings}",
+            )
+
+    def test_noncanonical_packet_filename_and_external_dir_cap_enforced(self) -> None:
+        """cr-007: non-canonical `back-*.md` names fail filename validation and still
+        count toward `BACKWARD_EDGE_CAP`, as do pre-move packets in external dirs."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            run_dir = root / "run"
+            run_dir.mkdir()
+            _make_run_dir(str(run_dir))
+
+            for idx in (1, 2):
+                pkt = run_dir / f"back-implement-to-plan-{idx}.md"
+                pkt.write_text(
+                    self.PACKET_TEMPLATE.format(
+                        from_phase="implement",
+                        to_phase="plan",
+                        count_line=f"Backward edge count for target phase: {idx} of 2",
+                        finding_id="ia-001",
+                        source_artifact="31-implementation-audit.md",
+                    ),
+                    encoding="utf-8",
+                )
+
+            # 1. Extra-hyphen filename fails check_packet_filename AND counts toward cap (3 > 2).
+            retry_pkt = run_dir / "back-implement-to-plan-2-retry.md"
+            retry_pkt.write_text(
+                self.PACKET_TEMPLATE.format(
+                    from_phase="implement",
+                    to_phase="plan",
+                    count_line="Backward edge count for target phase: 2 of 2",
+                    finding_id="ia-001",
+                    source_artifact="31-implementation-audit.md",
+                ),
+                encoding="utf-8",
+            )
+            retry_findings = backward_edge_checks.run_all(run_dir, retry_pkt)
+            retry_msgs = [f.message for f in retry_findings if f.severity == "error"]
+            self.assertTrue(
+                any("filename does not match canonical" in m for m in retry_msgs),
+                f"Expected non-canonical filename error: {retry_msgs}",
+            )
+            self.assertTrue(
+                any("Backward edge cap exceeded on disk for plan: 3 > 2" in m for m in retry_msgs),
+                f"Expected extra-hyphen packet to count toward disk cap: {retry_msgs}",
+            )
+            retry_pkt.unlink()
+
+            # 2. Missing source phase (`back-to-plan-1.md`) and routing mismatch fail check_packet_filename.
+            missing_from = run_dir / "back-to-plan-1.md"
+            missing_from.write_text(
+                self.PACKET_TEMPLATE.format(
+                    from_phase="implement",
+                    to_phase="plan",
+                    count_line="Backward edge count for target phase: 1 of 2",
+                    finding_id="ia-001",
+                    source_artifact="31-implementation-audit.md",
+                ),
+                encoding="utf-8",
+            )
+            self.assertTrue(
+                any(
+                    f.severity == "error"
+                    for f in backward_edge_checks.check_packet_filename(run_dir, missing_from)
+                )
+            )
+            missing_from.unlink()
+
+            mismatched = run_dir / "back-code-review-to-plan-1.md"
+            mismatched.write_text(
+                self.PACKET_TEMPLATE.format(
+                    from_phase="implement",
+                    to_phase="plan",
+                    count_line="Backward edge count for target phase: 1 of 2",
+                    finding_id="ia-001",
+                    source_artifact="31-implementation-audit.md",
+                ),
+                encoding="utf-8",
+            )
+            self.assertTrue(
+                any(
+                    f.severity == "error" and "do not match" in f.message
+                    for f in backward_edge_checks.check_packet_filename(run_dir, mismatched)
+                )
+            )
+            mismatched.unlink()
+
+            # 3. External staging packet (outside run_dir) when run_dir already has 2 packets -> 3 > 2!
+            staging_dir = root / "staging"
+            staging_dir.mkdir()
+            external_pkt = staging_dir / "back-implement-to-plan-3.md"
+            external_pkt.write_text(
+                self.PACKET_TEMPLATE.format(
+                    from_phase="implement",
+                    to_phase="plan",
+                    count_line="Backward edge count for target phase: 2 of 2",
+                    finding_id="ia-001",
+                    source_artifact="31-implementation-audit.md",
+                ),
+                encoding="utf-8",
+            )
+            ext_findings = backward_edge_checks.check_backward_edge_cap(
+                run_dir, external_pkt
+            )
+            ext_msgs = [f.message for f in ext_findings if f.severity == "error"]
+            self.assertTrue(
+                any("Backward edge cap exceeded on disk for plan: 3 > 2" in m for m in ext_msgs),
+                f"External pre-move packet must not bypass disk cap: {ext_msgs}",
             )
 
 

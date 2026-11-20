@@ -22,56 +22,20 @@ edges for upstream root causes, artifact contracts, and mode enforcement.
    to build.
 
 3. Follow the orchestrator skill's **Starting a run** procedure:
-   - Create a feature slug.
-   - Create `.agents/workflow/<slug>/`.
-   - Write `00-run-manifest.md` and `01-feature-brief.md`.
-   - Activate clarify mode.
-   - Record the baseline: `python .agents/tools/dev-workflow/record_baseline.py --phase clarify --run-dir .agents/workflow/<slug>` (captures git HEAD and dirty paths so mode-enforcement checks can distinguish pre-existing changes from changes made during the phase).
-   - Run the pre-flight check.
-   - Start Phase 0 (Clarify loop).
+   - Create a feature slug and `.agents/workflow/<slug>/`.
+   - Write `00-run-manifest.md` (per `.agents/skills/dev-workflow-orchestrator/references/manifest-format.md`) and `01-feature-brief.md`.
+   - Activate clarify mode, record the baseline (`python .agents/tools/dev-workflow/record_baseline.py --phase clarify --run-dir .agents/workflow/<slug>`), run the pre-flight check, and start Phase 0 (Clarify).
 
-4. Continue following the orchestrator skill through all phases, loops, backward edges, and
-   validation checks until the workflow completes or escalates.
+4. Continue following the orchestrator skill through all phases, loops, backward edges, and validation checks until the workflow completes or escalates.
 
-5. **Stage-aware mode detection (after Plan phase):** When the Plan phase produces
-   `20-implementation-plan.md`, read the `Execution mode` field from §10. If
-   `Execution mode: staged`, write `Run mode: staged` to the manifest's `Run metadata`
-   section. The orchestrator will then use the staged iterator procedure for the
-   Implement phase (per-stage implement → audit → review → commit loop with stage-exit
-   review between stages and a final deep review after all stages). If `Execution mode:
-   linear` or absent, the manifest defaults to `Run mode: linear` and the standard
-   linear pipeline runs unchanged.
+5. **Stage-aware mode detection (after Plan phase):** Read `Execution mode` from `20-implementation-plan.md` §10. If `Execution mode: staged`, set `Run mode: staged` in `00-run-manifest.md` (`## Run metadata`) so Implement uses the staged iterator (per-stage implement → audit → review → commit, between-stage exit review, and final deep review). Otherwise default to `Run mode: linear`.
 
 ## Optional arguments
 
-If the user adds text after `/run-dev-workflow`, treat it as the requirement or feature
-description. If they mention a specific phase to resume from (e.g., "resume from plan"),
-read the existing run manifest and continue from that phase.
+Treat `$ARGUMENTS` after `/run-dev-workflow` as the requirement or feature description, or if it names a phase to resume (e.g., "resume from plan"), read `00-run-manifest.md` and continue from that phase.
 
-## Output
+## Output and guardrails
 
-The orchestrator provides ongoing updates as each phase progresses:
-- Phase started, round number
-- Verdict from each checker
-- Backward edges created and routed
-- Validation results
-- Final summary with commit hash (if completed)
-
-## On failure
-
-| Condition | Action |
-| --- | --- |
-| Run directory already exists for the slug | Ask whether to resume or start fresh with a new slug |
-| Pre-flight check fails | Report the missing artifacts and stop |
-| Validation error (non-overridable) | Report the error and stop |
-| Loop cap hit with no backward edge available | Present blocker summary and ask the user |
-| Backward edge cap hit | Present the blocker chain and ask the user |
-
-## Do not
-
-- Skip the pre-flight or post-flight checks
-- Let a phase write outside its allowed artifacts
-- Proceed past a validation error without a recorded justification
-- Exceed the backward edge cap of 2 without escalating to the user
-- Commit, push, or deploy unless the workflow reaches Phase 5 (Commit) and the user has
-  explicitly authorized the commit
+- **Output**: ongoing phase/round updates, checker verdicts, backward edges, validation results, and final summary with commit hash (when completed).
+- **On failure**: if `.agents/workflow/<slug>/` already exists, ask whether to resume or use a new slug; defer pre/post-flight, validation-error, loop-cap, and backward-edge-cap (2) handling to `dev-workflow-orchestrator`.
+- **Do not**: skip pre/post-flight checks, write outside phase-allowed artifacts, proceed past an unoverridden validation error, exceed the backward-edge cap (2), or commit/push/deploy before Phase 5 (Commit) with explicit user authorization.

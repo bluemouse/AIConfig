@@ -1,6 +1,6 @@
 ---
 name: usd-hydra2-dev
-description: "Source-grounded OpenUSD Hydra 2.0 development guidance for scene indices, data sources, schema authoring, filtering scene indices, dependency forwarding, retained scene indices, Hydra renderer and scene-index plugin integration, Hdx task-controller use, USD imaging pipelines, materials, transparency, instancing, dirty propagation, code review, API migration from Hydra 1.0, and compile-ready C++ snippets. Use when implementing, reviewing, debugging, designing, or documenting rendering functionality with OpenUSD Hydra 2.0, Hd, Hdx, USD imaging, plugInfo.json plugins, or Hydra renderer pipelines — even if the user does not say 'Hydra 2.0'. For API-agnostic renderer architecture (render graph, frames-in-flight, binding model), use gpu-rendering-guide. For Vulkan implementation details, use vulkan-dev."
+description: "Source-grounded OpenUSD Hydra 2.0 C++ guidance for scene indices, data sources, schemas, filtering/retained scene indices, dependency forwarding, Hd/Hdx plugins (`plugInfo.json`), USD imaging, materials, transparency, instancing, dirty propagation, and Hydra 1.0 migration. Defer generic renderer architecture to gpu-rendering-guide and Vulkan API details to vulkan-dev."
 ---
 
 # USD Hydra 2.0 Development
@@ -60,5 +60,3 @@ A correct implementation needs all four pieces:
 - canonical prim types and schema tokens,
 - thread-safe pull methods and datasource access,
 - precise enough `HdDataSourceLocatorSet` dirtying.
-
-Reference provenance and refresh workflow for this skill: [SOURCES.md](SOURCES.md).

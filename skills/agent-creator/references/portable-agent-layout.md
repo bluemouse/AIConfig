@@ -163,6 +163,7 @@ python skills/agent-creator/scripts/quick_validate.py --root /path/to/repo --nam
 ## Notes on portability
 
 - The two installed copies are real files; edits made in one do not propagate to the other. Prefer bootstrap + reinstall as the single edit point.
+- Modern VS Code GitHub Copilot compat-discovers `.claude/agents/*.md` in addition to `.github/agents/*.agent.md`, which can surface both entries in VS Code's subagent list; keep `.github/agents/<name>.agent.md` so GitHub.com coding agent and older Copilot surfaces continue to discover the agent.
 - Bootstrapped portable agents belong in `agents/<name>/`.
 - Tool-specific frontmatter such as `model`, `tools`, or `readonly` is not portable; keep it as prose in `## Tool notes` when the user wants per-tool variants.
 

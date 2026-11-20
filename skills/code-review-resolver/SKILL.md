@@ -1,6 +1,6 @@
 ---
 name: code-review-resolver
-description: "Use when resolving, fixing, or addressing code review findings classified as local — applying targeted code fixes only to the specific findings, running verification, and producing a fix report for re-review. Also classifies findings as upstream and emits backward handoff packets when the root cause traces to an earlier phase. Triggers on prompts to fix review findings, resolve code review issues, address review comments, or apply review fixes — even when the user doesn't say 'code review resolver'. Does not trigger on code review itself (code-reviewer), plan execution (plan-executor), debugging a reproducible defect (debugging-guide), or git commit (/commit)."
+description: "Resolve or fix code review findings — apply targeted fixes to local findings, verify them, emit a fix report for re-review, and route upstream root-cause findings via backward handoff packets ('fix review findings', 'address review comments'). Not for running code review (code-reviewer), plan execution, root-cause defect debugging, or git commits."
 ---
 
 # Code Review Resolver

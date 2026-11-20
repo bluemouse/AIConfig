@@ -9,7 +9,7 @@ Runs or prints likely verification commands for a plain Kotlin project.
 
 Modes:
   --quick    Run a compact compile/test/check pass. Default.
-  --full     Include clean/check plus configured lint/static-analysis tasks.
+  --full     Run check plus configured lint/static-analysis tasks.
   --dry-run  Print commands without executing them.
   --help     Show this help.
 
@@ -92,7 +92,6 @@ if [ -n "$GRADLE_CMD" ] && { [ -f build.gradle.kts ] || [ -f build.gradle ] || [
 
   COMMANDS=()
   if [ "$MODE" = full ]; then
-    if task_exists clean; then COMMANDS+=(clean); fi
     if task_exists check; then COMMANDS+=(check); fi
     if task_exists ktlintCheck; then COMMANDS+=(ktlintCheck); fi
     if task_exists detekt; then COMMANDS+=(detekt); fi

@@ -158,6 +158,35 @@ class UnpairedAgentSkillWarningTests(unittest.TestCase):
         self.assertEqual(source.count("ar-012:"), 2,
                          "the ar-012 comment should live in the helper and its call site")
 
+    def test_agent_warns_for_secondary_referenced_skill(self) -> None:
+        """C-09: warn when an agent's paired skill is installed, but another
+        skill referenced in its body (e.g. dev-workflow-orchestrator) is missing."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            target = Path(tmp) / "target"
+            source.mkdir()
+            target.mkdir()
+            write_source_skill(source, "code-reviewer")
+            for rel in (
+                Path(".claude") / "agents" / "code-reviewer.md",
+                Path(".github") / "agents" / "code-reviewer.agent.md",
+            ):
+                path = source / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(
+                    "---\nname: code-reviewer\ndescription: checker\n---\n\n"
+                    "Read `.agents/skills/dev-workflow-orchestrator/references/checker-subagent-contract.md`.\n"
+                    "Criteria: `.agents/skills/code-reviewer/SKILL.md`.\n",
+                    encoding="utf-8",
+                )
+
+            result = self._install(
+                source, target, skills=["code-reviewer"], agents=["code-reviewer"]
+            )
+            self.assertTrue(result.ok)
+            self.assertEqual(len(result.warnings), 1, result.warnings)
+            self.assertIn("--skills dev-workflow-orchestrator", result.warnings[0])
+
 
 if __name__ == "__main__":
     unittest.main()

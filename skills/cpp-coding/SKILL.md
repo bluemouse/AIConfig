@@ -1,6 +1,6 @@
 ---
 name: cpp-coding
-description: Write, review, and refactor modern C++20 code following C++ Core Guidelines — RAII, concepts, value semantics, and safe concurrency. Use when implementing C++ classes or functions, move constructors and move assignment, const-correct APIs, ranges and concept-constrained templates, reviewing C++ diffs for Core Guidelines violations, choosing between language alternatives (enum vs enum class, raw pointer vs smart pointer), refactoring C++ modules, or enforcing idiomatic C++20 style — even if the user says "C++ help" or "fix this C++ code" without naming a standard. Also use when writing or fixing C++ tests with GoogleTest/GoogleMock, CMake/CTest test targets, regression/coverage/sanitizer test builds, or failing and flaky gtest tests — even if the user says "add tests" or "this test is flaky" without naming a framework.
+description: "Write, review, and refactor modern C++20 code following C++ Core Guidelines — RAII, concepts, value/move semantics, const-correctness, ranges, smart pointers, and safe concurrency — plus C++ unit/regression testing with GoogleTest, GoogleMock, CTest, sanitizers, and flaky gtest triage ('C++ help', 'fix this C++ code', 'add C++ tests')."
 ---
 
 # C++ Coding (C++20)

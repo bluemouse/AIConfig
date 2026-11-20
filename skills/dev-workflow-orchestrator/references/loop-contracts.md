@@ -44,7 +44,7 @@ Each loop has a doer (produces), a checker (audits), a round cap, an exit condit
 | Exit (blocked) | verdict `blocked` → escalate immediately |
 | Feedback format | `pr-NNN` findings + Guide handoff packet |
 | Terminal labels | `validated`, `conditionally validated`, `needs revision`, `blocked`, `NOT READY` (cap hit) |
-| Escalation | `NOT READY` → root cause classification → backward edge to Research or ask user |
+| Escalation | `NOT READY` → root cause classification → backward edge to Research or Clarify, or ask user |
 | Root cause field | `root-cause-phase`: `local` / `research` / `clarify` (fundamentally ambiguous requirement — backward edge to Clarify) / `plan` / `implement` / `code-review` |
 
 ## Loop 3: Implement
@@ -59,7 +59,7 @@ Each loop has a doer (produces), a checker (audits), a round cap, an exit condit
 | Exit (blocked) | verdict `blocked` → escalate immediately |
 | Feedback format | `ia-NNN` findings + audit report |
 | Terminal labels | `pass`, `pass with risks`, `fail`, `blocked`, `NOT READY` (cap hit) |
-| Escalation | `NOT READY` → root cause classification → backward edge to Plan or Research, or ask user |
+| Escalation | `NOT READY` → root cause classification → backward edge to Plan, Research, or Clarify, or ask user |
 | Root cause field | `root-cause-phase`: `local` / `research` / `clarify` (fundamentally ambiguous requirement — backward edge to Clarify) / `plan` / `implement` / `code-review` |
 
 ## Loop 4: Code Review
@@ -68,12 +68,12 @@ Each loop has a doer (produces), a checker (audits), a round cap, an exit condit
 |---------|-------|
 | Doer | code-review-resolver |
 | Checker | code-reviewer |
-| Round cap | 5 |
+| Round cap | 5 (3 for staged per-stage light reviews inside Phase 3 Implement, governed by `LOOP_CAPS["implement"]`) |
 | Exit (accept) | verdict `ready to commit` or `ready with notes` |
 | Exit (revise) | verdict `needs revision` → code-review-resolver applies fixes |
 | Feedback format | `cr-NNN` findings + verdict field |
 | Terminal labels | `ready to commit`, `ready with notes`, `needs revision`, `NOT READY` (cap hit) |
-| Escalation | `NOT READY` → root cause classification → backward edge to Plan or Research, or ask user |
+| Escalation | `NOT READY` → root cause classification → backward edge to an earlier phase (Implement, Plan, Research, or Clarify per `root-cause-phase`), or ask user |
 | Root cause field | `root-cause-phase`: `local` / `research` / `clarify` (fundamentally ambiguous requirement — backward edge to Clarify) / `plan` / `implement` / `code-review` |
 | Round-1 ordering | Checker (code-reviewer) runs first on round 1 to produce findings; doer (code-review-resolver) runs first on round > 1 to apply prior fixes. The resolver requires findings as input, so a clean first pass has nothing to resolve. |
 
@@ -107,7 +107,7 @@ Runs after all stages commit, on the cumulative commit range. This is the full c
 | Exit (revise) | verdict `needs revision` → code-review-resolver applies fixes as new commits on top (fixes land as new commits on top, no amend/rebase) |
 | Feedback format | `cr-NNN` findings + verdict field |
 | Terminal labels | `ready to commit`, `ready with notes`, `needs revision`, `NOT READY` (cap hit) |
-| Escalation | `NOT READY` → root cause classification → backward edge to Plan or Research, or ask user |
+| Escalation | `NOT READY` → root cause classification → backward edge to an earlier phase (Implement, Plan, Research, or Clarify per `root-cause-phase`), or ask user |
 | Root cause field | `root-cause-phase`: `local` / `research` / `clarify` (fundamentally ambiguous requirement — backward edge to Clarify) / `plan` / `implement` / `code-review` |
 | Review scope | Cumulative commit range (`HEAD~N..HEAD` where N = number of stage commits) |
 | Review effort | `deep` |
@@ -136,4 +136,4 @@ For the Clarify loop (Loop 0), there is no round cap and no root-cause-phase fie
 
 Each phase can receive backward edges at most 2 times. After that, escalate to the user.
 
-The Clarify phase can also receive backward edges (from Research, when the requirement itself is fundamentally ambiguous). The same cap of 2 applies.
+The Clarify phase can also receive backward edges (from any later phase when the requirement itself is fundamentally ambiguous or contradictory). The same cap of 2 applies.

@@ -81,10 +81,10 @@ if exists_file "$git_dir/REVERT_HEAD"; then
 fi
 
 printf '\n%s\n' '== status porcelain v2 =='
-git status --porcelain=v2 --branch
+git --no-pager status --porcelain=v2 --branch
 
 printf '\n%s\n' '== unmerged paths =='
-unmerged=$(git diff --name-only --diff-filter=U)
+unmerged=$(git --no-pager diff --name-only --diff-filter=U)
 if [ -n "$unmerged" ]; then
   printf '%s\n' "$unmerged"
 else
@@ -92,7 +92,7 @@ else
 fi
 
 printf '\n%s\n' '== unmerged index stages =='
-stages=$(git ls-files -u)
+stages=$(git --no-pager ls-files -u)
 if [ -n "$stages" ]; then
   printf '%s\n' "$stages"
 else
@@ -100,5 +100,5 @@ else
 fi
 
 printf '\n%s\n' '== recent history =='
-git log -n 12 --date=short --pretty=format:'%h %ad %d %s'
+git --no-pager log -n 12 --date=short --pretty=format:'%h %ad %d %s'
 printf '\n'

@@ -1,6 +1,6 @@
 ---
 name: android-vulkan-dev
-description: vulkan-through-ndk gpu rendering guidance for android 16/api 36+ apps. use when designing, implementing, reviewing, or troubleshooting android vulkan renderers, native surfaces, swapchains, devices, queues, command buffers, render passes, dynamic rendering, shaders, spir-v, descriptor sets, synchronization, validation layers, android vulkan profiles, wide color, camera/media interop, painting engines, image filters, and gpu performance. use android-ndk-dev for cmake/jni/native-library integration and android-dev for kotlin app architecture, compose ui, permissions, and sdk camera/media flows.
+description: "Vulkan-through-NDK GPU rendering guidance for Android 16 (API 36+) apps: ANativeWindow/swapchain lifecycle, Android Vulkan Profiles, AHardwareBuffer camera/media interop, wide color, dynamic rendering, SPIR-V pipelines, synchronization, and GPU profiling. Defer CMake/JNI packaging to android-ndk-dev and app-layer Kotlin/Compose to android-dev."
 ---
 
 # Android Vulkan Dev

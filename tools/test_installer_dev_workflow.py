@@ -771,5 +771,267 @@ class GuideTravelsWithOrchestratorTests(unittest.TestCase):
         self.assertFalse(hasattr(mod, "discover_docs_in_project"))
 
 
+class GuiSharedSlugBundleStateTests(unittest.TestCase):
+    """C-04: unchecking an agent that shares a slug with a skill marks the bundle partial."""
+
+    def test_gui_bundle_partial_when_shared_slug_agent_unchecked(self) -> None:
+        if mod.tk is None:
+            self.skipTest("tkinter unavailable")
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            write_full_harness_source(source)
+            original_root = mod.REPO_ROOT
+            mod.REPO_ROOT = source
+            root = None
+            try:
+                try:
+                    root = mod.tk.Tk()
+                except mod.tk.TclError as exc:
+                    self.skipTest(f"no display for tkinter: {exc}")
+                root.withdraw()
+                app = mod.InstallerApp(root)
+                harness = next(b for b in app.skill_bundles if b.id == "dev-workflow-harness")
+
+                # Toggle bundle ON -> all skills, agents, commands, scripts checked.
+                app._toggle_bundle(harness)
+                self.assertTrue(app.skill_vars["code-reviewer"].get())
+                self.assertTrue(app.agent_vars["code-reviewer"].get())
+                button = app._bundle_buttons["dev-workflow-harness"]
+                self.assertIn("selected", button.state())
+
+                # Uncheck ONLY the agent sharing the 'code-reviewer' slug.
+                app.agent_vars["code-reviewer"].set(False)
+                self.assertTrue(app.skill_vars["code-reviewer"].get())
+                self.assertIn("alternate", button.state())
+                self.assertNotIn("selected", button.state())
+
+                # Clicking the partial bundle re-selects the missing agent instead of clearing all.
+                app._toggle_bundle(harness)
+                self.assertTrue(app.agent_vars["code-reviewer"].get())
+                self.assertTrue(app.skill_vars["code-reviewer"].get())
+            finally:
+                mod.REPO_ROOT = original_root
+                if root is not None:
+                    try:
+                        root.destroy()
+                    except mod.tk.TclError:
+                        pass
+
+    def test_headless_shared_slug_bundle_toggle_sync_and_help(self) -> None:
+        class _StubVar:
+            def __init__(self, value: bool = False, on_change=None) -> None:
+                self._value = value
+                self._on_change = on_change
+
+            def get(self) -> bool:
+                return self._value
+
+            def set(self, value: bool) -> None:
+                self._value = bool(value)
+                if self._on_change is not None:
+                    self._on_change()
+
+        class _StubButton:
+            def __init__(self) -> None:
+                self._flags: set[str] = set()
+
+            def state(self, specs: list[str] | None = None) -> tuple[str, ...]:
+                if specs is None:
+                    return tuple(sorted(self._flags))
+                for spec in specs:
+                    if spec.startswith("!"):
+                        self._flags.discard(spec[1:])
+                    else:
+                        self._flags.add(spec)
+                return tuple(sorted(self._flags))
+
+        app = mod.InstallerApp.__new__(mod.InstallerApp)
+        app._syncing_bundle_selection = False
+        app._target_bundle = None
+        app.skill_bundles = mod.load_skill_bundles()
+        harness = next(b for b in app.skill_bundles if b.id == "dev-workflow-harness")
+
+        sync_calls = 0
+        orig_sync = app._sync_bundle_toggles
+
+        def counted_sync() -> None:
+            nonlocal sync_calls
+            sync_calls += 1
+            orig_sync()
+
+        app._sync_bundle_toggles = counted_sync  # type: ignore[method-assign]
+        app.skill_vars = {
+            name: _StubVar(False, on_change=app._on_selection_changed)
+            for name in sorted(harness.skills)
+        }
+        app.agent_vars = {
+            name: _StubVar(False, on_change=app._on_selection_changed)
+            for name in sorted(harness.agents)
+        }
+        app.command_vars = {
+            name: _StubVar(False, on_change=app._on_selection_changed)
+            for name in sorted(harness.commands)
+        }
+        app.scripts_vars = {
+            name: _StubVar(False, on_change=app._on_selection_changed)
+            for name in sorted(harness.scripts)
+        }
+        app.guideline_vars = {}
+        app._bundle_buttons = {b.id: _StubButton() for b in app.skill_bundles}
+
+        with (
+            mock.patch.object(mod, "tk", None),
+            mock.patch.object(mod, "ttk", None),
+            mock.patch.object(app, "_show_help_window") as show_help,
+        ):
+            app._toggle_bundle(harness)
+            button = app._bundle_buttons["dev-workflow-harness"]
+            self.assertIn("selected", button.state())
+            self.assertNotIn("alternate", button.state())
+            self.assertTrue(app.skill_vars["code-reviewer"].get())
+            self.assertTrue(app.agent_vars["code-reviewer"].get())
+
+            # Uncheck ONLY the shared-slug agent -> partial state + partial help entry.
+            app.agent_vars["code-reviewer"].set(False)
+            self.assertTrue(app.skill_vars["code-reviewer"].get())
+            self.assertIn("alternate", button.state())
+            self.assertNotIn("selected", button.state())
+
+            app._show_bundles_help()
+            show_help.assert_called_once()
+            help_title, help_body = show_help.call_args.args
+            self.assertEqual(help_title, "Bundles — Help")
+            self.assertIn("Dev-workflow harness (partial)", help_body)
+
+            # Toggling a partial bundle re-selects all members.
+            app._toggle_bundle(harness)
+            self.assertTrue(app.agent_vars["code-reviewer"].get())
+            self.assertIn("selected", button.state())
+            self.assertNotIn("alternate", button.state())
+
+            # _set_all batches trace callbacks into a single _sync_bundle_toggles call.
+            before = sync_calls
+            app._set_all(app.agent_vars, False)
+            self.assertEqual(sync_calls - before, 1)
+            self.assertIn("alternate", button.state())
+
+
+class CopyPathIgnoreNonRuntimeTests(unittest.TestCase):
+    """C-12 / T-03 / cr-012: copy_path and install_portable_skill share exact non-runtime exclusions."""
+
+    @staticmethod
+    def _load_install_portable_skill():
+        ips_path = (
+            TOOLS_DIR.parent
+            / "skills"
+            / "skill-creator"
+            / "scripts"
+            / "install_portable_skill.py"
+        )
+        sibling_names = ("quick_validate", "scaffold_skill")
+        stashed = {
+            name: sys.modules.pop(name)
+            for name in sibling_names
+            if name in sys.modules
+        }
+        old_path = list(sys.path)
+        try:
+            sys.path.insert(0, str(ips_path.parent))
+            spec = importlib.util.spec_from_file_location(
+                "cr012_install_portable_skill", ips_path
+            )
+            if spec is None or spec.loader is None:
+                raise RuntimeError(f"Could not load {ips_path}")
+            ips_mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(ips_mod)
+            return ips_mod
+        finally:
+            sys.path[:] = old_path
+            for name in sibling_names:
+                sys.modules.pop(name, None)
+            sys.modules.update(stashed)
+
+    def test_copy_path_ignore_patterns_match_install_portable_skill(self) -> None:
+        ips_mod = self._load_install_portable_skill()
+        expected = ips_mod.IGNORE_DIR_NAMES | set(ips_mod.IGNORE_FILE_GLOBS)
+        self.assertEqual(set(mod.COPY_IGNORE_PATTERNS), expected)
+
+        captured_patterns: list[tuple[str, ...]] = []
+        real_ignore_patterns = mod.shutil.ignore_patterns
+
+        def spy_ignore_patterns(*patterns: str):
+            captured_patterns.append(patterns)
+            return real_ignore_patterns(*patterns)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp) / "src"
+            dest = Path(tmp) / "dest"
+            src.mkdir()
+            (src / "runtime.py").write_text("x = 1\n", encoding="utf-8")
+            with mock.patch.object(
+                mod.shutil, "ignore_patterns", side_effect=spy_ignore_patterns
+            ):
+                mod.copy_path(src, dest)
+
+        self.assertEqual(len(captured_patterns), 1)
+        self.assertEqual(set(captured_patterns[0]), expected)
+
+    def test_copy_path_excludes_non_runtime_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp) / "src"
+            dest = Path(tmp) / "dest"
+            for dirname in (
+                "__pycache__",
+                ".pytest_cache",
+                ".ruff_cache",
+                ".mypy_cache",
+                ".hypothesis",
+                "node_modules",
+                "testdata",
+                "fixtures",
+                "evals",
+            ):
+                (src / dirname).mkdir(parents=True)
+                (src / dirname / "artifact.txt").write_text("x", encoding="utf-8")
+            (src / "check_pre_phase.py").write_text("x = 1\n", encoding="utf-8")
+            (src / "test_dry_run.py").write_text("def test_x(): pass\n", encoding="utf-8")
+            (src / "helper_test.py").write_text("def test_y(): pass\n", encoding="utf-8")
+            (src / "conftest.py").write_text("pass\n", encoding="utf-8")
+            (src / ".DS_Store").write_text("ds", encoding="utf-8")
+            (src / ".coverage").write_text("cov", encoding="utf-8")
+            (src / ".coverage.worker1").write_text("cov", encoding="utf-8")
+            (src / "stale.skill").write_text("zip", encoding="utf-8")
+            (src / "cached.pyc").write_bytes(b"\x00")
+            (src / "cached.pyo").write_bytes(b"\x00")
+            (src / "eval-queries.json").write_text("[]", encoding="utf-8")
+            (src / "SOURCES.md").write_text("# Sources\n", encoding="utf-8")
+
+            mod.copy_path(src, dest)
+            self.assertTrue((dest / "check_pre_phase.py").is_file())
+            for excluded in (
+                "__pycache__",
+                ".pytest_cache",
+                ".ruff_cache",
+                ".mypy_cache",
+                ".hypothesis",
+                "node_modules",
+                "testdata",
+                "fixtures",
+                "evals",
+                "test_dry_run.py",
+                "helper_test.py",
+                "conftest.py",
+                ".DS_Store",
+                ".coverage",
+                ".coverage.worker1",
+                "stale.skill",
+                "cached.pyc",
+                "cached.pyo",
+                "eval-queries.json",
+                "SOURCES.md",
+            ):
+                self.assertFalse((dest / excluded).exists(), f"{excluded} must be excluded")
+
+
 if __name__ == "__main__":
     unittest.main()

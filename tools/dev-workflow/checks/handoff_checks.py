@@ -72,7 +72,9 @@ def check_plan_consumer_ready(run_dir: Path) -> list[Finding]:
     return findings
 
 
-def check_impl_report_consumer_ready(run_dir: Path) -> list[Finding]:
+def check_impl_report_consumer_ready(
+    run_dir: Path, stage: int | None = None
+) -> list[Finding]:
     """Check that the implementation report has sections code-reviewer needs."""
     findings: list[Finding] = []
     # Resolve the implementation report path, including stage-indexed variants
@@ -80,7 +82,7 @@ def check_impl_report_consumer_ready(run_dir: Path) -> list[Finding]:
     from . import artifact_checks
     staged = artifact_checks._is_staged_mode(run_dir)
     path = artifact_checks._resolve_artifact_path(
-        run_dir, "30-implementation-report.md", "implement", staged
+        run_dir, "30-implementation-report.md", "implement", staged, stage
     )
     if path is None:
         return []  # Already reported by artifact_checks
@@ -104,19 +106,48 @@ def check_backward_packet_finding_exists(run_dir: Path, packet_path: Path) -> li
         return []
 
     text = packet_path.read_text(encoding="utf-8")
-    finding_match = re.search(r"Finding id:\s*(\S+)", text, re.IGNORECASE)
+    finding_match = re.search(r"Finding id:[ \t]*(\S*)", text, re.IGNORECASE)
     if not finding_match:
         return []  # Already reported by backward_edge_checks
 
-    finding_id = finding_match.group(1).strip().lower()
+    raw_finding_id = finding_match.group(1)
+    finding_id = raw_finding_id.strip().strip("`*").lower()
+    if not re.fullmatch(r"(?:rr|pr|ia|cr)-\d{3}", finding_id):
+        findings.append(Finding(
+            severity="error",
+            check="handoff_integrity",
+            message=(
+                f"Backward packet {packet_path.name} has invalid finding id: "
+                f"{raw_finding_id!r}"
+            ),
+        ))
+        return findings
 
     # Determine the source artifact. Prefer the packet's own "Source artifact:"
     # field (authoritative); fall back to inferring from the filename prefix
     # for packets that don't declare it.
     source_artifact = None
-    source_match = re.search(r"Source artifact:\s*(\S+)", text, re.IGNORECASE)
-    if source_match:
-        source_artifact = source_match.group(1).strip()
+    source_match = re.search(r"Source artifact:[ \t]*(\S*)", text, re.IGNORECASE)
+    if source_match is not None:
+        raw_source = source_match.group(1)
+        source_artifact = raw_source.strip().strip("`*")
+        if (
+            not source_artifact
+            or Path(source_artifact).name != source_artifact
+            or ".." in source_artifact
+            or "/" in source_artifact
+            or "\\" in source_artifact
+            or not source_artifact.startswith(("11-", "21-", "31-", "40-"))
+        ):
+            findings.append(Finding(
+                severity="error",
+                check="handoff_integrity",
+                message=(
+                    f"Backward packet {packet_path.name} has invalid source artifact: "
+                    f"{raw_source!r}"
+                ),
+            ))
+            return findings
 
     if source_artifact is None:
         # Fallback: infer from the packet filename prefix.
@@ -142,7 +173,16 @@ def check_backward_packet_finding_exists(run_dir: Path, packet_path: Path) -> li
         run_dir, source_artifact, "code-review", staged
     )
     if source_path is None:
-        return []
+        if source_match is not None:
+            findings.append(Finding(
+                severity="error",
+                check="handoff_integrity",
+                message=(
+                    f"Backward packet {packet_path.name}: source artifact not found "
+                    f"in run directory: {source_artifact}"
+                ),
+            ))
+        return findings
 
     source_text = source_path.read_text(encoding="utf-8")
     if finding_id not in source_text.lower():
@@ -157,7 +197,9 @@ def check_backward_packet_finding_exists(run_dir: Path, packet_path: Path) -> li
     return findings
 
 
-def run_all(run_dir: Path, phase: str) -> list[Finding]:
+def run_all(
+    run_dir: Path, phase: str, stage: int | None = None
+) -> list[Finding]:
     """Run handoff integrity checks for a phase's forward handoff."""
     findings: list[Finding] = []
     if phase == "research":
@@ -165,5 +207,5 @@ def run_all(run_dir: Path, phase: str) -> list[Finding]:
     elif phase == "plan":
         findings.extend(check_plan_consumer_ready(run_dir))
     elif phase == "implement":
-        findings.extend(check_impl_report_consumer_ready(run_dir))
+        findings.extend(check_impl_report_consumer_ready(run_dir, stage))
     return findings

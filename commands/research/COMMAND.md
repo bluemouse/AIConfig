@@ -5,43 +5,20 @@ description: Research phase loop when the user explicitly invokes /research.
 
 # Dev Workflow Research
 
-Run **only the Research phase** (Loop 1) of the dev-workflow harness to acceptance or
-escalation, without driving the full pipeline. Loads the `dev-workflow-orchestrator`
-skill's Phase 1 procedure and the `research-guide` / `research-reviewer` skills.
+Run **only the Research phase** (Loop 1) of the dev-workflow harness to acceptance or escalation, loading `dev-workflow-orchestrator`, `research-guide`, and `research-reviewer`.
 
 ## Steps
 
-1. Read and follow the **dev-workflow-orchestrator** skill
-   (`.agents/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill), specifically
-   the **Within a phase (the loop)** standard procedure for Phase 1 (Research). Treat
-   `/research` as the explicit start signal — proceed without asking for a second
-   confirmation. This command carries only the Research-phase delta; the orchestrator
-   owns the loop mechanics (baseline, pre-flight, doer/checker passes, post-flight,
-   verdict routing, backward edges, manifest pin refresh) and its
-   `references/loop-contracts.md` owns the contract details.
+1. Read and follow `.agents/skills/dev-workflow-orchestrator/SKILL.md` (**Within a phase (the loop)** for Phase 1); `/research` is the explicit start signal. This command carries only the Research delta — the orchestrator owns baseline, pre/post-flight, doer/checker passes, verdict routing, backward edges, validation handling, and manifest pin refresh (`references/loop-contracts.md`).
 
-2. **Resolve the run directory** (one of):
-   - **Explicit slug**: if the user passes `<slug>`, use `.agents/workflow/<slug>/`.
-   - **Auto-detect**: if no slug is given and exactly one run dir exists under
-     `.agents/workflow/`, use it. If zero or multiple run dirs exist, error and ask the user
-     to pass an explicit `<slug>`.
-   - **Bootstrap**: if no slug is given and no run dir exists, create a feature slug
-     (kebab-case) from the user's argument, create `.agents/workflow/<slug>/`, write
-     `01-feature-brief.md` from the argument, and write a minimal `02-requirement-ledger.md`
-     with the required sections (`# Requirement Ledger`, `## Outcome`, `## Scope`,
-     `## Acceptance criteria`, `## Assumptions` — per `artifact_checks.py`
-     `PHASE_ARTIFACTS["clarify"]`). Skip the Clarify phase.
+2. **Resolve `.agents/workflow/<slug>/`**:
+   - **Explicit `<slug>`**: use `.agents/workflow/<slug>/` (if missing, report and stop).
+   - **Auto-detect**: if no `<slug>` and one run dir exists under `.agents/workflow/`, use it; if zero or multiple exist (when not bootstrapping), ask for `<slug>`.
+   - **Bootstrap**: if no `<slug>` and no run dir exists, derive a kebab-case slug from `$ARGUMENTS`, create `.agents/workflow/<slug>/`, write `01-feature-brief.md`, and write `02-requirement-ledger.md` (`# Requirement Ledger`, `## Outcome`, `## Scope`, `## Acceptance criteria`, `## Assumptions`). Skip Clarify.
 
-3. **Read or write the manifest**: if the run dir exists, read `00-run-manifest.md`;
-   if bootstrapping, write a minimal one (`Run status: in-progress`, `Current phase:
-   research`, all phases `not-started` except Research `in-progress`, artifact registry
-   seeded with `01-feature-brief.md` and `02-requirement-ledger.md`) plus a `## Dispatch
-   log` section recording `Dispatch mode: native` or `delegated` per the orchestrator's
-   capability detection (`references/dispatch-modes.md`); default to delegated and say
-   so when the capability cannot be inspected, and record `Evaluated at: bootstrap`.
-   Never use `skipped` or `fragment` as status values — they fail `manifest_checks.py`.
+3. **Manifest**: read `00-run-manifest.md`, or on bootstrap write it per `.agents/skills/dev-workflow-orchestrator/references/manifest-format.md` with `# Run Manifest`, `## Run metadata` (`Run status: in-progress`, `Current phase: research`), `## Phase status` (Research `in-progress`, others `not-started`), `## Artifact registry` (`01-feature-brief.md`, `02-requirement-ledger.md`), and `## Dispatch log` recording `Dispatch mode: native` or `delegated` per `references/dispatch-modes.md` (default to delegated and say so when uninspectable) plus `Evaluated at: bootstrap`. Never use `skipped` or `fragment`.
 
-4. **Run the Phase 1 loop** with this delta:
+4. **Run the Phase 1 loop**:
 
    | Field | Value |
    | --- | --- |
@@ -51,28 +28,11 @@ skill's Phase 1 procedure and the `research-guide` / `research-reviewer` skills.
    | Accept verdicts | `ready`, `conditionally ready` (then `validate_phase.py --phase research`) |
    | Revise verdicts | `needs revision` — `local` loops to the round cap; non-local creates a backward packet per Backward targets |
    | Blocked | `blocked` → escalate immediately with a blocker summary and stop |
-   | Backward targets | `clarify` only (packet `back-research-to-clarify-<n>.md`; no `/clarify` command exists — instruct the user to run `/run-dev-workflow` or resolve manually) |
+   | Backward targets | `clarify` only (packet `back-research-to-clarify-<n>.md`; no `/clarify` command — run `/run-dev-workflow` or resolve manually) |
    | Mode | Read-only source access; write only `10-*.md` and `11-*.md`; no editing source, tests, configs, or committing |
 
-5. **Output**: phase started and round number; verdict from research-reviewer; backward
-   edge created and routed (if any); validation results; final summary (manifest phase
-   status, terminal artifact `10-research-report.md`).
+## Output and guardrails
 
-## On failure
-
-| Condition | Action |
-| --- | --- |
-| Run directory not found | Report and stop |
-| Pre-flight check fails | Report the missing artifacts and stop |
-| Validation error (non-overridable) | Report the error and stop |
-| Loop cap (5) hit with no backward edge available | Present blocker summary and ask the user |
-| Backward edge cap (2) hit | Present the blocker chain and ask the user |
-
-## Do not
-
-- Skip the pre-flight or post-flight checks
-- Let the phase write outside its allowed artifacts (`10-*.md`, `11-*.md`)
-- Proceed past a validation error without a recorded justification
-- Exceed the backward edge cap of 2 without escalating to the user
-- Commit, push, or deploy
-- Run phases other than Research
+- **Output**: phase/round, research-reviewer verdict, backward edge routed (if any), validation result, manifest phase status, and `10-research-report.md`.
+- **On failure**: defer pre/post-flight, validation-error, round-cap (5), and backward-edge-cap (2) handling to `dev-workflow-orchestrator`.
+- **Do not**: write outside `10-*.md` / `11-*.md`, edit source/tests/configs, commit/push/deploy, skip pre/post-flight or validation rules, or run phases other than Research.

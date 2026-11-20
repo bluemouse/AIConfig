@@ -1,6 +1,6 @@
 ---
 name: research-guide
-description: "Use when interactively researching, brainstorming, or hardening a feature idea, product concept, app design, technical spec, requirement set, architecture direction, or roadmap item before implementation planning — through iterative agreement gates until a finalized research report is ready. Triggers on prompts to research an idea, brainstorm requirements, explore alternatives, author a spec, clarify trade-offs, validate assumptions, define scope, repair a research report from reviewer feedback, or produce a research report — even when the user doesn't say 'research'. Does not trigger on implementation plan authoring, plan-reviewer audit, research-report audit, code diff review, or codebase learning guides (code-professor)."
+description: "Interactively research, brainstorm, or harden a feature idea, product concept, technical spec, requirement set, or architecture direction through agreement gates into a finalized research report, or repair one from reviewer feedback. Not for implementation plan authoring (plan-guide), report/plan audits, code diff review, or codebase learning guides (code-professor)."
 ---
 
 # Research Guide

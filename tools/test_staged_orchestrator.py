@@ -125,6 +125,13 @@ class StagedLoopContractsTests(unittest.TestCase):
             "loop-contracts.md must document Loop 6 (Final deep review)",
         )
 
+    def test_staged_in_stage_review_cap_synced_between_skill_and_contracts(self) -> None:
+        """cr-002: SKILL.md and loop-contracts.md agree on cap 3 for staged per-stage light reviews."""
+        skill_text = ORCHESTRATOR_PATH.read_text(encoding="utf-8")
+        contracts_text = LOOP_CONTRACTS_PATH.read_text(encoding="utf-8")
+        self.assertIn("in-stage review loop (cap 3", skill_text)
+        self.assertIn("3 for staged per-stage light reviews", contracts_text)
+
 
 class StagedPermissionMatrixTests(unittest.TestCase):
     """Permission matrix staged-mode extension."""

@@ -1,6 +1,6 @@
 ---
 name: qt-ui-guide
-description: Guide, design, and review desktop UI/UX for Qt 6 C++ Widgets applications and Qt Widgets Designer .ui files. Use for UI/UX questions, screenshot or mockup critiques, reviews of QWidget or .ui code, desktop workflow and component redesigns, UI specifications, or creating and editing Qt Designer XML. Apply desktop interaction design, layouts, keyboard access, accessibility, platform conventions, model/view, high-DPI, localization, and maintainable C++ integration. This skill covers Widgets and Designer, not Qt Quick/QML implementation.
+description: "Design, critique, and review desktop UI/UX for Qt 6 C++ Widgets apps and Qt Designer `.ui` XML: layouts, keyboard access, accessibility, model/view, high-DPI, localization, UI specs, and screenshot/mockup critiques (Widgets/Designer only, no QML/Qt Quick)."
 ---
 
 # Qt UI Guide

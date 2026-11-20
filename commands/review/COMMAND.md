@@ -5,73 +5,33 @@ description: Code Review phase loop when the user explicitly invokes /review.
 
 # Dev Workflow Review
 
-Run **only the Code Review phase** (Loop 4) of the dev-workflow harness to acceptance or
-escalation, without driving the full pipeline. Loads the `dev-workflow-orchestrator`
-skill's Phase 4 procedure and the `code-review-resolver` / `code-reviewer` skills.
+Run **only the Code Review phase** (Loop 4) of the dev-workflow harness to acceptance or escalation, loading `dev-workflow-orchestrator`, `code-review-resolver`, and `code-reviewer`.
 
 ## Steps
 
-1. Read and follow the **dev-workflow-orchestrator** skill
-   (`.agents/skills/dev-workflow-orchestrator/SKILL.md` or the installed tool skill), specifically
-   the **Within a phase (the loop)** standard procedure for Phase 4 (Code Review). Treat
-   `/review` as the explicit start signal — proceed without asking for a second
-   confirmation. This command carries only the Code-Review-phase delta; the orchestrator
-   owns the loop mechanics and its `references/loop-contracts.md` owns the contract
-   details.
+1. Read and follow `.agents/skills/dev-workflow-orchestrator/SKILL.md` (**Within a phase (the loop)** for Phase 4); `/review` is the explicit start signal. This command carries only the Code Review delta — the orchestrator owns loop mechanics, validation handling, and manifest pin refresh (`references/loop-contracts.md`).
 
-2. **Resolve the run directory** (one of):
-   - **Explicit slug**: if the user passes `<slug>`, use `.agents/workflow/<slug>/`.
-   - **Auto-detect**: if no slug is given and exactly one run dir exists under
-     `.agents/workflow/`, use it. If zero or multiple run dirs exist, error and ask the user
-     to pass an explicit `<slug>`.
-   - **Bootstrap**: if no slug is given and no run dir exists, first check the working
-     tree: if `git diff --stat` produces no output (clean working tree), report "No
-     changes to review — working tree is clean" and stop. Otherwise, create a feature
-     slug (kebab-case), create `.agents/workflow/<slug>/`, synthesize
-     `30-implementation-report.md` from the working-tree diff with the heading
-     `# Implementation Report` plus a one-paragraph summary, a files-changed list from
-     `git diff --stat`, and a `## Verification status` section with the body `unverified`.
-     Write a minimal `00-run-manifest.md` (`Run status: in-progress`, `Current phase:
-     code-review`, all phases `not-started` except Code Review `in-progress`) plus a
-     `## Dispatch log` section recording `Dispatch mode: native` or `delegated` per the
-     orchestrator's capability detection; default to delegated and say so when
-     uninspectable. Never use `skipped` or `fragment` as status values — they fail
-     `manifest_checks.py`.
+2. **Resolve `.agents/workflow/<slug>/` and manifest**:
+   - **Explicit `<slug>`**: use `.agents/workflow/<slug>/` and read `00-run-manifest.md` (if missing, report and stop).
+   - **Auto-detect**: if no `<slug>` and one run dir exists under `.agents/workflow/`, use it; if zero or multiple exist (when not bootstrapping), ask for `<slug>`.
+   - **Bootstrap**: if no `<slug>` and no run dir exists, first check `git status --porcelain`: if it produces no output (clean working tree), report "No changes to review — working tree is clean" and stop. Otherwise, create `.agents/workflow/<slug>/`, synthesize `30-implementation-report.md` with `# Implementation Report`, a summary paragraph, an explicit `## Files changed` section (populated from `git status --short` / `git diff HEAD --stat`), and `## Verification status` (`unverified`). Write `00-run-manifest.md` per `.agents/skills/dev-workflow-orchestrator/references/manifest-format.md` with `# Run Manifest`, `## Run metadata` (`Run status: in-progress`, `Current phase: code-review`), `## Phase status` (Code Review `in-progress`, others `not-started`), `## Artifact registry` (`30-implementation-report.md`), and `## Dispatch log` recording `Dispatch mode: native` or `delegated` per `references/dispatch-modes.md` (default to delegated and say so when uninspectable) plus `Evaluated at: bootstrap`. Never use `skipped` or `fragment`.
 
-3. **Run the Phase 4 loop** with this delta:
+3. **Run the Phase 4 loop**:
 
    | Field | Value |
    | --- | --- |
-   | Ordering | **Round 1: checker first** (code-reviewer runs on a clean pass — there are no findings to resolve yet); round > 1: doer first, then checker re-reviews |
-   | Doer | `code-review-resolver`, input findings from `40-code-review.md` (and the working-tree diff), output `41-fix-report.md` |
-   | Checker | `code-reviewer`, input `30-implementation-report.md` (and the working-tree diff), output `40-code-review.md` |
+   | Ordering | **Round 1: checker first** (`code-reviewer` runs first; round > 1: `code-review-resolver` applies fixes, then `code-reviewer` re-reviews) |
+   | Doer | `code-review-resolver`, input findings from `40-code-review.md` (and working-tree diff), output `41-fix-report.md` |
+   | Checker | `code-reviewer`, input `30-implementation-report.md` (and working-tree diff), output `40-code-review.md` |
    | Round cap | 5 |
    | Accept verdicts | `ready to commit`, `ready with notes` (then `validate_phase.py --phase code-review`) |
    | Revise verdicts | `needs revision` — `local` loops to the round cap; non-local creates a backward packet per Backward targets |
-   | Backward targets | `plan` or `research` (packet `back-code-review-to-<target>-<n>.md` → user runs `/plan <slug>` or `/research <slug>`) and `clarify` (`back-code-review-to-clarify-<n>.md` → no `/clarify` command; `/run-dev-workflow` or manual) |
-   | Blocked | code-reviewer emits no `blocked` verdict (an empty or unreachable diff yields `ready to commit`); if the artifact nonetheless carries one, treat it as an invalid verdict: report the mismatch and stop |
-   | Mode | Write source only to fix review findings (via code-review-resolver); write to `40-*.md` and `41-*.md`; run tests and builds; no committing, pushing, deploying, or scope expansion beyond findings |
+   | Backward targets | `implement`, `plan`, or `research` (`back-code-review-to-<target>-<n>.md` → `/implement <slug>`, `/plan <slug>`, or `/research <slug>`) and `clarify` (`back-code-review-to-clarify-<n>.md` → `/run-dev-workflow` or manual) |
+   | Blocked | `code-reviewer` emits no `blocked` verdict; if an artifact carries one, report the invalid verdict and stop |
+   | Mode | Write source only to fix review findings (via `code-review-resolver`); write `40-*.md` and `41-*.md`; run tests/builds; no committing, pushing, deploying, or scope expansion |
 
-4. **Output**: phase started and round number; verdict from code-reviewer; backward
-   edge created and routed (if any); validation results; final summary (manifest phase
-   status, terminal artifact `40-code-review.md`).
+## Output and guardrails
 
-## On failure
-
-| Condition | Action |
-| --- | --- |
-| Run directory not found | Report and stop |
-| Clean working tree (no diff) on bootstrap | Report "No changes to review — working tree is clean" and stop |
-| Pre-flight check fails | Report the missing artifacts and stop |
-| Validation error (non-overridable) | Report the error and stop |
-| Loop cap (5) hit with no backward edge available | Present blocker summary and ask the user |
-| Backward edge cap (2) hit | Present the blocker chain and ask the user |
-
-## Do not
-
-- Skip the pre-flight or post-flight checks
-- Let the phase write outside its allowed artifacts (`40-*.md`, `41-*.md`) and finding fixes
-- Proceed past a validation error without a recorded justification
-- Exceed the backward edge cap of 2 without escalating to the user
-- Commit, push, deploy, or expand scope beyond findings
-- Run phases other than Code Review
+- **Output**: phase/round, code-reviewer verdict, backward edge routed (if any), validation result, manifest phase status, and `40-code-review.md`.
+- **On failure**: on bootstrap with a clean working tree (`git status --porcelain` empty), report "No changes to review — working tree is clean" and stop; defer pre/post-flight, validation-error, round-cap (5), and backward-edge-cap (2) handling to `dev-workflow-orchestrator`.
+- **Do not**: write outside finding fixes and `40-*.md` / `41-*.md`, expand scope beyond findings, commit/push/deploy, skip pre/post-flight or validation rules, or run phases other than Code Review.

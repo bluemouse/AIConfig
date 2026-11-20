@@ -1,6 +1,6 @@
 ---
 name: research-reviewer
-description: "Run an isolated, fresh-context audit of a research report as a read-only subagent, with no access to the researcher's reasoning. Use when independence from the doer matters, when dispatched by the dev-workflow orchestrator in native mode, or when a fresh-context review of a research report for planning readiness, gaps, evidence quality, and risk awareness is needed before implementation planning. Produces a structured review-report with a verdict. Does not trigger on brainstorming new ideas, codebase learning guides (code-professor), implementation plan authoring (plan-guide), plan-reviewer audit, or code diff review."
+description: "Run an isolated, fresh-context audit of a research report as a read-only subagent, checking planning readiness, gaps, evidence quality, and risks standalone or in dev-workflow native mode; emits a review report with verdict. Excludes initial brainstorming, codebase guides, plan authoring/review, or diff review."
 ---
 
 # Research Reviewer (isolated subagent)
@@ -10,8 +10,10 @@ Isolated, read-only checker for the dev-workflow **research** phase.
 ## Read first
 
 Read and follow `.agents/skills/dev-workflow-orchestrator/references/checker-subagent-contract.md`
-— it defines the task packet, the fresh-context discipline, the verdict-heading forms,
-the finding format, and the boundaries. This file carries only this agent's delta.
+when present — it defines the task packet, fresh-context discipline, verdict-heading
+forms, finding format, and boundaries (if invoked standalone outside a harness install
+where that file is absent, apply read-only fresh-context discipline directly and follow
+the skill criteria below). This file carries only this agent's delta.
 
 ## Role
 

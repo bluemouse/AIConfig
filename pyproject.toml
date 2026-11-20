@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+pythonpath = ["skills/skill-creator", "skills/qt-ui-guide/scripts"]
+norecursedirs = [".*", "__pycache__", "testdata", "fixtures"]

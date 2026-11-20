@@ -26,5 +26,5 @@ Best-practice article:
 - Include Java interop only where it affects plain Kotlin/JVM correctness: platform types, arrays, `Optional`, annotations, and API shape.
 - Do not include Ktor, Spring, Android, Compose, KMP source sets, Kotlin/Native memory model, Kotlin/JS, browser, WebAssembly, backend deployment, or framework architecture.
 - Prefer progressive references instead of one large `SKILL.md` so the active model can load only the topic needed.
-- Testing (test design, coroutine tests, flaky-test triage) is in scope in this skill — see the Testing section of [SKILL.md](../SKILL.md) and [coroutine-testing.md](coroutine-testing.md)/[debugging-flaky-tests.md](debugging-flaky-tests.md); [debugging.md](debugging.md) covers compiler/runtime/performance debugging only.
-- Gradle build engineering is owned by [gradle-dev](../../gradle-dev/SKILL.md); [tooling.md](tooling.md) covers toolchain rules, `kotlinc`, dependency hygiene, and the check script.
+- Testing (test design, coroutine tests, flaky-test triage) is in scope in this skill — see the Testing section of [SKILL.md](SKILL.md) and [coroutine-testing.md](references/coroutine-testing.md)/[debugging-flaky-tests.md](references/debugging-flaky-tests.md); [debugging.md](references/debugging.md) covers compiler/runtime/performance debugging only.
+- Gradle build engineering is owned by [gradle-dev](../gradle-dev/SKILL.md); [tooling.md](references/tooling.md) covers toolchain rules, `kotlinc`, dependency hygiene, and the check script.

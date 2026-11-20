@@ -1,6 +1,6 @@
 ---
 name: techdoc-reviewer
-description: "Review, verify, and synchronize technical documentation for software projects. Use when asked to review README, API, build, architecture, design, runbook, tutorial, migration, troubleshooting, or developer documentation; verify documentation against code, tests, schemas, configuration, build files, examples, or CI; find stale, conflicting, missing, unsafe, or non-executable docs; assess documentation impact of a commit, branch, PR, or diff; or update docs after an implementation change. Prioritize evidence-backed semantic drift and reader-blocking omissions over grammar or style. Complements code-reviewer: use this skill for documentation truth and coverage, and code-reviewer for defects in the implementation diff."
+description: "Review, verify, and synchronize technical documentation (README, API, build, architecture, runbook, migration, or developer docs) against code, tests, schemas, configs, and CI. Use to find stale, conflicting, missing, unsafe, or non-executable docs, assess doc impact of a diff/PR, or update docs after code changes. Does not trigger on code-defect diff review (code-reviewer), authoring tutorials from scratch (tutorial-writer), or codebase onboarding (code-professor)."
 ---
 
 # Technical Documentation Reviewer
@@ -160,6 +160,8 @@ For deep reviews, parallelize only independent evidence passes — separate docu
 independently verifiable claim groups — giving each pass its document paths, purpose/audience,
 evidence targets, and required finding fields from the report template. Keep conflict
 reconciliation, cross-document deduplication, severity assignment, and the synchronization
-decision in the parent review; never split one tightly coupled workflow across agents. GitHub
-Copilot has no parallel dispatch: run independent claim groups sequentially with separate
+decision in the parent review; never split one tightly coupled workflow across agents. In
+GitHub Copilot, when the active surface exposes concurrent subagent/task dispatch (e.g.
+VS Code Copilot agent/SDK), run independent claim groups concurrently per the rule above;
+when the surface exposes only single-session chat, run them sequentially with separate
 evidence notes, and do not skip reconciliation or executable-procedure verification.

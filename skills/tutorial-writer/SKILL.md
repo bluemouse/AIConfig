@@ -1,6 +1,6 @@
 ---
 name: tutorial-writer
-description: Write, revise, and review example-driven technical tutorials, getting-started guides, practical walkthroughs, API or SDK lessons, and user guides for software products, libraries, frameworks, developer tools, and technical concepts. Use when a reader needs to achieve a concrete outcome, from a beginner quickstart through realistic or production use. Build a progressive, runnable example; show observable results; use only source-backed technical claims; and critique existing guides for learning flow, accuracy, and verification.
+description: "Write, revise, and critique example-driven technical tutorials, quickstarts, walkthroughs, SDK lessons, and user guides — building progressive runnable examples with observable outcomes and source-backed claims."
 ---
 
 # Tutorial Writer
@@ -105,4 +105,3 @@ Before delivering a tutorial, guide, or review, confirm:
 
 - [references/tutorial-patterns.md](references/tutorial-patterns.md) — example
   ladder, visual selector, review rubric, anti-patterns
-- [SOURCES.md](SOURCES.md) — provenance notes

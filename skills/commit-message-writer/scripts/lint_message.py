@@ -27,7 +27,7 @@ import re
 import sys
 
 SUBJECT_PREFIX_RE = re.compile(
-    r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([a-z0-9_-]+\))?: "
+    r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9_./-]+\))?!?: "
 )
 
 SUBJECT_MAX_LEN = 72
@@ -38,7 +38,7 @@ SUBJECT_MAX_LEN = 72
 _BANNED: tuple[tuple[re.Pattern[str], str], ...] = (
     # Run-artifact id grammar (harness task/finding/refinement ids and the
     # letter+digit id classes used by review runs).
-    (re.compile(r"\b(?:cr|fdr|pg|df|sx|pr2?|rr|dfcr|lo)-\d"), "run-artifact id"),
+    (re.compile(r"\b(?:cr|ia|fdr|pg|df|sx|pr2?|rr|dfcr|lo)-\d"), "run-artifact id"),
     (re.compile(r"\bt-\d+[ab]?\b"), "test task id"),
     (re.compile(r"\bR\d{1,2}\b(?!\.)"), "refinement id"),
     (re.compile(r"\b[FDCGAE]\d\d\b"), "finding id"),
@@ -52,7 +52,7 @@ _BANNED: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"user[- ](?:decision|approved)"), "user-approval narration"),
     (re.compile(r"deep review"), "review narration"),
     (re.compile(r"review fix"), "review narration"),
-    (re.compile(r"\bfindings?\b"), "review narration"),
+    (re.compile(r"\bfindings?\s+(?:[A-Z]{1,4}\d|(?:cr|ia|fdr|pg|df|sx|pr2?|rr|dfcr|lo)-\d)|\b(?:review|audit)\s+findings?\b|\bfresh[- ]review\b"), "review narration"),
     (re.compile(r"as planned|as discussed|per the (?:plan|review)"), "planning-artifact reference"),
 )
 
@@ -100,11 +100,15 @@ def main() -> int:
         return 2
 
     violations = lint_message_text(text)
-    if violations:
+    warnings = [v for v in violations if v.endswith("(warning-tier)")]
+    errors = [v for v in violations if not v.endswith("(warning-tier)")]
+    if errors:
         print("COMMIT MESSAGE LINT FAILED:", file=sys.stderr)
-        for violation in violations:
+        for violation in errors + warnings:
             print(f"  - {violation}", file=sys.stderr)
         return 1
+    for warning in warnings:
+        print(f"WARNING: {warning}", file=sys.stderr)
     print("COMMIT MESSAGE LINT PASSED")
     return 0
 

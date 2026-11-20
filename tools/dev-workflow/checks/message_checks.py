@@ -4,8 +4,8 @@ Lint commit messages made during a phase against the commit-message
 self-containment contract: no ephemeral planning/review ids, no run
 narration, a Conventional Commits subject within 72 characters, and no
 attribution footers. The rules mirror the commit-message-writer skill's
-message-style contract (references/message-style-contract.md, "Self-contained
-messages"): a commit message must be readable from the repository alone, and
+message-style contract (skills/commit-message-writer/SKILL.md, "Message rules"
+— Self-contained): a commit message must be readable from the repository alone, and
 finding/task/stage ids carry meaning only inside the run artifacts that
 define them.
 
@@ -37,7 +37,7 @@ LINT_PHASES = {"implement", "code-review", "commit"}
 
 # Conventional Commits subject prefix.
 SUBJECT_PREFIX_RE = re.compile(
-    r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([a-z0-9_-]+\))?: "
+    r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9_./-]+\))?!?: "
 )
 
 SUBJECT_MAX_LEN = 72
@@ -48,7 +48,7 @@ SUBJECT_MAX_LEN = 72
 _BANNED: tuple[tuple[re.Pattern[str], str], ...] = (
     # Run-artifact id grammar (harness task/finding/refinement ids and the
     # letter+digit id classes used by review runs).
-    (re.compile(r"\b(?:cr|fdr|pg|df|sx|pr2?|rr|dfcr|lo)-\d"), "run-artifact id"),
+    (re.compile(r"\b(?:cr|ia|fdr|pg|df|sx|pr2?|rr|dfcr|lo)-\d"), "run-artifact id"),
     (re.compile(r"\bt-\d+[ab]?\b"), "test task id"),
     (re.compile(r"\bR\d{1,2}\b(?!\.)"), "refinement id"),
     (re.compile(r"\b[FDCGAE]\d\d\b"), "finding id"),
@@ -62,7 +62,7 @@ _BANNED: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"user[- ](?:decision|approved)"), "user-approval narration"),
     (re.compile(r"deep review"), "review narration"),
     (re.compile(r"review fix"), "review narration"),
-    (re.compile(r"\bfindings?\b"), "review narration"),
+    (re.compile(r"\bfindings?\s+(?:[A-Z]{1,4}\d|(?:cr|ia|fdr|pg|df|sx|pr2?|rr|dfcr|lo)-\d)|\b(?:review|audit)\s+findings?\b|\bfresh[- ]review\b"), "review narration"),
     (re.compile(r"as planned|as discussed|per the (?:plan|review)"), "planning-artifact reference"),
 )
 
@@ -166,7 +166,7 @@ def check_commit_messages(run_dir: Path, phase: str, repo_root: Path | None = No
     for sha, message in commits:
         for violation in lint_message_text(message):
             findings.append(Finding(
-                severity="error",
+                severity="warning" if violation.endswith("(warning-tier)") else "error",
                 check="commit_message",
                 message=f"commit {sha[:8]}: {violation}",
             ))

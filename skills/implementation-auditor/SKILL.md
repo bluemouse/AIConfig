@@ -1,6 +1,6 @@
 ---
 name: implementation-auditor
-description: "Use when auditing an implementation for requirement coverage and fresh test/build evidence after code changes, bug fixes, or plan execution — producing a compact evidence-weighted audit report. Triggers on correctness audits, requirement mapping, test-gap analysis, and completion checks before claiming done. Does not trigger on active local merge/rebase integration verification (git-merge-guide), diff review (code-reviewer), plan authoring (plan-guide), pre-execution plan audit (plan-reviewer), plan execution (plan-executor), codebase learning guides (code-professor), or strict TDD coaching (test-driven-dev-guide)."
+description: "Audit an implementation for requirement coverage, test gaps, and fresh test/build evidence after code changes, bug fixes, or plan execution before claiming done — producing an evidence-weighted audit report. Not for diff review (code-reviewer), merge/rebase verification (git-merge-guide), plan authoring/review/execution, codebase learning, or TDD coaching."
 ---
 
 # Implementation Auditor

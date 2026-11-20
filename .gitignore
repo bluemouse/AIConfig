@@ -33,7 +33,7 @@ node_modules/
 *.swp
 *~
 
-# IDE (user-local; keep .cursor/ and .github/ project config tracked)
+# IDE (user-local; keep .cursor/ project config tracked; .github/ is generated below)
 .idea/
 *.sublime-*
 
@@ -56,9 +56,8 @@ timing.json
 #   skills  -> python skills/skill-creator/scripts/install_portable_skill.py
 #   agents  -> python skills/agent-creator/scripts/install_portable_agent.py
 #   commands-> python skills/command-creator/scripts/install_portable_command.py
-#   scripts -> python tools/installer.py <target> --scripts dev-workflow
-#   guidelines -> python tools/installer.py <target> --guidelines <name>
+#   scripts -> python tools/installer.py . --scripts dev-workflow --override
+#   guidelines -> python tools/installer.py . --guidelines <name> --override
 .agents/
-.claude/
 .claude/
 .github/

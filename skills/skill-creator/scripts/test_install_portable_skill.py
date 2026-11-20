@@ -12,40 +12,46 @@ import unittest
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
-AGENT_SCRIPTS_DIR = SCRIPTS_DIR.parents[1] / "agent-creator" / "scripts"
-for path in (str(AGENT_SCRIPTS_DIR), str(SCRIPTS_DIR)):
-    while path in sys.path:
-        sys.path.remove(path)
-sys.path.insert(0, str(SCRIPTS_DIR))
-
-
-def load_module(name: str, path: Path):
-    spec = importlib.util.spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Could not load module from {path}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-for mod_name in (
+_SIBLING_MODULES = (
     "quick_validate",
     "install_portable_skill",
     "scaffold_skill",
-    "create_agent",
-    "install_portable_agent",
-):
-    sys.modules.pop(mod_name, None)
+    "package_skill",
+)
 
-install_mod = load_module(
-    "install_portable_skill_test",
-    SCRIPTS_DIR / "install_portable_skill.py",
-)
-scaffold_mod = load_module(
-    "scaffold_skill_test",
-    SCRIPTS_DIR / "scaffold_skill.py",
-)
+
+def _load_skill_modules():
+    stashed = {
+        mod_name: sys.modules.pop(mod_name)
+        for mod_name in _SIBLING_MODULES
+        if mod_name in sys.modules
+    }
+    old_path = list(sys.path)
+    try:
+        sys.path.insert(0, str(SCRIPTS_DIR))
+
+        def _load(name: str, path: Path):
+            spec = importlib.util.spec_from_file_location(name, path)
+            if spec is None or spec.loader is None:
+                raise RuntimeError(f"Could not load module from {path}")
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[name] = module
+            spec.loader.exec_module(module)
+            return module
+
+        return (
+            _load("install_portable_skill_test", SCRIPTS_DIR / "install_portable_skill.py"),
+            _load("scaffold_skill_test", SCRIPTS_DIR / "scaffold_skill.py"),
+            _load("package_skill_test", SCRIPTS_DIR / "package_skill.py"),
+        )
+    finally:
+        sys.path[:] = old_path
+        for mod_name in _SIBLING_MODULES:
+            sys.modules.pop(mod_name, None)
+        sys.modules.update(stashed)
+
+
+install_mod, scaffold_mod, package_mod = _load_skill_modules()
 
 install_portable_skill = install_mod.install_portable_skill
 parse_args = install_mod.parse_args
@@ -369,6 +375,115 @@ class InstallPortableSkillTests(unittest.TestCase):
             self.assertFalse((root / ".ai").exists())
             self.assertFalse((root / ".cursor").exists())
             self.assertFalse((root / ".claude").exists())
+
+    def test_install_and_package_exclude_non_runtime_files(self) -> None:
+        from unittest import mock
+        import zipfile
+
+        self.assertEqual(package_mod.EXCLUDE_DIRS, set(install_mod.IGNORE_DIR_NAMES))
+        self.assertEqual(package_mod.EXCLUDE_GLOBS, set(install_mod.IGNORE_FILE_GLOBS))
+        self.assertTrue(package_mod.should_exclude(Path(f"{SKILL_NAME}/scripts/helper_test.py")))
+        self.assertTrue(package_mod.should_exclude(Path(f"{SKILL_NAME}/conftest.py")))
+        self.assertTrue(package_mod.should_exclude(Path(f"{SKILL_NAME}/.DS_Store")))
+        self.assertTrue(package_mod.should_exclude(Path(f"{SKILL_NAME}/node_modules/pkg/index.js")))
+        self.assertFalse(package_mod.should_exclude(Path(f"{SKILL_NAME}/SKILL.md")))
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "skills" / SKILL_NAME
+            write_bootstrap(source)
+            (source / "eval-queries.json").write_text("[]", encoding="utf-8")
+            (source / "SOURCES.md").write_text("# Sources\n", encoding="utf-8")
+            (source / ".DS_Store").write_text("ds", encoding="utf-8")
+            (source / ".coverage").write_text("cov", encoding="utf-8")
+            (source / ".coverage.worker1").write_text("cov", encoding="utf-8")
+            (source / "stale.skill").write_text("zip", encoding="utf-8")
+            (source / "evals").mkdir()
+            (source / "evals" / "evals.json").write_text("{}", encoding="utf-8")
+            (source / ".pytest_cache").mkdir()
+            (source / ".pytest_cache" / "CACHEDIR.TAG").write_text("t", encoding="utf-8")
+            (source / ".hypothesis").mkdir()
+            (source / ".hypothesis" / "examples").write_text("h", encoding="utf-8")
+            (source / "node_modules" / "pkg").mkdir(parents=True)
+            (source / "node_modules" / "pkg" / "index.js").write_text("0", encoding="utf-8")
+            scripts = source / "scripts"
+            scripts.mkdir()
+            (scripts / "helper.py").write_text("x = 1\n", encoding="utf-8")
+            (scripts / "test_helper.py").write_text("def test_x(): pass\n", encoding="utf-8")
+            (scripts / "helper_test.py").write_text("def test_y(): pass\n", encoding="utf-8")
+            (scripts / "conftest.py").write_text("pass\n", encoding="utf-8")
+            (scripts / ".ruff_cache").mkdir()
+            (scripts / ".ruff_cache" / "CACHEDIR.TAG").write_text("t", encoding="utf-8")
+            (scripts / "testdata").mkdir()
+            (scripts / "testdata" / "fixture.json").write_text("{}", encoding="utf-8")
+            (scripts / "fixtures").mkdir()
+            (scripts / "fixtures" / "sample.ui").write_text("<ui/>", encoding="utf-8")
+
+            install_portable_skill(root, source, SKILL_NAME, overwrite=True)
+            installed = root / ".agents" / "skills" / SKILL_NAME
+            self.assertTrue((installed / "SKILL.md").is_file())
+            self.assertTrue((installed / "scripts" / "helper.py").is_file())
+            for rel in (
+                "eval-queries.json",
+                "SOURCES.md",
+                ".DS_Store",
+                ".coverage",
+                ".coverage.worker1",
+                "stale.skill",
+                "evals",
+                ".pytest_cache",
+                ".hypothesis",
+                "node_modules",
+                "scripts/test_helper.py",
+                "scripts/helper_test.py",
+                "scripts/conftest.py",
+                "scripts/.ruff_cache",
+                "scripts/testdata",
+                "scripts/fixtures",
+            ):
+                self.assertFalse((installed / rel).exists(), f"{rel} should not install")
+
+            walked_dirs: list[Path] = []
+            real_walk = package_mod.os.walk
+
+            def tracking_walk(top, *args, **kwargs):
+                for dirpath, dirnames, filenames in real_walk(top, *args, **kwargs):
+                    walked_dirs.append(Path(dirpath))
+                    yield dirpath, dirnames, filenames
+
+            with mock.patch.object(package_mod.os, "walk", side_effect=tracking_walk):
+                archive = package_mod.package_skill(source, root / "dist")
+            self.assertIsNotNone(archive)
+
+            walked_parts = {
+                part
+                for walked in walked_dirs
+                for part in walked.relative_to(source).parts
+            }
+            for pruned_dir in ("node_modules", ".pytest_cache", ".hypothesis", "evals", ".ruff_cache", "testdata", "fixtures"):
+                self.assertNotIn(pruned_dir, walked_parts, f"os.walk descended into {pruned_dir}")
+
+            with zipfile.ZipFile(archive) as zf:
+                names = set(zf.namelist())
+            self.assertIn(f"{SKILL_NAME}/SKILL.md", names)
+            self.assertIn(f"{SKILL_NAME}/scripts/helper.py", names)
+            for banned in (
+                "eval-queries.json",
+                "SOURCES.md",
+                ".DS_Store",
+                ".coverage",
+                ".coverage.worker1",
+                "stale.skill",
+                "test_helper.py",
+                "helper_test.py",
+                "conftest.py",
+                "index.js",
+                "examples",
+                "CACHEDIR.TAG",
+                "fixture.json",
+                "sample.ui",
+            ):
+                self.assertFalse(any(n.endswith(banned) for n in names), f"{banned} leaked into .skill")
 
 
 if __name__ == "__main__":

@@ -23,6 +23,13 @@ HARNESS_DIR = REPO_ROOT / "tools" / "dev-workflow"
 SKILL_SCRIPT = REPO_ROOT / "skills" / "commit-message-writer" / "scripts" / "lint_message.py"
 
 sys.path.insert(0, str(HARNESS_DIR))
+for _mod_name in [
+    k for k in list(sys.modules)
+    if k == "checks" or k.startswith("checks.")
+]:
+    _mod_file = getattr(sys.modules[_mod_name], "__file__", "") or ""
+    if str(HARNESS_DIR) not in _mod_file:
+        del sys.modules[_mod_name]
 
 from checks import message_checks  # noqa: E402
 
@@ -88,6 +95,20 @@ Retries now cap at 30s.
 Co-authored-by: Some Assistant <assistant@example.com>
 """
 
+SIGNED_OFF_MESSAGE = """\
+fix(app): tighten retry backoff
+
+Retries now cap at 30s.
+
+Signed-off-by: Jane Developer <jane@example.com>
+"""
+
+DOMAIN_FINDINGS_MESSAGE = """\
+fix(scanner): deduplicate security findings by rule
+
+Group duplicate findings before emitting SARIF output.
+"""
+
 
 class LintMessageTextTests(unittest.TestCase):
     def test_good_message_passes(self) -> None:
@@ -129,6 +150,52 @@ class LintMessageTextTests(unittest.TestCase):
     def test_empty_message_flagged(self) -> None:
         self.assertEqual(message_checks.lint_message_text("  \n"), ["empty message"])
 
+    def test_ia_finding_id_flagged(self) -> None:
+        violations = message_checks.lint_message_text(
+            "fix(validator): thread stage parameter for ia-001\n"
+        )
+        self.assertTrue(any("run-artifact id" in v for v in violations), violations)
+
+    def test_domain_findings_word_allowed(self) -> None:
+        self.assertEqual(message_checks.lint_message_text(DOMAIN_FINDINGS_MESSAGE), [])
+        for review_text in (
+            "fix(scanner): resolve review findings in dedup\n",
+            "fix(scanner): resolve audit findings in dedup\n",
+            "fix(scanner): address findings M1 in dedup\n",
+            "fix(scanner): address findings ia-002 in dedup\n",
+            "fix(scanner): apply fresh review cleanup\n",
+        ):
+            with self.subTest(review_text=review_text):
+                violations = message_checks.lint_message_text(review_text)
+                self.assertTrue(
+                    any("review narration" in v for v in violations),
+                    f"Expected review narration for {review_text!r}: {violations}",
+                )
+
+    def test_breaking_and_revert_and_slash_scope_allowed(self) -> None:
+        valid_messages = [
+            "feat(api)!: drop deprecated v1 endpoint\n",
+            "feat!: drop deprecated v1 endpoint\n",
+            "revert: restore previous cache eviction order\n",
+            "revert(tools/checks): restore baseline parser\n",
+            "fix(tools/checks): parse porcelain rename entries\n",
+            "fix(config.schema): enforce positive timeout\n",
+        ]
+        for msg in valid_messages:
+            with self.subTest(msg=msg):
+                self.assertEqual(message_checks.lint_message_text(msg), [])
+
+    def test_docstring_cites_existing_skill_md(self) -> None:
+        doc = message_checks.__doc__ or ""
+        self.assertIn("skills/commit-message-writer/SKILL.md", doc)
+        self.assertIn('"Message rules"', doc)
+        self.assertNotIn("references/message-style-contract.md", doc)
+        self.assertNotIn('"Self-contained\nmessages"', doc)
+        skill_text = (REPO_ROOT / "skills" / "commit-message-writer" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("## Message rules", skill_text)
+
 
 class RuleParityTests(unittest.TestCase):
     """The harness gate and the skill script must flag the same things."""
@@ -139,6 +206,12 @@ class RuleParityTests(unittest.TestCase):
         B20_MESSAGE,
         SECTION_REF_MESSAGE,
         COAUTHORED_MESSAGE,
+        SIGNED_OFF_MESSAGE,
+        DOMAIN_FINDINGS_MESSAGE,
+        "fix(validator): thread stage parameter for ia-001\n",
+        "feat(api)!: drop deprecated v1 endpoint\n",
+        "revert(tools/checks): restore baseline parser\n",
+        "fix(config.schema): enforce positive timeout\n",
         "fix(app): tighten retry backoff.\n",
         "fixed the retry backoff\n\nBody.",
         "",
@@ -243,6 +316,17 @@ class CheckCommitMessagesTests(unittest.TestCase):
         self._commit(BAD_MESSAGE)
         self.assertEqual(message_checks.check_commit_messages(self.run_dir, "implement", None), [])
 
+    def test_signed_off_by_emits_warning_not_error(self) -> None:
+        sha = self._commit(SIGNED_OFF_MESSAGE)
+        findings = message_checks.check_commit_messages(self.run_dir, "implement", self.repo)
+        errors = [f for f in findings if f.severity == "error"]
+        warnings = [f for f in findings if f.severity == "warning"]
+        self.assertEqual(errors, [], f"Signed-off-by must not emit error: {findings}")
+        self.assertEqual(len(warnings), 1, findings)
+        self.assertEqual(warnings[0].check, "commit_message")
+        self.assertIn(sha[:8], warnings[0].message)
+        self.assertIn("Signed-off-by (warning-tier)", warnings[0].message)
+
 
 class SkillScriptCliTests(unittest.TestCase):
     def _run(self, *args: str, stdin: str | None = None) -> subprocess.CompletedProcess[str]:
@@ -278,6 +362,12 @@ class SkillScriptCliTests(unittest.TestCase):
     def test_usage_error_exit_two(self) -> None:
         result = self._run()
         self.assertEqual(result.returncode, 2)
+
+    def test_signed_off_by_warning_only_exits_zero(self) -> None:
+        result = self._run("-", stdin=SIGNED_OFF_MESSAGE)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("PASSED", result.stdout)
+        self.assertIn("Signed-off-by", result.stderr)
 
 
 if __name__ == "__main__":
