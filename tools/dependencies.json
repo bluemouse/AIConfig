@@ -7,7 +7,6 @@
     },
     "agent-runner": {
       "depends": [
-        "dev-workflow-orchestrator",
         "prompt-clarifier"
       ]
     },
@@ -133,7 +132,6 @@
     },
     "skill-creator": {
       "depends": [
-        "agent-runner",
         "prompt-clarifier"
       ]
     },

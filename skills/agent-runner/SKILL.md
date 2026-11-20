@@ -1,6 +1,6 @@
 ---
 name: agent-runner
-description: dispatch independent coding, debugging, research, or repository tasks to isolated subagents and run them concurrently, then verify and integrate their results. use when a request contains two or more separable workstreams, multiple unrelated failures, independent files or subsystems, parallel read-only audits, or explicit requests to delegate work across agents. does not trigger on active merge/rebase integration (git-merge-guide) or structured diff review (code-reviewer).
+description: dispatch independent coding, debugging, research, or repository tasks to isolated subagents and run them concurrently, then verify and integrate their results. use when a request contains two or more separable workstreams, multiple unrelated failures, independent files or subsystems, parallel read-only audits, or explicit requests to delegate work across agents. does not trigger on active merge/rebase integration (git-merge-guide), structured diff review (code-reviewer), or end-to-end dev-workflow orchestration (dev-workflow-orchestrator) — it is a dispatch primitive those workflows call, not a pipeline itself.
 ---
 
 # Agent Runner
@@ -15,7 +15,7 @@ This skill covers dispatch mechanics only — route the work itself elsewhere:
 
 - Diff or code review, including `deep` parallel passes and "review this diff" → [../code-reviewer/SKILL.md](../code-reviewer/SKILL.md)
 - Skill or agent eval loops → [../skill-creator/SKILL.md](../skill-creator/SKILL.md) or [../agent-creator/SKILL.md](../agent-creator/SKILL.md)
-- Dev-workflow orchestration → [../dev-workflow-orchestrator/SKILL.md](../dev-workflow-orchestrator/SKILL.md)
+- End-to-end dev-workflow orchestration (clarify → … → commit) — dev-workflow-orchestrator owns that pipeline; this skill stays a dispatch primitive it can call
 - Worktree mechanics alone → [../git-guide/SKILL.md](../git-guide/SKILL.md)
 - Active local merge/rebase integration → [../git-merge-guide/SKILL.md](../git-merge-guide/SKILL.md); while active, allow only read-only investigation here
 

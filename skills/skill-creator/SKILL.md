@@ -51,7 +51,7 @@ python <SKILL_CREATOR_ROOT>/scripts/install_portable_skill.py \
 Draft 2–3 realistic prompts with expected behavior and efficiency signals, confirm with the user, and save to `skills/<skill-name>/evals/evals.json` (or `.agents/skills/<skill-name>/evals/evals.json` on the direct path) per `references/schemas.md`. Read `references/schemas.md` before running a full eval:
 
 - Complete the planned iteration without stopping midway or invoking unrelated testing skills.
-- Cap concurrency per [../agent-runner/SKILL.md](../agent-runner/SKILL.md) (≤4 with-skill/baseline pairs = 8 subagents in flight) and spawn each case's with-skill + baseline (`without_skill/` or snapshotted `old_skill/`) in the **same turn**.
+- Cap eval-loop concurrency self-contained: ≤4 with-skill/baseline pairs = 8 short-lived read-only subagents in flight (the host-safe ceiling; lower if the host requires) and spawn each case's with-skill + baseline (`without_skill/` or snapshotted `old_skill/`) in the **same turn**.
 - Grade with `agents/grader.md` → `grading.json`; aggregate with `python -m scripts.aggregate_benchmark` (pass `--primary/--baseline` explicitly when >2 arms exist); analyze with `agents/analyzer.md` (and `agents/comparator.md` for optional blind A/B comparison); then launch the viewer (`--previous-workspace` on iteration 2+) and show the user **before** revising.
 - Record infra failures via `run_status.json` (`{"status": "completed"|"errored"|"timeout"}`); read `feedback.json` when done, stop any viewer server, and never eval on a dirty tree (clean up residue after runs).
 - Iterate on correctness, completeness, and efficiency per [references/creation-common.md](references/creation-common.md) into `iteration-<N+1>/`.

@@ -1168,10 +1168,13 @@ class MapBodyConsistencyTests(unittest.TestCase):
     Reverse protection covers classes 1-3 only. Edges whose anchors use
     other requirement phrasings ("live in", "see X", "per X", arrow-routing
     rows, "Use ... when available") are forward-anchored only — the same
-    deliberate over-inclusion status as the pr-005 agent-runner asymmetry:
-    the forward check proves every map edge is real, and deleting one of
-    these changes install sets silently (accepted; documented in
-    tools/bundles.md § Dependency map).
+    deliberate over-inclusion status: the forward check proves every map
+    edge is real, and deleting one of these changes install sets silently
+    (accepted; documented in tools/bundles.md § Dependency map). The
+    pr-005 agent-runner → dev-workflow-orchestrator edge was the one such
+    over-inclusion ever taken; it was removed so agent-runner stays a
+    dispatch primitive under the orchestrator (one-way edge), not a
+    member of the dev-workflow cycle.
     """
 
     SKILLS_ROOT = REPO_ROOT / "skills"
@@ -1226,9 +1229,9 @@ class MapBodyConsistencyTests(unittest.TestCase):
 
     def test_map_edges_have_body_references(self) -> None:
         # t-008 forward: every map edge must be anchored in the dependent's
-        # body. No exemptions: agent-runner's routing-style body link
-        # satisfies the forward predicate; the pr-005 asymmetry is
-        # reverse-direction only (ia-005).
+        # body. No exemptions — the reverse-direction-only pr-005
+        # asymmetry was removed with its edge (agent-runner no longer
+        # depends on dev-workflow-orchestrator).
         deps = mod.load_dependencies()
         self.assertTrue(deps["skills"] or deps["commands"] or deps["agents"])
         for kind in ("skills", "commands", "agents"):

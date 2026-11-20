@@ -132,9 +132,12 @@ expansion. Four behaviors, all reading the same `tools/dependencies.json`:
   group commonly leaves other members of the group shielding each other.
   Remove members outermost-first (dependents before dependencies) to
   surface the full chain — except inside a map cycle (e.g. the
-  dev-workflow core: orchestrator ↔ plan-executor ↔ agent-runner),
-  where every member is reachable from the others and none can surface
-  as an orphan until the whole cycle is removed. The report is
+  dev-workflow core: orchestrator ↔ plan-executor), where every member
+  is reachable from the other and neither can surface as an orphan
+  until the whole cycle is removed. agent-runner is deliberately not a
+  member of the cycle — it is a dispatch primitive *under* it
+  (plan-executor → agent-runner), so removing the orchestrator and
+  plan-executor surfaces it as an orphan. The report is
   informational only: **orphans are never removed automatically** —
   removal is an explicit `--skills <name>` call.
 - **Uninstall-mode exception.** Both GUI behaviors are disabled in
