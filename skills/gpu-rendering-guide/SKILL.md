@@ -89,4 +89,4 @@ When a companion is installed to `.agents/skills/<name>/`, read that copy and re
 
 ## Tool notes
 
-- After installing or editing the skill, reload the coding agent (restart or reload the Claude Code session; reload the Cursor window; reload VS Code for Copilot) so the skill is rediscovered.
+- After installing or editing the skill, reload the coding agent (restart or reload the Claude Code session; reload VS Code for Copilot) so the skill is rediscovered.

@@ -6,13 +6,13 @@
     "rationale": "direct: create portable slash command"
   },
   {
-    "query": "bootstrap a cursor command under commands/ and install it to all tools",
+    "query": "bootstrap a slash command under commands/ and install it to all tools",
     "should_trigger": true,
     "split": "train",
     "rationale": "direct: bootstrap and install workflow"
   },
   {
-    "query": "write a reusable /commit-message command for cursor and claude",
+    "query": "write a reusable /commit-message command for claude and copilot",
     "should_trigger": true,
     "split": "train",
     "rationale": "direct: multi-tool command authoring"
@@ -42,13 +42,13 @@
     "rationale": "direct: install script invocation"
   },
   {
-    "query": "what is the difference between a cursor slash command and a skill",
+    "query": "what is the difference between a slash command and a skill",
     "should_trigger": true,
     "split": "train",
     "rationale": "direct: command vs skill guidance"
   },
   {
-    "query": "validate my bootstrap command before installing to .cursor and .claude",
+    "query": "validate my bootstrap command before installing to .claude and .github",
     "should_trigger": true,
     "split": "train",
     "rationale": "direct: quick_validate bootstrap flow"
@@ -66,7 +66,7 @@
     "rationale": "direct: workflow capture as command"
   },
   {
-    "query": "create command-creator meta skill install paths for cursor claude copilot",
+    "query": "create command-creator meta skill install paths for claude and copilot",
     "should_trigger": true,
     "split": "validation",
     "rationale": "direct: meta-skill scope"
@@ -78,19 +78,13 @@
     "rationale": "direct: bootstrap edit and reinstall"
   },
   {
-    "query": "write best practices for cursor commands with no frontmatter",
-    "should_trigger": true,
-    "split": "validation",
-    "rationale": "direct: cursor format rules in references"
-  },
-  {
     "query": "create a skill from scratch with evals and description optimization",
     "should_trigger": false,
     "split": "train",
     "rationale": "near-miss: skill creation, use skill-creator"
   },
   {
-    "query": "bootstrap a custom agent under agents/ with cursor wrapper only",
+    "query": "bootstrap a custom agent under agents/ with claude target only",
     "should_trigger": false,
     "split": "train",
     "rationale": "near-miss: agent creation, use agent-creator"

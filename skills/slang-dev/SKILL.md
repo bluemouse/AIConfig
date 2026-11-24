@@ -91,10 +91,6 @@ python <SKILL_ROOT>/scripts/slang_compile_matrix.py manifest.json [--print-only]
 
 - Reload the session after installing or editing the skill so updated frontmatter and relative cross-links are rediscovered.
 
-### Cursor
-
-- Reload the window after installing or editing the skill so the skill catalog refreshes.
-
 ### GitHub Copilot
 
 - Reload VS Code or start a new chat session after installing or editing the skill so the updated skill is rediscovered.

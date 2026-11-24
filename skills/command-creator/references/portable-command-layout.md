@@ -1,6 +1,6 @@
 # Portable Command Layout
 
-Use this guide when creating or reviewing portable slash commands that should work across Cursor, Claude Code, and GitHub Copilot.
+Use this guide when creating or reviewing portable slash commands that should work across Claude Code and GitHub Copilot.
 
 ## Two-phase workflow
 

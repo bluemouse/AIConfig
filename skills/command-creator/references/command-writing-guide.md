@@ -44,7 +44,6 @@ Optional sections:
 | --- | --- | --- |
 | Claude Code | `$ARGUMENTS`, `$0`, `$1` | Set `allowed-tools` in bootstrap `COMMAND.md` frontmatter; it transfers to the installed command-skill |
 | GitHub Copilot | `${input:name}`, `${input:name:placeholder}` | Document expected inputs in the body |
-| Cursor | User text after `/command` in chat | Document expected trailing input in the body |
 
 ## Command-skill frontmatter
 

@@ -1,12 +1,12 @@
 # Agent guidance
 
-Guidance for coding agents working in this repository. Keep this file **tool-neutral**: tool-specific mechanics live in each tool's own config (e.g. `.cursor/rules/`) and in the `## Tool notes` sections of the bootstrap skills and agents.
+Guidance for coding agents working in this repository. Keep this file **tool-neutral**: tool-specific mechanics live in each tool's own config and in the `## Tool notes` sections of the bootstrap skills and agents.
 
 Claude Code (v2.1.277+) auto-loads this file as project instructions — but only when no `CLAUDE.md`-family file (`CLAUDE.md`, `.claude/CLAUDE.md`, or `CLAUDE.local.md`) exists in this repo or above it. Do not add one; any such file suppresses this file for Claude Code sessions.
 
 ## What this repo is
 
-A **portable, single-root layout** for AI-assisted development configuration shared across Cursor, GitHub Copilot, and Claude Code. It contains no application code — only **skills**, **agents**, **commands** (slash prompts), and the tooling that installs them into each tool's config format. Everything here is Markdown (SKILL.md / agent .md / command files with YAML frontmatter where supported) plus small Python scripts that copy/validate that content.
+A **portable, single-root layout** for AI-assisted development configuration shared across GitHub Copilot and Claude Code. It contains no application code — only **skills**, **agents**, **commands** (slash prompts), and the tooling that installs them into each tool's config format. Everything here is Markdown (SKILL.md / agent .md / command files with YAML frontmatter where supported) plus small Python scripts that copy/validate that content.
 
 ## Core architecture
 
@@ -15,7 +15,7 @@ Understanding paths under `skills/`, `.agents/`, `.claude/`, and `.github/` is r
 ### Skills: bootstrap → installed
 
 1. **Bootstrap** (`skills/<name>/`, source-of-truth) — author here. Contains `SKILL.md`, optional `references/`, `scripts/`, `assets/`. Tool-specific mechanics live in a `## Tool notes` section of the body (H3 subsections per tool as needed), not in separate per-tool files.
-2. **Installed** (`.agents/skills/<name>/`, generated, **untracked**) — verbatim copy of the bootstrap package produced by `install_portable_skill.py`. It is the copy every tool reads; cross-skill links (e.g. `../cpp-coding/SKILL.md`) resolve here. Cursor and GitHub Copilot read it directly; Claude Code discovers it through the `.claude/skills -> ../.agents/skills` bridge symlink the installer creates. Generated output is never committed — regenerate after a clone or a bootstrap edit.
+2. **Installed** (`.agents/skills/<name>/`, generated, **untracked**) — verbatim copy of the bootstrap package produced by `install_portable_skill.py`. It is the copy every tool reads; cross-skill links (e.g. `../cpp-coding/SKILL.md`) resolve here. GitHub Copilot reads it directly; Claude Code discovers it through the `.claude/skills -> ../.agents/skills` bridge symlink the installer creates. Generated output is never committed — regenerate after a clone or a bootstrap edit.
 
 **Never hand-edit `.agents/skills/` for bootstrapped skills.** It is generated output. Edit the bootstrap skill under `skills/<name>/` and re-run the install script — otherwise edits are lost on the next install. The skill directory must be a direct child of a skills root; category subfolders (`skills/<category>/<name>/`) are rejected by the validator.
 
@@ -24,7 +24,7 @@ Understanding paths under `skills/`, `.agents/`, `.claude/`, and `.github/` is r
 Agents that ship bootstrap source use the same two-phase pattern as skills. Other agents may still be scaffolded directly with `create_agent.py`.
 
 1. **Bootstrap** (`agents/<name>/`, source-of-truth when present) — author `AGENT.md` here. Tool-specific mechanics live in a `## Tool notes` section of the body.
-2. **Installed** (`.claude/agents/<name>.md` + `.github/agents/<name>.agent.md`, generated) — two real copies produced by `install_portable_agent.py`: the Claude/Cursor file is AGENT.md verbatim; the `.agent.md` file is the Copilot transform.
+2. **Installed** (`.claude/agents/<name>.md` + `.github/agents/<name>.agent.md`, generated) — two real copies produced by `install_portable_agent.py`: the Claude Code file is AGENT.md verbatim; the `.agent.md` file is the Copilot transform.
 
 **Never hand-edit the installed agent files for bootstrapped agents.** Edit `agents/<name>/` and re-run `install_portable_agent.py`. For agents without bootstrap source, edit the installed files directly or regenerate with `create_agent.py`.
 
@@ -115,11 +115,10 @@ Then dispatch the emitted tasks to subagents and score them as described in skil
 
 ## Editing conventions
 
-- Bootstrap `SKILL.md` and `AGENT.md` bodies must stay **tool-neutral** in the main body — tool-specific mechanics belong in a `## Tool notes` section (H2, with `### Claude Code` / `### Cursor` / `### GitHub Copilot` H3 subsections as needed) of the bootstrap body.
+- Bootstrap `SKILL.md` and `AGENT.md` bodies must stay **tool-neutral** in the main body — tool-specific mechanics belong in a `## Tool notes` section (H2, with `### Claude Code` / `### GitHub Copilot` H3 subsections as needed) of the bootstrap body.
 - Resolve `<SKILL_ROOT>` / `<SKILL_CREATOR_ROOT>` / `<AGENT_CREATOR_ROOT>` / `<COMMAND_CREATOR_ROOT>` as "the directory containing this skill's SKILL.md" — used throughout skill/agent/command-creator bodies to reference bundled `references/`, `scripts/`, `assets/` without hardcoding paths.
 - Cross-link sibling skills with relative paths (e.g. `../cpp-coding/SKILL.md`) — they resolve after install because bootstrap and installed copies sit at the same depth.
 - Author guidance by outcome: state the required constraints (safety, authorization, source-of-truth, installation), then useful expertise, then success criteria. Prescribed step sequences are defaults, not requirements — give the reason for each so a capable model can adapt it to the task. Move uncommon detail into references rather than padding the main body. A skill or guideline earns its place: when a simplification is proposed, compare `baseline` (target removed), `current`, and `candidate` arms on correctness and safety first, then efficiency; report uncertainty and the exact tested host/model rather than claiming general benefit. See the skill-creator references for the evaluation mechanics.
-- `.cursor/rules/` (`.mdc` files, frontmatter controls `globs`/`alwaysApply`) is for small always-on or path-scoped rules — keep them composable, not full skills.
 - Follow [coding-behavior](guidelines/coding-behavior.md) when generating or editing any code in this repo or in skill/agent output.
 - Follow [code-comment](guidelines/code-comment.md) when writing or updating code comments or commit messages in this repo or in skill/agent output.
 - Commit messages in this repo never carry attribution footers (`Co-authored-by`, `Signed-off-by`, or any other AI/tool sign-off) — this repo rule overrides host attribution defaults. Draft per [commit-message-writer](skills/commit-message-writer/SKILL.md) and run its lint (`python skills/commit-message-writer/scripts/lint_message.py <message-file>`) before committing.

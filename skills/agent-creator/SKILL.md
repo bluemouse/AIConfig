@@ -1,6 +1,6 @@
 ---
 name: agent-creator
-description: "Create and iteratively improve portable custom agents for GitHub Copilot, Cursor, and Claude Code using the dual-target layout (bootstrap under agents/ and install to .claude/agents and .github/agents). Use to author an agent from scratch, edit or validate an agent, tune its trigger description, or explain portable agent layout. Does not trigger on skills (skill-creator) or slash commands (command-creator)."
+description: "Create and iteratively improve portable custom agents for GitHub Copilot and Claude Code using the dual-target layout (bootstrap under agents/ and install to .claude/agents and .github/agents). Use to author an agent from scratch, edit or validate an agent, tune its trigger description, or explain portable agent layout. Does not trigger on skills (skill-creator) or slash commands (command-creator)."
 ---
 
 # Agent Creator
@@ -24,7 +24,7 @@ Follow [../skill-creator/references/creation-common.md](../skill-creator/referen
 
 | Path | Authoritative source | Install / scaffold | Installed targets (dual-target real copies) |
 | --- | --- | --- | --- |
-| **Bootstrap** | `agents/<name>/AGENT.md` | `install_portable_agent.py` | `.claude/agents/<name>.md` (verbatim; Cursor + modern VS Code Copilot compat-read) + `.github/agents/<name>.agent.md` (Copilot `name`/`description` transform) |
+| **Bootstrap** | `agents/<name>/AGENT.md` | `install_portable_agent.py` | `.claude/agents/<name>.md` (verbatim; modern VS Code Copilot compat-reads) + `.github/agents/<name>.agent.md` (Copilot `name`/`description` transform) |
 | **Direct** | Installed files (via script) | `create_agent.py` | Same dual-target paths (`--overwrite` purges legacy wrappers) |
 
 Resolve `<AGENT_CREATOR_ROOT>` as the directory containing **this** skill's `SKILL.md`:
@@ -69,7 +69,6 @@ Draft 2–3 test prompts, run against the installed agent, review correctness/co
 | Tool | Spawn mechanics | Agent file read |
 | --- | --- | --- |
 | Claude Code | Subagent (parallel per prompt when comparing variants; note `total_tokens` / `duration_ms`); sequential inline on Claude.ai | `.claude/agents/<agent-name>.md` |
-| Cursor | Task tool (`subagent_type` matching role, e.g. `generalPurpose`), one Task per prompt | `.claude/agents/<agent-name>.md` (compat-read) |
 | GitHub Copilot | Subagent/task dispatch when the active Copilot surface exposes it (e.g. VS Code Copilot agent/SDK); otherwise invoke sequentially from the agent picker or matching prompt; reload VS Code after changes | `.github/agents/<agent-name>.agent.md` (VS Code also compat-discovers `.claude/agents/<agent-name>.md`) |
 
 Prompt wrapper when spawning via generic subagent/Task:

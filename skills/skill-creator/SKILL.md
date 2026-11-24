@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: "Create, evaluate, and iteratively improve portable skills for GitHub Copilot, Cursor, and Claude Code using the single-root layout (bootstrap under skills/ and install to .agents/skills/). Use to author a skill from scratch, edit or benchmark an existing skill, run evals, or tune a skill description for triggering accuracy. Does not trigger on custom agents (agent-creator) or slash commands (command-creator)."
+description: "Create, evaluate, and iteratively improve portable skills for GitHub Copilot and Claude Code using the single-root layout (bootstrap under skills/ and install to .agents/skills/). Use to author a skill from scratch, edit or benchmark an existing skill, run evals, or tune a skill description for triggering accuracy. Does not trigger on custom agents (agent-creator) or slash commands (command-creator)."
 ---
 
 # Skill Creator
@@ -31,7 +31,7 @@ Follow [references/creation-common.md](references/creation-common.md). Skill-spe
 
 ### Anatomy, frontmatter, and installation
 
-Installed single-root layout: `.agents/skills/<skill-name>/` (`SKILL.md` + optional `scripts/`, `references/`, `assets/`), read directly by Cursor and GitHub Copilot and via the `.claude/skills -> ../.agents/skills` symlink by Claude Code (layout/examples/checklist in `references/portable-skill-layout.md`).
+Installed single-root layout: `.agents/skills/<skill-name>/` (`SKILL.md` + optional `scripts/`, `references/`, `assets/`), read directly by GitHub Copilot and via the `.claude/skills -> ../.agents/skills` symlink by Claude Code (layout/examples/checklist in `references/portable-skill-layout.md`).
 
 - **Progressive disclosure:** frontmatter (`name` kebab-case ≤64 chars; `description` ≤1,024 chars with no `<`/`>`, stating both **what** the skill does and **when** to trigger; optional `compatibility`) → lean tool-neutral `SKILL.md` body → `## Tool notes` H2 + on-demand `references/` and `scripts/`.
 - **Bootstrap:** author `skills/<skill-name>/SKILL.md` (resolving `<SKILL_ROOT>` for bundled paths), then validate and install:
@@ -101,12 +101,6 @@ Supports **subagents**: run the parallel with-skill + baseline eval loop, then t
 
 - **Cowork / headless:** subagents work; pass `generate_review.py --static <path>` (before self-grading) when no browser is available.
 - **Claude.ai (no CLI, no subagents):** run prompts sequentially inline and tune descriptions manually.
-
-### Cursor
-
-Run the shared eval loop using concurrent **Task** subagents (with-skill + baseline in the same turn), then the subagent-driven description optimization above.
-- **Remote / headless:** pass `--static <output.html>`, collect downloaded `feedback.json`, and stop any background viewer (`kill <PID>`).
-- Optional frontmatter: `disable-model-invocation: true` for explicit-only skills.
 
 ### GitHub Copilot
 

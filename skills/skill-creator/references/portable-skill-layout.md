@@ -1,6 +1,6 @@
 # Portable Skill Layout
 
-Use this guide when creating or reviewing skills that should work across GitHub Copilot, Cursor, and Claude Code.
+Use this guide when creating or reviewing skills that should work across GitHub Copilot and Claude Code.
 
 ## Two-phase workflow
 
@@ -15,7 +15,7 @@ For one-off skills without bootstrap source, use `create_skill.py` to scaffold d
 
 ## Single-root install
 
-One real copy of each skill lives at `.agents/skills/<name>/`. Claude Code discovers skills through the `.claude/skills` bridge symlink (auto-created on install); Cursor and GitHub Copilot read `.agents/skills/` directly. There are no per-tool wrapper copies and no category subfolders — a skill directory must be a direct child of a skills root (the validator rejects `skills/<category>/<name>/`).
+One real copy of each skill lives at `.agents/skills/<name>/`. Claude Code discovers skills through the `.claude/skills` bridge symlink (auto-created on install); GitHub Copilot reads `.agents/skills/` directly. There are no per-tool wrapper copies and no category subfolders — a skill directory must be a direct child of a skills root (the validator rejects `skills/<category>/<name>/`).
 
 Tool-specific guidance lives in `## Tool notes` sections of the `SKILL.md` body, not in separate files:
 
@@ -25,10 +25,6 @@ Tool-specific guidance lives in `## Tool notes` sections of the `SKILL.md` body,
 ### Claude Code
 
 - Restart or reload the session after install so the skill is rediscovered.
-
-### Cursor
-
-- Reload the window after adding or editing this skill so the agent rediscovers it.
 ```
 
 ## Directory structure
@@ -103,7 +99,6 @@ Keep the body tool-neutral above `## Tool notes`. Use `<SKILL_ROOT>` for bundled
 | Tool | Read path |
 | --- | --- |
 | Claude Code | `.claude/skills/<name>/SKILL.md` via the bridge symlink to `.agents/skills/` |
-| Cursor | `.agents/skills/<name>/SKILL.md` |
 | GitHub Copilot | `.agents/skills/<name>/SKILL.md` |
 
 ## Worked example: bootstrap and install

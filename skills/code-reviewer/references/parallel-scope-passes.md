@@ -82,23 +82,6 @@ cross-scope dedup, verify pass, and gap sweep yourself.
 passes sequentially yourself, keeping notes separate per scope, then dedup, verify, and
 gap-sweep.
 
-**Cursor** — use the Task tool with `subagent_type: "generalPurpose"` (it has
-Read/Grep/Shell access to inspect surrounding code): one Task call per *selected* scope
-in a single message, using the prompt template above with real diff content. You
-receive only each subagent's **final text reply**, not its tool calls — append the
-ReportFindings block below to each scope-pass prompt.
-
-```
-Use Read/Grep/Shell as needed to inspect call sites, related tests, and existing patterns
-before flagging anything.
-
-If a ReportFindings tool is available in your environment, you may call it once at the end
-with raw candidates (file, line, summary, failure_scenario, category: "<scope>") — but
-your final reply text must still restate each candidate with Severity, Location, What's
-wrong, Why it matters, and Proposed fix, because the orchestrator only receives your final
-text message.
-```
-
 **GitHub Copilot** — when the active Copilot surface exposes concurrent subagent/task
 dispatch (e.g. VS Code Copilot agent/SDK), dispatch one subagent per *selected* scope
 concurrently in a single turn using the prompt template above (with verbatim

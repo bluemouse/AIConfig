@@ -1,6 +1,6 @@
-# AI Configuration for Cursor, GitHub Copilot, and Claude Code
+# AI Configuration for GitHub Copilot and Claude Code
 
-This repository provides a **portable, single-root layout** for AI-assisted development across Cursor, GitHub Copilot, and Claude Code.
+This repository provides a **portable, single-root layout** for AI-assisted development across GitHub Copilot and Claude Code.
 
 ### Bootstrap skills and installed skills
 
@@ -17,7 +17,7 @@ Install a bootstrap skill with `install_portable_skill.py` to copy it to `.agent
 | Term | Location | Role |
 | --- | --- | --- |
 | **Bootstrap agent** | `agents/<name>/` | Authoritative source. Edit `AGENT.md` here. |
-| **Installed agents** | `.claude/agents/<name>.md`, `.github/agents/<name>.agent.md` | Two real copies: the Claude/Cursor file (verbatim from AGENT.md) and the Copilot transform. |
+| **Installed agents** | `.claude/agents/<name>.md`, `.github/agents/<name>.agent.md` | Two real copies: the Claude Code file (verbatim from AGENT.md) and the Copilot transform. |
 
 Install a bootstrap agent with `install_portable_agent.py`. Re-run after edits to `agents/<name>/`.
 
@@ -67,7 +67,7 @@ repo/
 
 ## Bootstrap skills
 
-Bootstrap skills live under `skills/`. Installing one copies the package to `.agents/skills/<name>/` and ensures the Claude Code bridge symlink (`.claude/skills -> ../.agents/skills`) exists. Cursor and GitHub Copilot read `.agents/skills/` directly. This repo includes:
+Bootstrap skills live under `skills/`. Installing one copies the package to `.agents/skills/<name>/` and ensures the Claude Code bridge symlink (`.claude/skills -> ../.agents/skills`) exists. GitHub Copilot reads `.agents/skills/` directly. This repo includes:
 
 | Skill | Path | Purpose |
 | --- | --- | --- |
@@ -187,7 +187,7 @@ Or ask in chat: **use skill-creator** to install or refresh the meta-skill.
 The script copies the bootstrap skill to `.agents/skills/skill-creator/`, ensures the `.claude/skills` bridge symlink exists, validates the install, and prints a summary.
 
 Only Claude Code needs a reload after install (restart or reload the
-session): Cursor and VS Code (Copilot) discover `.agents/` and
+session): VS Code (Copilot) discovers `.agents/` and
 `.github/agents/` natively on their next session.
 
 ## Install agent-creator
@@ -228,7 +228,7 @@ skills/<name>/
 
 **Shared `SKILL.md` rules:**
 
-- Keep the body **tool-neutral** — tool-specific mechanics belong in a `## Tool notes` section of the body (H2 with `### Claude Code` / `### Cursor` / `### GitHub Copilot` H3 subsections as needed), not in separate per-tool files
+- Keep the body **tool-neutral** — tool-specific mechanics belong in a `## Tool notes` section of the body (H2 with `### Claude Code` / `### GitHub Copilot` H3 subsections as needed), not in separate per-tool files
 - Resolve `<SKILL_ROOT>` as the directory containing the skill's `SKILL.md`
 - Put bundled resources only under `references/`, `scripts/`, or `assets/`
 - Cross-link sibling skills with relative paths (e.g. `../cpp-coding/SKILL.md`) — these resolve after install under `.agents/skills/`
@@ -262,8 +262,8 @@ python skills/skill-creator/scripts/quick_validate.py .agents/skills/<skill-name
 
 ### 4. Reload
 
-Only Claude Code needs a reload (restart or reload the session): Cursor
-and VS Code (Copilot) discover `.agents/` and `.github/agents/` natively
+Only Claude Code needs a reload (restart or reload the session): VS Code
+(Copilot) discovers `.agents/` and `.github/agents/` natively
 on their next session.
 
 ### 5. Re-install after edits
@@ -327,7 +327,7 @@ python skills/skill-creator/scripts/quick_validate.py .agents/skills/my-skill
 For a standalone skill in one location (personal install or single-tool copy):
 
 ```bash
-python skills/skill-creator/scripts/init_skill.py my-skill --path ~/.cursor/skills
+python skills/skill-creator/scripts/init_skill.py my-skill --path ~/my-project/skills
 ```
 
 The path must be a skills root (a directory named `skills`) with the skill created directly inside it — category subfolders (`skills/<category>/<name>/`) are rejected by `quick_validate.py`'s flat-root check (and by `install_portable_skill.py`'s source check), not by `init_skill` itself.
@@ -349,7 +349,7 @@ python skills/agent-creator/scripts/create_agent.py \
 
 This creates:
 
-- `.claude/agents/my-agent.md` — Claude Code agent (verbatim; Cursor compat-reads it)
+- `.claude/agents/my-agent.md` — Claude Code agent (verbatim)
 - `.github/agents/my-agent.agent.md` — GitHub Copilot agent
 
 Validate immediately:
@@ -368,10 +368,6 @@ When adding assets to this repo or another project, use these locations:
 
 - `.agents/skills/<skill-name>/` — installed skill (the one real copy); command-skills install at `.agents/skills/cmd-<name>/` (invoked as `/<name>`)
 - `.agents/skills/guidelines-<name>/` — guideline skill packages installed into target projects
-
-### Cursor
-
-Cursor reads `.agents/skills/` directly; reload Cursor after adding or changing skills, rules, or commands.
 
 ### Claude Code
 
@@ -447,7 +443,7 @@ python tools/installer.py /path/to/other-project --guidelines coding-behavior --
 | `--uninstall` | Remove the selected skills, agents, commands, and guidelines from the target project (a missing target errors with exit 2 rather than reporting an empty success, so teardown scripts fail loudly) |
 | *(no arguments)* | Open a tkinter GUI with skill/agent/command checkboxes and a **Bundles** panel for workflow batch selection |
 
-Without `--override`, existing paths in the target are skipped. `--dry-run` previews the selected install, uninstall, or purge without writing anything to the target — the target must already exist, and the output is prefixed with `Dry run — no changes were made:`. The script refuses to install skills, agents, or commands into this AIConfig repo itself (use `install_portable_*` for those); `--guidelines` may target `.` to regenerate local untracked copies. Reload Claude Code in the target project after install (Cursor and VS Code rediscover natively). Bundle definitions live in [tools/bundles.md](tools/bundles.md) (human-readable) and [tools/bundles.json](tools/bundles.json) (machine-readable).
+Without `--override`, existing paths in the target are skipped. `--dry-run` previews the selected install, uninstall, or purge without writing anything to the target — the target must already exist, and the output is prefixed with `Dry run — no changes were made:`. The script refuses to install skills, agents, or commands into this AIConfig repo itself (use `install_portable_*` for those); `--guidelines` may target `.` to regenerate local untracked copies. Reload Claude Code in the target project after install (VS Code Copilot rediscovers natively). Bundle definitions live in [tools/bundles.md](tools/bundles.md) (human-readable) and [tools/bundles.json](tools/bundles.json) (machine-readable).
 
 **GUI:**
 
@@ -509,7 +505,7 @@ Skills are folders with a `SKILL.md` (YAML frontmatter: `name`, `description`) p
 
 **Portable (recommended):** author a **bootstrap skill** under `skills/<name>/`, install to produce the single real copy in `.agents/skills/<name>/` that all tools read.
 
-**Standalone:** copy the full skill folder into one tool path (e.g. `~/.cursor/skills/<name>/`) without the single-root layout.
+**Standalone:** copy the full skill folder into one tool path (e.g. `~/my-project/skills/<name>/`) without the single-root layout.
 
 **Package an installed skill for distribution:**
 
@@ -567,16 +563,12 @@ python skills/agent-creator/scripts/create_agent.py \
 
 Commit messages: use the installed **commit-message-writer** skill (or ask in chat to draft a Conventional Commit from staged changes).
 
-## Rules (Cursor)
-
-Rules are `.mdc` files in `.cursor/rules/` with frontmatter controlling `globs` and `alwaysApply`. They apply automatically based on scope. Keep rules small and composable.
-
 ## Agents
 
 Portable custom agents use a dual-target layout:
 
 - `agents/<name>/` — bootstrap source when present (edit `AGENT.md` here, then install)
-- `.claude/agents/<name>.md` — Claude Code copy (verbatim from AGENT.md; Cursor compat-reads it)
+- `.claude/agents/<name>.md` — Claude Code copy (verbatim from AGENT.md)
 - `.github/agents/<name>.agent.md` — GitHub Copilot copy
 
 Use the **agent-creator** skill to scaffold new agents or **install_portable_agent.py** to install bootstrapped agents under `agents/<name>/`. Tool-specific agent mechanics belong in a `## Tool notes` section of the bootstrap `AGENT.md`.
@@ -590,7 +582,7 @@ python skills/agent-creator/scripts/install_portable_agent.py \
   --root . --name <name> --source agents/<name> --overwrite
 ```
 
-Reload Claude Code after install so custom agents are rediscovered (Cursor and VS Code rediscover `.github/agents/` natively).
+Reload Claude Code after install so custom agents are rediscovered (VS Code Copilot rediscovers `.github/agents/` natively).
 
 ## Further reading
 

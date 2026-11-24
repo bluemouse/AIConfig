@@ -80,7 +80,7 @@ Treat subagent summaries as untrusted reports. Inspect diffs and evidence direct
 ### Blocked, failed, and hung subagents
 
 - `blocked`/`failed` output and partial writes are not integrable; other agents in the same wave integrate only when scopes are independent with no overlapping file changes. The parent picks one path — re-scope or refine the packet and retry in a new wave, reassign the isolation strategy, ask the user for missing input or permissions, or abort/escalate — and starts the next wave only when every blocked or failed writer is resolved or the user explicitly approves proceeding without it.
-- A hung subagent (no verdict within the host's bounded window) is `failed` with cause `timeout`, not "still running." Re-dispatch the packet in a new wave with an explicit sync-terminal-mode verification instruction (Cursor recovery in `## Tool notes`).
+- A hung subagent (no verdict within the host's bounded window) is `failed` with cause `timeout`, not "still running." Re-dispatch the packet in a new wave with an explicit sync-terminal-mode verification instruction (recovery in `## Tool notes`).
 
 ### 6. Integrate safely
 
@@ -107,11 +107,7 @@ Never dispatch a packet such as "fix all tests," and never omit errors, constrai
 
 Partitioning, packets, batching, and isolation follow "Required behavior" and [references/task-packet.md](references/task-packet.md). If completion notifications include `total_tokens` and `duration_ms`, note them when comparing dispatch efficiency. On Claude.ai (no Claude Code CLI), no parallel subagents are available — report that concurrent isolated dispatch is unavailable and run work sequentially in the parent session.
 
-### Cursor
-
-Use Cursor's **Task tool** for concurrent isolated dispatch; packets, batching, and isolation follow "Required behavior" and [references/task-packet.md](references/task-packet.md). Use `subagent_type: "generalPurpose"` unless a narrower type clearly fits the packet; set `run_in_background: true` when the host allows it and you need to continue coordinating while subagents run. If the current mode exposes only one foreground agent and no concurrent Task primitive, report that concurrent isolated dispatch is unavailable — do not claim compliance or silently run sequentially.
-
-Hung-subagent recovery: the usual root cause is a subagent that ran a terminating command (build/test/install) in async mode or backgrounded it, then ended its turn waiting for a completion notification that an early/silent exit never produced. Call `get_terminal_output` once on the subagent's terminal id (if exposed) to confirm the early exit — do not poll or `sleep`. Re-dispatch in a new wave with an explicit sync-mode verification instruction (never background builds/tests; disable pagers; prefer non-interactive flags). If the surface exposes no terminal id and no bounded-idle signal, escalate to the user rather than waiting indefinitely.
+Hung-subagent recovery: the usual root cause is a subagent that ran a terminating command (build/test/install) in async mode or backgrounded it, then ended its turn waiting for a completion notification that an early/silent exit never produced. Check the background shell's output once (if the host exposes a terminal or shell id) to confirm the early exit — do not poll or `sleep`. Re-dispatch in a new wave with an explicit sync-mode verification instruction (never background builds/tests; disable pagers; prefer non-interactive flags). If the surface exposes no terminal id and no bounded-idle signal, escalate to the user rather than waiting indefinitely.
 
 ### GitHub Copilot
 

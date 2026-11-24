@@ -106,8 +106,8 @@ class CheckerAgentContentTests(unittest.TestCase):
     def test_readonly_enforcement_documented_per_host(self):
         """t-004 (cr-205/ia-002): The shared per-host reality section in
         agent-creator's portable-agent-layout.md documents the verbatim-copy
-        reality — Claude and Cursor hosts carry no readonly/tools frontmatter
-        keys (the installer copies AGENT.md verbatim), Copilot is
+        reality — the Claude Code host carries no `tools:` or `model:`
+        frontmatter keys (the installer copies AGENT.md verbatim), Copilot is
         instruction-only. The AGENT.md bodies carry no Tool notes sections."""
         shared = self.SHARED_TOOL_NOTES_REF.read_text(encoding="utf-8")
         self.assertIn(
@@ -117,8 +117,6 @@ class CheckerAgentContentTests(unittest.TestCase):
         )
         self.assertIn("no `tools:` or `model:` keys", shared,
                       "shared Tool notes missing Claude no-host-frontmatter-keys documentation")
-        self.assertIn("no `readonly:` key", shared,
-                      "shared Tool notes missing Cursor no-readonly-key documentation")
         self.assertIn("instruction-only", shared.lower(),
                       "shared Tool notes missing Copilot instruction-only documentation")
         for name in CHECKER_AGENTS:
@@ -143,7 +141,7 @@ class CheckerAgentContentTests(unittest.TestCase):
     def test_model_inheritance_documented_per_host(self):
         """t-012 (cr-205/ia-002): The shared per-host reality section documents
         the default-model reality — installed copies carry no `model:` key, so
-        Claude/Cursor run on the conversation/parent model and Copilot on the
+        Claude Code runs on the conversation model and Copilot on the
         user's selected chat model. The AGENT.md bodies carry no Tool notes."""
         shared = self.SHARED_TOOL_NOTES_REF.read_text(encoding="utf-8")
         self.assertIn(

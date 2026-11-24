@@ -66,5 +66,4 @@ Use subagents only for deep red-team reviews where independence materially impro
 Per-tool exceptions:
 
 - **Claude Code:** on Claude.ai (no CLI subagents), run lenses sequentially in one context and label the missing-independence uncertainty.
-- **Cursor:** `subagent_type: "generalPurpose"` (`explore` for pure repository discovery); `AskQuestion` only when a missing non-negotiable or decision-owner preference would change the verdict.
 - **GitHub Copilot:** usually no parallel subagent API — run lenses sequentially; record assumptions, gates, and kill criteria in the report or PR text.

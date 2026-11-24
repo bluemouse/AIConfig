@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Create a portable custom agent as two real copies for Claude Code (which
-Cursor compat-reads) and GitHub Copilot.
+Create a portable custom agent as two real copies for Claude Code and GitHub Copilot.
 
 Example:
     python create_agent.py \

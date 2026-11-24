@@ -88,12 +88,12 @@ Use the template in `references/output-formats.md` matching the deliverable. Alw
 
 ## Tool notes
 
-### Claude Code and Cursor
+### Claude Code
 
 Use subagents only when the decision is large enough to benefit from independent work:
 
 1. Run the charter, evidence ledger, role selection, and depth choice yourself first.
-2. In a single turn (Claude Code) or single message (Cursor), spawn one subagent per selected Round 1 council member when parallel independence matters.
+2. In a single turn, spawn one subagent per selected Round 1 council member when parallel independence matters.
 3. Give every subagent the same charter and evidence ledger, plus only its own role brief. Do not include peer conclusions in Round 1.
 4. Ask each subagent to return the Round 1 fields from Workflow step 5.
 5. Collect final replies, normalize claims, then run cross-examination and synthesis yourself. Dispatch a second round only for rigorous or high-stakes councils.
@@ -101,7 +101,6 @@ Use subagents only when the decision is large enough to benefit from independent
 Tool-specific differences:
 
 - **Claude Code:** On Claude.ai (no Claude Code CLI), no parallel subagents are available — use simulated council mode, label it honestly, write all independent Round 1 positions before cross-examination, and keep the final decision proportional to the prompt.
-- **Cursor:** Use `subagent_type: "generalPurpose"` for broad analysis, or `explore` for read-only, codebase-focused discovery roles. Use `AskQuestion` only for a small number of blocking user decisions (e.g. criteria weights or value trade-offs) — not for facts discoverable from the workspace or supplied context. When the council depends on current external facts and web or MCP tools are available, gather those facts before treating a claim as evidence, and cite the source in the evidence ledger.
 
 ### GitHub Copilot
 

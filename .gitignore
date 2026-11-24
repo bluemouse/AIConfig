@@ -33,7 +33,7 @@ node_modules/
 *.swp
 *~
 
-# IDE (user-local; keep .cursor/ project config tracked; .github/ is generated below)
+# IDE (user-local; .github/ is generated below)
 .idea/
 *.sublime-*
 

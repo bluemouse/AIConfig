@@ -4,8 +4,7 @@ Install a bootstrap agent package into the dual-target agent layout.
 
 Reads agents/<name>/AGENT.md and writes two real copies:
 
-- .claude/agents/<name>.md — AGENT.md verbatim (frontmatter + body), which
-  Cursor compat-reads.
+- .claude/agents/<name>.md — AGENT.md verbatim (frontmatter + body).
 - .github/agents/<name>.agent.md — a Copilot transform: name/description
   frontmatter plus the body.
 

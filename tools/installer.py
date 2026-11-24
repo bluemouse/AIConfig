@@ -165,7 +165,7 @@ COMMAND_SKILL_DIR_PREFIX = "cmd-"
 COMMAND_SKILL_DIR = ".agents/skills/" + COMMAND_SKILL_DIR_PREFIX + "{name}"
 
 # Agents distribute from two real copies (dual-target layout): the verbatim
-# Claude/Cursor copy and the Copilot .agent.md transform.
+# Claude Code copy and the Copilot .agent.md transform.
 CLAUDE_AGENT_FILE = ".claude/agents/{name}.md"
 GITHUB_AGENT_FILE = ".github/agents/{name}.agent.md"
 
@@ -220,14 +220,15 @@ LEGACY_PURGE_REL_PATHS = (
 
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
-# cr-008: the single-root layout writes no Cursor/Copilot outputs — they
-# read .agents/ natively — so only Claude Code needs a reload (through the
+# cr-008: the single-root layout writes no per-tool skill wrapper outputs —
+# VS Code reads .agents/ natively (and discovers .github/agents/ without a
+# reload) — so only Claude Code needs a reload (through the
 # .claude/skills bridge).
 RELOAD_REMINDER = (
     "Restart or reload Claude Code so it rediscovers installed skills and "
     "command-skills through the .claude/skills bridge (and picks up the "
-    "agent files under .claude/agents); Cursor and VS Code (Copilot) "
-    "discover .agents/ and .github/agents/ natively on their next session."
+    "agent files under .claude/agents); VS Code (Copilot) "
+    "discovers .agents/ and .github/agents/ natively on their next session."
 )
 
 BUNDLES_JSON = Path(__file__).resolve().parent / "bundles.json"

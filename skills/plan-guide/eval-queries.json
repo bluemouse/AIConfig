@@ -120,7 +120,7 @@
     "rationale": "validation negative: interactive research -> research-guide"
   },
   {
-    "query": "use Cursor Plan mode to build the checkout feature",
+    "query": "use the IDE's plan mode to build the checkout feature",
     "should_trigger": false,
     "split": "validation",
     "rationale": "validation negative: IDE Plan mode workflow, not plan-guide skill"

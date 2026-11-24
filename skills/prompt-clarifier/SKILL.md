@@ -80,12 +80,6 @@ Questions are plain text and require **ending the turn** to get a reply:
 3. **Subagents and non-interactive runs:** cannot ask the user — skip `ASK`, apply safe defaults, report all assumptions explicitly, and emit the `blocked` summary instead of guessing on irreversible work. Resolve blockers in the parent before dispatching subagents.
 4. **Claude.ai (no repo access):** ask for facts that would otherwise be inspected, or ask the user to paste relevant files/configs.
 
-### Cursor
-
-Use the **AskQuestion tool** for discrete choice batches (one question object per decision; put `(Recommended)` first; include `Not sure - use the recommended default` when safe; set `allow_multiple: true` only for true multi-select; fall back to numbered text for open-ended thresholds or examples). Treat open/attached files as supplied context and run Read/Grep/Glob (or an `explore` Task subagent) during `INSPECT`.
-
-In **Plan mode**, front-load blocking decisions and record accepted defaults in the plan (`SwitchMode` to Plan mode when a request turns out to be architecture-shaped). Subagents spawned via the Task tool cannot ask the user — skip `ASK`, state assumptions in the return packet, and flag human-only blockers.
-
 ### GitHub Copilot
 
 - **Interactive chat / agent:** use the host's structured question tool (e.g. `ask_user`) when exposed on the active Copilot surface; otherwise send concise numbered questions with lettered options, `(recommended)`, and a compact reply hint. Treat open editors and `#file`/`#selection` attachments as supplied context during `INSPECT`.

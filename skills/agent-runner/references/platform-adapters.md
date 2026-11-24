@@ -30,7 +30,6 @@ Before dispatching:
 Load and obey host and repository instructions before creating packets. Common locations include:
 
 - `CLAUDE.md` and nested Claude instruction files
-- `.cursor/rules/`, `.cursorrules`, or project Cursor instructions
 - `.github/copilot-instructions.md`, `AGENTS.md`, and custom agent definitions
 
 More specific repository instructions override generic recommendations in this skill unless they would violate the user's explicit request or safety constraints.

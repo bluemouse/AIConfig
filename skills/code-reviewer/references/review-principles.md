@@ -30,8 +30,8 @@ norms:
 1. **Change metadata** — commit message(s) for the reviewed range (`git --no-pager log`
    on the range); if a PR is open, read title/body (`gh pr view` when `gh` is available).
 2. **Project norms** — skim applicable guidance when present: `AGENTS.md`, `CONTRIBUTING`,
-   `README` sections for the touched area, `.cursor/rules/` or tool-specific review rules
-   (e.g. `.cursor/BUGBOT.md`), and established patterns in neighboring files.
+   `README` sections for the touched area, tool-specific review rules,
+   and established patterns in neighboring files.
 3. **The patch** — resolved git diff plus untracked files per the chosen source target.
 4. **Surrounding code** — call sites, dependents, config wiring, and tests for each
    meaningful change (not the whole repo).

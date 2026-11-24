@@ -1,6 +1,6 @@
 ---
 name: command-creator
-description: "Create and iteratively improve portable slash commands for Cursor, Claude Code, and GitHub Copilot as invocation-gated command-skills (bootstrap under commands/ and install to .agents/skills). Use to author a slash command or prompt file from scratch, edit or validate a command, or explain command-skill structure. Does not trigger on skills (skill-creator) or custom agents (agent-creator)."
+description: "Create and iteratively improve portable slash commands for Claude Code and GitHub Copilot as invocation-gated command-skills (bootstrap under commands/ and install to .agents/skills). Use to author a slash command or prompt file from scratch, edit or validate a command, or explain command-skill structure. Does not trigger on skills (skill-creator) or custom agents (agent-creator)."
 ---
 
 # Command Creator
@@ -63,7 +63,7 @@ Follow [command-writing-guide.md](references/command-writing-guide.md) and [port
 
 - [portable-command-layout.md](references/portable-command-layout.md) — paths, install comparison, templates
 - [command-writing-guide.md](references/command-writing-guide.md) — cross-tool authoring checklist
-- [cursor-command-best-practices.md](references/cursor-command-best-practices.md), [claude-command-best-practices.md](references/claude-command-best-practices.md), [copilot-prompt-best-practices.md](references/copilot-prompt-best-practices.md)
+- [claude-command-best-practices.md](references/claude-command-best-practices.md), [copilot-prompt-best-practices.md](references/copilot-prompt-best-practices.md)
 - [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md) — shared authoring skeleton
 
 ## Tool notes
@@ -73,10 +73,6 @@ Every host exposes `.agents/skills/cmd-<name>/SKILL.md` as `/<name>` while `disa
 ### Claude Code
 
 - Enforces `allowed-tools` frontmatter (when declared in bootstrap `COMMAND.md`) as a permission gate during `/<name>` execution.
-
-### Cursor
-
-- Exposes `/<name>` in chat while preserving frontmatter and `disable-model-invocation: true`.
 
 ### GitHub Copilot
 

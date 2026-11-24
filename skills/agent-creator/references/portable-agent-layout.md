@@ -1,13 +1,13 @@
 # Portable Agent Layout
 
-Use this guide when creating or reviewing agents that should work across GitHub Copilot, Cursor, and Claude Code.
+Use this guide when creating or reviewing agents that should work across GitHub Copilot and Claude Code.
 
 ## Two-phase workflow
 
 Portable agents use **two phases**:
 
 1. **Bootstrap** — Author tool-neutral content under `agents/<name>/`. This is the source of truth when bootstrap exists.
-2. **Install** — Run `install_portable_agent.py` to write two real copies: `.claude/agents/<name>.md` (AGENT.md verbatim, which Cursor compat-reads) and `.github/agents/<name>.agent.md` (a Copilot transform).
+2. **Install** — Run `install_portable_agent.py` to write two real copies: `.claude/agents/<name>.md` (AGENT.md verbatim) and `.github/agents/<name>.agent.md` (a Copilot transform).
 
 Do not hand-edit installed agent files for bootstrapped agents — edit bootstrap and reinstall.
 
@@ -17,7 +17,7 @@ For one-off agents without bootstrap source, use `create_agent.py` to scaffold d
 
 There is no shared wrapper layer. Each agent installs as two real files:
 
-- **Claude Code** — `.claude/agents/<name>.md`, verbatim from `AGENT.md` (frontmatter + body). Cursor compat-reads this file.
+- **Claude Code** — `.claude/agents/<name>.md`, verbatim from `AGENT.md` (frontmatter + body).
 - **GitHub Copilot** — `.github/agents/<name>.agent.md`, a transform keeping only `name` and `description` frontmatter plus the body.
 
 Tool-specific guidance lives in `## Tool notes` sections of the agent body, not in separate files:
@@ -103,7 +103,7 @@ Keep the agent body tool-neutral above `## Tool notes`. Do not embed reload step
 
 | Tool | Install path |
 | --- | --- |
-| Claude Code (and Cursor compat-read) | `.claude/agents/<name>.md` |
+| Claude Code | `.claude/agents/<name>.md` |
 | GitHub Copilot | `.github/agents/<name>.agent.md` |
 
 ## Worked example: bootstrap and install
@@ -178,19 +178,14 @@ its output artifact), the installed copies intentionally carry no host frontmatt
   by the agent body's Boundaries section, not by host frontmatter. Add
   `tools: Read, Grep, Glob, Bash` to the installed file's frontmatter only if you want
   Claude Code to restrict this agent's tools at the host level.
-- **Cursor** — compat-reads the same verbatim copy and provides no host-level write guard
-  (there is no `readonly:` key). Read-only behavior is enforced by the agent body's
-  Boundaries section. Add `readonly: true` to the installed file's frontmatter only if
-  your Cursor setup honors it.
 - **GitHub Copilot** — `.agent.md` files do not expose a native `readonly` frontmatter
   field. Read-only enforcement is **instruction-only** (the agent body's Boundaries
   section) plus detection via the dev-workflow `check_post_phase.py` validation script,
   which catches forbidden writes in all modes.
 
-**Model defaults:** with no `model:` key, Claude Code runs the agent on the main conversation's model, Cursor on the parent agent's model, and Copilot on the user's currently selected Copilot chat model. Add a `model` key per tool only if the agent must run on a specific model.
+**Model defaults:** with no `model:` key, Claude Code runs the agent on the main conversation's model and Copilot on the user's currently selected Copilot chat model. Add a `model` key per tool only if the agent must run on a specific model.
 
-**Reload after install:** restart or reload the Claude Code session, reload the Cursor
-window, or reload VS Code after installing or editing an agent so the host rediscovers it.
+**Reload after install:** restart or reload the Claude Code session, or reload VS Code after installing or editing an agent so the host rediscovers it.
 
 Because these facts are identical for every read-only checker, the agent AGENT.md files
 carry **no** `## Tool notes` section at all — this section is the only home for the
