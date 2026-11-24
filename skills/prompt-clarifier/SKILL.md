@@ -77,7 +77,7 @@ If required information cannot be obtained safely, mark `blocked`: state the exa
 Questions are plain text and require **ending the turn** to get a reply:
 1. Finish `INSPECT` (Read, Grep, Glob, or a read-only subagent for broad searches) before ending a turn; never burn a turn on a question a stated default covers.
 2. Send the full question batch in one numbered message with lettered options, `(recommended)`, and the compact reply hint; complete any unblocked reversible work before ending the turn.
-3. **Subagents and headless (`claude -p`):** cannot ask the user — skip `ASK`, apply safe defaults, report all assumptions explicitly, and emit the `blocked` summary instead of guessing on irreversible work. Resolve blockers in the parent before dispatching subagents.
+3. **Subagents and non-interactive runs:** cannot ask the user — skip `ASK`, apply safe defaults, report all assumptions explicitly, and emit the `blocked` summary instead of guessing on irreversible work. Resolve blockers in the parent before dispatching subagents.
 4. **Claude.ai (no repo access):** ask for facts that would otherwise be inspected, or ask the user to paste relevant files/configs.
 
 ### Cursor

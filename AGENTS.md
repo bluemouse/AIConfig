@@ -106,9 +106,12 @@ Guidelines are explicit-only (`--guidelines`). The dev-workflow validation scrip
 
 ```bash
 cd skills/skill-creator && python -m scripts.run_eval \
+  --eval-set ../../skills/<name>/eval-queries.json \
   --skill-path ../../.agents/skills/<name> \
-  --eval-set ../../skills/<name>/eval-queries.json
+  --emit-tasks tasks.json
 ```
+
+Then dispatch the emitted tasks to subagents and score them as described in skill-creator's `## Tool notes`.
 
 ## Editing conventions
 

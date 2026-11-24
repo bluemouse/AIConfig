@@ -26,7 +26,7 @@ Follow [references/creation-common.md](references/creation-common.md). Skill-spe
 
 `<SKILL_CREATOR_ROOT>` is the directory containing **this** skill's `SKILL.md`; `<SKILL_ROOT>` is the installed target skill's directory.
 
-- **Module form** (`python -m scripts.<name>` from `<SKILL_CREATOR_ROOT>`): `quick_validate`, `aggregate_benchmark`, `run_loop`, `run_eval` (plus `eval-viewer/generate_review.py` by path).
+- **Module form** (`python -m scripts.<name>` from `<SKILL_CREATOR_ROOT>`): `quick_validate`, `aggregate_benchmark`, `run_eval`, `improve_description` (plus `eval-viewer/generate_review.py` by path).
 - **Direct form** (`python <SKILL_CREATOR_ROOT>/scripts/<name>.py` — flat sibling imports): `install_portable_skill`, `create_skill`, `init_skill`, `package_skill`.
 
 ### Anatomy, frontmatter, and installation
@@ -71,7 +71,7 @@ When trimming, simplifying, or retiring guidance, compare frozen, hashed arms ra
 
 ## Description optimization and packaging
 
-Manual description tuning follows [references/creation-common.md](references/creation-common.md) + `references/description-eval-queries.md` and `assets/eval_review.html` (`__EVAL_DATA_PLACEHOLDER__`, `__SKILL_NAME_PLACEHOLDER__`, `__SKILL_DESCRIPTION_PLACEHOLDER__`). Automated `run_loop.py` applies only where `## Tool notes` documents it.
+Description tuning uses the subagent-driven loop in `## Tool notes` (the scripts never spawn a CLI). Follow [references/creation-common.md](references/creation-common.md) + `references/description-eval-queries.md`, and use `assets/eval_review.html` (`__EVAL_DATA_PLACEHOLDER__`, `__SKILL_NAME_PLACEHOLDER__`, `__SKILL_DESCRIPTION_PLACEHOLDER__`) to review results.
 
 Package an installed skill after validation:
 
@@ -84,33 +84,31 @@ python <SKILL_CREATOR_ROOT>/scripts/package_skill.py .agents/skills/<skill-name>
 
 ## Tool notes
 
+### Subagent-driven description optimization (all hosts)
+
+The scripts build prompts and score answers; the host agent does the model calls. Use native subagents when available. Each subagent gets a fresh context and answers one task only, so no subagent sees another's answer. The trigger result is a proxy: it shows whether a model would route the query to the description, not Claude Code's real routing.
+
+1. **Trigger eval.** Run `python -m scripts.run_eval --eval-set <trigger-eval.json> --skill-path <SKILL_ROOT> --emit-tasks tasks.json`. Dispatch each task's `prompt` to its own no-tools subagent, one per task. Save the answers as `responses.json` (task id → answer text). Then run `python -m scripts.run_eval --eval-set <trigger-eval.json> --skill-path <SKILL_ROOT> --score tasks.json --responses responses.json > results.json`. A query with a missing or unparseable answer is listed under `summary.incomplete` and is never counted as a pass; re-dispatch those tasks and score again.
+Use `[]` as `history.json` on the first round.
+2. **Improve.** Run `python -m scripts.improve_description --eval-results results.json --skill-path <SKILL_ROOT> --history history.json --emit-prompt improve.txt`. Dispatch `improve.txt` to one subagent, save its reply to `reply.txt`, and run `python -m scripts.improve_description --eval-results results.json --skill-path <SKILL_ROOT> --history history.json --response reply.txt > next.json`. If `over_limit` is true in `next.json`, dispatch its `shorten_prompt` and parse the new reply the same way. Use `next.json`'s `history` as the next `history.json`.
+3. Repeat steps 1–2 up to about 5 rounds, then pick the best description by train score. Confirm the final description with one more trigger eval before shipping.
+
+Step 1 scoring uses `--trigger-threshold` (default 0.5). A should-trigger query passes when its trigger rate is at least the threshold; a should-not query passes when it is below it.
+
 ### Claude Code
 
-Supports **subagents** — run the full parallel with-skill + baseline eval loop. Automated description optimization (shared Step 3, after skill content stabilizes):
+Supports **subagents**: run the parallel with-skill + baseline eval loop, then the subagent-driven description optimization above.
 
-```bash
-cd <SKILL_CREATOR_ROOT>
-python -m scripts.run_loop \
-  --eval-set <path-to-trigger-eval.json> \
-  --skill-path .agents/skills/<skill-name> \
-  --max-iterations 5 \
-  --verbose
-```
-
-- **Model default:** evals and description improvement run on `claude-haiku-5-5` by default (cheap iterative search). Pass `--model <model-id>` to eval on a different model — the description is tuned against whatever model the eval runs, so before shipping a tuned description, run one confirmation eval pass with `--model` set to the model your users actually run.
-- **Duplicate-loop lock:** a second `run_loop` on the same skill refuses with exit 2 before any API call; `--force` overrides. Concurrency is also capped machine-wide (flock slots, default 10 live `claude -p` processes).
-- **Cowork / headless:** subagents and `run_loop.py` (`claude -p`) work; pass `generate_review.py --static <path>` (before self-grading) when no browser is available.
-- **Claude.ai (no CLI):** no subagents or `run_loop.py` — run prompts sequentially inline and tune descriptions manually.
+- **Cowork / headless:** subagents work; pass `generate_review.py --static <path>` (before self-grading) when no browser is available.
+- **Claude.ai (no CLI, no subagents):** run prompts sequentially inline and tune descriptions manually.
 
 ### Cursor
 
-Run the shared eval loop using concurrent **Task** subagents (with-skill + baseline in the same turn):
-- **No `run_loop.py`** (requires Claude Code CLI) — use manual description tuning with `assets/eval_review.html`.
+Run the shared eval loop using concurrent **Task** subagents (with-skill + baseline in the same turn), then the subagent-driven description optimization above.
 - **Remote / headless:** pass `--static <output.html>`, collect downloaded `feedback.json`, and stop any background viewer (`kill <PID>`).
 - Optional frontmatter: `disable-model-invocation: true` for explicit-only skills.
 
 ### GitHub Copilot
 
-- **Agent surfaces with concurrent subagent/task dispatch** (e.g. VS Code Copilot agent/SDK): run independent with-skill + baseline eval pairs concurrently per **Test prompts and evaluation**, saving artifacts under `<workspace>/iteration-1/eval-<ID>/` and generating `<workspace>/<skill-name>-review.html` via `eval-viewer/generate_review.py --static` when Python is available.
-- **Single-session chat surfaces** (no subagent dispatch): run a **qualitative, sequential** loop — write `evals/evals.json` and `eval_metadata.json`, send each prompt sequentially in chat (saving file outputs under `with_skill/outputs/`), optionally compare informally in a fresh session without the skill (`without_skill/outputs/`), and review in chat or via `generate_review.py --static <workspace>/<skill-name>-review.html` (skip `aggregate_benchmark` unless both arms exist).
-- **Description optimization:** `run_loop.py` is not available in Copilot — use the manual path (shared Steps 1, 2, and 4), stating both **what** the skill does and **when** Copilot should load it.
+- **Agent surfaces with concurrent subagent/task dispatch** (e.g. VS Code Copilot agent/SDK): run independent with-skill + baseline eval pairs concurrently per **Test prompts and evaluation**, saving artifacts under `<workspace>/iteration-1/eval-<ID>/` and generating `<workspace>/<skill-name>-review.html` via `eval-viewer/generate_review.py --static` when Python is available. Then use the subagent-driven description optimization above.
+- **Single-session chat surfaces** (no subagent dispatch): run a **qualitative, sequential** loop — write `evals/evals.json` and `eval_metadata.json`, send each prompt sequentially in chat (saving file outputs under `with_skill/outputs/`), optionally compare informally in a fresh session without the skill (`without_skill/outputs/`), and review in chat or via `generate_review.py --static <workspace>/<skill-name>-review.html` (skip `aggregate_benchmark` unless both arms exist). Tune descriptions manually.

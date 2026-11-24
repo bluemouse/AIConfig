@@ -1,76 +1,34 @@
 #!/usr/bin/env python3
-"""Improve a skill description based on eval results.
+"""Improve a skill description from eval results, run by a native subagent.
 
-Takes eval results (from run_eval.py) and generates an improved description
-by calling `claude -p` as a subprocess (same auth pattern as run_eval.py —
-uses the session's Claude Code auth, no separate ANTHROPIC_API_KEY needed).
+This script spawns no CLI. An agent with subagent support runs it in two steps:
+
+1. --emit-prompt OUT: write the improvement prompt. Dispatch it to a subagent.
+2. --response FILE: parse the subagent's reply (which should contain
+   <new_description> tags) and print JSON. If `over_limit` is true, dispatch
+   `shorten_prompt` to a subagent and parse its reply with --response again.
 """
 
 import argparse
 import json
-import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 
-from scripts.utils import DEFAULT_EVAL_MODEL, parse_skill_md, subprocess_slot
+from scripts.utils import parse_skill_md
+
+DESCRIPTION_LIMIT = 1024
 
 
-def _call_claude(
-    prompt: str,
-    model: str | None,
-    timeout: int = 300,
-    budget_id: str | None = None,
-) -> str:
-    """Run `claude -p` with the prompt on stdin and return the text response.
-
-    Prompt goes over stdin (not argv) because it embeds the full SKILL.md
-    body and can easily exceed comfortable argv length.
-    """
-    cmd = ["claude", "-p", "--output-format", "text"]
-    if model:
-        cmd.extend(["--model", model])
-
-    # Remove CLAUDECODE env var to allow nesting claude -p inside a
-    # Claude Code session. The guard is for interactive terminal conflicts;
-    # programmatic subprocess usage is safe. Same pattern as run_eval.py.
-    env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
-
-    with subprocess_slot(budget_id=budget_id):
-        result = subprocess.run(
-            cmd,
-            input=prompt,
-            capture_output=True,
-            text=True,
-            env=env,
-            timeout=timeout,
-        )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"claude -p exited {result.returncode}\nstderr: {result.stderr}"
-        )
-    return result.stdout
-
-
-def improve_description(
+def build_improve_prompt(
     skill_name: str,
     skill_content: str,
     current_description: str,
     eval_results: dict,
     history: list[dict],
-    model: str,
     test_results: dict | None = None,
-    log_dir: Path | None = None,
-    iteration: int | None = None,
-    budget_id: str | None = None,
 ) -> str:
-    """Call Claude to improve the description based on eval results.
-
-    Consumes at most 2 budgeted spawns: the improvement call plus the
-    optional over-limit rewrite. Budget is shared with run_eval when a
-    loop passes one budget_id across both phases.
-    """
+    """Build the prompt that asks for an improved description."""
     failed_triggers = [
         r for r in eval_results["results"]
         if r["should_trigger"] and not r["pass"]
@@ -152,64 +110,37 @@ Here are some tips that we've found to work well in writing these descriptions:
 I'd encourage you to be creative and mix up the style in different iterations since you'll have multiple opportunities to try different approaches and we'll just grab the highest-scoring one at the end. 
 
 Please respond with only the new description text in <new_description> tags, nothing else."""
+    return prompt
 
-    text = _call_claude(prompt, model, budget_id=budget_id)
 
+def parse_description(text: str) -> str:
+    """Extract the description from <new_description> tags, or fall back to the whole reply."""
     match = re.search(r"<new_description>(.*?)</new_description>", text, re.DOTALL)
-    description = match.group(1).strip().strip('"') if match else text.strip().strip('"')
+    return (match.group(1) if match else text).strip().strip('"')
 
-    transcript: dict = {
-        "iteration": iteration,
-        "prompt": prompt,
-        "response": text,
-        "parsed_description": description,
-        "char_count": len(description),
-        "over_limit": len(description) > 1024,
-    }
 
-    # Safety net: the prompt already states the 1024-char hard limit, but if
-    # the model blew past it anyway, make one fresh single-turn call that
-    # quotes the too-long version and asks for a shorter rewrite. (The old
-    # SDK path did this as a true multi-turn; `claude -p` is one-shot, so we
-    # inline the prior output into the new prompt instead.)
-    if len(description) > 1024:
-        shorten_prompt = (
-            f"{prompt}\n\n"
-            f"---\n\n"
-            f"A previous attempt produced this description, which at "
-            f"{len(description)} characters is over the 1024-character hard limit:\n\n"
-            f'"{description}"\n\n'
-            f"Rewrite it to be under 1024 characters while keeping the most "
-            f"important trigger words and intent coverage. Respond with only "
-            f"the new description in <new_description> tags."
-        )
-        shorten_text = _call_claude(shorten_prompt, model, budget_id=budget_id)
-        match = re.search(r"<new_description>(.*?)</new_description>", shorten_text, re.DOTALL)
-        shortened = match.group(1).strip().strip('"') if match else shorten_text.strip().strip('"')
-
-        transcript["rewrite_prompt"] = shorten_prompt
-        transcript["rewrite_response"] = shorten_text
-        transcript["rewrite_description"] = shortened
-        transcript["rewrite_char_count"] = len(shortened)
-        description = shortened
-
-    transcript["final_description"] = description
-
-    if log_dir:
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_file = log_dir / f"improve_iter_{iteration or 'unknown'}.json"
-        log_file.write_text(json.dumps(transcript, indent=2))
-
-    return description
+def build_shorten_prompt(prompt: str, description: str) -> str:
+    """Prompt for a one-shot rewrite of a description that exceeded the limit."""
+    return (
+        f"{prompt}\n\n"
+        f"---\n\n"
+        f"A previous attempt produced this description, which at "
+        f"{len(description)} characters is over the {DESCRIPTION_LIMIT}-character hard limit:\n\n"
+        f'"{description}"\n\n'
+        f"Rewrite it to be under {DESCRIPTION_LIMIT} characters while keeping the most "
+        f"important trigger words and intent coverage. Respond with only "
+        f"the new description in <new_description> tags."
+    )
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Improve a skill description based on eval results")
-    parser.add_argument("--eval-results", required=True, help="Path to eval results JSON (from run_eval.py)")
+    parser = argparse.ArgumentParser(description="Improve a skill description based on eval results (subagent-driven)")
+    parser.add_argument("--eval-results", required=True, help="Path to eval results JSON (from run_eval.py --score)")
     parser.add_argument("--skill-path", required=True, help="Path to skill directory")
     parser.add_argument("--history", default=None, help="Path to history JSON (previous attempts)")
-    parser.add_argument("--model", default=DEFAULT_EVAL_MODEL, help="Model for the improvement call (default: %(default)s)")
-    parser.add_argument("--verbose", action="store_true", help="Print thinking to stderr")
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--emit-prompt", metavar="OUT", help="Write the improvement prompt to OUT")
+    mode.add_argument("--response", metavar="FILE", help="Parse a subagent reply stored in FILE")
     args = parser.parse_args()
 
     skill_path = Path(args.skill_path)
@@ -218,32 +149,24 @@ def main():
         sys.exit(1)
 
     eval_results = json.loads(Path(args.eval_results).read_text())
-    history = []
-    if args.history:
-        history = json.loads(Path(args.history).read_text())
-
+    history = json.loads(Path(args.history).read_text()) if args.history else []
     name, _, content = parse_skill_md(skill_path)
     current_description = eval_results["description"]
 
-    if args.verbose:
-        print(f"Current: {current_description}", file=sys.stderr)
-        print(f"Score: {eval_results['summary']['passed']}/{eval_results['summary']['total']}", file=sys.stderr)
+    if args.emit_prompt:
+        prompt = build_improve_prompt(name, content, current_description, eval_results, history)
+        Path(args.emit_prompt).write_text(prompt)
+        print(f"Wrote improvement prompt to {args.emit_prompt}", file=sys.stderr)
+        return
 
-    new_description = improve_description(
-        skill_name=name,
-        skill_content=content,
-        current_description=current_description,
-        eval_results=eval_results,
-        history=history,
-        model=args.model,
-    )
+    prompt = build_improve_prompt(name, content, current_description, eval_results, history)
+    new_description = parse_description(Path(args.response).read_text())
+    over_limit = len(new_description) > DESCRIPTION_LIMIT
 
-    if args.verbose:
-        print(f"Improved: {new_description}", file=sys.stderr)
-
-    # Output as JSON with both the new description and updated history
     output = {
         "description": new_description,
+        "char_count": len(new_description),
+        "over_limit": over_limit,
         "history": history + [{
             "description": current_description,
             "passed": eval_results["summary"]["passed"],
@@ -252,6 +175,8 @@ def main():
             "results": eval_results["results"],
         }],
     }
+    if over_limit:
+        output["shorten_prompt"] = build_shorten_prompt(prompt, new_description)
     print(json.dumps(output, indent=2))
 
 

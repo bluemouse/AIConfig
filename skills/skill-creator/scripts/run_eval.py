@@ -1,389 +1,171 @@
 #!/usr/bin/env python3
-"""Run trigger evaluation for a skill description.
+"""Trigger evaluation for a skill description, run by native subagents.
 
-Tests whether a skill's description causes Claude to trigger (read the skill)
-for a set of queries. Outputs results as JSON.
+This script spawns no CLI. An agent with subagent support runs it in two steps:
+
+1. --emit-tasks OUT: write one task per (query, run). Each task holds a
+   self-contained prompt that shows a fresh subagent only the skill's name and
+   description and asks for a YES/NO decision. Subagents must not use tools.
+2. --score TASKS --responses RESP: parse the subagents' answers (a JSON object
+   mapping task id to answer text) and compute per-query trigger rates.
+
+This is a proxy. It measures whether a model reading the description would
+choose the skill, not Claude Code's real routing.
 """
 
 import argparse
 import json
-import os
-import select
-import subprocess
+import re
 import sys
-import time
-import uuid
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
-from scripts.utils import (
-    DEFAULT_EVAL_MODEL,
-    SpawnBudgetExceededError,
-    SubprocessLimitError,
-    create_spawn_budget,
-    parse_skill_md,
-    subprocess_slot,
-)
+from scripts.utils import parse_skill_md
 
 
-def find_project_root() -> Path:
-    """Find the project root by walking up from cwd looking for .claude/.
-
-    Mimics how Claude Code discovers its project root, so the command file
-    we create ends up where claude -p will look for it.
-    """
-    current = Path.cwd()
-    for parent in [current, *current.parents]:
-        if (parent / ".claude").is_dir():
-            return parent
-    return current
-
-
-def _matches_skill_trigger(
-    payload: str | dict,
-    skill_name: str,
-    clean_name: str,
-    tool_name: str,
-) -> bool:
-    """Return True when a Skill/Read tool call targets the eval skill."""
-    if tool_name == "Skill":
-        if isinstance(payload, dict):
-            skill = payload.get("skill", "")
-            return clean_name in skill or skill == skill_name
-        return clean_name in payload or f'"{skill_name}"' in payload
-    if tool_name == "Read":
-        if isinstance(payload, dict):
-            path = payload.get("file_path", "")
-            return clean_name in path or f"/{skill_name}/" in path or path.endswith(f"/{skill_name}")
-        return clean_name in payload or skill_name in payload
-    return False
+def build_task_prompt(skill_name: str, description: str, query: str) -> str:
+    return (
+        "You are deciding whether an AI coding agent would load a skill to handle a user request.\n\n"
+        "Available skill:\n"
+        f"- name: {skill_name}\n"
+        f"- description: {description}\n\n"
+        "User request:\n"
+        f"<request>\n{query}\n</request>\n\n"
+        "Based only on the skill's name and description, would the agent load this skill "
+        "to handle the request? Do not use any tools. Answer with exactly one word: YES or NO."
+    )
 
 
-def run_single_query(
-    query: str,
-    skill_name: str,
-    skill_description: str,
-    timeout: int,
-    project_root: str,
-    model: str | None = None,
-    budget_id: str | None = None,
-) -> bool:
-    """Run a single query and return whether the skill was triggered.
-
-    Creates a command file in .claude/commands/ so it appears in Claude's
-    available_skills list, then runs `claude -p` with the raw query.
-    Uses --include-partial-messages to detect triggering early from
-    stream events (content_block_start) rather than waiting for the
-    full assistant message, which only arrives after tool execution.
-    """
-    unique_id = uuid.uuid4().hex[:8]
-    clean_name = f"{skill_name}-skill-{unique_id}"
-    project_commands_dir = Path(project_root) / ".claude" / "commands"
-    command_file = project_commands_dir / f"{clean_name}.md"
-
-    try:
-        with subprocess_slot(budget_id=budget_id):
-            project_commands_dir.mkdir(parents=True, exist_ok=True)
-            # Use YAML block scalar to avoid breaking on quotes in description
-            indented_desc = "\n  ".join(skill_description.split("\n"))
-            command_content = (
-                f"---\n"
-                f"description: |\n"
-                f"  {indented_desc}\n"
-                f"---\n\n"
-                f"# {skill_name}\n\n"
-                f"This skill handles: {skill_description}\n"
-            )
-            command_file.write_text(command_content)
-
-            cmd = [
-                "claude",
-                "-p", query,
-                "--output-format", "stream-json",
-                "--verbose",
-                "--include-partial-messages",
-            ]
-            if model:
-                cmd.extend(["--model", model])
-
-            # Remove CLAUDECODE env var to allow nesting claude -p inside a
-            # Claude Code session. The guard is for interactive terminal conflicts;
-            # programmatic subprocess usage is safe.
-            env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
-
-            process = subprocess.Popen(
-                cmd,
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                cwd=project_root,
-                env=env,
-            )
-
-            triggered = False
-            start_time = time.time()
-            buffer = ""
-            pending_tool_name = None
-            accumulated_json = ""
-
-            try:
-                while time.time() - start_time < timeout:
-                    if process.poll() is not None:
-                        while True:
-                            extra = os.read(process.stdout.fileno(), 8192)
-                            if not extra:
-                                break
-                            buffer += extra.decode("utf-8", errors="replace")
-                        break
-
-                    ready, _, _ = select.select([process.stdout], [], [], 1.0)
-                    if not ready:
-                        continue
-
-                    chunk = os.read(process.stdout.fileno(), 8192)
-                    if not chunk:
-                        break
-                    buffer += chunk.decode("utf-8", errors="replace")
-
-                    while "\n" in buffer:
-                        line, buffer = buffer.split("\n", 1)
-                        line = line.strip()
-                        if not line:
-                            continue
-                        try:
-                            event = json.loads(line)
-                        except json.JSONDecodeError:
-                            continue
-
-                        if event.get("type") == "stream_event":
-                            se = event.get("event", {})
-                            se_type = se.get("type", "")
-
-                            if se_type == "content_block_start":
-                                cb = se.get("content_block", {})
-                                if cb.get("type") == "tool_use":
-                                    tool_name = cb.get("name", "")
-                                    if tool_name in ("Skill", "Read"):
-                                        pending_tool_name = tool_name
-                                        accumulated_json = ""
-
-                            elif se_type == "content_block_delta" and pending_tool_name:
-                                delta = se.get("delta", {})
-                                if delta.get("type") == "input_json_delta":
-                                    accumulated_json += delta.get("partial_json", "")
-                                    if _matches_skill_trigger(
-                                        accumulated_json,
-                                        skill_name,
-                                        clean_name,
-                                        pending_tool_name,
-                                    ):
-                                        return True
-
-                            elif se_type == "content_block_stop":
-                                if pending_tool_name and _matches_skill_trigger(
-                                    accumulated_json,
-                                    skill_name,
-                                    clean_name,
-                                    pending_tool_name,
-                                ):
-                                    return True
-                                pending_tool_name = None
-                                accumulated_json = ""
-
-                            elif se_type == "message_stop":
-                                if pending_tool_name and _matches_skill_trigger(
-                                    accumulated_json,
-                                    skill_name,
-                                    clean_name,
-                                    pending_tool_name,
-                                ):
-                                    return True
-                                pending_tool_name = None
-                                accumulated_json = ""
-
-                        elif event.get("type") == "assistant":
-                            message = event.get("message", {})
-                            for content_item in message.get("content", []):
-                                if content_item.get("type") != "tool_use":
-                                    continue
-                                tool_name = content_item.get("name", "")
-                                tool_input = content_item.get("input", {})
-                                if tool_name in ("Skill", "Read") and _matches_skill_trigger(
-                                    tool_input, skill_name, clean_name, tool_name
-                                ):
-                                    return True
-            finally:
-                # Clean up process on any exit path (return, exception, timeout)
-                if process.poll() is None:
-                    process.kill()
-                    process.wait()
-
-            return triggered
-    finally:
-        if command_file.exists():
-            command_file.unlink()
+def parse_decision(text: str | None) -> bool | None:
+    """Return True for YES, False for NO, None when the first word is neither."""
+    words = re.findall(r"[A-Za-z]+", text or "")
+    if not words:
+        return None
+    first = words[0].upper()
+    if first == "YES":
+        return True
+    if first == "NO":
+        return False
+    return None
 
 
-def run_eval(
+def build_tasks(
     eval_set: list[dict],
     skill_name: str,
     description: str,
-    num_workers: int,
-    timeout: int,
-    project_root: Path,
-    runs_per_query: int = 1,
-    trigger_threshold: float = 0.5,
-    model: str | None = None,
-    spawn_budget_id: str | None = None,
+    runs_per_query: int,
+    trigger_threshold: float,
 ) -> dict:
-    """Run the full eval set and return results.
+    tasks = []
+    for q_idx, item in enumerate(eval_set):
+        for run_idx in range(runs_per_query):
+            tasks.append({
+                "id": f"{q_idx}-{run_idx}",
+                "query": item["query"],
+                "should_trigger": item["should_trigger"],
+                "prompt": build_task_prompt(skill_name, description, item["query"]),
+            })
+    return {
+        "skill_name": skill_name,
+        "description": description,
+        "runs_per_query": runs_per_query,
+        "trigger_threshold": trigger_threshold,
+        "tasks": tasks,
+    }
 
-    When `spawn_budget_id` is not provided, a budget of exactly
-    len(eval_set) * runs_per_query is created: one spawn per submitted run,
-    no more. A SpawnBudgetExceededError from any worker propagates — a
-    budget breach means a retry/respawn regression, not a query failure.
-    """
-    results = []
 
-    if spawn_budget_id is None:
-        spawn_budget_id = create_spawn_budget(len(eval_set) * runs_per_query)
-
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
-        future_to_info = {}
-        for item in eval_set:
-            for run_idx in range(runs_per_query):
-                future = executor.submit(
-                    run_single_query,
-                    item["query"],
-                    skill_name,
-                    description,
-                    timeout,
-                    str(project_root),
-                    model,
-                    spawn_budget_id,
-                )
-                future_to_info[future] = (item, run_idx)
-
-        query_triggers: dict[str, list[bool]] = {}
-        query_items: dict[str, dict] = {}
-        dropped_runs: dict[str, int] = {}
-        for future in as_completed(future_to_info):
-            item, _ = future_to_info[future]
-            query = item["query"]
-            query_items[query] = item
-            if query not in query_triggers:
-                query_triggers[query] = []
-            try:
-                query_triggers[query].append(future.result())
-            except SpawnBudgetExceededError:
-                # Budget breach = spawn regression. Re-raise hard: swallowing
-                # it as a query failure would hide the very bug the budget
-                # exists to catch, and continuing would keep spending.
-                raise
-            except SubprocessLimitError as e:
-                # Slot exhaustion is a capacity signal, not a trigger signal.
-                # Recording False here would poison tuning decisions: run_loop
-                # would chase phantom regressions. Drop the run instead.
-                print(f"Warning: run skipped (no subprocess slot): {e}", file=sys.stderr)
-                dropped_runs[query] = dropped_runs.get(query, 0) + 1
-            except Exception as e:
-                print(f"Warning: query failed: {e}", file=sys.stderr)
-                query_triggers[query].append(False)
-
-    # Queries whose every run was dropped (slot exhaustion) are excluded from
-    # per-query results — scoring them would poison trigger rates — but are
-    # recorded in the summary so reports/history can explain a smaller total.
-    dropped = [
-        {"query": query, "dropped_runs": count}
-        for query, count in sorted(dropped_runs.items())
-        if not query_triggers.get(query)
-    ]
-
-    for query, triggers in query_triggers.items():
-        if not triggers:
-            continue
-        item = query_items[query]
-        trigger_rate = sum(triggers) / len(triggers)
-        should_trigger = item["should_trigger"]
-        if should_trigger:
-            did_pass = trigger_rate >= trigger_threshold
+def score_responses(tasks_doc: dict, responses: dict[str, str]) -> dict:
+    """Score subagent answers. Queries with any missing or unparseable answer are
+    reported as incomplete and never counted as passes or failures."""
+    grouped: dict[str, dict] = {}
+    for task in tasks_doc["tasks"]:
+        entry = grouped.setdefault(
+            task["query"],
+            {"should_trigger": task["should_trigger"], "decisions": [], "missing": 0},
+        )
+        decision = parse_decision(responses.get(task["id"]))
+        if decision is None:
+            entry["missing"] += 1
         else:
-            did_pass = trigger_rate < trigger_threshold
+            entry["decisions"].append(decision)
+
+    threshold = tasks_doc["trigger_threshold"]
+    results = []
+    incomplete = []
+    for query, entry in grouped.items():
+        if entry["missing"]:
+            incomplete.append({"query": query, "missing_runs": entry["missing"]})
+            continue
+        decisions = entry["decisions"]
+        triggers = sum(decisions)
+        trigger_rate = triggers / len(decisions)
+        if entry["should_trigger"]:
+            did_pass = trigger_rate >= threshold
+        else:
+            did_pass = trigger_rate < threshold
         results.append({
             "query": query,
-            "should_trigger": should_trigger,
+            "should_trigger": entry["should_trigger"],
             "trigger_rate": trigger_rate,
-            "triggers": sum(triggers),
-            "runs": len(triggers),
+            "triggers": triggers,
+            "runs": len(decisions),
             "pass": did_pass,
         })
 
     passed = sum(1 for r in results if r["pass"])
-    total = len(results)
-
     return {
-        "skill_name": skill_name,
-        "description": description,
+        "skill_name": tasks_doc["skill_name"],
+        "description": tasks_doc["description"],
         "results": results,
         "summary": {
-            "total": total,
+            "total": len(results),
             "passed": passed,
-            "failed": total - passed,
-            # Queries excluded from scoring because every run was dropped
-            # to slot exhaustion — capacity signal, not trigger signal.
-            "dropped": dropped,
+            "failed": len(results) - passed,
+            "incomplete": incomplete,
         },
     }
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run trigger evaluation for a skill description")
+    parser = argparse.ArgumentParser(description="Trigger evaluation for a skill description (subagent-driven)")
     parser.add_argument("--eval-set", required=True, help="Path to eval set JSON file")
     parser.add_argument("--skill-path", required=True, help="Path to skill directory")
     parser.add_argument("--description", default=None, help="Override description to test")
-    parser.add_argument("--num-workers", type=int, default=10, help="Number of parallel workers")
-    parser.add_argument("--timeout", type=int, default=30, help="Timeout per query in seconds")
     parser.add_argument("--runs-per-query", type=int, default=3, help="Number of runs per query")
     parser.add_argument("--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold")
-    parser.add_argument("--model", default=DEFAULT_EVAL_MODEL, help="Model for claude -p (default: %(default)s — cheap trigger evals; override to measure trigger behavior on the model your users run)")
-    parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--emit-tasks", metavar="OUT", help="Write subagent tasks JSON to OUT")
+    mode.add_argument("--score", metavar="TASKS", help="Score responses for the tasks file TASKS (requires --responses)")
+    parser.add_argument("--responses", help="JSON object mapping task id to subagent answer text (with --score)")
     args = parser.parse_args()
 
-    eval_set = json.loads(Path(args.eval_set).read_text())
     skill_path = Path(args.skill_path)
-
     if not (skill_path / "SKILL.md").exists():
         print(f"Error: No SKILL.md found at {skill_path}", file=sys.stderr)
         sys.exit(1)
 
-    name, original_description, content = parse_skill_md(skill_path)
-    description = args.description or original_description
-    project_root = find_project_root()
+    if args.emit_tasks:
+        name, original_description, _ = parse_skill_md(skill_path)
+        description = args.description or original_description
+        eval_set = json.loads(Path(args.eval_set).read_text())
+        tasks_doc = build_tasks(eval_set, name, description, args.runs_per_query, args.trigger_threshold)
+        Path(args.emit_tasks).write_text(json.dumps(tasks_doc, indent=2))
+        print(f"Wrote {len(tasks_doc['tasks'])} tasks to {args.emit_tasks}", file=sys.stderr)
+        return
 
-    if args.verbose:
-        print(f"Evaluating: {description}", file=sys.stderr)
-
-    output = run_eval(
-        eval_set=eval_set,
-        skill_name=name,
-        description=description,
-        num_workers=args.num_workers,
-        timeout=args.timeout,
-        project_root=project_root,
-        runs_per_query=args.runs_per_query,
-        trigger_threshold=args.trigger_threshold,
-        model=args.model,
-    )
-
-    if args.verbose:
-        summary = output["summary"]
-        print(f"Results: {summary['passed']}/{summary['total']} passed", file=sys.stderr)
-        for r in output["results"]:
-            status = "PASS" if r["pass"] else "FAIL"
-            rate_str = f"{r['triggers']}/{r['runs']}"
-            print(f"  [{status}] rate={rate_str} expected={r['should_trigger']}: {r['query'][:70]}", file=sys.stderr)
-
+    if not args.responses:
+        parser.error("--score requires --responses")
+    tasks_doc = json.loads(Path(args.score).read_text())
+    responses = json.loads(Path(args.responses).read_text())
+    output = score_responses(tasks_doc, responses)
+    incomplete = output["summary"]["incomplete"]
     print(json.dumps(output, indent=2))
+    if incomplete:
+        print(
+            f"Warning: {len(incomplete)} queries have missing or unparseable answers; "
+            f"re-run those task ids before trusting the score.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
 
 if __name__ == "__main__":

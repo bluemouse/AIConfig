@@ -60,6 +60,6 @@ Agents match tasks against skill **name + description** in their available-skill
 
 ## Automated optimization (Claude Code / Cowork only)
 
-When `run_loop.py` is available (see the Claude Code `## Tool notes` section), it splits the eval set ~60% train / 40% held-out test, runs each query multiple times, and proposes description revisions. Execution details are **not** shared here — see the skill's `## Tool notes`.
+When the host has subagents, skill-creator's subagent-driven loop (`run_eval.py` + `improve_description.py`, per its `## Tool notes`) scores the eval set and proposes description revisions. Its trigger results are a proxy for real routing. Each query runs as independent subagent tasks, and missing answers are never counted as passes.
 
 Manual optimization (all tools): draft queries (Step 1), review with user via `assets/eval_review.html` (Step 2), revise the description yourself, apply, and reinstall or re-sync the installed copy (Step 4).

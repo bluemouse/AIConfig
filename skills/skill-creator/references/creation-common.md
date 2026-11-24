@@ -53,14 +53,14 @@ against the user's request. After creating or improving content, offer to tune i
 1. Draft ~10–20 realistic should-trigger / should-not-trigger queries, concrete and
    edge-case heavy.
 2. Review them with the user; mark false positives and false negatives.
-3. Revise the description: for skills this can be the automated eval loop
-   (skill-creator's `run_loop.py`, per its `## Tool notes`); agents and commands
-   revise manually.
+3. Revise the description: for skills this can be the subagent-driven eval loop
+   (skill-creator's `run_eval.py` + `improve_description.py`, per its `## Tool notes`);
+   agents and commands revise manually.
 4. Apply the revised `description` at the authoritative edit location; reinstall
    or re-sync the installed copy. Show before/after when possible.
 
 Automated description-eval loops exist **only for skills** (skill-creator's
-`run_loop.py`, per its `## Tool notes`) — agents and commands tune manually on every
+subagent-driven scripts, per its `## Tool notes`) — agents and commands tune manually on every
 tool.
 
 ## Output summary (all kinds)

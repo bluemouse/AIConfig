@@ -58,7 +58,7 @@ python <AGENT_CREATOR_ROOT>/scripts/quick_validate.py --root <repo_root> --name 
 
 ### Iterate, tune, and references
 
-Follow [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md) for testing, manual `description` tuning (there is no automated `run_loop.py` for agents), and the final output summary. Layout details and per-host read-only checker notes live in `references/portable-agent-layout.md`.
+Follow [../skill-creator/references/creation-common.md](../skill-creator/references/creation-common.md) for testing, manual `description` tuning (there is no automated description loop for agents), and the final output summary. Layout details and per-host read-only checker notes live in `references/portable-agent-layout.md`.
 
 ---
 
