@@ -145,6 +145,7 @@ class DevWorkflowBundleTests(unittest.TestCase):
         self.assertEqual(
             selection.commands,
             [
+                "commit",
                 "implement",
                 "plan",
                 "research",
@@ -356,6 +357,7 @@ class BundlesJsonPhaseCommandsTests(unittest.TestCase):
                 "plan",
                 "implement",
                 "review",
+                "commit",
             ],
         )
 

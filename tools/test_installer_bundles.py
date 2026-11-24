@@ -43,6 +43,18 @@ class BundleLoadingTests(unittest.TestCase):
         bundles = mod.load_skill_bundles(BUNDLES_JSON_PATH)
         by_id = {bundle.id: bundle for bundle in bundles}
         self.assertEqual(len(by_id["core-dev-workflow"].skills), 12)
+        # The core base carries the commit command and the three behavioral
+        # guidelines; the extended bundle inherits both through the base.
+        self.assertEqual(by_id["core-dev-workflow"].commands, frozenset({"commit"}))
+        self.assertEqual(
+            by_id["core-dev-workflow"].guidelines,
+            frozenset({"code-comment", "coding-behavior", "response"}),
+        )
+        self.assertEqual(by_id["extended-dev-workflow"].commands, frozenset({"commit"}))
+        self.assertEqual(
+            by_id["extended-dev-workflow"].guidelines,
+            frozenset({"code-comment", "coding-behavior", "response"}),
+        )
         # cr-001: the orchestrator must ship with the extended bundle so the
         # reviewers' folded reviewer-core links resolve in the target.
         self.assertEqual(len(by_id["extended-dev-workflow"].skills), 20)
@@ -79,6 +91,7 @@ class BundleLoadingTests(unittest.TestCase):
                 "plan",
                 "implement",
                 "review",
+                "commit",
             }),
         )
         self.assertEqual(
@@ -90,6 +103,8 @@ class BundleLoadingTests(unittest.TestCase):
                 "code-reviewer",
             }),
         )
+        # The harness carries no guidelines; the core bundle does.
+        self.assertEqual(harness.guidelines, frozenset())
 
     def test_bases_composition(self) -> None:
         config = {
@@ -587,15 +602,18 @@ class TargetBundleTests(unittest.TestCase):
             self._write_target_skill(root, "only-in-target")
             self._write_target_agent(root, "alpha")
             self._write_target_command(root, "alpha")
+            self._write_target_skill(root, "guidelines-response")
             bundle = mod.build_target_bundle(
                 root,
                 available_skills=["alpha", "beta"],
                 available_agents=["alpha", "beta"],
                 available_commands=["alpha", "beta"],
+                available_guidelines=["response"],
             )
             self.assertEqual(bundle.skills, frozenset({"alpha"}))
             self.assertEqual(bundle.agents, frozenset({"alpha"}))
             self.assertEqual(bundle.commands, frozenset({"alpha"}))
+            self.assertEqual(bundle.guidelines, frozenset({"response"}))
             self.assertFalse(bundle.is_empty)
 
     def test_build_target_bundle_empty_when_no_matches(self) -> None:
@@ -617,9 +635,11 @@ class TargetBundleTests(unittest.TestCase):
             self._write_target_skill(root, "research-guide")
             self._write_target_agent(root, "alpha")
             self._write_target_command(root, "commit")
+            self._write_target_skill(root, "guidelines-response")
             with mock.patch.object(mod, "discover_skills", return_value=["research-guide"]), \
                  mock.patch.object(mod, "discover_agents", return_value=["alpha"]), \
-                 mock.patch.object(mod, "discover_commands", return_value=["commit"]):
+                 mock.patch.object(mod, "discover_commands", return_value=["commit"]), \
+                 mock.patch.object(mod, "discover_guidelines", return_value=["response"]):
                 selection = mod.resolve_bundle(
                     [mod.TARGET_BUNDLE_ID],
                     target_root=root,
@@ -627,6 +647,7 @@ class TargetBundleTests(unittest.TestCase):
             self.assertIn("research-guide", selection.skills)
             self.assertIn("alpha", selection.agents)
             self.assertIn("commit", selection.commands)
+            self.assertIn("response", selection.guidelines)
 
     def test_target_bundle_excludes_command_skill_dirs_from_skills(self) -> None:
         """F1 regression: cmd-<name> dirs are commands, never plain skills.

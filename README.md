@@ -410,7 +410,8 @@ python tools/installer.py /path/to/other-project --bundles core-dev-workflow --d
 python tools/installer.py /path/to/other-project --dev-workflow
 python tools/installer.py /path/to/other-project --bundles dev-workflow-harness
 
-# Install behavioral guidelines (explicit-only; installs as .agents/skills/guidelines-<name>/)
+# Install behavioral guidelines (never in the default install; bundles may carry them;
+# installs as .agents/skills/guidelines-<name>/)
 python tools/installer.py /path/to/other-project --guidelines coding-behavior
 
 # Remove legacy-layout leftovers from an older install of this repo's tooling
@@ -431,11 +432,11 @@ python tools/installer.py /path/to/other-project --guidelines coding-behavior --
 | Flag | Behavior |
 | --- | --- |
 | `TARGET` | Destination project root (required in CLI mode) |
-| `--bundles ID ...` | Bundle ids from [tools/bundles.json](tools/bundles.json) or `target-bundle`; a bundle may include skills, agents, and commands (see [tools/bundles.md](tools/bundles.md)) |
+| `--bundles ID ...` | Bundle ids from [tools/bundles.json](tools/bundles.json) or `target-bundle`; a bundle may include skills, agents, commands, and guidelines (see [tools/bundles.md](tools/bundles.md)) |
 | `--skills NAME ...` | Skill slugs to install or uninstall (default: all discovered unless `--bundles` is set); at install time the selection is expanded with the slugs' transitive skill dependencies (see [tools/bundles.md](tools/bundles.md) § Dependency map) |
 | `--agents NAME ...` | Agent slugs to install or uninstall (default: all discovered); install selections auto-select each agent's criteria skills (see [tools/bundles.md](tools/bundles.md) § Dependency map) |
 | `--commands NAME ...` | Command slugs to install or uninstall (default: all discovered); commands install as command-skills under `.agents/skills/cmd-<name>/` with `disable-model-invocation: true`; install selections auto-select each command's engine skills (see [tools/bundles.md](tools/bundles.md) § Dependency map) |
-| `--guidelines NAME ...` | Behavioral guideline names (under `guidelines/`) to install or uninstall. Explicit-only — never part of the default install or bundles. Installed as the skill package `.agents/skills/guidelines-<name>/` in the target (loads via skill discovery) |
+| `--guidelines NAME ...` | Behavioral guideline names (under `guidelines/`) to install or uninstall. Never part of the default install; bundles may carry them. Installed as the skill package `.agents/skills/guidelines-<name>/` in the target (loads via skill discovery) |
 | `--dev-workflow` | Alias for `--bundles dev-workflow-harness`: installs/uninstalls the complete dev-workflow harness (orchestrator, phase skills, and commands — validation scripts ship inside the orchestrator skill; see [tools/bundles.md](tools/bundles.md) for full membership) as a unit |
 | `--purge-legacy` | Remove the target's pre-single-root install leftovers (`.ai/`, `.cursor/skills|commands|agents/`, `.github/prompts/`, `.github/skills/`, `.claude/commands/`, `.agents/guidelines/`, `.agents/tools/`, and `.claude/skills/` only when it is a real directory — the bridge symlink is left alone). Composes with the kind selectors or runs standalone |
 | `--override` | Replace existing paths in the target; without it, skip and report |
@@ -452,7 +453,7 @@ python tools/installer.py
 ```
 
 - Checkboxes start **unchecked**
-- **Bundles** panel: batch toggles plus Select all/none; **Target bundle** appears after a valid target project path is set and selects skills, agents, and commands already installed in that project
+- **Bundles** panel: batch toggles plus Select all/none; **Target bundle** appears after a valid target project path is set and selects skills, agents, commands, and guidelines already installed in that project
 - **Help** (right side of each panel): descriptions for current selections; partial bundles labeled `(partial)`
 - **Hover tooltips** on individual checkboxes
 

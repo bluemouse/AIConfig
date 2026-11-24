@@ -174,12 +174,14 @@ GITHUB_AGENT_FILE = ".github/agents/{name}.agent.md"
 # that skill. Legacy .agents/tools/<name>/ trees from a pre-move installer
 # are removed by --purge-legacy (see LEGACY_PURGE_REL_PATHS).
 
-# Behavioral guidelines installable to target projects (explicit selection only —
-# never part of the no-selector default or bundles). A guideline installs as a
-# skill package: the source guidelines/<name>.md is wrapped into
-# .agents/skills/guidelines-<name>/SKILL.md with `name: guidelines-<name>`
-# frontmatter injected at install time, so guidelines load through ordinary
-# skill discovery in the target.
+# Behavioral guidelines installable to target projects. Excluded from the
+# no-selector default (they change agent behavior in the target, so
+# installing one is always a deliberate choice — a bundle selection or an
+# explicit --guidelines), but a bundle may carry them via its `guidelines`
+# list. A guideline installs as a skill package: the source
+# guidelines/<name>.md is wrapped into .agents/skills/guidelines-<name>/SKILL.md
+# with `name: guidelines-<name>` frontmatter injected at install time, so
+# guidelines load through ordinary skill discovery in the target.
 GUIDELINE_SKILL_PREFIX = "guidelines-"
 INSTALLABLE_GUIDELINES = (
     "coding-behavior",
@@ -286,11 +288,12 @@ class Bundle:
     skills: frozenset[str]
     agents: frozenset[str] = frozenset()
     commands: frozenset[str] = frozenset()
+    guidelines: frozenset[str] = frozenset()
 
     @property
     def is_empty(self) -> bool:
         """Return True if the bundle has no members of any kind."""
-        return not (self.skills or self.agents or self.commands)
+        return not (self.skills or self.agents or self.commands or self.guidelines)
 
 
 # Backward-compatible alias.
@@ -435,6 +438,7 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
         resolved_skills: set[str] = set()
         resolved_agents: set[str] = set()
         resolved_commands: set[str] = set()
+        resolved_guidelines: set[str] = set()
 
         raw_bundle_bases = entry.get("bases", [])
         if raw_bundle_bases is None:
@@ -453,15 +457,18 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
             resolved_skills.update(base.skills)
             resolved_agents.update(base.agents)
             resolved_commands.update(base.commands)
+            resolved_guidelines.update(base.guidelines)
 
         resolved_skills.update(_parse_member_list(entry, "skills", path, index))
         resolved_agents.update(_parse_member_list(entry, "agents", path, index))
         resolved_commands.update(_parse_member_list(entry, "commands", path, index))
+        resolved_guidelines.update(_parse_member_list(entry, "guidelines", path, index))
 
         if not (
             resolved_skills
             or resolved_agents
             or resolved_commands
+            or resolved_guidelines
         ):
             raise InstallerError(
                 f"Invalid bundle config {path}: bundles[{index}] resolved to an empty bundle."
@@ -475,6 +482,7 @@ def load_skill_bundles(path: Path = BUNDLES_JSON) -> list[Bundle]:
                 skills=frozenset(resolved_skills),
                 agents=frozenset(resolved_agents),
                 commands=frozenset(resolved_commands),
+                guidelines=frozenset(resolved_guidelines),
             )
         )
 
@@ -487,7 +495,7 @@ def _parse_member_list(
     path: Path,
     index: int,
 ) -> set[str]:
-    """Parse an optional member list (skills/agents/commands) from a bundle/base entry."""
+    """Parse an optional member list (skills/agents/commands/guidelines) from a bundle/base entry."""
     if key not in entry:
         return set()
     raw = entry[key]
@@ -502,8 +510,8 @@ def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, Bundl
     """Parse the top-level bases registry from bundles.json.
 
     A base is a reusable member set. It must define at least one of skills,
-    agents, or commands. For backward compatibility, a base with only
-    a ``skills`` key is valid.
+    agents, commands, or guidelines. For backward compatibility, a base with
+    only a ``skills`` key is valid.
     """
     if raw_bases is None:
         return {}
@@ -529,11 +537,12 @@ def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, Bundl
         skills = frozenset(_parse_member_list(entry, "skills", path, index))
         agents = frozenset(_parse_member_list(entry, "agents", path, index))
         commands = frozenset(_parse_member_list(entry, "commands", path, index))
+        guidelines = frozenset(_parse_member_list(entry, "guidelines", path, index))
 
-        if not (skills or agents or commands):
+        if not (skills or agents or commands or guidelines):
             raise InstallerError(
                 f"Invalid bundle config {path}: bases[{index}] must define at least one of "
-                "skills, agents, or commands."
+                "skills, agents, commands, or guidelines."
             )
 
         base_registry[base_id] = Bundle(
@@ -543,6 +552,7 @@ def _load_bundle_base_registry(path: Path, raw_bases: object) -> dict[str, Bundl
             skills=skills,
             agents=agents,
             commands=commands,
+            guidelines=guidelines,
         )
 
     return base_registry
@@ -956,6 +966,7 @@ def resolve_bundle(
                 skills=sorted(target_bundle.skills),
                 agents=sorted(target_bundle.agents),
                 commands=sorted(target_bundle.commands),
+                guidelines=sorted(target_bundle.guidelines),
             ))
             continue
         if bundle_id not in by_id:
@@ -968,6 +979,7 @@ def resolve_bundle(
             skills=sorted(bundle.skills),
             agents=sorted(bundle.agents),
             commands=sorted(bundle.commands),
+            guidelines=sorted(bundle.guidelines),
         ))
     selection.dedupe()
     return selection
@@ -1030,11 +1042,12 @@ def resolve_cli_selection(
         return resolve_dependencies(
             selection, uninstall=uninstall, added_out=added_out
         )
-    # No explicit selection: default to all discovered items. Guidelines are
-    # explicit-only — they change agent behavior in the target, so the
-    # guidelines-<name> skill packages this repo carries are filtered out of
-    # the default install (and out of target-bundle membership, which uses
-    # the same catalog intersection). discover_skills() has no
+    # No explicit selection: default to all discovered items. Guidelines
+    # change agent behavior in the target, so they stay out of the
+    # no-selector default — the guidelines-<name> skill packages this repo
+    # carries are filtered out of the default install (the target bundle
+    # maps them back to guideline names as its own kind instead).
+    # discover_skills() has no
     # command-skill filter, so a command-skill name lands in BOTH lists and
     # must run through the same dedupe as the explicit-selection path (fd-019)
     # — without it, the default uninstall hits the cr-004 cross-kind guard
@@ -1043,9 +1056,9 @@ def resolve_cli_selection(
         skills=[
             name
             for name in discover_skills()
-            # Guidelines are explicit-only; command-skill dirs (cmd-<name>)
-            # are commands, not plain skills — filter both out of the
-            # default skill list.
+            # Guidelines stay out of the default selection; command-skill
+            # dirs (cmd-<name>) are commands, not plain skills — filter
+            # both out of the default skill list.
             if not name.startswith(GUIDELINE_SKILL_PREFIX)
             and not name.startswith(COMMAND_SKILL_DIR_PREFIX)
         ],
@@ -1214,12 +1227,14 @@ def build_target_bundle(
     available_skills: Sequence[str] | None = None,
     available_agents: Sequence[str] | None = None,
     available_commands: Sequence[str] | None = None,
+    available_guidelines: Sequence[str] | None = None,
 ) -> Bundle:
     """Build the dynamic target bundle from installed members in the target project.
 
     Membership for each kind is the intersection of what is installed in the
     target project's shared ``.agents/`` layer and what is available in this
-    AIConfig repository catalog.
+    AIConfig repository catalog. Installed guideline skill packages
+    (``guidelines-<name>``) map back to their guideline names.
     """
     if available_skills is None:
         available_skills = discover_skills()
@@ -1227,6 +1242,8 @@ def build_target_bundle(
         available_agents = discover_agents()
     if available_commands is None:
         available_commands = discover_commands()
+    if available_guidelines is None:
+        available_guidelines = discover_guidelines()
 
     def _intersect(
         installed: Sequence[str], available: Sequence[str]
@@ -1234,25 +1251,37 @@ def build_target_bundle(
         available_set = set(available)
         return frozenset(name for name in installed if name in available_set)
 
+    # Command-skill dirs (cmd-<name>) are commands, not plain skills —
+    # excluded here so the target bundle does not carry them through the
+    # skills pass. Guideline packages are handled as their own kind below,
+    # derived from raw target discovery so membership does not depend on
+    # this repo's own regenerated guideline packages being present.
+    installed_in_target = discover_skills_in_project(target_root)
+    installed_skill_names = _intersect(installed_in_target, available_skills)
+    installed_guideline_names = frozenset(
+        name
+        for name in installed_in_target
+        if name.startswith(GUIDELINE_SKILL_PREFIX)
+    )
     return Bundle(
         id=TARGET_BUNDLE_ID,
         name=TARGET_BUNDLE_NAME,
         description=TARGET_BUNDLE_DESCRIPTION,
-        # Guidelines are explicit-only and never bundle-carried: their
-        # guidelines-<name> skill packages are excluded from target-bundle
-        # membership even when installed in the target. Command-skill dirs
-        # (cmd-<name>) are commands, not plain skills — excluded here so the
-        # target bundle does not carry them through the skills pass.
         skills=frozenset(
             name
-            for name in _intersect(
-                discover_skills_in_project(target_root), available_skills
-            )
+            for name in installed_skill_names
             if not name.startswith(GUIDELINE_SKILL_PREFIX)
             and not name.startswith(COMMAND_SKILL_DIR_PREFIX)
         ),
         agents=_intersect(discover_agents_in_project(target_root), available_agents),
         commands=_intersect(discover_commands_in_project(target_root), available_commands),
+        guidelines=_intersect(
+            (
+                name[len(GUIDELINE_SKILL_PREFIX):]
+                for name in installed_guideline_names
+            ),
+            available_guidelines,
+        ),
     )
 
 
@@ -2246,9 +2275,9 @@ def orphaned_skills(
     instead (rr-011 — the resolved selection would wrongly exclude
     guard-refused members from the remaining dependents).
 
-    Kind filters (rr-001): guidelines-<name> packages are explicit-only
-    and never map members; cmd-<name> dirs are commands, not plain
-    skills, and their dependents are read from the commands kind.
+    Kind filters (rr-001): guidelines-<name> packages are outside the
+    dependency map and never map members; cmd-<name> dirs are commands,
+    not plain skills, and their dependents are read from the commands kind.
     Reported only (AC-5) — nothing is removed here.
     """
     remaining_skills = set(discover_skills_in_project(target_root))
@@ -2486,7 +2515,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         metavar="NAME",
         help=(
             "Behavioral guideline names (under guidelines/) to install or uninstall. "
-            "Explicit-only: guidelines are never part of the default install or bundles. "
+            "Never part of the default install; bundles may carry them. "
             "Installed as the skill package .agents/skills/guidelines-<name>/ in the target."
         ),
     )
@@ -2717,8 +2746,9 @@ class InstallerApp:
         self.root.title("AIConfig Installer")
         self.root.minsize(720, 520)
 
-        # Guideline skill packages are explicit-only and stay on their own
-        # Guidelines panel — the Skills panel lists ordinary skills only.
+        # Guideline skill packages stay on their own Guidelines panel —
+        # the Skills panel lists ordinary skills only. Bundle-carried
+        # guidelines are checked on that panel by the bundle toggles.
         # Command-skill dirs (cmd-<name>) belong to the Commands panel.
         self.skills = [
             name
@@ -3069,8 +3099,8 @@ class InstallerApp:
         finally:
             self._syncing_bundle_selection = False
         self._sync_bundle_toggles()
-        # Guidelines are outside the dependency graph (explicit-only) — a
-        # guidelines Select all/none must not re-check member panels.
+        # Guidelines are outside the dependency graph — a guidelines
+        # Select all/none must not re-check member panels.
         if var_map is not self.guideline_vars:
             self._reconcile_after_batch()
 
@@ -3092,6 +3122,8 @@ class InstallerApp:
             pairs.append((bundle.agents, self.agent_vars))
         if bundle.commands:
             pairs.append((bundle.commands, self.command_vars))
+        if bundle.guidelines:
+            pairs.append((bundle.guidelines, self.guideline_vars))
         return pairs
 
     def _bundle_present_members(self, members: frozenset[str], var_map: dict[str, tk.BooleanVar]) -> list[str]:
@@ -3191,6 +3223,7 @@ class InstallerApp:
             available_skills=self.skills,
             available_agents=self.agents,
             available_commands=self.commands,
+            available_guidelines=self.guidelines,
         )
         if bundle.is_empty:
             button.state(["disabled"])
@@ -3206,6 +3239,7 @@ class InstallerApp:
             (len(bundle.skills), "skill"),
             (len(bundle.agents), "agent"),
             (len(bundle.commands), "command"),
+            (len(bundle.guidelines), "guideline"),
         ]
         parts = [f"{count} {word}{'s' if count != 1 else ''}" for count, word in counts if count]
         self._update_target_bundle_tooltip(

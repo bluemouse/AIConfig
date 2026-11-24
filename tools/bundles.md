@@ -15,17 +15,18 @@ Canonical bundle membership for tooling lives in [bundles.json](bundles.json). E
 [bundles.json](bundles.json) modularizes bundles with two layers:
 
 - **`bases`** — reusable member sets keyed by id. Shared membership (for example the core workflow skills) is defined once in the top-level `bases` array.
-- **`bundles`** — installable bundles shown in the installer GUI. Each bundle references zero or more base ids through its `bases` field and may add bundle-specific members in its own `skills`, `agents`, and `commands` lists.
+- **`bundles`** — installable bundles shown in the installer GUI. Each bundle references zero or more base ids through its `bases` field and may add bundle-specific members in its own `skills`, `agents`, `commands`, and `guidelines` lists.
 
-A bundle (or base) may include any combination of three member kinds:
+A bundle (or base) may include any combination of four member kinds:
 
 | Field | Description |
 | --- | --- |
 | `skills` | Skill slugs (installed as single-root copies under `.agents/skills/<name>/`) |
 | `agents` | Agent slugs (installed as dual-target copies: `.claude/agents/<name>.md` + `.github/agents/<name>.agent.md`) |
 | `commands` | Command slugs (installed as command-skills under `.agents/skills/cmd-<name>/` with `disable-model-invocation: true`) |
+| `guidelines` | Guideline names (installed as skill packages under `.agents/skills/guidelines-<name>/`) |
 
-Guidelines are a fourth installer member kind but are **never bundle-carried**: they are selected explicitly via `--guidelines` (CLI) or the Guidelines panel (GUI) only. A guideline changes agent behavior in the target, so installing one is always a deliberate choice. Guidelines install as skill packages (`.agents/skills/guidelines-<name>/SKILL.md`) and activate through ordinary skill discovery.
+Guidelines change agent behavior in the target, so they stay out of the no-selector default — but a bundle may carry them via its `guidelines` list, making the bundle selection itself the deliberate choice. The dynamic target bundle carries them too, mapping installed `guidelines-<name>` packages back to their guideline names. Guidelines remain individually selectable via `--guidelines` (CLI) or the Guidelines panel (GUI). Guidelines install as skill packages (`.agents/skills/guidelines-<name>/SKILL.md`) and activate through ordinary skill discovery.
 
 Resolved membership for tooling is:
 
@@ -46,9 +47,10 @@ python tools/installer.py /path/to/project --bundles core-dev-workflow --skills 
 python tools/installer.py /path/to/project --bundles dev-workflow-harness
 ```
 
-- `--bundles <id>` selects all members (skills, agents, and commands) from the resolved bundle for install or uninstall.
-- Combine with `--skills`, `--agents`, or `--commands` to add individual items beyond the bundle.
-- When no selector is passed, all discovered skills, agents, and commands are selected.
+- `--bundles <id>` selects all members (skills, agents, commands, and guidelines) from the resolved bundle for install or uninstall.
+- Combine with `--skills`, `--agents`, `--commands`, or `--guidelines` to add individual items beyond the bundle.
+- When no selector is passed, all discovered skills, agents, and commands are selected (guidelines never enter the default).
+- Bundle membership is the **listed** set; at install time the dependency closure (below) expands it, reporting each auto-selected dependency under `Also selecting (dependencies):`. Guidelines are outside the dependency map, so bundle-carried guidelines never trigger closure expansion.
 
 ### Dependency map (auto-selection)
 
@@ -155,7 +157,7 @@ The **Target bundle** is not stored in `bundles.json`. It is computed at runtime
 
 Membership is the intersection of:
 
-1. Skills and command-skills found under `<target>/.agents/skills/<name>/SKILL.md`; agents found under `<target>/.claude/agents/<name>.md` (and their `.github/agents/<name>.agent.md` twins)
+1. Skills and command-skills found under `<target>/.agents/skills/<name>/SKILL.md`; agents found under `<target>/.claude/agents/<name>.md` (and their `.github/agents/<name>.agent.md` twins); installed `guidelines-<name>` packages map back to their guideline names
 2. The same kinds available in this AIConfig repository catalog
 
 ```bash
@@ -164,7 +166,7 @@ python tools/installer.py /path/to/project --bundles target-bundle
 
 ## Dev-workflow harness bundle
 
-The **dev-workflow harness** is a bundle (`dev-workflow-harness`) that groups the complete dev-workflow harness as a single unit. It includes the orchestrator plus all phase doer/checker skills and the command (the validation scripts the orchestrator invokes at runtime ship inside the orchestrator skill package):
+The **dev-workflow harness** is a bundle (`dev-workflow-harness`) that groups the complete dev-workflow harness as a single unit. It includes the orchestrator plus all phase doer/checker skills and the commands (the validation scripts the orchestrator invokes at runtime ship inside the orchestrator skill package):
 
 ```bash
 python tools/installer.py /path/to/project --bundles dev-workflow-harness
@@ -176,17 +178,19 @@ python tools/installer.py /path/to/project --dev-workflow
 
 - **Skills (11):** `dev-workflow-orchestrator` (the orchestrator) plus the phase doers and checkers — `prompt-clarifier`, `research-guide` / `research-reviewer`, `plan-guide` / `plan-reviewer`, `plan-executor` / `implementation-auditor`, `code-review-resolver` / `code-reviewer`, and `commit-message-writer`.
 - **Agents (4):** the four checker agents — `research-reviewer`, `plan-reviewer`, `implementation-auditor`, `code-reviewer` — installed as dual-target copies (`.claude/agents/<name>.md` verbatim from AGENT.md + `.github/agents/<name>.agent.md`). These run the checker skills with fresh-context isolation; read-only behavior is instruction-level (the agent body's Boundaries plus the harness's `check_post_phase.py` detection), not host-enforced frontmatter.
-- **Command (1):** `run-dev-workflow` — installed as a command-skill (`.agents/skills/cmd-run-dev-workflow/SKILL.md` with `disable-model-invocation: true`). Four per-phase commands — `research`, `plan`, `implement`, `review` — are also installed; each runs a single phase's doer/checker loop to acceptance or escalation without driving the full pipeline.
+- **Commands (6):** `run-dev-workflow` — installed as a command-skill (`.agents/skills/cmd-run-dev-workflow/SKILL.md` with `disable-model-invocation: true`) — plus four per-phase commands, `research`, `plan`, `implement`, and `review`, and the `commit` command for staged commits; each per-phase command runs a single phase's doer/checker loop to acceptance or escalation without driving the full pipeline.
 - **Validation scripts:** the `scripts/` tree inside the orchestrator skill package (including the `checks/` subpackage) — installed with the skill to `<target>/.agents/skills/dev-workflow-orchestrator/scripts/`.
 - **Guide:** the `dev-workflow.md` governance guide travels inside the orchestrator skill as `references/dev-workflow.md` — installing the skill installs the guide.
 
-The orchestrator formats escalations per the `guidelines-response` guideline-skill, which is **opt-in** (`--guidelines response`; guidelines are never bundle-carried). The escalation rules are restated inline in the orchestrator, so the harness works without it; install the guideline alongside when every-message output shaping is wanted in the target — it loads through ordinary skill discovery once installed.
+The 11 skills above are the harness's own membership; the dependency closure expands the install to 16 skills, also selecting `agent-runner`, `debugging-guide`, `git-guide`, `git-merge-guide`, and `test-driven-dev-guide` — the `commit` command pulls in `git-guide` alongside core-skill `commit-message-writer` (reported as `Also selecting (dependencies):` lines).
+
+The orchestrator formats escalations per the `guidelines-response` guideline-skill. The harness does not carry guidelines itself; the core bundle does (see [Core dev workflow bundle](#core-dev-workflow-bundle)), and the escalation rules are restated inline in the orchestrator, so the harness works without it. Install the guideline alongside (`--guidelines response` or `--bundles core-dev-workflow`) when every-message output shaping is wanted in the target — it loads through ordinary skill discovery once installed.
 
 The bundle composes with `--skills`, `--agents`, `--commands`, and other `--bundles` in a single invocation. Use `--override` to replace existing harness paths in the target.
 
 ## Personal output preferences
 
-Chat-output shaping is distributed as the **`response` guideline** (installed as the `guidelines-response` skill), not a bundle: guidelines are explicit-only and never bundle-carried, because a guideline changes agent behavior in the target and installing one is always a deliberate choice. Install it with:
+Chat-output shaping is distributed as the **`response` guideline** (installed as the `guidelines-response` skill). The core bundle carries it (along with `code-comment` and `coding-behavior`); install it individually when the bundle is not wanted:
 
 ```bash
 python tools/installer.py /path/to/project --guidelines response
@@ -213,6 +217,11 @@ The core bundle is the minimum workflow set a team should rely on for ordinary f
 | [git-guide](../skills/git-guide/SKILL.md) | Git mechanics | Staging, committing, pushing, rebasing, resolving conflicts, or worktrees are needed |
 | [github-guide](../skills/github-guide/SKILL.md) | GitHub delivery and PR authoring | A GitHub PR or review must be created, updated, commented on, or resolved through `gh` / `gh api`, or the change needs a review-ready PR description, sizing, or self-review |
 
+Beyond the skills, the core bundle carries:
+
+- **Command (1):** `commit` — commits staged changes with a Conventional Commit message on explicit `/commit` invocation (its dependencies `commit-message-writer` and `git-guide` are core skills).
+- **Guidelines (3):** `code-comment`, `coding-behavior`, and `response` — the always-on behavioral guidelines for coding agents working in the target. Selecting the bundle is the deliberate choice to install them; teams that want the skills without behavior shaping should install with explicit `--skills`/`--commands` selectors instead of the bundle, or uninstall the guideline packages afterwards (`--uninstall --guidelines <name>`).
+
 ## Extended dev workflow bundle
 
 The extended bundle adds quality gates, collaboration support, parallel execution, and host-specific delivery. Use it for high-risk work, cross-team work, complex plans, expensive changes, ambiguous research, or formal review processes.
@@ -232,6 +241,8 @@ The extended bundle includes the full core bundle plus these additional skills:
 
 ## Choosing Core vs Extended
 
+Both bundles are expanded by the dependency closure at install time (see [Dependency map](#dependency-map-auto-selection)). The core bundle's 12 listed skills install as 18: the closure adds `dev-workflow-orchestrator`, `research-reviewer`, `plan-reviewer`, `code-review-resolver`, `agent-runner`, and `git-merge-guide`. The extended bundle's real delta over core is therefore three skills — `advisory-council`, `devil-advocate`, and `techdoc-reviewer` — not the orchestrator or reviewers, which core already carries. Both bundles carry the same command (`commit`) and guidelines (`code-comment`, `coding-behavior`, `response`) through the shared base.
+
 Use the core bundle for normal work when:
 
 - The requirement is small or moderately sized.
@@ -247,7 +258,7 @@ Use the extended bundle when:
 - Multiple independent subsystems, test failures, or research tracks can be split safely.
 - A formal PR process or GitHub inline review posting is required.
 
-When extending beyond core, add individual extended-bundle skills as the work warrants:
+When extending beyond core, add individual extended-bundle skills as the work warrants. Note that `research-reviewer`, `plan-reviewer`, and `agent-runner` are already part of every core install via the dependency closure, so they need no separate selection:
 
 - [research-reviewer](../skills/research-reviewer/SKILL.md) when research will drive expensive or irreversible work.
 - [plan-reviewer](../skills/plan-reviewer/SKILL.md) when execution risk is higher than normal.

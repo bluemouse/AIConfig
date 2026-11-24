@@ -306,7 +306,8 @@ class RealRepoGuidelineInstallTests(unittest.TestCase):
 
 
 class GuidelineDiscoveryTests(unittest.TestCase):
-    """Guidelines stay explicit-only: never in the default selection or bundles."""
+    """Guidelines stay out of the default selection and the dynamic target
+    bundle, but authored bundles may carry them via their guidelines list."""
 
     def test_discover_guidelines_allowlist(self) -> None:
         discovered = mod.discover_guidelines()
@@ -334,7 +335,10 @@ class GuidelineDiscoveryTests(unittest.TestCase):
         self.assertIn("cpp-coding", selection.skills)
         self.assertNotIn("guidelines-response", selection.skills)
 
-    def test_target_bundle_excludes_guideline_skills(self) -> None:
+    def test_target_bundle_maps_guideline_packages_to_guidelines(self) -> None:
+        # Installed guidelines-<name> packages are excluded from the
+        # skills kind but map back to their guideline names in the
+        # guidelines kind.
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / ".agents" / "skills"
             (target / "guidelines-response").mkdir(parents=True)
@@ -349,10 +353,99 @@ class GuidelineDiscoveryTests(unittest.TestCase):
                 mod,
                 "discover_skills",
                 return_value=["cpp-coding", "guidelines-response"],
+            ), mock.patch.object(
+                mod, "discover_guidelines", return_value=["response", "minutes"]
             ):
                 bundle = mod.build_target_bundle(Path(tmp))
         self.assertIn("cpp-coding", bundle.skills)
         self.assertNotIn("guidelines-response", bundle.skills)
+        self.assertEqual(bundle.guidelines, frozenset({"response"}))
+
+
+class BundleCarriedGuidelineTests(unittest.TestCase):
+    """Authored bundles may carry guidelines; the selection and install
+    paths must treat them exactly like an explicit --guidelines choice."""
+
+    def test_production_core_bundle_carries_guidelines(self) -> None:
+        bundles = mod.load_skill_bundles()
+        by_id = {bundle.id: bundle for bundle in bundles}
+        core = by_id["core-dev-workflow"]
+        self.assertEqual(
+            core.guidelines,
+            frozenset({"code-comment", "coding-behavior", "response"}),
+        )
+
+    def test_resolve_bundle_includes_guidelines(self) -> None:
+        selection = mod.resolve_bundle(["core-dev-workflow"])
+        self.assertEqual(
+            selection.guidelines,
+            ["code-comment", "coding-behavior", "response"],
+        )
+
+    def test_bundle_guidelines_merge_with_explicit_selection(self) -> None:
+        selection = mod.resolve_cli_selection(
+            bundle_ids=["core-dev-workflow"],
+            skill_names=None,
+            agent_names=None,
+            command_names=None,
+            guideline_names=["minutes"],
+        )
+        self.assertIn("minutes", selection.guidelines)
+        self.assertIn("response", selection.guidelines)
+
+    def test_base_only_guidelines_is_valid(self) -> None:
+        # A base carrying only guidelines must load (the "at least one of
+        # skills, agents, commands" check now includes guidelines).
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
+            import json
+
+            json.dump(
+                {
+                    "version": 2,
+                    "bases": [{"id": "g-only", "guidelines": ["response"]}],
+                    "bundles": [
+                        {
+                            "id": "b",
+                            "name": "B",
+                            "description": "d",
+                            "bases": ["g-only"],
+                        }
+                    ],
+                },
+                handle,
+            )
+            handle.close()
+        bundles = mod.load_skill_bundles(Path(handle.name))
+        self.assertEqual(bundles[0].guidelines, frozenset({"response"}))
+
+    def test_bundle_uninstall_removes_carried_guidelines(self) -> None:
+        # Uninstall is exactly-what-you-selected: the bundle's guideline
+        # members are removed with the bundle.
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            mod.install_items(
+                source_root=REPO_ROOT,
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=[],
+                guidelines=["response"],
+            )
+            self.assertTrue(
+                (target / ".agents" / "skills" / "guidelines-response" / "SKILL.md").is_file()
+            )
+            selection = mod.resolve_bundle(["core-dev-workflow"])
+            self.assertIn("response", selection.guidelines)
+            mod.uninstall_items(
+                target_root=target,
+                skills=[],
+                agents=[],
+                commands=[],
+                guidelines=selection.guidelines,
+            )
+            self.assertFalse(
+                (target / ".agents" / "skills" / "guidelines-response").exists()
+            )
 
 
 if __name__ == "__main__":
@@ -361,6 +454,37 @@ if __name__ == "__main__":
 
 class GuiGuidelinesPanelTests(unittest.TestCase):
     """The GUI exposes a Guidelines panel that installs skill packages."""
+
+    def test_gui_bundle_toggle_checks_carried_guidelines(self) -> None:
+        # A bundle carrying guidelines must check/uncheck the Guidelines
+        # panel checkboxes with its other members (the production core
+        # bundle carries code-comment, coding-behavior, response).
+        import tkinter as tk
+
+        if mod.tk is None:
+            self.skipTest("tkinter unavailable")
+        try:
+            root = mod.tk.Tk()
+        except mod.tk.TclError as exc:
+            self.skipTest(f"no display for tkinter: {exc}")
+        root.withdraw()
+        try:
+            app = mod.InstallerApp(root)
+            core = next(b for b in app.skill_bundles if b.id == "core-dev-workflow")
+            self.assertTrue(core.guidelines)
+            app._toggle_bundle(core)
+            for name in core.guidelines:
+                self.assertTrue(
+                    app.guideline_vars[name].get(),
+                    f"bundle toggle must check guideline {name}",
+                )
+            button = app._bundle_buttons["core-dev-workflow"]
+            self.assertIn("selected", button.state())
+            app._toggle_bundle(core)
+            for name in core.guidelines:
+                self.assertFalse(app.guideline_vars[name].get())
+        finally:
+            root.destroy()
 
     def test_gui_panel_construction(self) -> None:
         import tkinter as tk

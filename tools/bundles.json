@@ -16,6 +16,14 @@
         "commit-message-writer",
         "git-guide",
         "github-guide"
+      ],
+      "commands": [
+        "commit"
+      ],
+      "guidelines": [
+        "code-comment",
+        "coding-behavior",
+        "response"
       ]
     }
   ],
@@ -23,7 +31,7 @@
     {
       "id": "core-dev-workflow",
       "name": "Core dev workflow bundle",
-      "description": "Minimum workflow set for ordinary feature, bug, and product-spec development.",
+      "description": "Minimum workflow set for ordinary feature, bug, and product-spec development, plus the commit command and the core behavioral guidelines (code-comment, coding-behavior, response).",
       "bases": [
         "core-dev-workflow"
       ]
@@ -68,7 +76,8 @@
         "research",
         "plan",
         "implement",
-        "review"
+        "review",
+        "commit"
       ],
       "agents": [
         "research-reviewer",

@@ -1094,9 +1094,10 @@ class OrphanReportTests(unittest.TestCase):
 
     def test_orphans_exclude_guideline_and_cmd_prefixes(self) -> None:
         # t-011 (rr-001): guidelines-<n> packages and cmd-<n> dirs are
-        # never orphan candidates — guidelines are explicit-only, and
-        # command-skills are never depends targets (their dependents are
-        # read from the commands panel kind, not the skills list).
+        # never orphan candidates — guidelines are outside the dependency
+        # map, and command-skills are never depends targets (their
+        # dependents are read from the commands panel kind, not the
+        # skills list).
         with (
             tempfile.TemporaryDirectory() as repo_tmp,
             tempfile.TemporaryDirectory() as target_tmp,
