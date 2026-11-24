@@ -87,6 +87,16 @@ python skills/command-creator/scripts/quick_validate.py --root . --name <command
 
 Direct scaffold: `python skills/command-creator/scripts/create_command.py --root . --name my-command --description "..." --body-file <path> --overwrite`.
 
+**Regenerate all installed output on a fresh clone (`tools/install_all.py`):**
+
+```bash
+# Reinstall every bootstrap skill, agent, and command in one pass
+# (installer.py's catalog is empty until this output exists).
+# Guideline packages are installer-generated, not bootstrap output —
+# regenerate them separately with the --guidelines command below.
+python tools/install_all.py
+```
+
 **Refresh local scripts/guidelines or distribute to another project (`tools/installer.py`):**
 
 ```bash
