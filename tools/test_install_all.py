@@ -56,6 +56,15 @@ def write_command(root: Path, name: str) -> None:
     )
 
 
+def write_guideline(root: Path, name: str) -> None:
+    guidelines_dir = root / "guidelines"
+    guidelines_dir.mkdir(parents=True, exist_ok=True)
+    (guidelines_dir / f"{name}.md").write_text(
+        f"---\ndescription: {name} guideline\n---\n\n# {name}\n",
+        encoding="utf-8",
+    )
+
+
 def seed_creator_scripts(root: Path) -> None:
     """Copy the real creator script dirs into the fixture root.
 
@@ -158,6 +167,77 @@ class InstallAllTests(unittest.TestCase):
         self.assertTrue(
             (self.root / ".agents" / "skills" / "bracketed" / "SKILL.md").is_file()
         )
+
+    def test_regenerates_guideline_packages(self) -> None:
+        write_guideline(self.root, "sample")
+
+        failures = mod.install_all(self.root)
+
+        self.assertEqual(failures, 0)
+        skill_md = (
+            self.root / ".agents" / "skills" / "guidelines-sample" / "SKILL.md"
+        )
+        self.assertTrue(skill_md.is_file())
+        content = skill_md.read_text(encoding="utf-8")
+        self.assertIn("name: guidelines-sample", content)
+        self.assertIn("# sample", content)
+
+    def test_no_overwrite_skips_existing_guideline(self) -> None:
+        write_guideline(self.root, "sample")
+        self.assertEqual(mod.install_all(self.root), 0)
+        skill_md = (
+            self.root / ".agents" / "skills" / "guidelines-sample" / "SKILL.md"
+        )
+        original = skill_md.read_text(encoding="utf-8")
+
+        # Changed source content, so a clobber is detectable: if
+        # overwrite=False were ignored, the refreshed body would land here.
+        (self.root / "guidelines" / "sample.md").write_text(
+            "---\ndescription: sample guideline\n---\n\n# sample\n\nNew body.\n",
+            encoding="utf-8",
+        )
+        failures = mod.install_all(self.root, overwrite=False)
+
+        self.assertEqual(failures, 0)
+        self.assertEqual(skill_md.read_text(encoding="utf-8"), original)
+
+    def test_failed_guideline_is_reported_and_others_install(self) -> None:
+        write_guideline(self.root, "sample")
+        # Missing description: malformed frontmatter must fail this
+        # guideline alone, not abort the pass or the other guideline.
+        (self.root / "guidelines" / "broken.md").write_text(
+            "---\nauthor: someone\n---\n\n# broken\n",
+            encoding="utf-8",
+        )
+
+        failures = mod.install_all(self.root)
+
+        self.assertEqual(failures, 1)
+        self.assertTrue(
+            (self.root / ".agents" / "skills" / "guidelines-sample" / "SKILL.md").is_file()
+        )
+        # The installer mkdirs the dest dir before generating content, so a
+        # failed guideline can leave an empty dir — the package is the file.
+        self.assertFalse(
+            (self.root / ".agents" / "skills" / "guidelines-broken" / "SKILL.md").exists()
+        )
+
+    def test_overwrite_refreshes_stale_guideline(self) -> None:
+        write_guideline(self.root, "sample")
+        self.assertEqual(mod.install_all(self.root), 0)
+        skill_md = (
+            self.root / ".agents" / "skills" / "guidelines-sample" / "SKILL.md"
+        )
+
+        # A source edit must reach the installed package on the next run.
+        (self.root / "guidelines" / "sample.md").write_text(
+            "---\ndescription: sample guideline\n---\n\n# sample\n\nNew body.\n",
+            encoding="utf-8",
+        )
+        failures = mod.install_all(self.root)
+
+        self.assertEqual(failures, 0)
+        self.assertIn("New body.", skill_md.read_text(encoding="utf-8"))
 
     def test_main_rejects_foreign_root(self) -> None:
         foreign = self.root / "elsewhere"

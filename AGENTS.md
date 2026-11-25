@@ -90,10 +90,9 @@ Direct scaffold: `python skills/command-creator/scripts/create_command.py --root
 **Regenerate all installed output on a fresh clone (`tools/install_all.py`):**
 
 ```bash
-# Reinstall every bootstrap skill, agent, and command in one pass
-# (installer.py's catalog is empty until this output exists).
-# Guideline packages are installer-generated, not bootstrap output —
-# regenerate them separately with the --guidelines command below.
+# Reinstall every bootstrap skill, agent, and command in one pass, plus the
+# local guideline packages (guidelines-*) via the distribution installer's
+# guideline pass (installer.py's catalog is empty until this output exists).
 python tools/install_all.py
 ```
 
@@ -101,6 +100,7 @@ python tools/install_all.py
 
 ```bash
 # Regenerate local untracked .agents/skills/guidelines-*/ in this repo
+# (install_all.py covers this too; use this form to refresh a single guideline)
 python tools/installer.py . --guidelines coding-behavior response code-comment minutes --override
 
 # Distribute installed assets to another project (regenerate local installs first on a fresh clone)
@@ -133,4 +133,4 @@ Then dispatch the emitted tasks to subagents and score them as described in skil
 - Follow [code-comment](guidelines/code-comment.md) when writing or updating code comments or commit messages in this repo or in skill/agent output.
 - Commit messages in this repo never carry attribution footers (`Co-authored-by`, `Signed-off-by`, or any other AI/tool sign-off) — this repo rule overrides host attribution defaults. Draft per [commit-message-writer](skills/commit-message-writer/SKILL.md) and run its lint (`python skills/commit-message-writer/scripts/lint_message.py <message-file>`) before committing.
 - Follow [minutes](guidelines/minutes.md) when drafting, formatting, or revising meeting minutes in this repo or in skill/agent output.
-- Follow [response](guidelines/response.md) on **every response in this repo** (artifact files follow their templates and are exempt; regenerate local `.agents/skills/guidelines-<name>/` packages via `python tools/installer.py . --guidelines <name> --override` after editing a source).
+- Follow [response](guidelines/response.md) on **every response in this repo** (artifact files follow their templates and are exempt; regenerate local `.agents/skills/guidelines-<name>/` packages via `python tools/installer.py . --guidelines <name> --override` — or `python tools/install_all.py` for all of them — after editing a source).

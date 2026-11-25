@@ -26,7 +26,7 @@ A bundle (or base) may include any combination of four member kinds:
 | `commands` | Command slugs (installed as command-skills under `.agents/skills/cmd-<name>/` with `disable-model-invocation: true`) |
 | `guidelines` | Guideline names (installed as skill packages under `.agents/skills/guidelines-<name>/`) |
 
-Guidelines change agent behavior in the target, so they stay out of the no-selector default — but a bundle may carry them via its `guidelines` list, making the bundle selection itself the deliberate choice. The dynamic target bundle carries them too, mapping installed `guidelines-<name>` packages back to their guideline names. Guidelines remain individually selectable via `--guidelines` (CLI) or the Guidelines panel (GUI). Guidelines install as skill packages (`.agents/skills/guidelines-<name>/SKILL.md`) and activate through ordinary skill discovery.
+Guidelines change agent behavior in the target, so they stay out of the no-selector default — but a bundle may carry them via its `guidelines` list, making the bundle selection itself the deliberate choice. The dynamic target bundle carries them too, mapping installed `guidelines-<name>` packages back to their guideline names. Guidelines remain individually selectable via `--guidelines` (CLI) or the Guidelines panel (GUI). Guidelines install as skill packages (`.agents/skills/guidelines-<name>/SKILL.md`) and activate through ordinary skill discovery. (`tools/install_all.py` also regenerates this repo's own untracked `guidelines-*` copies; that is local output regeneration, not a target install, so the opt-in rule is unaffected.)
 
 Resolved membership for tooling is:
 

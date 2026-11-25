@@ -64,7 +64,7 @@ repo/
 | `skills/dev-workflow-orchestrator/scripts/` | **Dev-workflow validation scripts** — the orchestrator's runtime gates; ship inside the skill package and install with it to `.agents/skills/dev-workflow-orchestrator/scripts/`. |
 | `guidelines/` | **Behavioral guidelines** — markdown documents installable to target projects via `tools/installer.py --guidelines`. |
 | `tools/installer.py` | Copy installed portable skills, agents, and commands from this repo into another project (CLI or GUI); `--dry-run` previews an operation without writing anything. |
-| `tools/install_all.py` | Regenerate every installed skill, agent, and command from bootstrap sources in one pass — run it on a fresh clone before `tools/installer.py` (its catalog is empty until the installed output exists). Guideline packages are separate: `python tools/installer.py . --guidelines <name> --override`. |
+| `tools/install_all.py` | Regenerate every installed skill, agent, and command from bootstrap sources in one pass, plus the local guideline packages (`guidelines-*`) via the distribution installer's guideline pass — run it on a fresh clone before `tools/installer.py` (its catalog is empty until the installed output exists). To refresh a single guideline: `python tools/installer.py . --guidelines <name> --override`. |
 
 ## Bootstrap skills
 
